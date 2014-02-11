@@ -12,8 +12,14 @@ find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
 
 include(${QT_USE_FILE})
 
+set(robot_blending_rqt_plugin_SRCS
+	src/rqt_plugins/robot_blending_plugin.cpp)
+
+set(robot_blending_rqt_plugin_HDRS
+	include/robot_blending_rqt_plugin/rqt_plugins/robot_blending_plugin.h)
+
 set(robot_blending_rqt_plugin_UIS
-	src/rqt_plugins/robot_blending_view.ui)
+	src/rqt_plugins/robot_blending_plugin.ui)
 
 set(robot_blending_rqt_plugin_INCLUDE_DIRECTORIES
 	include
@@ -28,14 +34,20 @@ catkin_package(
 ###########
 ## Build ##
 ###########
-#qt4_wrap_cpp(rqt_image_view_MOCS ${rqt_image_view_HDRS})
-qt4_wrap_ui(robot_blending_rqt_plugin_UIS_H ${rqt_image_view_UIS})
+qt4_wrap_cpp(robot_blending_rqt_plugin_MOCS ${robot_blending_rqt_plugin_HDRS})
+qt4_wrap_ui(robot_blending_rqt_plugin_UIS_H ${robot_blending_rqt_plugin_UIS})
 
 include_directories(${robot_blending_rqt_plugin_INCLUDE_DIRECTORIES} ${catkin_INCLUDE_DIRS})
 
 ## Declare a cpp library
  add_library(${PROJECT_NAME}
-   src/${PROJECT_NAME}/robot_blending_rqt_plugin.cpp)
+	${robot_blending_rqt_plugin_UIS_H}
+	${robot_blending_rqt_plugin_MOCS}
+	${robot_blending_rqt_plugin_SRCS})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY})
+
+find_package(class_loader)
+class_loader_hide_library_symbols(${PROJECT_NAME})
 
 ## Declare a cpp executable
 # add_executable(robot_blending_rqt_plugin_node src/robot_blending_rqt_plugin_node.cpp)
@@ -52,9 +64,13 @@ include_directories(${robot_blending_rqt_plugin_INCLUDE_DIRECTORIES} ${catkin_IN
 #############
 ## Install ##
 #############
+install(TARGETS ${PROJECT_NAME}
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION})
 
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
 
-#############
-## Testing ##
-#############
 
