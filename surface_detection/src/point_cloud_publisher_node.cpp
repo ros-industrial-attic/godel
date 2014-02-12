@@ -18,8 +18,8 @@
 using namespace boost::filesystem;
 
 const std::string POINT_CLOUD_TOPIC="sensor_point_cloud";
-const std::string DATA_DIR = "data";
 const float NOISE_THRESHOLD = 0.005f;
+const std::string WORLD_FRAME_ID = "world_frame";
 
 int main(int argc,char** argv)
 {
@@ -37,8 +37,8 @@ int main(int argc,char** argv)
 
 	if(argc > 1)
 	{
-		file_path = path(ros::package::getPath("surface_detection") + "/"+
-				+ DATA_DIR.c_str() + "/"+ std::string(argv[1]));
+		file_path = path(ros::package::getPath("surface_detection") +
+				"/"+ std::string(argv[1]));
 
 		if(exists(file_path))
 		{
@@ -46,13 +46,13 @@ int main(int argc,char** argv)
 		}
 		else
 		{
-			ROS_ERROR_STREAM("Must supply valid pcd file name that exists in 'data' directory");
+			ROS_ERROR_STREAM("Must supply valid pcd file name that exists in the package directory");
 		}
 
 	}
 	else
 	{
-		ROS_ERROR_STREAM("Must supply valid pcd file name that exists in 'data' directory");
+		ROS_ERROR_STREAM("Must supply valid pcd file name that exists in the package directory");
 		return 0;
 	}
 
@@ -65,7 +65,7 @@ int main(int argc,char** argv)
 	}
 	else
 	{
-		ROS_ERROR_STREAM("Successfully read pcd file with "
+		ROS_INFO_STREAM("Successfully read pcd file with "
 				<<cloud_ptr->points.size()<<" points");
 	}
 
@@ -73,6 +73,8 @@ int main(int argc,char** argv)
 	ros::Duration loop_time(0.2f);
 	srand(time(NULL));
 	float noise;
+
+	ROS_INFO_STREAM("Publishing cloud ");
 	while(ros::ok())
 	{
 
@@ -92,7 +94,9 @@ int main(int argc,char** argv)
 		sensor_msgs::PointCloud2 msg;
 		pcl::toROSMsg(*noise_cloud_ptr,msg);
 
+		msg.header.frame_id = msg.header.frame_id.empty() ? WORLD_FRAME_ID:msg.header.frame_id;
 		point_cloud_pub.publish(msg);
+
 		loop_time.sleep();
 	}
 
