@@ -23,7 +23,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>1</number>
    </property>
    <widget class="QWidget" name="Tab1">
     <attribute name="title">
@@ -210,6 +210,9 @@ Library</string>
        <width>341</width>
        <height>81</height>
       </rect>
+     </property>
+     <property name="readOnly">
+      <bool>true</bool>
      </property>
      <property name="plainText">
       <string>Use the controls in the window to identify and select surfaces on a part.  Then generate blending path on selected part surfaces and save blending data into a library file.</string>
