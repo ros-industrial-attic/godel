@@ -97,8 +97,8 @@ catkin_package(
 
 ## Specify additional locations of header files
 include_directories(${surface_detection_INCLUDE_DIRECTORIES})
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
+#link_directories(${PCL_LIBRARY_DIRS})
+#add_definitions(${PCL_DEFINITIONS})
 
 ## Declare a cpp library
 add_library(${PROJECT_NAME} 
