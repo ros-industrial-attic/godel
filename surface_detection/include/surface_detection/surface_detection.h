@@ -24,26 +24,36 @@ typedef pcl::PointCloud<pcl::PointXYZ> Cloud;
 typedef pcl::PointCloud<pcl::PointXYZRGB> CloudRGB;
 typedef pcl::PointCloud<pcl::Normal> Normals;
 
-static const std::string POINT_COLUD_TOPIC="sensor_point_cloud";
-static const float DEFAULT_ACQUISITION_TIME = 5.0f;
+namespace defaults{
 
-static const int DEFAULT_STATISTICAL_OUTLIER_MEAN = 50;
-static const float DEFAULT_STATISTICAL_OUTLIER_STDEV_THRESHOLD = 1;
-static const int DEFAULT_K_SEARCH = 50;
+	static const float ACQUISITION_TIME = 5.0f;
 
-static const int DEFAULT_REGION_GROWING_MIN_CLUSTER_SIZE=100;
-static const int DEFAULT_REGION_GROWING_MAX_CLUSTER_SIZE=100000;
-static const int DEFAULT_REGION_GROWING_NEIGHBORS=50;
-static const float DEFAULT_REGION_GROWING_SMOOTHNESS_THRESHOLD=(7.0f )/( 180.0f * M_PI);
-static const float DEFAULT_REGION_GROWING_CURVATURE_THRESHOLD=1.0f;
+	static const int STATISTICAL_OUTLIER_MEAN = 50;
+	static const float STATISTICAL_OUTLIER_STDEV_THRESHOLD = 1;
+	static const int K_SEARCH = 50;
 
-static const float DEFAULT_TRIANGULATION_SEARCH_RADIUS = 0.01;
-static const float DEFAULT_TRIANGULATION_MU = 2.5f;
-static const int DEFAULT_TRIANGULATION_MAX_NEAREST_NEIGHBORS = 100;
-static const float DEFAULT_TRIANGULATION_MAX_SURFACE_ANGLE = M_PI/4.0f;
-static const float DEFAULT_TRIANGULATION_MIN_ANGLE= M_PI/18.0f;
-static const float DEFAULT_TRIANGULATION_MAX_ANGLE = 2.0f *M_PI/3.0f;
-static const bool DEFAULT_TRIANGULATION_NORMAL_CONSISTENCY = false;
+	static const int REGION_GROWING_MIN_CLUSTER_SIZE=100;
+	static const int REGION_GROWING_MAX_CLUSTER_SIZE=100000;
+	static const int REGION_GROWING_NEIGHBORS=50;
+	static const float REGION_GROWING_SMOOTHNESS_THRESHOLD=(7.0f )/( 180.0f * M_PI);
+	static const float REGION_GROWING_CURVATURE_THRESHOLD=1.0f;
+
+	static const float TRIANGULATION_SEARCH_RADIUS = 0.01;
+	static const float TRIANGULATION_MU = 2.5f;
+	static const int TRIANGULATION_MAX_NEAREST_NEIGHBORS = 100;
+	static const float TRIANGULATION_MAX_SURFACE_ANGLE = M_PI/4.0f;
+	static const float TRIANGULATION_MIN_ANGLE= M_PI/18.0f;
+	static const float TRIANGULATION_MAX_ANGLE = 2.0f *M_PI/3.0f;
+	static const bool TRIANGULATION_NORMAL_CONSISTENCY = false;
+
+	static const float VOXEL_LEAF_SIZE = 0.01f;
+}
+
+namespace config
+{
+	static const std::string POINT_COLUD_TOPIC="sensor_point_cloud";
+
+}
 
 class SurfaceDetection {
 
@@ -55,8 +65,8 @@ public:
 public:
 
 	void set_acquisition_time(float val);
-	void acquire_data();
-	bool find_surfaces(const Cloud& in);
+	bool acquire_data();
+	bool find_surfaces();
 
 	// retrieve results
 	Cloud::Ptr get_acquired_cloud();
@@ -76,6 +86,8 @@ protected:
 			const Normals& normals,
 			pcl::PolygonMesh& mesh);
 
+	bool apply_voxel_downsampling(Cloud& cloud);
+
 
 protected:
 
@@ -86,7 +98,7 @@ protected:
 	pcl::PointCloud<pcl::PointXYZ>::Ptr acquired_cloud_ptr_;
 	CloudRGB::Ptr region_colored_cloud_ptr_;
 	std::vector<Cloud::Ptr> segment_clouds_;
-	visualization_msgs::MarkerArray meshes;
+	visualization_msgs::MarkerArray meshes_;
 
 	// acquisition
 	float acquisition_time_;
@@ -112,6 +124,9 @@ protected:
 	float tr_min_angle_;
 	float tr_max_angle_;
 	bool tr_normal_consistency_;
+
+	// voxel downsampling
+	float voxel_leafsize_;
 
 };
 
