@@ -11,27 +11,29 @@
 #include <pcl/search/kdtree.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/segmentation/region_growing.h>
+#include <pcl/filters/voxel_grid.h>
 
 namespace surface_detection {
 
 SurfaceDetection::SurfaceDetection():
 		acquired_clouds_counter_(0),
-		k_search_(DEFAULT_K_SEARCH),
-		meanK_(DEFAULT_STATISTICAL_OUTLIER_MEAN),
-		stdv_threshold_(DEFAULT_STATISTICAL_OUTLIER_STDEV_THRESHOLD),
-		rg_min_cluster_size_(DEFAULT_REGION_GROWING_MIN_CLUSTER_SIZE),
-		rg_max_cluster_size_(DEFAULT_REGION_GROWING_MAX_CLUSTER_SIZE),
-		rg_neightbors_(DEFAULT_REGION_GROWING_NEIGHBORS),
-		rg_smoothness_threshold_(DEFAULT_REGION_GROWING_SMOOTHNESS_THRESHOLD),
-		rg_curvature_threshold_(DEFAULT_REGION_GROWING_CURVATURE_THRESHOLD),
-		acquisition_time_(DEFAULT_ACQUISITION_TIME),
-		tr_search_radius_(DEFAULT_TRIANGULATION_SEARCH_RADIUS),
-		tr_mu_(DEFAULT_TRIANGULATION_MU),
-		tr_max_nearest_neighbors_(DEFAULT_TRIANGULATION_MAX_NEAREST_NEIGHBORS),
-		tr_max_surface_angle_(DEFAULT_TRIANGULATION_MAX_SURFACE_ANGLE),
-		tr_min_angle_(DEFAULT_TRIANGULATION_MIN_ANGLE),
-		tr_max_angle_(DEFAULT_TRIANGULATION_MAX_ANGLE),
-		tr_normal_consistency_(DEFAULT_TRIANGULATION_NORMAL_CONSISTENCY)
+		k_search_(defaults::K_SEARCH),
+		meanK_(defaults::STATISTICAL_OUTLIER_MEAN),
+		stdv_threshold_(defaults::STATISTICAL_OUTLIER_STDEV_THRESHOLD),
+		rg_min_cluster_size_(defaults::REGION_GROWING_MIN_CLUSTER_SIZE),
+		rg_max_cluster_size_(defaults::REGION_GROWING_MAX_CLUSTER_SIZE),
+		rg_neightbors_(defaults::REGION_GROWING_NEIGHBORS),
+		rg_smoothness_threshold_(defaults::REGION_GROWING_SMOOTHNESS_THRESHOLD),
+		rg_curvature_threshold_(defaults::REGION_GROWING_CURVATURE_THRESHOLD),
+		acquisition_time_(defaults::ACQUISITION_TIME),
+		tr_search_radius_(defaults::TRIANGULATION_SEARCH_RADIUS),
+		tr_mu_(defaults::TRIANGULATION_MU),
+		tr_max_nearest_neighbors_(defaults::TRIANGULATION_MAX_NEAREST_NEIGHBORS),
+		tr_max_surface_angle_(defaults::TRIANGULATION_MAX_SURFACE_ANGLE),
+		tr_min_angle_(defaults::TRIANGULATION_MIN_ANGLE),
+		tr_max_angle_(defaults::TRIANGULATION_MAX_ANGLE),
+		tr_normal_consistency_(defaults::TRIANGULATION_NORMAL_CONSISTENCY),
+		voxel_leafsize_(defaults::VOXEL_LEAF_SIZE)
 {
 	// TODO Auto-generated constructor stub
 
@@ -40,6 +42,7 @@ SurfaceDetection::SurfaceDetection():
 SurfaceDetection::~SurfaceDetection()
 {
 	// TODO Auto-generated destructor stub
+	ROS_INFO_STREAM("Surface Detection destructor invoked");
 }
 
 void SurfaceDetection::set_acquisition_time(float val)
@@ -62,7 +65,7 @@ std::vector<Cloud::Ptr> SurfaceDetection::get_segment_clouds()
 	return segment_clouds_;
 }
 
-void SurfaceDetection::acquire_data()
+bool SurfaceDetection::acquire_data()
 {
 	// initialize  aggregate point cloud
 	acquired_cloud_ptr_.reset(new Cloud());
@@ -70,30 +73,104 @@ void SurfaceDetection::acquire_data()
 
 	// initialize subscriber
 	ros::NodeHandle nh;
-	point_cloud_subs_ = nh.subscribe(POINT_COLUD_TOPIC,1,
+	point_cloud_subs_ = nh.subscribe(config::POINT_COLUD_TOPIC,1,
 			&SurfaceDetection::point_cloud_subscriber_cb,this);
 
-	ROS_INFO_STREAM("Started point cloud acquisition");
+	// wait for topic
+	sensor_msgs::PointCloud2ConstPtr msg =
+			ros::topic::waitForMessage<sensor_msgs::PointCloud2>(point_cloud_subs_.getTopic(),
+					ros::Duration(5.0f));
 
-	ros::Duration acquistion_time(acquisition_time_);
-	ros::Time start_time = ros::Time::now();
-	while(ros::ok() &&
-			((start_time + acquistion_time) > ros::Time::now()))
+	if(msg)
 	{
-		ros::spinOnce();
-	}
+		ROS_INFO_STREAM("Started point cloud acquisition");
 
-	point_cloud_subs_.shutdown();
-	ROS_INFO_STREAM("Finished point cloud acquisition");
+		ros::Duration acquistion_time(acquisition_time_);
+		ros::Time start_time = ros::Time::now();
+		while(ros::ok() &&
+				((start_time + acquistion_time) > ros::Time::now()))
+		{
+			ros::spinOnce();
+		}
+
+		point_cloud_subs_.shutdown();
+		ROS_INFO_STREAM("Finished point cloud acquisition");
+
+		return !acquired_cloud_ptr_->empty();
+	}
+	else
+	{
+		ROS_ERROR_STREAM("Point cloud topic: '"<<point_cloud_subs_.getTopic()<<
+				"' not advertised");
+		return false;
+	}
 }
 
-bool SurfaceDetection::find_surfaces(const Cloud& in)
+bool SurfaceDetection::find_surfaces()
 {
+	// reset members
 	region_colored_cloud_ptr_ = CloudRGB::Ptr(new CloudRGB());
 	segment_clouds_.clear();
 
-	// computing normal estimates
+	// variables to hold intermediate results
 	Normals::Ptr normals(new Normals());
+	std::vector<pcl::PointIndices> clusters_indices;
+	std::vector<Normals::Ptr> segment_normals;
+
+	if(apply_voxel_downsampling(*acquired_cloud_ptr_))
+	{
+		ROS_INFO_STREAM("Voxel downsampling succeeded, downsampled cloud size: "<<
+				acquired_cloud_ptr_->size());
+	}
+
+	// apply statistical filter
+	if(apply_statistical_filter(*acquired_cloud_ptr_,*acquired_cloud_ptr_))
+	{
+		ROS_INFO_STREAM("Statistical filter succeeded");
+	}
+	else
+	{
+		ROS_ERROR_STREAM("Statistical filter failed");
+		return false;
+	}
+
+	// estimate normals
+	if(apply_normal_estimation(*acquired_cloud_ptr_,*normals))
+	{
+		ROS_INFO_STREAM("Normal estimation succeeded");
+	}
+	else
+	{
+		ROS_ERROR_STREAM("Normal estimation failed");
+		return false;
+	}
+
+	// applying region growing segmentation
+	if(apply_region_growing_segmentation(*acquired_cloud_ptr_,*normals,clusters_indices,
+			*region_colored_cloud_ptr_))
+	{
+		ROS_INFO_STREAM("Region growing succeeded: "<<
+				clusters_indices.size()<< " cluster found");
+
+		// filling cloud array
+		for(int i =0;i< clusters_indices.size(); i++)
+		{
+			Cloud::Ptr segment_cloud_ptr(new Cloud());
+			Normals::Ptr segment_normal_ptr(new Normals());
+			pcl::copyPointCloud(*acquired_cloud_ptr_,clusters_indices[i],
+					*segment_cloud_ptr);
+			pcl::copyPointCloud(*normals,clusters_indices[i],*segment_normal_ptr);
+			segment_clouds_.push_back(segment_cloud_ptr);
+			segment_normals.push_back(segment_normal_ptr);
+		}
+	}
+	else
+	{
+		ROS_ERROR_STREAM("Region growing failed");
+		return false;
+	}
+
+	return true;
 }
 
 void SurfaceDetection::point_cloud_subscriber_cb(const sensor_msgs::PointCloud2ConstPtr &msg)
@@ -101,6 +178,9 @@ void SurfaceDetection::point_cloud_subscriber_cb(const sensor_msgs::PointCloud2C
 	// convert to message to point cloud
 	Cloud::Ptr new_cloud_ptr(new Cloud());
 	pcl::fromROSMsg<pcl::PointXYZ>(*msg,*new_cloud_ptr);
+
+	std::vector<int> index;
+	pcl::removeNaNFromPointCloud(*new_cloud_ptr,*new_cloud_ptr,index);
 
 	// add to aggregate point cloud
 	(*acquired_cloud_ptr_)+=*new_cloud_ptr;
@@ -152,18 +232,8 @@ bool SurfaceDetection::apply_region_growing_segmentation(const Cloud& in,
 	rg.setInputNormals(normals_ptr);
 	rg.extract(clusters);
 
-	// copying clusters
-/*	if(clusters.size()>0)
-	{
+	pcl::copyPointCloud(*rg.getColoredCloud(),colored_cloud);
 
-		pcl::copyPointCloud(*rg.getColoredCloud(),colored_cloud);
-		for(int i = 0;i < clusters.size();i++)
-		{
-			Cloud::Ptr cluster_ptr(new Cloud());
-			pcl::copyPointCloud(*cloud_ptr,clusters[i],*cluster_ptr);
-			segments.push_back(cluster_ptr);
-		}
-	}*/
 
 	return clusters.size()>0;
 }
@@ -198,6 +268,25 @@ bool SurfaceDetection::apply_fast_triangulation(const Cloud& in,
 
 	return mesh.polygons.size() > 0;
 
+}
+
+bool SurfaceDetection::apply_voxel_downsampling(Cloud& cloud)
+{
+	// converting to pcl2 type
+	 pcl::PCLPointCloud2::Ptr pcl_cloud_ptr(new pcl::PCLPointCloud2());
+	 pcl::toPCLPointCloud2(cloud,*pcl_cloud_ptr);
+
+
+	pcl::VoxelGrid<pcl::PCLPointCloud2> vg;
+	vg.setInputCloud(pcl_cloud_ptr);
+	ROS_INFO_STREAM("voxel grid setting leaf size");
+	vg.setLeafSize(voxel_leafsize_,voxel_leafsize_,voxel_leafsize_);
+
+	ROS_INFO_STREAM("voxel grid filtering");
+	vg.filter(*pcl_cloud_ptr);
+
+	pcl::fromPCLPointCloud2(*pcl_cloud_ptr,cloud);
+	return true;
 }
 
 
