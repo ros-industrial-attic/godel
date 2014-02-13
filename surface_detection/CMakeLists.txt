@@ -11,6 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(PCL 1.7 REQUIRED COMPONENTS common io)
 find_package(Boost REQUIRED COMPONENTS system)
 
+ADD_DEFINITIONS("-std=c++0x")
+
 set(surface_detection_INCLUDE_DIRECTORIES
 	include
 	${catkin_INCLUDE_DIRS}
@@ -99,13 +101,17 @@ link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
 ## Declare a cpp library
-add_library(${PROJECT_NAME}
-   src/point_cloud_publisher_node.cpp src/surface_detection.cpp )
+add_library(${PROJECT_NAME} 
+	src/surface_detection.cpp )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${PCL_COMMON_LIBRARIES})
 
 ## point cloud publisher node
-add_executable(point_cloud_publisher_node src/point_cloud_publisher_node.cpp)
+add_executable(point_cloud_publisher_node src/nodes/point_cloud_publisher_node.cpp)
 target_link_libraries(point_cloud_publisher_node ${PROJECT_NAME})
+
+## surface detection node
+add_executable(surface_detection_node src/nodes/surface_detection_node.cpp)
+target_link_libraries(surface_detection_node ${PROJECT_NAME})
 
 #############
 ## Install ##
