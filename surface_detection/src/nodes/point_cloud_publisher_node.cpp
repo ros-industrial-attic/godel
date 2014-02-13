@@ -26,6 +26,7 @@ const std::string HELP_TEXT="\n-h Help information\n-f <file name>\n"
 		"-n <noise range value (m)>\n-r <publish rate (sec)>\n-i <frame id> ";
 
 typedef pcl::PointCloud<pcl::PointXYZRGBA> CloudRGBA;
+typedef pcl::PointCloud<pcl::PointXYZRGB> CloudRGB;
 
 
 int main(int argc,char** argv)
@@ -44,8 +45,8 @@ int main(int argc,char** argv)
 	std::string frame_id = DEFAULT_FRAME_ID;
 
 	// point clouds
-	CloudRGBA::Ptr cloud_ptr(new CloudRGBA());
-	CloudRGBA::Ptr noise_cloud_ptr(new CloudRGBA());
+	CloudRGB::Ptr cloud_ptr(new CloudRGB());
+	CloudRGB::Ptr noise_cloud_ptr(new CloudRGB());
 
 	if(argc > 1)
 	{
@@ -134,7 +135,7 @@ int main(int argc,char** argv)
 		{
 			noise = float(rand())/float(RAND_MAX); // <0,1>
 			noise = -noise_range*0.5f + noise*noise_range;
-			pcl::PointXYZRGBA &p = noise_cloud_ptr->points[i];
+			pcl::PointXYZRGB &p = noise_cloud_ptr->points[i];
 			noise_cloud_ptr->points[i].x = p.x + noise;
 			noise_cloud_ptr->points[i].y = p.y + noise;
 			noise_cloud_ptr->points[i].z = p.z + noise;
