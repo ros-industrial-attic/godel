@@ -12,6 +12,7 @@
 #include <pcl/features/normal_3d.h>
 #include <pcl/segmentation/region_growing.h>
 #include <pcl/filters/voxel_grid.h>
+#include <tf/transform_datatypes.h>
 
 namespace surface_detection {
 
@@ -33,10 +34,12 @@ SurfaceDetection::SurfaceDetection():
 		tr_min_angle_(defaults::TRIANGULATION_MIN_ANGLE),
 		tr_max_angle_(defaults::TRIANGULATION_MAX_ANGLE),
 		tr_normal_consistency_(defaults::TRIANGULATION_NORMAL_CONSISTENCY),
-		voxel_leafsize_(defaults::VOXEL_LEAF_SIZE)
+		voxel_leafsize_(defaults::VOXEL_LEAF_SIZE),
+		marker_alpha_(defaults::MARKER_ALPHA),
+		ignore_largest_cluster_(defaults::IGNORE_LARGEST_CLUSTER)
 {
 	// TODO Auto-generated constructor stub
-
+	srand(time(NULL));
 }
 
 SurfaceDetection::~SurfaceDetection()
@@ -45,24 +48,139 @@ SurfaceDetection::~SurfaceDetection()
 	ROS_INFO_STREAM("Surface Detection destructor invoked");
 }
 
-void SurfaceDetection::set_acquisition_time(float val)
+bool SurfaceDetection::load_parameters()
+{
+	ros::NodeHandle nh("~");
+	bool succeeded;
+	const std::string ns = params::PARAMETER_NS + "/";
+	if(nh.getParam(ns + params::ACQUISITION_TIME,acquisition_time_) &&
+			nh.getParam(ns + params::STOUTLIER_MEAN,meanK_) &&
+			nh.getParam(ns + params::STOUTLIER_STDEV_THRESHOLD,stdv_threshold_) &&
+			nh.getParam(ns + params::REGION_GROWING_MIN_CLUSTER_SIZE,rg_min_cluster_size_) &&
+			nh.getParam(ns + params::REGION_GROWING_MAX_CLUSTER_SIZE,rg_max_cluster_size_) &&
+			nh.getParam(ns + params::REGION_GROWING_NEIGHBORS,rg_neightbors_) &&
+			nh.getParam(ns + params::REGION_GROWING_SMOOTHNESS_THRESHOLD,rg_smoothness_threshold_) &&
+			nh.getParam(ns + params::REGION_GROWING_CURVATURE_THRESHOLD,rg_curvature_threshold_) &&
+			nh.getParam(ns + params::TRIANGULATION_SEARCH_RADIUS,tr_search_radius_) &&
+			nh.getParam(ns + params::TRIANGULATION_MU ,tr_mu_) &&
+			nh.getParam(ns + params::TRIANGULATION_MAX_NEAREST_NEIGHBORS,tr_max_nearest_neighbors_) &&
+			nh.getParam(ns + params::TRIANGULATION_MAX_SURFACE_ANGLE,tr_max_surface_angle_) &&
+			nh.getParam(ns + params::TRIANGULATION_MIN_ANGLE,tr_min_angle_) &&
+			nh.getParam(ns + params::TRIANGULATION_MAX_ANGLE,tr_max_angle_) &&
+			nh.getParam(ns + params::TRIANGULATION_NORMAL_CONSISTENCY,tr_normal_consistency_) &&
+			nh.getParam(ns + params::VOXEL_LEAF_SIZE,voxel_leafsize_) &&
+			nh.getParam(ns + params::MARKER_ALPHA,marker_alpha_) &&
+			nh.getParam(ns + params::IGNORE_LARGEST_CLUSTER,ignore_largest_cluster_)
+			)
+	{
+		succeeded = true;
+		ROS_INFO_STREAM("surface detection parameters loaded");
+	}
+	else
+	{
+		succeeded = false;
+		ROS_ERROR_STREAM("surface detection failed to load one or more parameters");
+	}
+
+	return succeeded;
+}
+
+void SurfaceDetection::mesh_to_marker(const pcl::PolygonMesh &mesh,
+		visualization_msgs::Marker &marker)
+{
+	// color value ranges
+	static const double color_val_min = 0.5f;
+	static const double color_val_max = 1.0f;
+	std_msgs::ColorRGBA color;
+	color.a =  1;
+
+	// set marker properties
+	tf::poseTFToMsg(tf::Transform::getIdentity(),marker.pose );
+	marker.scale.x = marker.scale.y = marker.scale.z = 1;
+	marker.type = marker.TRIANGLE_LIST;
+	marker.action = marker.ADD;
+
+	// create color
+	color.r = color_val_min +
+			(static_cast<double>(rand())/static_cast<double>(RAND_MAX))
+			* (color_val_max - color_val_min);
+	color.g = color_val_min +
+					(static_cast<double>(rand())/static_cast<double>(RAND_MAX))
+					* (color_val_max - color_val_min);
+	color.b = color_val_min +
+					(static_cast<double>(rand())/static_cast<double>(RAND_MAX))
+					* (color_val_max - color_val_min);
+	marker.color = color;
+
+
+	// filling points
+	for(int i = 0; i < mesh.polygons.size(); i++)
+	{
+		const pcl::Vertices &v =  mesh.polygons[i];
+		Cloud points;
+		pcl::fromPCLPointCloud2(mesh.cloud,points);
+		for(int j = 0;j < v.vertices.size(); j++)
+		{
+			uint32_t index = v.vertices[j];
+			geometry_msgs::Point p;
+			p.x = points.points[index].x;
+			p.y = points.points[index].y;
+			p.z = points.points[index].z;
+			marker.points.push_back(p);
+		}
+	}
+}
+
+visualization_msgs::MarkerArray SurfaceDetection::get_segment_markers()
+{
+	return visualization_msgs::MarkerArray(meshes_);
+}
+
+std::string SurfaceDetection::get_results_summary()
+{
+	std::stringstream ss;
+	if(segment_clouds_.size() > 0)
+	{
+		ss<<"\nNumber of surfaces identified: "<<segment_clouds_.size()<<"\n";
+		for(int i =0;i < segment_clouds_.size(); i++)
+		{
+			ss<<"\t-segment "<<i+1<<" {points: "<<segment_clouds_[i]->size()<<"}\n";
+		}
+
+	}
+	else
+	{
+		ss<<"\nNo surfaces have been found\n";
+	}
+
+	return ss.str();
+}
+
+void SurfaceDetection::set_acquisition_time(double val)
 {
 	acquisition_time_ = val;
 }
 
-Cloud::Ptr SurfaceDetection::get_acquired_cloud()
+void SurfaceDetection::get_acquired_cloud(Cloud& cloud)
 {
-	return acquired_cloud_ptr_;
+	pcl::copyPointCloud(*acquired_cloud_ptr_,cloud);
 }
 
-CloudRGB::Ptr SurfaceDetection::get_region_colored_cloud()
+void SurfaceDetection::get_acquired_cloud(sensor_msgs::PointCloud2 cloud_msg)
 {
-	return region_colored_cloud_ptr_;
+	pcl::toROSMsg(*acquired_cloud_ptr_,cloud_msg);
 }
 
-std::vector<Cloud::Ptr> SurfaceDetection::get_segment_clouds()
+void SurfaceDetection::get_region_colored_cloud(CloudRGB& cloud )
 {
-	return segment_clouds_;
+	pcl::copyPointCloud(*region_colored_cloud_ptr_,cloud);
+	cloud.header.frame_id = acquired_cloud_ptr_->header.frame_id;
+}
+
+void SurfaceDetection::get_region_colored_cloud(sensor_msgs::PointCloud2 &cloud_msg)
+{
+	pcl::toROSMsg(*region_colored_cloud_ptr_,cloud_msg);
+	cloud_msg.header.frame_id = acquired_cloud_ptr_->header.frame_id;
 }
 
 bool SurfaceDetection::acquire_data()
@@ -111,6 +229,7 @@ bool SurfaceDetection::find_surfaces()
 	// reset members
 	region_colored_cloud_ptr_ = CloudRGB::Ptr(new CloudRGB());
 	segment_clouds_.clear();
+	meshes_.markers.clear();
 
 	// variables to hold intermediate results
 	Normals::Ptr normals(new Normals());
@@ -149,26 +268,70 @@ bool SurfaceDetection::find_surfaces()
 	if(apply_region_growing_segmentation(*acquired_cloud_ptr_,*normals,clusters_indices,
 			*region_colored_cloud_ptr_))
 	{
-		ROS_INFO_STREAM("Region growing succeeded: "<<
-				clusters_indices.size()<< " cluster found");
 
 		// filling cloud array
 		for(int i =0;i< clusters_indices.size(); i++)
 		{
+			if(clusters_indices[i].indices.size() < rg_min_cluster_size_)
+			{
+				continue;
+			}
+
 			Cloud::Ptr segment_cloud_ptr(new Cloud());
 			Normals::Ptr segment_normal_ptr(new Normals());
 			pcl::copyPointCloud(*acquired_cloud_ptr_,clusters_indices[i],
 					*segment_cloud_ptr);
 			pcl::copyPointCloud(*normals,clusters_indices[i],*segment_normal_ptr);
+
+			segment_cloud_ptr->header.frame_id = acquired_cloud_ptr_->header.frame_id;
 			segment_clouds_.push_back(segment_cloud_ptr);
 			segment_normals.push_back(segment_normal_ptr);
 		}
+
+		ROS_INFO_STREAM("\nRegion growing succeeded:\n"<<
+				"\tTotal surface clusters found: "<<clusters_indices.size()<<"\n"
+				"\tValid surface clusters (> "<<rg_min_cluster_size_<<" points ) found: "<<segment_clouds_.size());
 	}
 	else
 	{
 		ROS_ERROR_STREAM("Region growing failed");
 		return false;
 	}
+
+	if(ignore_largest_cluster_ && segment_clouds_.size() > 1)
+	{
+		int largest_index = 0;
+		int largest_size = 0;
+		for(int i = 0;i < segment_clouds_.size();i++)
+		{
+			if(segment_clouds_[i]->points.size() > largest_size)
+			{
+				largest_size = segment_clouds_[i]->points.size();
+				largest_index = i;
+			}
+		}
+
+		ROS_INFO_STREAM("Removing larges cluster from results: cluster index [ "<<
+				largest_index<<" ], cluster size [ "<<largest_size<<" ]");
+		segment_clouds_.erase(segment_clouds_.begin() + largest_index);
+		segment_normals.erase(segment_normals.begin() + largest_index);
+	}
+
+	// applying fast triangulation
+
+	ROS_INFO_STREAM("Triangulation of surfaces started");
+	for(int i = 0; i < segment_clouds_.size(); i++)
+	{
+		pcl::PolygonMesh mesh;
+		visualization_msgs::Marker marker;
+		apply_fast_triangulation(*segment_clouds_[i],*segment_normals[i],mesh);
+		mesh_to_marker(mesh,marker);
+		marker.header.frame_id = segment_clouds_[i]->header.frame_id;
+		marker.id = i;
+		marker.color.a = marker_alpha_;
+		meshes_.markers.push_back(marker);
+	}
+	ROS_INFO_STREAM("Triangulation of surfaces completed");
 
 	return true;
 }
@@ -185,6 +348,8 @@ void SurfaceDetection::point_cloud_subscriber_cb(const sensor_msgs::PointCloud2C
 	// add to aggregate point cloud
 	(*acquired_cloud_ptr_)+=*new_cloud_ptr;
 	acquired_clouds_counter_++;
+
+	acquired_cloud_ptr_->header.frame_id = msg->header.frame_id;
 
 	ROS_INFO_STREAM("Added " <<acquired_clouds_counter_ <<
 			" point clouds, total points: "<<acquired_cloud_ptr_->points.size());
@@ -230,6 +395,8 @@ bool SurfaceDetection::apply_region_growing_segmentation(const Cloud& in,
 	rg.setNumberOfNeighbours(rg_neightbors_);
 	rg.setInputCloud(cloud_ptr);
 	rg.setInputNormals(normals_ptr);
+	rg.setSmoothnessThreshold(rg_smoothness_threshold_);
+	rg.setCurvatureThreshold(rg_curvature_threshold_);
 	rg.extract(clusters);
 
 	pcl::copyPointCloud(*rg.getColoredCloud(),colored_cloud);
@@ -276,15 +443,10 @@ bool SurfaceDetection::apply_voxel_downsampling(Cloud& cloud)
 	 pcl::PCLPointCloud2::Ptr pcl_cloud_ptr(new pcl::PCLPointCloud2());
 	 pcl::toPCLPointCloud2(cloud,*pcl_cloud_ptr);
 
-
 	pcl::VoxelGrid<pcl::PCLPointCloud2> vg;
 	vg.setInputCloud(pcl_cloud_ptr);
-	ROS_INFO_STREAM("voxel grid setting leaf size");
 	vg.setLeafSize(voxel_leafsize_,voxel_leafsize_,voxel_leafsize_);
-
-	ROS_INFO_STREAM("voxel grid filtering");
 	vg.filter(*pcl_cloud_ptr);
-
 	pcl::fromPCLPointCloud2(*pcl_cloud_ptr,cloud);
 	return true;
 }
