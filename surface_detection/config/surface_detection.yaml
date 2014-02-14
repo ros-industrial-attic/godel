@@ -1,0 +1,20 @@
+surface_detection:
+  acquisition_time: 4
+  stout_mean: 50
+  stout_stdev_threshold: 1
+  k_search: 10
+  rg_min_cluster_size: 100
+  rg_max_cluster_size: 10000
+  rg_neighbors: 40
+  rg_smoothness_threshold: 0.11
+  rg_curvature_threshold: 1.0
+  tr_search_radius: 0.04
+  tr_mu: 2.5
+  tr_nearest_neighbors: 100
+  tr_max_surface_angle: 0.785
+  tr_min_angle: 0.1744
+  tr_max_angle: 2.093
+  tr_normal_consistency: false
+  voxel_leaf: 0.01
+  marker_alpha: 0.6
+  ignore_largest_cluster: False
