@@ -10,7 +10,9 @@
 
 const float DEFAULT_ACQUISITION_TIME = 2.0f; //second
 const std::string DEFAULT_FRAME_ID = "world_frame";
+
 const std::string SEGMENTS_CLOUD_TOPIC = "segments_cloud";
+const std::string MARKER_ARRAY_TOPIC = "segment_markers";
 const std::string NODE_NAME = "surface_detection_node";
 const std::string HELP_TEXT="\n" + NODE_NAME + " help:\n" +
 		"-h help menu\n" +
@@ -44,19 +46,32 @@ int main(int argc,char** argv)
 
 	ROS_INFO_STREAM("Using acquisition time '"<<acquisition_time<<"'");
 
-	// publisher
+	// publishers
 	ros::Publisher point_cloud_publisher = nh.advertise<sensor_msgs::PointCloud2>(
 			SEGMENTS_CLOUD_TOPIC,1);
 
+	ros::Publisher markers_publisher = nh.advertise<visualization_msgs::MarkerArray>(
+			MARKER_ARRAY_TOPIC,1);
+
 	// surface detection instance
 	surface_detection::SurfaceDetection sf;
+
+	// load paramters
+	if(!sf.load_parameters())
+	{
+		return 0;
+	}
 
 	// acquire data
 	sf.set_acquisition_time(acquisition_time);
 	bool succeeded = true;
 	if(sf.acquire_data())
 	{
-		if(!sf.find_surfaces())
+		if(sf.find_surfaces())
+		{
+			ROS_INFO_STREAM(sf.get_results_summary());
+		}
+		else
 		{
 			ROS_ERROR_STREAM("No surface was found");
 			succeeded = false;
@@ -70,18 +85,23 @@ int main(int argc,char** argv)
 
 	if(succeeded)
 	{
-		ROS_INFO_STREAM("Publishing segments colored cloud");
-		sensor_msgs::PointCloud2 msg;
-		pcl::toROSMsg(*sf.get_region_colored_cloud(),msg);
-		msg.header.frame_id = msg.header.frame_id.empty() ? frame_id : msg.header.frame_id;
+		ROS_INFO_STREAM("Publishing segments visuals");
+		sensor_msgs::PointCloud2 cloud_msg;
+		visualization_msgs::MarkerArray markers_msg = sf.get_segment_markers();
+		sf.get_region_colored_cloud(cloud_msg);
+		cloud_msg.header.frame_id = cloud_msg.header.frame_id.empty() ? frame_id : cloud_msg.header.frame_id;
+
 		ros::Duration loop_rate(1.0f);
 		while(succeeded && ros::ok() )
 		{
-			point_cloud_publisher.publish(msg);
+			point_cloud_publisher.publish(cloud_msg);
+			markers_publisher.publish(markers_msg);
+
 			loop_rate.sleep();
 		}
 
 		point_cloud_publisher.shutdown();
+		markers_publisher.shutdown();
 	}
 
 	return 0;
