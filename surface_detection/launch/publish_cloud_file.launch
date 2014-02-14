@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+	<node name="point_cloud_publisher_node" pkg="surface_detection" type="point_cloud_publisher_node"
+		args="-f data/milk_cartoon_all_small_clorox.pcd -r 0.5 -i world_frame" output="screen"/>
+	<node name="rviz_surface_detection" pkg="rviz" type="rviz" 
+		args="-d $(find surface_detection)/rviz/surface_detection.rviz" output="screen"/> 
+</launch>
