@@ -27,6 +27,7 @@ typedef pcl::PointCloud<pcl::Normal> Normals;
 namespace defaults{
 
 	static const double ACQUISITION_TIME = 5.0f;
+	static std::string FRAME_ID = "world_frame";
 
 	static const int STATISTICAL_OUTLIER_MEAN = 50;
 	static const double STATISTICAL_OUTLIER_STDEV_THRESHOLD = 1;
@@ -63,6 +64,7 @@ namespace params
 	static const std::string PARAMETER_NS = "surface_detection";
 
 	static const std::string ACQUISITION_TIME = "acquisition_time";
+	static const std::string FRAME_ID = "frame_id";
 
 	static const std::string STOUTLIER_MEAN = "stout_mean";
 	static const std::string STOUTLIER_STDEV_THRESHOLD = "stout_stdev_threshold";
@@ -108,7 +110,8 @@ public:
 			visualization_msgs::Marker &marker);
 
 	// retrieve results
-	visualization_msgs::MarkerArray get_segment_markers();
+	visualization_msgs::MarkerArray get_surface_markers();
+	std::vector<Cloud::Ptr> get_surface_clouds();
 	void get_acquired_cloud(Cloud& cloud);
 	void get_acquired_cloud(sensor_msgs::PointCloud2 cloud_msg);
 	void get_region_colored_cloud(CloudRGB& cloud);
@@ -138,11 +141,12 @@ protected:
 	// pcl members
 	pcl::PointCloud<pcl::PointXYZ>::Ptr acquired_cloud_ptr_;
 	CloudRGB::Ptr region_colored_cloud_ptr_;
-	std::vector<Cloud::Ptr> segment_clouds_;
+	std::vector<Cloud::Ptr> surface_clouds_;
 	visualization_msgs::MarkerArray meshes_;
 
 	// acquisition
 	double acquisition_time_;
+	std::string frame_id_;
 
 	// filter and normal estimation
 	int acquired_clouds_counter_;

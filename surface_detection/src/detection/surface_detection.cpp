@@ -6,6 +6,8 @@
  */
 
 #include <surface_detection/detection/surface_detection.h>
+#include <pcl_ros/transforms.h>
+#include <tf/transform_listener.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/search/search.h>
 #include <pcl/search/kdtree.h>
@@ -18,6 +20,7 @@ namespace surface_detection { namespace detection{
 
 SurfaceDetection::SurfaceDetection():
 		acquired_clouds_counter_(0),
+		frame_id_(defaults::FRAME_ID),
 		k_search_(defaults::K_SEARCH),
 		meanK_(defaults::STATISTICAL_OUTLIER_MEAN),
 		stdv_threshold_(defaults::STATISTICAL_OUTLIER_STDEV_THRESHOLD),
@@ -45,7 +48,6 @@ SurfaceDetection::SurfaceDetection():
 SurfaceDetection::~SurfaceDetection()
 {
 	// TODO Auto-generated destructor stub
-	ROS_INFO_STREAM("Surface Detection destructor invoked");
 }
 
 bool SurfaceDetection::init()
@@ -59,6 +61,7 @@ bool SurfaceDetection::load_parameters()
 	bool succeeded;
 	const std::string ns = params::PARAMETER_NS + "/";
 	if(nh.getParam(ns + params::ACQUISITION_TIME,acquisition_time_) &&
+			nh.getParam(ns + params::FRAME_ID,frame_id_)&&
 			nh.getParam(ns + params::STOUTLIER_MEAN,meanK_) &&
 			nh.getParam(ns + params::STOUTLIER_STDEV_THRESHOLD,stdv_threshold_) &&
 			nh.getParam(ns + params::REGION_GROWING_MIN_CLUSTER_SIZE,rg_min_cluster_size_) &&
@@ -136,20 +139,25 @@ void SurfaceDetection::mesh_to_marker(const pcl::PolygonMesh &mesh,
 	}
 }
 
-visualization_msgs::MarkerArray SurfaceDetection::get_segment_markers()
+visualization_msgs::MarkerArray SurfaceDetection::get_surface_markers()
 {
 	return visualization_msgs::MarkerArray(meshes_);
+}
+
+std::vector<Cloud::Ptr> SurfaceDetection::get_surface_clouds()
+{
+	return surface_clouds_;
 }
 
 std::string SurfaceDetection::get_results_summary()
 {
 	std::stringstream ss;
-	if(segment_clouds_.size() > 0)
+	if(surface_clouds_.size() > 0)
 	{
-		ss<<"\nNumber of surfaces identified: "<<segment_clouds_.size()<<"\n";
-		for(int i =0;i < segment_clouds_.size(); i++)
+		ss<<"\nNumber of surfaces identified: "<<surface_clouds_.size()<<"\n";
+		for(int i =0;i < surface_clouds_.size(); i++)
 		{
-			ss<<"\t-segment "<<i+1<<" {points: "<<segment_clouds_[i]->size()<<"}\n";
+			ss<<"\t-segment "<<i+1<<" {points: "<<surface_clouds_[i]->size()<<"}\n";
 		}
 
 	}
@@ -233,7 +241,7 @@ bool SurfaceDetection::find_surfaces()
 {
 	// reset members
 	region_colored_cloud_ptr_ = CloudRGB::Ptr(new CloudRGB());
-	segment_clouds_.clear();
+	surface_clouds_.clear();
 	meshes_.markers.clear();
 
 	// variables to hold intermediate results
@@ -289,13 +297,13 @@ bool SurfaceDetection::find_surfaces()
 			pcl::copyPointCloud(*normals,clusters_indices[i],*segment_normal_ptr);
 
 			segment_cloud_ptr->header.frame_id = acquired_cloud_ptr_->header.frame_id;
-			segment_clouds_.push_back(segment_cloud_ptr);
+			surface_clouds_.push_back(segment_cloud_ptr);
 			segment_normals.push_back(segment_normal_ptr);
 		}
 
 		ROS_INFO_STREAM("\nRegion growing succeeded:\n"<<
 				"\tTotal surface clusters found: "<<clusters_indices.size()<<"\n"
-				"\tValid surface clusters (> "<<rg_min_cluster_size_<<" points ) found: "<<segment_clouds_.size());
+				"\tValid surface clusters (> "<<rg_min_cluster_size_<<" points ) found: "<<surface_clouds_.size());
 	}
 	else
 	{
@@ -303,35 +311,35 @@ bool SurfaceDetection::find_surfaces()
 		return false;
 	}
 
-	if(ignore_largest_cluster_ && segment_clouds_.size() > 1)
+	if(ignore_largest_cluster_ && surface_clouds_.size() > 1)
 	{
 		int largest_index = 0;
 		int largest_size = 0;
-		for(int i = 0;i < segment_clouds_.size();i++)
+		for(int i = 0;i < surface_clouds_.size();i++)
 		{
-			if(segment_clouds_[i]->points.size() > largest_size)
+			if(surface_clouds_[i]->points.size() > largest_size)
 			{
-				largest_size = segment_clouds_[i]->points.size();
+				largest_size = surface_clouds_[i]->points.size();
 				largest_index = i;
 			}
 		}
 
 		ROS_INFO_STREAM("Removing larges cluster from results: cluster index [ "<<
 				largest_index<<" ], cluster size [ "<<largest_size<<" ]");
-		segment_clouds_.erase(segment_clouds_.begin() + largest_index);
+		surface_clouds_.erase(surface_clouds_.begin() + largest_index);
 		segment_normals.erase(segment_normals.begin() + largest_index);
 	}
 
 	// applying fast triangulation
 
 	ROS_INFO_STREAM("Triangulation of surfaces started");
-	for(int i = 0; i < segment_clouds_.size(); i++)
+	for(int i = 0; i < surface_clouds_.size(); i++)
 	{
 		pcl::PolygonMesh mesh;
 		visualization_msgs::Marker marker;
-		apply_fast_triangulation(*segment_clouds_[i],*segment_normals[i],mesh);
+		apply_fast_triangulation(*surface_clouds_[i],*segment_normals[i],mesh);
 		mesh_to_marker(mesh,marker);
-		marker.header.frame_id = segment_clouds_[i]->header.frame_id;
+		marker.header.frame_id = surface_clouds_[i]->header.frame_id;
 		marker.id = i;
 		marker.color.a = marker_alpha_;
 		meshes_.markers.push_back(marker);
@@ -343,18 +351,50 @@ bool SurfaceDetection::find_surfaces()
 
 void SurfaceDetection::point_cloud_subscriber_cb(const sensor_msgs::PointCloud2ConstPtr &msg)
 {
+	static tf::TransformListener tf_listener;
+
 	// convert to message to point cloud
 	Cloud::Ptr new_cloud_ptr(new Cloud());
 	pcl::fromROSMsg<pcl::PointXYZ>(*msg,*new_cloud_ptr);
 
+	// removed nans
 	std::vector<int> index;
 	pcl::removeNaNFromPointCloud(*new_cloud_ptr,*new_cloud_ptr,index);
+
+	// transform to frame id
+	tf::StampedTransform source_to_target_tf;
+	if(frame_id_.compare(msg->header.frame_id) !=0)
+	{
+		ROS_INFO_STREAM("Source cloud with frame id '"<<msg->header.frame_id<<"' will be transformed to frame id: '"
+				<<frame_id_<<"'");
+		try
+		{
+			tf_listener.lookupTransform(frame_id_,msg->header.frame_id,
+					ros::Time::now() - ros::Duration(0.2f),source_to_target_tf);
+			pcl_ros::transformPointCloud(*new_cloud_ptr,*new_cloud_ptr,source_to_target_tf);
+		}
+		catch(tf::LookupException &e)
+		{
+			ROS_ERROR_STREAM("Transform lookup error, using source frame id '"<< msg->header.frame_id<<"'");
+			frame_id_ = msg->header.frame_id;
+		}
+		catch(tf::ExtrapolationException &e)
+		{
+			ROS_ERROR_STREAM("Transform lookup error, using source frame id '"<< msg->header.frame_id<<"'");
+			frame_id_ = msg->header.frame_id;
+		}
+
+	}
+	else
+	{
+		ROS_INFO_STREAM("Source cloud is already in frame id '"<<msg->header.frame_id<<", skipping transform");
+	}
 
 	// add to aggregate point cloud
 	(*acquired_cloud_ptr_)+=*new_cloud_ptr;
 	acquired_clouds_counter_++;
 
-	acquired_cloud_ptr_->header.frame_id = msg->header.frame_id;
+	acquired_cloud_ptr_->header.frame_id = frame_id_;
 
 	ROS_INFO_STREAM("Added " <<acquired_clouds_counter_ <<
 			" point clouds, total points: "<<acquired_cloud_ptr_->points.size());
