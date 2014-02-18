@@ -1,5 +1,6 @@
 surface_detection:
   acquisition_time: 4
+  frame_id: world_frame
   stout_mean: 50
   stout_stdev_threshold: 1
   k_search: 10
