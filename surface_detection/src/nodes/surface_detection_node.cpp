@@ -5,7 +5,8 @@
  *      Author: ros-industrial
  */
 #include <ros/ros.h>
-#include <surface_detection/surface_detection.h>
+#include <surface_detection/detection/surface_detection.h>
+#include <surface_detection/interactive/interactive_surface_server.h>
 #include <pcl/console/parse.h>
 
 const float DEFAULT_ACQUISITION_TIME = 2.0f; //second
@@ -54,13 +55,19 @@ int main(int argc,char** argv)
 			MARKER_ARRAY_TOPIC,1);
 
 	// surface detection instance
-	surface_detection::SurfaceDetection sf;
+	surface_detection::detection::SurfaceDetection sf;
+
+	// marker server instance
+	surface_detection::interactive::InteractiveSurfaceServer servr;
 
 	// load paramters
-	if(!sf.load_parameters())
+	if(!sf.init() && !servr.init())
 	{
 		return 0;
 	}
+
+	// start server
+	servr.run();
 
 	// acquire data
 	sf.set_acquisition_time(acquisition_time);
@@ -70,6 +77,7 @@ int main(int argc,char** argv)
 		if(sf.find_surfaces())
 		{
 			ROS_INFO_STREAM(sf.get_results_summary());
+
 		}
 		else
 		{
@@ -91,11 +99,18 @@ int main(int argc,char** argv)
 		sf.get_region_colored_cloud(cloud_msg);
 		cloud_msg.header.frame_id = cloud_msg.header.frame_id.empty() ? frame_id : cloud_msg.header.frame_id;
 
+		// adding markers to server
+		for(int i =0;i < markers_msg.markers.size();i++)
+		{
+			servr.add_marker(markers_msg.markers[i]);
+		}
+
 		ros::Duration loop_rate(1.0f);
 		while(succeeded && ros::ok() )
 		{
 			point_cloud_publisher.publish(cloud_msg);
 			markers_publisher.publish(markers_msg);
+			ros::spinOnce();
 
 			loop_rate.sleep();
 		}
