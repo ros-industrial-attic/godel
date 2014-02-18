@@ -61,7 +61,7 @@ int main(int argc,char** argv)
 	surface_detection::interactive::InteractiveSurfaceServer servr;
 
 	// load paramters
-	if(!sf.init() && !servr.init())
+	if(!sf.init() || !servr.init())
 	{
 		return 0;
 	}
@@ -95,14 +95,14 @@ int main(int argc,char** argv)
 	{
 		ROS_INFO_STREAM("Publishing segments visuals");
 		sensor_msgs::PointCloud2 cloud_msg;
-		visualization_msgs::MarkerArray markers_msg = sf.get_segment_markers();
+		visualization_msgs::MarkerArray markers_msg = sf.get_surface_markers();
 		sf.get_region_colored_cloud(cloud_msg);
 		cloud_msg.header.frame_id = cloud_msg.header.frame_id.empty() ? frame_id : cloud_msg.header.frame_id;
 
 		// adding markers to server
 		for(int i =0;i < markers_msg.markers.size();i++)
 		{
-			servr.add_marker(markers_msg.markers[i]);
+			servr.add_surface(markers_msg.markers[i]);
 		}
 
 		ros::Duration loop_rate(1.0f);
