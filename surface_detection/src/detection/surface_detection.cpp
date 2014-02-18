@@ -5,7 +5,7 @@
  *      Author: ros-industrial
  */
 
-#include <surface_detection/surface_detection.h>
+#include <surface_detection/detection/surface_detection.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/search/search.h>
 #include <pcl/search/kdtree.h>
@@ -14,7 +14,7 @@
 #include <pcl/filters/voxel_grid.h>
 #include <tf/transform_datatypes.h>
 
-namespace surface_detection {
+namespace surface_detection { namespace detection{
 
 SurfaceDetection::SurfaceDetection():
 		acquired_clouds_counter_(0),
@@ -46,6 +46,11 @@ SurfaceDetection::~SurfaceDetection()
 {
 	// TODO Auto-generated destructor stub
 	ROS_INFO_STREAM("Surface Detection destructor invoked");
+}
+
+bool SurfaceDetection::init()
+{
+	return load_parameters();
 }
 
 bool SurfaceDetection::load_parameters()
@@ -452,4 +457,4 @@ bool SurfaceDetection::apply_voxel_downsampling(Cloud& cloud)
 }
 
 
-} /* namespace surface_detection */
+}} /* namespace surface_detection */

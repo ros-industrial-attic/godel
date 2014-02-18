@@ -18,7 +18,7 @@
 #include <pcl/surface/gp3.h>
 #include <visualization_msgs/MarkerArray.h>
 
-namespace surface_detection {
+namespace surface_detection { namespace detection{
 
 typedef pcl::PointCloud<pcl::PointXYZ> Cloud;
 typedef pcl::PointCloud<pcl::PointXYZRGB> CloudRGB;
@@ -98,10 +98,10 @@ public:
 
 public:
 
+	bool init();
 	void set_acquisition_time(double val);
 	bool acquire_data();
 	bool find_surfaces();
-	bool load_parameters();
 	std::string get_results_summary();
 
 	static void mesh_to_marker(const pcl::PolygonMesh &mesh,
@@ -116,7 +116,7 @@ public:
 
 protected:
 
-
+	bool load_parameters();
 	void point_cloud_subscriber_cb(const sensor_msgs::PointCloud2ConstPtr &msg);
 	bool apply_statistical_filter(const Cloud& in,Cloud& out);
 	bool apply_region_growing_segmentation(const Cloud& in,
@@ -174,6 +174,6 @@ protected:
 
 };
 
-} /* namespace surface_detection */
+}} /* namespace surface_detection */
 
 #endif /* SURFACE_DETECTION_H_ */
