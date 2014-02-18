@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
   pcl_ros
   roscpp
   sensor_msgs
+  interactive_markers
 )
 find_package(PCL 1.7 REQUIRED COMPONENTS common io)
 find_package(Boost REQUIRED COMPONENTS system)
@@ -87,7 +88,7 @@ set(surface_detection_INCLUDE_DIRECTORIES
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS pcl_msgs pcl_ros roscpp sensor_msgs
+  CATKIN_DEPENDS pcl_msgs pcl_ros roscpp sensor_msgs interactive_markers
   DEPENDS PCL
 )
 
@@ -102,7 +103,8 @@ include_directories(${surface_detection_INCLUDE_DIRECTORIES})
 
 ## Declare a cpp library
 add_library(${PROJECT_NAME} 
-	src/surface_detection.cpp )
+	src/detection/surface_detection.cpp
+	src/interactive/interactive_surface_server.cpp )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${PCL_COMMON_LIBRARIES})
 
 ## point cloud publisher node
