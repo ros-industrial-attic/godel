@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+	<node name="godel_surface_detection_node" pkg="godel_surface_detection" type="godel_surface_detection_node" 
+		args="-a 4 -f world_frame" output="screen">
+		<rosparam command="load" file="$(find godel_surface_detection)/config/godel_surface_detection.yaml"/>
+	</node> 
+
+</launch>

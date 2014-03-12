@@ -1,0 +1,17 @@
+<library path="lib/libgodel_plugins">
+  <class name="godel_plugins/RobotBlendingPlugin" type="godel_plugins::rqt_plugins::RobotBlendingPlugin" 	base_class_type="rqt_gui_cpp::Plugin">
+    <description>
+      A GUI plugin to create and run robot paths for blending surfaces.
+    </description>
+    <qtgui>
+      <group>
+        <label>Visualization</label>
+        <icon type="theme">folder</icon>
+        <statustip>Plugins related to visualization.</statustip>
+      </group>
+      <label>Robot Blending</label>
+      <icon type="theme">image-x-generic</icon>
+      <statustip>A GUI plugin for generating robot paths for surface blending</statustip>
+    </qtgui>
+  </class>
+</library>
