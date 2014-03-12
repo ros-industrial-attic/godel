@@ -61,7 +61,7 @@ namespace config
 
 namespace params
 {
-	static const std::string PARAMETER_NS = "godel_surface_detection";
+	static const std::string PARAMETER_NS = "surface_detection";
 
 	static const std::string ACQUISITION_TIME = "acquisition_time";
 	static const std::string FRAME_ID = "frame_id";

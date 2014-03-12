@@ -14,7 +14,7 @@ const std::string DEFAULT_FRAME_ID = "world_frame";
 
 const std::string SEGMENTS_CLOUD_TOPIC = "segments_cloud";
 const std::string MARKER_ARRAY_TOPIC = "segment_markers";
-const std::string NODE_NAME = "godel_surface_detection_node";
+const std::string NODE_NAME = "surface_detection_node";
 const std::string HELP_TEXT="\n" + NODE_NAME + " help:\n" +
 		"-h help menu\n" +
 		"-a <acquisition time (sec)>\n" +
@@ -22,7 +22,7 @@ const std::string HELP_TEXT="\n" + NODE_NAME + " help:\n" +
 
 int main(int argc,char** argv)
 {
-	ros::init(argc,argv,"godel_surface_detection_node");
+	ros::init(argc,argv,"surface_detection_node");
 	ros::NodeHandle nh;
 
 	// parsing arguments
