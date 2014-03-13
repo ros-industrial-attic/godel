@@ -1,4 +1,12 @@
+<?xml version="1.0"?>
 <library path="lib/libgodel_plugins">
+  <class name="godel_plugins/RobotBlendingPanel"
+         type="godel_plugins::rviz_panels::RobotBlendingPanel"
+         base_class_type="rviz::Panel">
+    <description>
+      A panel widget that can be used in an rviz instance for surface blending path generation
+    </description>
+  </class>
   <class name="godel_plugins/RobotBlendingPlugin" type="godel_plugins::rqt_plugins::RobotBlendingPlugin" 	base_class_type="rqt_gui_cpp::Plugin">
     <description>
       A GUI plugin to create and run robot paths for blending surfaces.

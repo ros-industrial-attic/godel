@@ -18,6 +18,7 @@
 #define ROBOT_BLENDING_PLUGIN_H_
 
 #include <rqt_gui_cpp/plugin.h>
+#include <godel_plugins/widgets/robot_blending_widget.h>
 #include <ui_robot_blending_plugin.h>
 #include <QWidget>
 
@@ -43,7 +44,6 @@ public:
 			const qt_gui_cpp::Settings& instance_settings);
 
 private:
-	Ui::RobotBlendingWidget ui_;
 	QWidget* widget_;
 };
 

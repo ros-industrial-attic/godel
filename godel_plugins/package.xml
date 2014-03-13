@@ -11,12 +11,17 @@
   <build_depend>roscpp</build_depend>
   <build_depend>rqt_gui</build_depend>
   <build_depend>rqt_gui_cpp</build_depend>
+	<build_depend>godel_surface_detection</build_depend>
+	<build_depend>rviz</build_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>rqt_gui</run_depend>
   <run_depend>rqt_gui_cpp</run_depend>
+	<run_depend>rviz</run_depend>
+	<run_depend>godel_surface_detection</run_depend>
 
 
   <export>
     <rqt_gui plugin="${prefix}/plugin.xml"/>
+		<rviz plugin="${prefix}/plugin.xml"/>
   </export>
 </package>

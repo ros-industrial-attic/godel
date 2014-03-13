@@ -6,20 +6,27 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   rqt_gui
   rqt_gui_cpp
+	rviz
+	godel_surface_detection
 )
 
 find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
 
 include(${QT_USE_FILE})
+#add_definitions(-DQT_NO_KEYWORDS)
 
 set(godel_plugins_SRCS
-	src/rqt_plugins/robot_blending_plugin.cpp)
+	src/rqt_plugins/robot_blending_plugin.cpp
+	src/rviz_panels/robot_blending_panel.cpp
+	src/widgets/robot_blending_widget.cpp)
 
 set(godel_plugins_HDRS
-	include/godel_plugins/rqt_plugins/robot_blending_plugin.h)
+	include/godel_plugins/rqt_plugins/robot_blending_plugin.h
+	include/godel_plugins/rviz_panels/robot_blending_panel.h
+	include/godel_plugins/widgets/robot_blending_widget.h)
 
 set(godel_plugins_UIS
-	src/rqt_plugins/robot_blending_plugin.ui)
+	src/widgets/robot_blending_plugin.ui)
 
 set(godel_plugins_INCLUDE_DIRECTORIES
 	include
@@ -28,7 +35,7 @@ set(godel_plugins_INCLUDE_DIRECTORIES
 catkin_package(
   INCLUDE_DIRS ${godel_plugins_INCLUDE_DIRECTORIES}
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS roscpp rqt_gui rqt_gui_cpp
+  CATKIN_DEPENDS roscpp rqt_gui rqt_gui_cpp rviz
 )
 
 ###########
@@ -44,7 +51,7 @@ include_directories(${godel_plugins_INCLUDE_DIRECTORIES} ${catkin_INCLUDE_DIRS})
 	${godel_plugins_UIS_H}
 	${godel_plugins_MOCS}
 	${godel_plugins_SRCS})
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${QT_LIBRARIES} ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY})
 
 find_package(class_loader)
 class_loader_hide_library_symbols(${PROJECT_NAME})
