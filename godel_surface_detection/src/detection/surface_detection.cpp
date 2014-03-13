@@ -29,6 +29,7 @@ namespace godel_surface_detection { namespace detection{
 
 SurfaceDetection::SurfaceDetection():
 		acquired_clouds_counter_(0),
+		acquisition_topic_(config::POINT_COLUD_TOPIC),
 		frame_id_(defaults::FRAME_ID),
 		k_search_(defaults::K_SEARCH),
 		meanK_(defaults::STATISTICAL_OUTLIER_MEAN),
@@ -213,13 +214,16 @@ bool SurfaceDetection::acquire_data()
 
 	// initialize subscriber
 	ros::NodeHandle nh;
-	point_cloud_subs_ = nh.subscribe(config::POINT_COLUD_TOPIC,1,
+	point_cloud_subs_ = nh.subscribe(acquisition_topic_,1,
 			&SurfaceDetection::point_cloud_subscriber_cb,this);
 
 	// wait for topic
 	sensor_msgs::PointCloud2ConstPtr msg =
 			ros::topic::waitForMessage<sensor_msgs::PointCloud2>(point_cloud_subs_.getTopic(),
 					ros::Duration(5.0f));
+
+	ros::AsyncSpinner spinner(2);
+	spinner.start();
 
 	if(msg)
 	{
@@ -230,18 +234,19 @@ bool SurfaceDetection::acquire_data()
 		while(ros::ok() &&
 				((start_time + acquistion_time) > ros::Time::now()))
 		{
-			ros::spinOnce();
+			//ros::spinOnce();
 		}
 
 		point_cloud_subs_.shutdown();
 		ROS_INFO_STREAM("Finished point cloud acquisition");
-
+		spinner.stop();
 		return !acquired_cloud_ptr_->empty();
 	}
 	else
 	{
 		ROS_ERROR_STREAM("Point cloud topic: '"<<point_cloud_subs_.getTopic()<<
 				"' not advertised");
+		spinner.stop();
 		return false;
 	}
 }

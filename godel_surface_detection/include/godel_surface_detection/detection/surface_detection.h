@@ -141,21 +141,12 @@ protected:
 
 	bool apply_voxel_downsampling(Cloud& cloud);
 
-
-protected:
-
-	// roscpp members
-	ros::Subscriber point_cloud_subs_;
-
-	// pcl members
-	pcl::PointCloud<pcl::PointXYZ>::Ptr acquired_cloud_ptr_;
-	CloudRGB::Ptr region_colored_cloud_ptr_;
-	std::vector<Cloud::Ptr> surface_clouds_;
-	visualization_msgs::MarkerArray meshes_;
+public:
 
 	// acquisition
 	double acquisition_time_;
 	std::string frame_id_;
+	std::string acquisition_topic_;
 
 	// filter and normal estimation
 	int acquired_clouds_counter_;
@@ -184,6 +175,17 @@ protected:
 
 	double marker_alpha_;
 	bool ignore_largest_cluster_;
+
+protected:
+
+	// roscpp members
+	ros::Subscriber point_cloud_subs_;
+
+	// pcl members
+	pcl::PointCloud<pcl::PointXYZ>::Ptr acquired_cloud_ptr_;
+	CloudRGB::Ptr region_colored_cloud_ptr_;
+	std::vector<Cloud::Ptr> surface_clouds_;
+	visualization_msgs::MarkerArray meshes_;
 
 };
 
