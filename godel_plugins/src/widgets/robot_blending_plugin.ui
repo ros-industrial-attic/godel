@@ -2,6 +2,9 @@
 <ui version="4.0">
  <class>RobotBlendingWidget</class>
  <widget class="QWidget" name="RobotBlendingWidget">
+  <property name="windowModality">
+   <enum>Qt::ApplicationModal</enum>
+  </property>
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -9,6 +12,12 @@
     <width>378</width>
     <height>440</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="windowTitle">
    <string>rqt blending plugin</string>
@@ -398,6 +407,29 @@ p, li { white-space: pre-wrap; }
          <string>Acquire
 and
 Detect</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="LineEditSensorTopic">
+        <property name="geometry">
+         <rect>
+          <x>90</x>
+          <y>110</y>
+          <width>231</width>
+          <height>27</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QLabel" name="acquisitionTopicLabel">
+        <property name="geometry">
+         <rect>
+          <x>0</x>
+          <y>110</y>
+          <width>85</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Sensor Topic</string>
         </property>
        </widget>
       </widget>
