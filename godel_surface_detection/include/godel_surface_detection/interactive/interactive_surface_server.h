@@ -63,6 +63,11 @@ public:
 	void add_surface(const visualization_msgs::Marker& marker);
 	void add_surface(const visualization_msgs::Marker& marker,const geometry_msgs::Pose& pose);
 	void add_random_surface_marker();
+	void remove_all_surfaces();
+	int get_surface_count()
+	{
+		return surface_selection_map_.size();
+	}
 
 protected:
 

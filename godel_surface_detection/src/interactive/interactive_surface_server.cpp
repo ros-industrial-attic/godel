@@ -285,6 +285,13 @@ void InteractiveSurfaceServer::add_surface(const visualization_msgs::Marker& mar
 	marker_server_ptr_->applyChanges();
 }
 
+void InteractiveSurfaceServer::remove_all_surfaces()
+{
+	surface_selection_map_.clear();
+	marker_server_ptr_->clear();
+	marker_server_ptr_->applyChanges();
+}
+
 void InteractiveSurfaceServer::add_surface(const visualization_msgs::Marker& marker)
 {
 	geometry_msgs::Pose pose;
