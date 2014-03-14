@@ -60,14 +60,14 @@ SurfaceDetection::~SurfaceDetection()
 	// TODO Auto-generated destructor stub
 }
 
-bool SurfaceDetection::init()
+bool SurfaceDetection::init(std::string node_ns)
 {
-	return load_parameters();
+	return load_parameters(node_ns);
 }
 
-bool SurfaceDetection::load_parameters()
+bool SurfaceDetection::load_parameters(std::string node_ns)
 {
-	ros::NodeHandle nh("~");
+	ros::NodeHandle nh(node_ns.empty() ? "~" : node_ns);
 	bool succeeded;
 	const std::string ns = params::PARAMETER_NS + "/";
 	if(nh.getParam(ns + params::ACQUISITION_TIME,acquisition_time_) &&

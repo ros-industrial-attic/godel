@@ -25,14 +25,15 @@ RobotBlendingPanel::RobotBlendingPanel(QWidget *parent):
 	// TODO Auto-generated constructor stub
 }
 
-RobotBlendingPanel::~RobotBlendingPanel() {
-	// TODO Auto-generated destructor stub
-	widget_ = new widgets::RobotBlendingWidget();
+RobotBlendingPanel::~RobotBlendingPanel()
+{
+
 }
 
 void RobotBlendingPanel::onInitialize()
 {
 	// creating main layout
+	ROS_INFO_STREAM("Initializing RobotBlendingPanel");
 	widget_ = new widgets::RobotBlendingWidget();
 	this->parentWidget()->resize(widget_->width(),widget_->height());
 	QHBoxLayout* main_layout = new QHBoxLayout(this);

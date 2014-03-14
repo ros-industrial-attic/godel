@@ -57,7 +57,7 @@ public:
 	virtual ~InteractiveSurfaceServer();
 
 
-	bool init();
+	bool init(std::string node_ns = "");
 	void run();
 
 	void add_surface(const visualization_msgs::Marker& marker);
@@ -78,7 +78,7 @@ protected:
 protected:
 
 
-	bool load_parameters();
+	bool load_parameters(std::string node_ns = "");
 	void button_marker_callback(
 			const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback);
 	void menu_marker_callback(

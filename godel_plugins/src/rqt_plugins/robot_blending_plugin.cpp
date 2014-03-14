@@ -35,7 +35,7 @@ RobotBlendingPlugin::~RobotBlendingPlugin() {
 
 void RobotBlendingPlugin::initPlugin(qt_gui_cpp::PluginContext& context)
 {
-	widget_ = new widgets::RobotBlendingWidget();
+	widget_ = new widgets::RobotBlendingWidget("rqt");
 	context.addWidget(widget_);
 }
 

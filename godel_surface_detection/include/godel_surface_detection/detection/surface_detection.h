@@ -109,7 +109,7 @@ public:
 
 public:
 
-	bool init();
+	bool init(std::string node_ns = "");
 	void set_acquisition_time(double val);
 	bool acquire_data();
 	bool find_surfaces();
@@ -128,7 +128,7 @@ public:
 
 protected:
 
-	bool load_parameters();
+	bool load_parameters(std::string node_ns="");
 	void point_cloud_subscriber_cb(const sensor_msgs::PointCloud2ConstPtr &msg);
 	bool apply_statistical_filter(const Cloud& in,Cloud& out);
 	bool apply_region_growing_segmentation(const Cloud& in,

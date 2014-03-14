@@ -21,7 +21,8 @@ namespace godel_plugins
 {
 namespace widgets {
 
-RobotBlendingWidget::RobotBlendingWidget()
+RobotBlendingWidget::RobotBlendingWidget(std::string ns):
+		param_ns_(ns)
 {
 	// TODO Auto-generated constructor stub
 	init();
@@ -34,7 +35,7 @@ RobotBlendingWidget::~RobotBlendingWidget() {
 void RobotBlendingWidget::init()
 {
 	// initializing surface detector
-	if(surf_detect_.init() && surf_server_.init())
+	if(surf_detect_.init(param_ns_) && surf_server_.init(param_ns_))
 	{
 		ROS_INFO_STREAM("Parameters for surface detector and server loaded successfully");
 	}
@@ -54,6 +55,8 @@ void RobotBlendingWidget::init()
 
 	// setting signals and slots
 	connect(ui_.PushButtonAcquire,SIGNAL(clicked()),this,SLOT(acquire_button_handler()));
+	connect(ui_.PushButtonNext,SIGNAL(clicked()),this,SLOT(increase_tab_index()));
+	connect(ui_.PushButtonBack,SIGNAL(clicked()),this,SLOT(decrease_tab_index()));
 
 	// setting up timer
 	QTimer *timer = new QTimer(this);
@@ -63,17 +66,17 @@ void RobotBlendingWidget::init()
 
 void RobotBlendingWidget::update()
 {
-	//ros::spinOnce();
-	if(surf_server_.get_surface_count() == 0)
-	{
-		// adding markers to server
-		visualization_msgs::MarkerArray markers_msg = surf_detect_.get_surface_markers();
-		surf_server_.remove_all_surfaces();
-		for(int i =0;i < markers_msg.markers.size();i++)
-		{
-			surf_server_.add_surface(markers_msg.markers[i]);
-		}
-	}
+
+}
+
+void RobotBlendingWidget::increase_tab_index()
+{
+	ui_.TabWidgetCreateLib->setCurrentIndex(ui_.TabWidgetCreateLib->currentIndex() + 1);
+}
+
+void RobotBlendingWidget::decrease_tab_index()
+{
+	ui_.TabWidgetCreateLib->setCurrentIndex(ui_.TabWidgetCreateLib->currentIndex() - 1);
 }
 
 void RobotBlendingWidget::acquire_button_handler()
@@ -85,7 +88,13 @@ void RobotBlendingWidget::acquire_button_handler()
 		ROS_INFO_STREAM("Acquisition succeeded");
 		if(surf_detect_.find_surfaces())
 		{
+			// adding markers to server
 			surf_server_.remove_all_surfaces();
+			visualization_msgs::MarkerArray markers_msg = surf_detect_.get_surface_markers();
+			for(int i =0;i < markers_msg.markers.size();i++)
+			{
+				surf_server_.add_surface(markers_msg.markers[i]);
+			}
 		}
 	}
 	else

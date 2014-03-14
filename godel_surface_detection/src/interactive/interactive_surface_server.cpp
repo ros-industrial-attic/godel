@@ -43,11 +43,11 @@ InteractiveSurfaceServer::~InteractiveSurfaceServer() {
 }
 
 
-bool InteractiveSurfaceServer::init()
+bool InteractiveSurfaceServer::init(std::string node_ns)
 {
 
 	srand(time(NULL));
-	return load_parameters();
+	return load_parameters(node_ns);
 }
 
 void InteractiveSurfaceServer::run()
@@ -74,9 +74,9 @@ void InteractiveSurfaceServer::run()
 	marker_server_ptr_->applyChanges();
 }
 
-bool InteractiveSurfaceServer::load_parameters()
+bool InteractiveSurfaceServer::load_parameters(std::string node_ns)
 {
-	ros::NodeHandle nh("~");
+	ros::NodeHandle nh(node_ns.empty() ? "~" : node_ns);
 	std::string ns = params::PARAMETER_NS + "/";
 	bool succeeded = true;//nh.getParam(ns +params::FRAME_ID,frame_id_);
 	return succeeded;
@@ -115,7 +115,7 @@ void InteractiveSurfaceServer::button_marker_callback(
 	switch(feedback->event_type)
 	{
 	case visualization_msgs::InteractiveMarkerFeedback::BUTTON_CLICK:
-		ROS_INFO_STREAM("marker "<<feedback->marker_name <<" button control was clicked");
+		//ROS_INFO_STREAM("marker "<<feedback->marker_name <<" button control was clicked");
 		toggle_selection_flag(feedback->marker_name);
 		marker_server_ptr_->applyChanges();
 		break;

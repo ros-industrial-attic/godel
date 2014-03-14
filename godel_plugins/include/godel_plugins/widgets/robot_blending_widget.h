@@ -30,19 +30,37 @@ class RobotBlendingWidget:  public QWidget
 {
 Q_OBJECT
 public:
-	RobotBlendingWidget();
+	RobotBlendingWidget(std::string ns="");
 	virtual ~RobotBlendingWidget();
 
+	std::string get_name()
+	{
+		return "RobotBlending";
+	}
+
+	int width()
+	{
+		return ui_.TabWidget->width();
+	}
+
+	int height()
+	{
+		return ui_.TabWidget->height();
+	}
 protected:
+
 	void init();
 
 protected Q_SLOTS:
 
 	void acquire_button_handler();
 	void update();
+	void increase_tab_index();
+	void decrease_tab_index();
 
 protected:
 	Ui::RobotBlendingWidget ui_;
+	std::string param_ns_;
 	godel_surface_detection::detection::SurfaceDetection surf_detect_;
 	godel_surface_detection::interactive::InteractiveSurfaceServer surf_server_;
 };
