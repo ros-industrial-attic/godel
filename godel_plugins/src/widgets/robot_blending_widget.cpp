@@ -45,6 +45,9 @@ void RobotBlendingWidget::init()
 	}
 
 	// start server
+	godel_surface_detection::interactive::InteractiveSurfaceServer::SelectionCallback f =	boost::bind(
+			&RobotBlendingWidget::emit_signal_selection_change,this);
+	surf_server_.add_selection_callback(f);
 	surf_server_.run();
 
 	// initializing gui
@@ -55,26 +58,59 @@ void RobotBlendingWidget::init()
 
 	// setting signals and slots
 	connect(ui_.PushButtonAcquire,SIGNAL(clicked()),this,SLOT(acquire_button_handler()));
-	connect(ui_.PushButtonNext,SIGNAL(clicked()),this,SLOT(increase_tab_index()));
-	connect(ui_.PushButtonBack,SIGNAL(clicked()),this,SLOT(decrease_tab_index()));
+	connect(ui_.PushButtonNext,SIGNAL(clicked()),this,SLOT(increase_tab_index_handler()));
+	connect(ui_.PushButtonBack,SIGNAL(clicked()),this,SLOT(decrease_tab_index_handler()));
+	connect(ui_.PushButtonSelectAllSurfaces,SIGNAL(clicked()),this,SLOT(select_all_handler()));
+	connect(ui_.PushButtonDeselectAllSurfaces,SIGNAL(clicked()),this,SLOT(deselect_all_handler()));
+	connect(this,SIGNAL(selection_changed()),this,SLOT(selection_changed_handler()));
+
 
 	// setting up timer
 	QTimer *timer = new QTimer(this);
-	connect(timer,SIGNAL(timeout()),this,SLOT(update()));
+	connect(timer,SIGNAL(timeout()),this,SLOT(update_handler()));
 	timer->start(1000);
 }
 
-void RobotBlendingWidget::update()
+void RobotBlendingWidget::select_all_handler()
+{
+	surf_server_.select_all(true);
+}
+
+void RobotBlendingWidget::deselect_all_handler()
+{
+	surf_server_.select_all(false);
+}
+
+
+void RobotBlendingWidget::update_handler()
 {
 
 }
 
-void RobotBlendingWidget::increase_tab_index()
+void RobotBlendingWidget::selection_changed_handler()
+{
+	std::vector<std::string> list;
+	surf_server_.get_selected_list(list);
+
+	ui_.ListWidgetSelectedSurfs->clear();
+	if(list.size() > 0)
+	{
+		for(std::vector<std::string>::iterator i = list.begin(); i != list.end();i++)
+		{
+			QListWidgetItem *item = new QListWidgetItem();
+			item->setText(QString::fromStdString(*i));
+			ui_.ListWidgetSelectedSurfs->addItem(item);
+
+		}
+	}
+}
+
+void RobotBlendingWidget::increase_tab_index_handler()
 {
 	ui_.TabWidgetCreateLib->setCurrentIndex(ui_.TabWidgetCreateLib->currentIndex() + 1);
 }
 
-void RobotBlendingWidget::decrease_tab_index()
+void RobotBlendingWidget::decrease_tab_index_handler()
 {
 	ui_.TabWidgetCreateLib->setCurrentIndex(ui_.TabWidgetCreateLib->currentIndex() - 1);
 }

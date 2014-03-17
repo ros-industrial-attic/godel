@@ -47,16 +47,29 @@ public:
 	{
 		return ui_.TabWidget->height();
 	}
+
+	void emit_signal_selection_change()
+	{
+		Q_EMIT selection_changed();
+	}
+
+Q_SIGNALS:
+	void selection_changed();
+
 protected:
 
 	void init();
 
+
 protected Q_SLOTS:
 
 	void acquire_button_handler();
-	void update();
-	void increase_tab_index();
-	void decrease_tab_index();
+	void update_handler();
+	void increase_tab_index_handler();
+	void decrease_tab_index_handler();
+	void selection_changed_handler();
+	void select_all_handler();
+	void deselect_all_handler();
 
 protected:
 	Ui::RobotBlendingWidget ui_;
