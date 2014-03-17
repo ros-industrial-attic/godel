@@ -10,6 +10,9 @@ find_package(catkin REQUIRED COMPONENTS
 	godel_surface_detection
 )
 
+# c++11
+ADD_DEFINITIONS("-std=c++0x")
+
 find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
 
 include(${QT_USE_FILE})
