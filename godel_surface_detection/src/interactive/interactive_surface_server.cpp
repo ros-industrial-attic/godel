@@ -92,6 +92,37 @@ void InteractiveSurfaceServer::set_selection_flag(std::string marker_name,bool s
 		int_marker.controls[1].markers[0].color.a = selected ? 1 : 0;
 		//int_marker.controls[1].always_visible = selected;
 		marker_server_ptr_->insert(int_marker);
+		invoke_callbacks();
+	}
+}
+
+void InteractiveSurfaceServer::select_all(bool select)
+{
+	typedef std::map<std::string,bool>::iterator SelectionIterator;
+	for(SelectionIterator i = surface_selection_map_.begin();i!= surface_selection_map_.end();i++)
+	{
+		set_selection_flag(i->first,select);
+	}
+	marker_server_ptr_->applyChanges();
+}
+
+void InteractiveSurfaceServer::invoke_callbacks()
+{
+	for(unsigned int i = 0;i < selection_callbacks_.size();i++)
+	{
+		selection_callbacks_[i]();
+	}
+}
+
+void InteractiveSurfaceServer::get_selected_list(std::vector<std::string>& list)
+{
+	std::map<std::string,bool>::iterator i;
+	for(i = surface_selection_map_.begin();i != surface_selection_map_.end();i++)
+	{
+		if(i->second)
+		{
+			list.push_back(i->first);
+		}
 	}
 }
 
@@ -106,6 +137,7 @@ void InteractiveSurfaceServer::toggle_selection_flag(std::string marker_name)
 		surface_selection_map_[marker_name] = !selected;
 		//int_marker.controls[1].always_visible = selected;
 		marker_server_ptr_->insert(int_marker);
+		invoke_callbacks();
 	}
 }
 
@@ -128,8 +160,6 @@ void InteractiveSurfaceServer::button_marker_callback(
 void InteractiveSurfaceServer::menu_marker_callback(
 		const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback)
 {
-
-	typedef std::map<std::string,bool>::iterator SelectionIterator;
 
 	switch(feedback->event_type)
 	{
@@ -159,23 +189,13 @@ void InteractiveSurfaceServer::menu_marker_callback(
 		else if(feedback->menu_entry_id == clear_all_entry_id_)
 		{
 
-			for(SelectionIterator i = surface_selection_map_.begin();i!= surface_selection_map_.end();i++)
-			{
-				set_selection_flag(i->first,false);
-			}
-
-			marker_server_ptr_->applyChanges();
+			select_all(false);
 			return;
 
 		}
 		else if(feedback->menu_entry_id == select_all_entry_id_)
 		{
-			for(SelectionIterator i = surface_selection_map_.begin();i!= surface_selection_map_.end();i++)
-			{
-				set_selection_flag(i->first,true);
-			}
-
-			marker_server_ptr_->applyChanges();
+			select_all(true);
 			return;
 
 		}
@@ -289,6 +309,7 @@ void InteractiveSurfaceServer::remove_all_surfaces()
 {
 	surface_selection_map_.clear();
 	marker_server_ptr_->clear();
+	invoke_callbacks();
 	marker_server_ptr_->applyChanges();
 }
 
@@ -297,6 +318,16 @@ void InteractiveSurfaceServer::add_surface(const visualization_msgs::Marker& mar
 	geometry_msgs::Pose pose;
 	tf::poseTFToMsg(tf::Transform::getIdentity(),pose);
 	add_surface(marker,pose);
+}
+
+void InteractiveSurfaceServer::add_selection_callback(SelectionCallback &f)
+{
+	selection_callbacks_.push_back(f);
+}
+
+void InteractiveSurfaceServer::clear_selection_callbacks()
+{
+	selection_callbacks_.clear();
 }
 
 void InteractiveSurfaceServer::add_random_surface_marker()

@@ -20,6 +20,7 @@
 #include <ros/ros.h>
 #include <interactive_markers/interactive_marker_server.h>
 #include <interactive_markers/menu_handler.h>
+#include <functional>
 
 namespace interactive_markers
 {
@@ -52,6 +53,7 @@ class InteractiveSurfaceServer {
 public:
 
 	typedef std::pair<std::string, bool> Selection;
+	typedef boost::function<void ()> SelectionCallback;
 public:
 	InteractiveSurfaceServer();
 	virtual ~InteractiveSurfaceServer();
@@ -69,11 +71,17 @@ public:
 		return surface_selection_map_.size();
 	}
 
+	void get_selected_list(std::vector<std::string>& list);
+	void add_selection_callback(SelectionCallback &f);
+	void clear_selection_callbacks();
+	void select_all(bool select = true);
+
 protected:
 
 	interactive_markers::InteractiveMarkerServerPtr marker_server_ptr_;
 	interactive_markers::MenuHandler menu_handler_;
 	std::map<std::string,bool> surface_selection_map_;
+	std::vector<SelectionCallback> selection_callbacks_;
 
 protected:
 
@@ -85,6 +93,7 @@ protected:
 			const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback);
 	void set_selection_flag(std::string marker_name,bool selected);
 	void toggle_selection_flag(std::string marker_name);
+	void invoke_callbacks();
 	void create_polygon_marker(visualization_msgs::Marker& marker,int triangles);
 	void create_arrow_marker(const visualization_msgs::Marker& surface_marker,
 			visualization_msgs::Marker& arrow_marker);
