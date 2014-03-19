@@ -18,6 +18,7 @@
 #define INTERACTIVE_SURFACE_SERVER_H_
 
 #include <ros/ros.h>
+#include <visualization_msgs/MarkerArray.h>
 #include <interactive_markers/interactive_marker_server.h>
 #include <interactive_markers/menu_handler.h>
 #include <functional>
@@ -72,9 +73,14 @@ public:
 	}
 
 	void get_selected_list(std::vector<std::string>& list);
+	void get_selected_surfaces(visualization_msgs::MarkerArray& surfaces);
 	void add_selection_callback(SelectionCallback &f);
 	void clear_selection_callbacks();
 	void select_all(bool select = true);
+	void set_selection_flag(std::string marker_name,bool selected);
+	void toggle_selection_flag(std::string marker_name);
+	void show(std::string marker_name,bool show = true);
+	void show_all(bool show_surf);
 
 protected:
 
@@ -85,14 +91,11 @@ protected:
 
 protected:
 
-
 	bool load_parameters(std::string node_ns = "");
 	void button_marker_callback(
 			const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback);
 	void menu_marker_callback(
 			const visualization_msgs::InteractiveMarkerFeedbackConstPtr &feedback);
-	void set_selection_flag(std::string marker_name,bool selected);
-	void toggle_selection_flag(std::string marker_name);
 	void invoke_callbacks();
 	void create_polygon_marker(visualization_msgs::Marker& marker,int triangles);
 	void create_arrow_marker(const visualization_msgs::Marker& surface_marker,

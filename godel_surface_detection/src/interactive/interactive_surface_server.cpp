@@ -89,10 +89,28 @@ void InteractiveSurfaceServer::set_selection_flag(std::string marker_name,bool s
 	if(surface_selection_map_.count(marker_name)>0 && marker_server_ptr_->get(marker_name,int_marker))
 	{
 		surface_selection_map_[marker_name] = selected;
-		int_marker.controls[1].markers[0].color.a = selected ? 1 : 0;
-		//int_marker.controls[1].always_visible = selected;
+		int_marker.controls[1].markers[0].type = selected ? visualization_msgs::Marker::ARROW : visualization_msgs::Marker::SPHERE;
+		int_marker.controls[1].markers[0].scale.x = selected ? arrow_shaft_diameter_: 0.0001f;
+		int_marker.controls[1].markers[0].scale.y = selected ? arrow_head_diameter_: 0.0001f;
+		int_marker.controls[1].markers[0].scale.z = selected ? arrow_head_length_: 0.0001f;
+
 		marker_server_ptr_->insert(int_marker);
 		invoke_callbacks();
+		marker_server_ptr_->applyChanges();
+	}
+}
+
+void InteractiveSurfaceServer::show(std::string marker_name,bool show)
+{
+	visualization_msgs::InteractiveMarker int_marker;
+	if(surface_selection_map_.count(marker_name)>0 && marker_server_ptr_->get(marker_name,int_marker))
+	{
+
+		int_marker.controls[0].markers[0].scale.x =show ? 1: 0.0001f;
+		int_marker.controls[0].markers[0].scale.y = show ? 1: 0.0001f;
+		int_marker.controls[0].markers[0].scale.z = show ? 1: 0.0001f;
+		marker_server_ptr_->insert(int_marker);
+		set_selection_flag(marker_name,show && surface_selection_map_[marker_name]);
 	}
 }
 
@@ -103,8 +121,18 @@ void InteractiveSurfaceServer::select_all(bool select)
 	{
 		set_selection_flag(i->first,select);
 	}
-	marker_server_ptr_->applyChanges();
 }
+
+void InteractiveSurfaceServer::show_all(bool show_surf)
+{
+	typedef std::map<std::string,bool>::iterator SelectionIterator;
+	for(SelectionIterator i = surface_selection_map_.begin();i!= surface_selection_map_.end();i++)
+	{
+		show(i->first,show_surf);
+	}
+}
+
+
 
 void InteractiveSurfaceServer::invoke_callbacks()
 {
@@ -126,18 +154,26 @@ void InteractiveSurfaceServer::get_selected_list(std::vector<std::string>& list)
 	}
 }
 
+void InteractiveSurfaceServer::get_selected_surfaces(visualization_msgs::MarkerArray& surfaces)
+{
+	std::map<std::string,bool>::iterator i;
+	for(i = surface_selection_map_.begin();i != surface_selection_map_.end();i++)
+	{
+		if(i->second)
+		{
+			visualization_msgs::InteractiveMarker int_marker;
+			const std::string &marker_name = i->first;
+			marker_server_ptr_->get(marker_name,int_marker);
+			surfaces.markers.push_back(int_marker.controls[0].markers[0]);
+		}
+	}
+}
+
 void InteractiveSurfaceServer::toggle_selection_flag(std::string marker_name)
 {
-	visualization_msgs::InteractiveMarker int_marker;
-	bool selected;
-	if(surface_selection_map_.count(marker_name)>0 && marker_server_ptr_->get(marker_name,int_marker))
+	if(surface_selection_map_.count(marker_name)>0 )
 	{
-		selected = surface_selection_map_[marker_name];
-		int_marker.controls[1].markers[0].color.a = !selected ? 1 : 0;
-		surface_selection_map_[marker_name] = !selected;
-		//int_marker.controls[1].always_visible = selected;
-		marker_server_ptr_->insert(int_marker);
-		invoke_callbacks();
+		set_selection_flag(marker_name,!surface_selection_map_[marker_name]);
 	}
 }
 
@@ -149,7 +185,6 @@ void InteractiveSurfaceServer::button_marker_callback(
 	case visualization_msgs::InteractiveMarkerFeedback::BUTTON_CLICK:
 		//ROS_INFO_STREAM("marker "<<feedback->marker_name <<" button control was clicked");
 		toggle_selection_flag(feedback->marker_name);
-		marker_server_ptr_->applyChanges();
 		break;
 
 	case visualization_msgs::InteractiveMarkerFeedback::MENU_SELECT:
@@ -166,7 +201,6 @@ void InteractiveSurfaceServer::menu_marker_callback(
 	case visualization_msgs::InteractiveMarkerFeedback::BUTTON_CLICK:
 //		ROS_INFO_STREAM("marker "<<feedback->marker_name <<" button control was clicked");
 		toggle_selection_flag(feedback->marker_name);
-		marker_server_ptr_->applyChanges();
 		break;
 
 	case visualization_msgs::InteractiveMarkerFeedback::MENU_SELECT:
@@ -176,13 +210,11 @@ void InteractiveSurfaceServer::menu_marker_callback(
 		if(feedback->menu_entry_id == select_entry_id_ )
 		{
 			set_selection_flag(feedback->marker_name,true);
-			marker_server_ptr_->applyChanges();
 			return;
 		}
 		else if(feedback->menu_entry_id == unselect_entry_id_)
 		{
 			set_selection_flag(feedback->marker_name,false);
-			marker_server_ptr_->applyChanges();
 			return;
 
 		}
@@ -201,15 +233,15 @@ void InteractiveSurfaceServer::menu_marker_callback(
 		}
 		else if(feedback->menu_entry_id == hide_entry_id_)
 		{
-			ROS_WARN_STREAM("'Hide' menu option has not been implemented yet");
+			//ROS_WARN_STREAM("'Hide' menu option has not been implemented yet");
 
-			marker_server_ptr_->applyChanges();
+			show(feedback->marker_name,false);
 			return;
 		}
 		else if(feedback->menu_entry_id == show_all_entry_id_)
 		{
-			ROS_WARN_STREAM("'Show All' menu option has not been implemented yet");
-
+			//ROS_WARN_STREAM("'Show All' menu option has not been implemented yet");
+			show_all(true);
 			marker_server_ptr_->applyChanges();
 			return;
 		}
@@ -268,8 +300,6 @@ void InteractiveSurfaceServer::add_surface(const visualization_msgs::Marker& mar
 	int_marker.name = ss.str();
 	int_marker.pose = pose;
 
-
-
 	// create button control
 	visualization_msgs::InteractiveMarkerControl button_control;
 	button_control.interaction_mode = button_control.BUTTON;
@@ -280,7 +310,6 @@ void InteractiveSurfaceServer::add_surface(const visualization_msgs::Marker& mar
 	// create seletected arrow marker
 	visualization_msgs::Marker arrow_marker;
 	create_arrow_marker(marker,arrow_marker);
-	arrow_marker.color.a = 0; // unselected
 	visualization_msgs::InteractiveMarkerControl selected_arrow;
 	selected_arrow.interaction_mode = selected_arrow.FIXED;
 	selected_arrow.markers.push_back(arrow_marker);
@@ -300,6 +329,7 @@ void InteractiveSurfaceServer::add_surface(const visualization_msgs::Marker& mar
 
 	// save name
 	surface_selection_map_.insert(std::make_pair(int_marker.name,false));
+	set_selection_flag(int_marker.name,false);
 
 	// apply changes
 	marker_server_ptr_->applyChanges();
