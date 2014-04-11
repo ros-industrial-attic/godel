@@ -23,13 +23,14 @@
 #include <pcl/features/normal_3d.h>
 #include <pcl/segmentation/region_growing.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/surface/mls.h>
 #include <tf/transform_datatypes.h>
+#include <octomap_ros/conversions.h>
 
 namespace godel_surface_detection { namespace detection{
 
 SurfaceDetection::SurfaceDetection():
 		acquired_clouds_counter_(0),
-		acquisition_topic_(config::POINT_COLUD_TOPIC),
 		frame_id_(defaults::FRAME_ID),
 		k_search_(defaults::K_SEARCH),
 		meanK_(defaults::STATISTICAL_OUTLIER_MEAN),
@@ -39,7 +40,7 @@ SurfaceDetection::SurfaceDetection():
 		rg_neightbors_(defaults::REGION_GROWING_NEIGHBORS),
 		rg_smoothness_threshold_(defaults::REGION_GROWING_SMOOTHNESS_THRESHOLD),
 		rg_curvature_threshold_(defaults::REGION_GROWING_CURVATURE_THRESHOLD),
-		acquisition_time_(defaults::ACQUISITION_TIME),
+		//acquisition_time_(defaults::ACQUISITION_TIME),
 		tr_search_radius_(defaults::TRIANGULATION_SEARCH_RADIUS),
 		tr_mu_(defaults::TRIANGULATION_MU),
 		tr_max_nearest_neighbors_(defaults::TRIANGULATION_MAX_NEAREST_NEIGHBORS),
@@ -49,7 +50,14 @@ SurfaceDetection::SurfaceDetection():
 		tr_normal_consistency_(defaults::TRIANGULATION_NORMAL_CONSISTENCY),
 		voxel_leafsize_(defaults::VOXEL_LEAF_SIZE),
 		marker_alpha_(defaults::MARKER_ALPHA),
-		ignore_largest_cluster_(defaults::IGNORE_LARGEST_CLUSTER)
+		ignore_largest_cluster_(defaults::IGNORE_LARGEST_CLUSTER),
+		use_octomap_(defaults::USE_OCTOMAP),
+		occupancy_threshold_(defaults::OCCUPANCY_THRESHOLD),
+		mls_upsampling_radius_(defaults::MLS_UPSAMPLING_RADIUS),
+		mls_point_density_(defaults::MLS_POINT_DENSITY),
+		mls_search_radius_(defaults::MLS_SEARCH_RADIUS),
+		octree_(new octomap::OcTree(defaults::VOXEL_LEAF_SIZE)),
+		full_cloud_ptr_(new Cloud())
 {
 	// TODO Auto-generated constructor stub
 	srand(time(NULL));
@@ -62,46 +70,13 @@ SurfaceDetection::~SurfaceDetection()
 
 bool SurfaceDetection::init(std::string node_ns)
 {
-	return load_parameters(node_ns);
+	octree_->setResolution(voxel_leafsize_);
+	octree_->setOccupancyThres(occupancy_threshold_);
+	full_cloud_ptr_->header.frame_id = frame_id_;
+	acquired_clouds_counter_ = 0;
+	return true;
 }
 
-bool SurfaceDetection::load_parameters(std::string node_ns)
-{
-	ros::NodeHandle nh(node_ns.empty() ? "~" : node_ns);
-	bool succeeded;
-	const std::string ns = params::PARAMETER_NS + "/";
-	if(nh.getParam(ns + params::ACQUISITION_TIME,acquisition_time_) &&
-			nh.getParam(ns + params::FRAME_ID,frame_id_)&&
-			nh.getParam(ns + params::STOUTLIER_MEAN,meanK_) &&
-			nh.getParam(ns + params::STOUTLIER_STDEV_THRESHOLD,stdv_threshold_) &&
-			nh.getParam(ns + params::REGION_GROWING_MIN_CLUSTER_SIZE,rg_min_cluster_size_) &&
-			nh.getParam(ns + params::REGION_GROWING_MAX_CLUSTER_SIZE,rg_max_cluster_size_) &&
-			nh.getParam(ns + params::REGION_GROWING_NEIGHBORS,rg_neightbors_) &&
-			nh.getParam(ns + params::REGION_GROWING_SMOOTHNESS_THRESHOLD,rg_smoothness_threshold_) &&
-			nh.getParam(ns + params::REGION_GROWING_CURVATURE_THRESHOLD,rg_curvature_threshold_) &&
-			nh.getParam(ns + params::TRIANGULATION_SEARCH_RADIUS,tr_search_radius_) &&
-			nh.getParam(ns + params::TRIANGULATION_MU ,tr_mu_) &&
-			nh.getParam(ns + params::TRIANGULATION_MAX_NEAREST_NEIGHBORS,tr_max_nearest_neighbors_) &&
-			nh.getParam(ns + params::TRIANGULATION_MAX_SURFACE_ANGLE,tr_max_surface_angle_) &&
-			nh.getParam(ns + params::TRIANGULATION_MIN_ANGLE,tr_min_angle_) &&
-			nh.getParam(ns + params::TRIANGULATION_MAX_ANGLE,tr_max_angle_) &&
-			nh.getParam(ns + params::TRIANGULATION_NORMAL_CONSISTENCY,tr_normal_consistency_) &&
-			nh.getParam(ns + params::VOXEL_LEAF_SIZE,voxel_leafsize_) &&
-			nh.getParam(ns + params::MARKER_ALPHA,marker_alpha_) &&
-			nh.getParam(ns + params::IGNORE_LARGEST_CLUSTER,ignore_largest_cluster_)
-			)
-	{
-		succeeded = true;
-		ROS_INFO_STREAM("surface detection parameters loaded");
-	}
-	else
-	{
-		succeeded = false;
-		ROS_ERROR_STREAM("surface detection failed to load one or more parameters");
-	}
-
-	return succeeded;
-}
 
 void SurfaceDetection::mesh_to_marker(const pcl::PolygonMesh &mesh,
 		visualization_msgs::Marker &marker)
@@ -149,6 +124,68 @@ void SurfaceDetection::mesh_to_marker(const pcl::PolygonMesh &mesh,
 	}
 }
 
+void SurfaceDetection::add_cloud(Cloud& cloud)
+{
+	if(use_octomap_)
+	{
+		Cloud::iterator i;
+		for( int i = 0
+				; i < cloud.points.size();i++)
+		{
+			const pcl::PointXYZ &p = cloud.points[i];
+			octomap::point3d entry = octomath::Vector3(p.x,p.y,p.z);
+			octree_->updateNode(entry,true,true);
+		}
+		octree_->updateInnerOccupancy();
+		ROS_INFO_STREAM("Aggregated new cloud to octomap");
+	}
+	else
+	{
+		(*full_cloud_ptr_)+=cloud;
+		ROS_INFO_STREAM("Concatenated new cloud to acquired clouds");
+	}
+	acquired_clouds_counter_++;
+}
+
+void SurfaceDetection::process_octree()
+{
+	if(use_octomap_)
+	{
+		Cloud::Ptr buffer_cloud_ptr(new Cloud());
+		buffer_cloud_ptr->reserve(octree_->getNumLeafNodes());
+		full_cloud_ptr_->clear();
+		octomap::OcTree::tree_iterator i;
+
+		ROS_INFO_STREAM("Searching voxels with threshold > "<<octree_->getOccupancyThres());
+		for(i = octree_->begin_tree(); i != octree_->end_tree(); i++)
+		{
+
+			if(octree_->isNodeOccupied(*i))
+			{
+				pcl::PointXYZ p;
+				p.x = i.getX();
+				p.y = i.getY();
+				p.z = i.getZ();
+				buffer_cloud_ptr->push_back(p);
+			}
+		}
+
+		if(buffer_cloud_ptr->size() > 0)
+		{
+			pcl::copyPointCloud(*buffer_cloud_ptr,*full_cloud_ptr_);
+			full_cloud_ptr_->header.frame_id = frame_id_;
+
+		}
+
+		ROS_INFO_STREAM("Total voxels found: "<<buffer_cloud_ptr->size());
+	}
+	else
+	{
+
+	}
+
+}
+
 visualization_msgs::MarkerArray SurfaceDetection::get_surface_markers()
 {
 	return visualization_msgs::MarkerArray(meshes_);
@@ -179,80 +216,34 @@ std::string SurfaceDetection::get_results_summary()
 	return ss.str();
 }
 
-void SurfaceDetection::set_acquisition_time(double val)
+void SurfaceDetection::get_full_cloud(Cloud& cloud)
 {
-	acquisition_time_ = val;
+	pcl::copyPointCloud(*full_cloud_ptr_,cloud);
+
 }
 
-void SurfaceDetection::get_acquired_cloud(Cloud& cloud)
+void SurfaceDetection::get_full_cloud(sensor_msgs::PointCloud2 cloud_msg)
 {
-	pcl::copyPointCloud(*acquired_cloud_ptr_,cloud);
-}
-
-void SurfaceDetection::get_acquired_cloud(sensor_msgs::PointCloud2 cloud_msg)
-{
-	pcl::toROSMsg(*acquired_cloud_ptr_,cloud_msg);
+	pcl::toROSMsg(*full_cloud_ptr_,cloud_msg);
 }
 
 void SurfaceDetection::get_region_colored_cloud(CloudRGB& cloud )
 {
 	pcl::copyPointCloud(*region_colored_cloud_ptr_,cloud);
-	cloud.header.frame_id = acquired_cloud_ptr_->header.frame_id;
+	cloud.header.frame_id = frame_id_;
 }
 
 void SurfaceDetection::get_region_colored_cloud(sensor_msgs::PointCloud2 &cloud_msg)
 {
 	pcl::toROSMsg(*region_colored_cloud_ptr_,cloud_msg);
-	cloud_msg.header.frame_id = acquired_cloud_ptr_->header.frame_id;
-}
-
-bool SurfaceDetection::acquire_data()
-{
-	// initialize  aggregate point cloud
-	acquired_cloud_ptr_.reset(new Cloud());
-	acquired_clouds_counter_ = 0;
-
-	// initialize subscriber
-	ros::NodeHandle nh;
-	point_cloud_subs_ = nh.subscribe(acquisition_topic_,1,
-			&SurfaceDetection::point_cloud_subscriber_cb,this);
-
-	// wait for topic
-	sensor_msgs::PointCloud2ConstPtr msg =
-			ros::topic::waitForMessage<sensor_msgs::PointCloud2>(point_cloud_subs_.getTopic(),
-					ros::Duration(5.0f));
-
-	ros::AsyncSpinner spinner(2);
-	spinner.start();
-
-	if(msg)
-	{
-		ROS_INFO_STREAM("Started point cloud acquisition");
-
-		ros::Duration acquistion_time(acquisition_time_);
-		ros::Time start_time = ros::Time::now();
-		while(ros::ok() &&
-				((start_time + acquistion_time) > ros::Time::now()))
-		{
-			//ros::spinOnce();
-		}
-
-		point_cloud_subs_.shutdown();
-		ROS_INFO_STREAM("Finished point cloud acquisition");
-		spinner.stop();
-		return !acquired_cloud_ptr_->empty();
-	}
-	else
-	{
-		ROS_ERROR_STREAM("Point cloud topic: '"<<point_cloud_subs_.getTopic()<<
-				"' not advertised");
-		spinner.stop();
-		return false;
-	}
+	cloud_msg.header.frame_id = frame_id_;
 }
 
 bool SurfaceDetection::find_surfaces()
 {
+	// process acquired sensor data
+	process_octree();
+
 	// reset members
 	region_colored_cloud_ptr_ = CloudRGB::Ptr(new CloudRGB());
 	surface_clouds_.clear();
@@ -263,14 +254,22 @@ bool SurfaceDetection::find_surfaces()
 	std::vector<pcl::PointIndices> clusters_indices;
 	std::vector<Normals::Ptr> segment_normals;
 
-	if(apply_voxel_downsampling(*acquired_cloud_ptr_))
+
+	if(!use_octomap_ )
 	{
-		ROS_INFO_STREAM("Voxel downsampling succeeded, downsampled cloud size: "<<
-				acquired_cloud_ptr_->size());
+		if(apply_voxel_downsampling(*full_cloud_ptr_))
+		{
+			ROS_INFO_STREAM("Voxel downsampling succeeded, downsampled cloud size: "<<
+					full_cloud_ptr_->size());
+		}
+		else
+		{
+			ROS_WARN_STREAM("Voxel downsampling failed, cloud size :"<<full_cloud_ptr_->size());
+		}
 	}
 
 	// apply statistical filter
-	if(apply_statistical_filter(*acquired_cloud_ptr_,*acquired_cloud_ptr_))
+	if(apply_statistical_filter(*full_cloud_ptr_,*full_cloud_ptr_))
 	{
 		ROS_INFO_STREAM("Statistical filter succeeded");
 	}
@@ -281,7 +280,7 @@ bool SurfaceDetection::find_surfaces()
 	}
 
 	// estimate normals
-	if(apply_normal_estimation(*acquired_cloud_ptr_,*normals))
+	if(apply_normal_estimation(*full_cloud_ptr_,*normals))
 	{
 		ROS_INFO_STREAM("Normal estimation succeeded");
 	}
@@ -292,7 +291,7 @@ bool SurfaceDetection::find_surfaces()
 	}
 
 	// applying region growing segmentation
-	if(apply_region_growing_segmentation(*acquired_cloud_ptr_,*normals,clusters_indices,
+	if(apply_region_growing_segmentation(*full_cloud_ptr_,*normals,clusters_indices,
 			*region_colored_cloud_ptr_))
 	{
 
@@ -306,11 +305,24 @@ bool SurfaceDetection::find_surfaces()
 
 			Cloud::Ptr segment_cloud_ptr(new Cloud());
 			Normals::Ptr segment_normal_ptr(new Normals());
-			pcl::copyPointCloud(*acquired_cloud_ptr_,clusters_indices[i],
-					*segment_cloud_ptr);
-			pcl::copyPointCloud(*normals,clusters_indices[i],*segment_normal_ptr);
 
-			segment_cloud_ptr->header.frame_id = acquired_cloud_ptr_->header.frame_id;
+			// apply smoothing
+			pcl::copyPointCloud(*full_cloud_ptr_,clusters_indices[i],
+					*segment_cloud_ptr);
+
+			int count = segment_cloud_ptr->size();
+			if(apply_mls_surface_smoothing(*segment_cloud_ptr,*segment_cloud_ptr,*segment_normal_ptr))
+			{
+				ROS_INFO_STREAM("Moving least squares smoothing applied successfully for cluster "<<i<<". Count at t0: "<<count
+						<<", Count at tf: "<<segment_cloud_ptr->size());
+			}
+			else
+			{
+				ROS_WARN_STREAM("Moving least squares smoothing failed for cluster "<<i<<", using original estimated normals");
+				pcl::copyPointCloud(*normals,clusters_indices[i],*segment_normal_ptr);
+			}
+
+			segment_cloud_ptr->header.frame_id = frame_id_;
 			surface_clouds_.push_back(segment_cloud_ptr);
 			segment_normals.push_back(segment_normal_ptr);
 		}
@@ -361,57 +373,6 @@ bool SurfaceDetection::find_surfaces()
 	ROS_INFO_STREAM("Triangulation of surfaces completed");
 
 	return true;
-}
-
-void SurfaceDetection::point_cloud_subscriber_cb(const sensor_msgs::PointCloud2ConstPtr &msg)
-{
-	static tf::TransformListener tf_listener;
-
-	// convert to message to point cloud
-	Cloud::Ptr new_cloud_ptr(new Cloud());
-	pcl::fromROSMsg<pcl::PointXYZ>(*msg,*new_cloud_ptr);
-
-	// removed nans
-	std::vector<int> index;
-	pcl::removeNaNFromPointCloud(*new_cloud_ptr,*new_cloud_ptr,index);
-
-	// transform to frame id
-	tf::StampedTransform source_to_target_tf;
-	if(frame_id_.compare(msg->header.frame_id) !=0)
-	{
-		ROS_INFO_STREAM("Source cloud with frame id '"<<msg->header.frame_id<<"' will be transformed to frame id: '"
-				<<frame_id_<<"'");
-		try
-		{
-			tf_listener.lookupTransform(frame_id_,msg->header.frame_id,
-					ros::Time::now() - ros::Duration(0.2f),source_to_target_tf);
-			pcl_ros::transformPointCloud(*new_cloud_ptr,*new_cloud_ptr,source_to_target_tf);
-		}
-		catch(tf::LookupException &e)
-		{
-			ROS_ERROR_STREAM("Transform lookup error, using source frame id '"<< msg->header.frame_id<<"'");
-			frame_id_ = msg->header.frame_id;
-		}
-		catch(tf::ExtrapolationException &e)
-		{
-			ROS_ERROR_STREAM("Transform lookup error, using source frame id '"<< msg->header.frame_id<<"'");
-			frame_id_ = msg->header.frame_id;
-		}
-
-	}
-	else
-	{
-		ROS_INFO_STREAM("Source cloud is already in frame id '"<<msg->header.frame_id<<", skipping transform");
-	}
-
-	// add to aggregate point cloud
-	(*acquired_cloud_ptr_)+=*new_cloud_ptr;
-	acquired_clouds_counter_++;
-
-	acquired_cloud_ptr_->header.frame_id = frame_id_;
-
-	ROS_INFO_STREAM("Added " <<acquired_clouds_counter_ <<
-			" point clouds, total points: "<<acquired_cloud_ptr_->points.size());
 }
 
 bool SurfaceDetection::apply_statistical_filter(const Cloud& in,Cloud& out)
@@ -508,6 +469,34 @@ bool SurfaceDetection::apply_voxel_downsampling(Cloud& cloud)
 	vg.filter(*pcl_cloud_ptr);
 	pcl::fromPCLPointCloud2(*pcl_cloud_ptr,cloud);
 	return true;
+}
+
+bool SurfaceDetection::apply_mls_surface_smoothing(const Cloud& cloud_in,Cloud& cloud_out,Normals& normals)
+{
+	pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>());
+	pcl::PointCloud<pcl::PointNormal> mls_points;
+	pcl::MovingLeastSquares<pcl::PointXYZ,pcl::PointNormal> mls;
+	mls.setInputCloud(boost::make_shared<Cloud>(cloud_in));
+	mls.setComputeNormals(true);
+	mls.setPolynomialFit(true);
+
+	mls.setUpsamplingMethod(pcl::MovingLeastSquares<pcl::PointXYZ,pcl::PointNormal>::RANDOM_UNIFORM_DENSITY);
+	mls.setUpsamplingRadius(mls_upsampling_radius_);
+	mls.setPointDensity(mls_point_density_);
+
+	mls.setSearchMethod(tree);
+	mls.setSearchRadius(mls_search_radius_);
+	mls.process(mls_points);
+
+	bool succeeded = mls_points.size() > 0;
+	if(succeeded)
+	{
+		cloud_out.clear();
+		normals.clear();
+		pcl::copyPointCloud(mls_points,cloud_out);
+		pcl::copyPointCloud(mls_points,normals);
+	}
+	return succeeded;
 }
 
 

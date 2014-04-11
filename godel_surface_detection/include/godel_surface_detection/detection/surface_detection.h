@@ -25,6 +25,8 @@
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/surface/gp3.h>
+#include <octomap/octomap.h>
+#include <octomap/OcTree.h>
 #include <visualization_msgs/MarkerArray.h>
 
 namespace godel_surface_detection { namespace detection{
@@ -32,11 +34,13 @@ namespace godel_surface_detection { namespace detection{
 typedef pcl::PointCloud<pcl::PointXYZ> Cloud;
 typedef pcl::PointCloud<pcl::PointXYZRGB> CloudRGB;
 typedef pcl::PointCloud<pcl::Normal> Normals;
+typedef boost::shared_ptr<octomap::OcTree> OctreePtr;
 
 namespace defaults{
 
-	static const double ACQUISITION_TIME = 5.0f;
+	//static const double ACQUISITION_TIME = 5.0f;
 	static std::string FRAME_ID = "world_frame";
+	static const bool USE_OCTOMAP = false;
 
 	static const int STATISTICAL_OUTLIER_MEAN = 50;
 	static const double STATISTICAL_OUTLIER_STDEV_THRESHOLD = 1;
@@ -48,7 +52,7 @@ namespace defaults{
 	static const double REGION_GROWING_SMOOTHNESS_THRESHOLD=(M_PI/180.0f) * 7.0f;
 	static const double REGION_GROWING_CURVATURE_THRESHOLD=1.0f;
 
-	static const double TRIANGULATION_SEARCH_RADIUS = 0.01;
+	static const double TRIANGULATION_SEARCH_RADIUS = 0.01f;
 	static const double TRIANGULATION_MU = 2.5f;
 	static const int TRIANGULATION_MAX_NEAREST_NEIGHBORS = 100;
 	static const double TRIANGULATION_MAX_SURFACE_ANGLE = M_PI/4.0f;
@@ -58,8 +62,14 @@ namespace defaults{
 
 	static const double VOXEL_LEAF_SIZE = 0.01f;
 
-	static const double MARKER_ALPHA = 1.0f;
+	static const double OCCUPANCY_THRESHOLD = 0.1f;
 
+	// Moving least square smoothing
+	static const double MLS_UPSAMPLING_RADIUS = 0.01f;
+	static const double MLS_SEARCH_RADIUS = 0.01f;
+	static const int MLS_POINT_DENSITY = 40;
+
+	static const double MARKER_ALPHA = 1.0f;
 	static const bool IGNORE_LARGEST_CLUSTER = false;
 }
 
@@ -72,8 +82,8 @@ namespace params
 {
 	static const std::string PARAMETER_NS = "surface_detection";
 
-	static const std::string ACQUISITION_TIME = "acquisition_time";
 	static const std::string FRAME_ID = "frame_id";
+	static const std::string USE_OCTOMAP = "use_octomap";
 
 	static const std::string STOUTLIER_MEAN = "stout_mean";
 	static const std::string STOUTLIER_STDEV_THRESHOLD = "stout_stdev_threshold";
@@ -95,6 +105,12 @@ namespace params
 
 	static const std::string VOXEL_LEAF_SIZE = "voxel_leaf";
 
+	static const std::string OCCUPANCY_THRESHOLD = "occupancy_threshold";
+
+	static const std::string MLS_UPSAMPLING_RADIUS = "mls_upsampling_radius";
+	static const std::string MLS_SEARCH_RADIUS = "mls_search_radius";
+	static const std::string MLS_POINT_DENSITY = "mls_point_density";
+
 	static const std::string MARKER_ALPHA = "marker_alpha";
 	static const std::string IGNORE_LARGEST_CLUSTER = "ignore_largest_cluster";
 
@@ -110,26 +126,31 @@ public:
 public:
 
 	bool init(std::string node_ns = "");
-	void set_acquisition_time(double val);
-	bool acquire_data();
+	//void set_acquisition_time(double val);
+	//bool acquire_data();
 	bool find_surfaces();
 	std::string get_results_summary();
 
 	static void mesh_to_marker(const pcl::PolygonMesh &mesh,
 			visualization_msgs::Marker &marker);
 
+	// adds point cloud to the occupancy grid, it performs no frame transformation
+	void add_cloud(Cloud& cloud);
+
 	// retrieve results
 	visualization_msgs::MarkerArray get_surface_markers();
 	std::vector<Cloud::Ptr> get_surface_clouds();
-	void get_acquired_cloud(Cloud& cloud);
-	void get_acquired_cloud(sensor_msgs::PointCloud2 cloud_msg);
+	void get_full_cloud(Cloud& cloud);
+	void get_full_cloud(sensor_msgs::PointCloud2 cloud_msg);
 	void get_region_colored_cloud(CloudRGB& cloud);
 	void get_region_colored_cloud(sensor_msgs::PointCloud2 &cloud_msg);
 
 protected:
 
-	bool load_parameters(std::string node_ns="");
-	void point_cloud_subscriber_cb(const sensor_msgs::PointCloud2ConstPtr &msg);
+	//bool load_parameters(std::string node_ns="");
+	//void point_cloud_subscriber_cb(const sensor_msgs::PointCloud2ConstPtr &msg);
+
+	void process_octree();
 	bool apply_statistical_filter(const Cloud& in,Cloud& out);
 	bool apply_region_growing_segmentation(const Cloud& in,
 			const Normals& normals,
@@ -141,12 +162,14 @@ protected:
 
 	bool apply_voxel_downsampling(Cloud& cloud);
 
+	bool apply_mls_surface_smoothing(const Cloud& cloud_in,Cloud& cloud_out,Normals& normals);
+
 public:
 
 	// acquisition
-	double acquisition_time_;
 	std::string frame_id_;
-	std::string acquisition_topic_;
+	bool use_octomap_;
+	OctreePtr octree_;
 
 	// filter and normal estimation
 	int acquired_clouds_counter_;
@@ -173,6 +196,15 @@ public:
 	// voxel downsampling
 	double voxel_leafsize_;
 
+	// octomap occupancy
+	double occupancy_threshold_;
+
+	// moving least square smoothing
+	double mls_upsampling_radius_;
+	double mls_search_radius_;
+	int mls_point_density_;
+
+	// options
 	double marker_alpha_;
 	bool ignore_largest_cluster_;
 
@@ -182,7 +214,7 @@ protected:
 	ros::Subscriber point_cloud_subs_;
 
 	// pcl members
-	pcl::PointCloud<pcl::PointXYZ>::Ptr acquired_cloud_ptr_;
+	pcl::PointCloud<pcl::PointXYZ>::Ptr full_cloud_ptr_;
 	CloudRGB::Ptr region_colored_cloud_ptr_;
 	std::vector<Cloud::Ptr> surface_clouds_;
 	visualization_msgs::MarkerArray meshes_;

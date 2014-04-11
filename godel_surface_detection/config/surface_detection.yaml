@@ -1,5 +1,4 @@
 surface_detection:
-  acquisition_time: 4
   frame_id: world_frame
   stout_mean: 50
   stout_stdev_threshold: 1
@@ -9,13 +8,17 @@ surface_detection:
   rg_neighbors: 40
   rg_smoothness_threshold: 0.11
   rg_curvature_threshold: 1.0
-  tr_search_radius: 0.04
+  tr_search_radius: 0.02
   tr_mu: 2.5
   tr_nearest_neighbors: 100
   tr_max_surface_angle: 0.785
   tr_min_angle: 0.1744
   tr_max_angle: 2.093
-  tr_normal_consistency: false
+  tr_normal_consistency: true
   voxel_leaf: 0.01
+  occupancy_threshold: 0.5
+  mls_upsampling_radius: 0.01
+  mls_point_density: 100
+  mls_search_radius: 0.05
   marker_alpha: 0.6
   ignore_largest_cluster: False
