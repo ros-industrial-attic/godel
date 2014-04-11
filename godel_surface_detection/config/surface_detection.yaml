@@ -3,7 +3,7 @@ surface_detection:
   stout_mean: 50
   stout_stdev_threshold: 1
   k_search: 10
-  rg_min_cluster_size: 100
+  rg_min_cluster_size: 300
   rg_max_cluster_size: 10000
   rg_neighbors: 40
   rg_smoothness_threshold: 0.11
@@ -20,5 +20,7 @@ surface_detection:
   mls_upsampling_radius: 0.01
   mls_point_density: 100
   mls_search_radius: 0.05
+  use_tabletop_segmentation: false
+  tabletop_seg_distance_thresh: 0.01
   marker_alpha: 0.6
   ignore_largest_cluster: False

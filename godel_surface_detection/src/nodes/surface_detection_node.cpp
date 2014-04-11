@@ -68,6 +68,8 @@ bool load_parameters(std::string node_ns = "")
 			nh.getParam(ns + params::MLS_UPSAMPLING_RADIUS,SurfDetect.mls_upsampling_radius_) &&
 			nh.getParam(ns + params::MLS_POINT_DENSITY,SurfDetect.mls_point_density_) &&
 			nh.getParam(ns + params::MLS_SEARCH_RADIUS,SurfDetect.mls_search_radius_) &&
+			nh.getParam(ns + params::USE_TABLETOP_SEGMENTATION,SurfDetect.use_tabletop_seg_) &&
+			nh.getParam(ns + params::TABLETOP_SEG_DISTANCE_THRESH,SurfDetect.tabletop_seg_distance_threshold_) &&
 			nh.getParam(ns + params::MARKER_ALPHA,SurfDetect.marker_alpha_) &&
 			nh.getParam(ns + params::IGNORE_LARGEST_CLUSTER,SurfDetect.ignore_largest_cluster_)
 			)

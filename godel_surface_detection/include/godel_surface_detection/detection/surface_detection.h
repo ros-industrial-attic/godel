@@ -69,6 +69,9 @@ namespace defaults{
 	static const double MLS_SEARCH_RADIUS = 0.01f;
 	static const int MLS_POINT_DENSITY = 40;
 
+	static const bool USE_TABLETOP_SEGMENTATION = true;
+	static const double TABLETOP_SEG_DISTANCE_THRESH = 0.005f;
+
 	static const double MARKER_ALPHA = 1.0f;
 	static const bool IGNORE_LARGEST_CLUSTER = false;
 }
@@ -110,6 +113,9 @@ namespace params
 	static const std::string MLS_UPSAMPLING_RADIUS = "mls_upsampling_radius";
 	static const std::string MLS_SEARCH_RADIUS = "mls_search_radius";
 	static const std::string MLS_POINT_DENSITY = "mls_point_density";
+
+	static const std::string USE_TABLETOP_SEGMENTATION = "use_tabletop_segmentation";
+	static const std::string TABLETOP_SEG_DISTANCE_THRESH = "tabletop_seg_distance_thresh";
 
 	static const std::string MARKER_ALPHA = "marker_alpha";
 	static const std::string IGNORE_LARGEST_CLUSTER = "ignore_largest_cluster";
@@ -164,11 +170,12 @@ protected:
 
 	bool apply_mls_surface_smoothing(const Cloud& cloud_in,Cloud& cloud_out,Normals& normals);
 
+	bool apply_tabletop_segmentation(const Cloud& cloud_in,Cloud& cloud_out);
+
 public:
 
 	// acquisition
 	std::string frame_id_;
-	bool use_octomap_;
 	OctreePtr octree_;
 
 	// filter and normal estimation
@@ -197,12 +204,17 @@ public:
 	double voxel_leafsize_;
 
 	// octomap occupancy
+	bool use_octomap_;
 	double occupancy_threshold_;
 
 	// moving least square smoothing
 	double mls_upsampling_radius_;
 	double mls_search_radius_;
 	int mls_point_density_;
+
+	// tabletop segmentation
+	bool use_tabletop_seg_;
+	double tabletop_seg_distance_threshold_;
 
 	// options
 	double marker_alpha_;

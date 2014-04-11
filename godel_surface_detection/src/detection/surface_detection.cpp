@@ -23,7 +23,11 @@
 #include <pcl/features/normal_3d.h>
 #include <pcl/segmentation/region_growing.h>
 #include <pcl/filters/voxel_grid.h>
+#include <pcl/filters/extract_indices.h>
 #include <pcl/surface/mls.h>
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/sample_consensus/model_types.h>
+#include <pcl/segmentation/sac_segmentation.h>
 #include <tf/transform_datatypes.h>
 #include <octomap_ros/conversions.h>
 
@@ -56,6 +60,8 @@ SurfaceDetection::SurfaceDetection():
 		mls_upsampling_radius_(defaults::MLS_UPSAMPLING_RADIUS),
 		mls_point_density_(defaults::MLS_POINT_DENSITY),
 		mls_search_radius_(defaults::MLS_SEARCH_RADIUS),
+		use_tabletop_seg_(defaults::USE_TABLETOP_SEGMENTATION),
+		tabletop_seg_distance_threshold_(defaults::TABLETOP_SEG_DISTANCE_THRESH),
 		octree_(new octomap::OcTree(defaults::VOXEL_LEAF_SIZE)),
 		full_cloud_ptr_(new Cloud())
 {
@@ -254,7 +260,6 @@ bool SurfaceDetection::find_surfaces()
 	std::vector<pcl::PointIndices> clusters_indices;
 	std::vector<Normals::Ptr> segment_normals;
 
-
 	if(!use_octomap_ )
 	{
 		if(apply_voxel_downsampling(*full_cloud_ptr_))
@@ -266,6 +271,24 @@ bool SurfaceDetection::find_surfaces()
 		{
 			ROS_WARN_STREAM("Voxel downsampling failed, cloud size :"<<full_cloud_ptr_->size());
 		}
+	}
+
+	if(use_tabletop_seg_)
+	{
+		int count = full_cloud_ptr_->size();
+		if(apply_tabletop_segmentation(*full_cloud_ptr_,*full_cloud_ptr_))
+		{
+			ROS_INFO_STREAM("Tabletop segmentation successfully applied, new point count: "<<full_cloud_ptr_->size()
+					<<", old point cloud: "<<count);
+		}
+		else
+		{
+			ROS_WARN_STREAM("Tabletop segmentation failed, ignoring results");
+		}
+	}
+	else
+	{
+		ROS_WARN_STREAM("Tabletop segmentation skipped");
 	}
 
 	// apply statistical filter
@@ -496,6 +519,32 @@ bool SurfaceDetection::apply_mls_surface_smoothing(const Cloud& cloud_in,Cloud& 
 		pcl::copyPointCloud(mls_points,cloud_out);
 		pcl::copyPointCloud(mls_points,normals);
 	}
+	return succeeded;
+}
+
+bool SurfaceDetection::apply_tabletop_segmentation(const Cloud& cloud_in,Cloud& cloud_out)
+{
+	pcl::ModelCoefficients::Ptr coeff_ptr(new pcl::ModelCoefficients());
+	pcl::PointIndices::Ptr inliers_ptr(new pcl::PointIndices());
+	pcl::SACSegmentation<pcl::PointXYZ> seg;
+	seg.setOptimizeCoefficients(true);
+	seg.setModelType(pcl::SACMODEL_PLANE);
+	seg.setMethodType(pcl::SAC_RANSAC);
+	seg.setMaxIterations (1000);
+	seg.setDistanceThreshold(tabletop_seg_distance_threshold_);
+	seg.setInputCloud(boost::make_shared<Cloud>(cloud_in));
+	seg.segment(*inliers_ptr,*coeff_ptr);
+
+	bool succeeded = inliers_ptr->indices.size() > 0;
+	if(succeeded)
+	{
+		pcl::ExtractIndices<pcl::PointXYZ> extract;
+		extract.setInputCloud(boost::make_shared<Cloud>(cloud_in));
+		extract.setIndices(inliers_ptr);
+		extract.setNegative(true);
+		extract.filter(cloud_out);
+	}
+
 	return succeeded;
 }
 
