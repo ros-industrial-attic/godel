@@ -16,6 +16,9 @@
   <build_depend>sensor_msgs</build_depend>
   <build_depend>interactive_markers</build_depend>
   <build_depend>octomap_ros</build_depend>
+	<build_depend>moveit_ros_move_group</build_depend>
+	<build_depend>moveit_ros_planning_interface</build_depend>
+	<build_depend>tf</build_depend>
 
   <run_depend>pcl</run_depend>
   <run_depend>pcl_msgs</run_depend>
@@ -24,6 +27,9 @@
   <run_depend>sensor_msgs</run_depend>
   <run_depend>interactive_markers</run_depend>
   <run_depend>octomap_ros</run_depend>
+	<run_depend>moveit_ros_move_group</run_depend>
+  <run_depend>moveit_ros_planning_interface</run_depend>
+	<run_depend>tf</run_depend>
 
 
   <export>

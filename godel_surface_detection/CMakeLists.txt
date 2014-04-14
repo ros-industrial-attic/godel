@@ -9,6 +9,9 @@ find_package(catkin REQUIRED COMPONENTS
   sensor_msgs
   interactive_markers
   octomap_ros
+	moveit_ros_move_group
+  moveit_ros_planning_interface
+	tf
 )
 find_package(PCL 1.7 REQUIRED COMPONENTS common io)
 find_package(Boost REQUIRED COMPONENTS system)
@@ -94,6 +97,7 @@ include_directories(${godel_surface_detection_INCLUDE_DIRECTORIES})
 ## Declare a cpp library
 add_library(${PROJECT_NAME} 
 	src/detection/surface_detection.cpp
+  src/scan/robot_scan.cpp
 	src/interactive/interactive_surface_server.cpp )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${PCL_COMMON_LIBRARIES})
 
