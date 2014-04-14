@@ -2,13 +2,13 @@ surface_detection:
   frame_id: world_frame
   stout_mean: 50
   stout_stdev_threshold: 1
-  k_search: 10
+  k_search: 20
   rg_min_cluster_size: 300
   rg_max_cluster_size: 10000
   rg_neighbors: 40
   rg_smoothness_threshold: 0.11
   rg_curvature_threshold: 1.0
-  tr_search_radius: 0.02
+  tr_search_radius: 0.03
   tr_mu: 2.5
   tr_nearest_neighbors: 100
   tr_max_surface_angle: 0.785
