@@ -20,27 +20,34 @@ static const std::string DISPLAY_TRAJECTORY_TOPIC = "scan_trajectory";
 int main(int argc,char** argv)
 {
 	ros::init(argc,argv,"robot_scan_node");
+	ros::AsyncSpinner spinner(2);
+	spinner.start();
 	ros::NodeHandle nh;
 
 	// publishers
-	ros::Publisher traj_pub = nh.advertise<moveit_msgs::DisplayTrajectory>(DISPLAY_TRAJECTORY_TOPIC,1,true);
+	ros::Publisher traj_pub = nh.advertise<geometry_msgs::PoseArray>(DISPLAY_TRAJECTORY_TOPIC,1,true);
 
 	godel_surface_detection::scan::RobotScan robot_scan;
-	if(robot_scan.load_parameters("~") && robot_scan.init())
+	if(robot_scan.load_parameters("~/robot_scan") && robot_scan.init())
 	{
-		moveit_msgs::DisplayTrajectory display_msg;
-		if(robot_scan.get_display_trajectory(display_msg))
+		geometry_msgs::PoseArray poses_msg;
+		robot_scan.get_scan_pose_array(poses_msg);
+		ros::Duration loop_duration(0.5f);
+		int counter = 0;
+		while(ros::ok() && counter < poses_msg.poses.size())
 		{
-			ros::Duration loop_duration(0.5f);
-			while(ros::ok())
+			traj_pub.publish(poses_msg);
+			loop_duration.sleep();
+			if(robot_scan.move_to_pose(poses_msg.poses[counter]))
 			{
-				traj_pub.publish(display_msg);
-				loop_duration.sleep();
+				ROS_INFO_STREAM("Move to pose "<<counter<<" succeeded");
+				counter++;
 			}
-		}
-		else
-		{
-			ROS_ERROR_STREAM("Failed to create scan trajectory");
+			else
+			{
+				ROS_ERROR_STREAM("Move to pose "<<counter<<" failed");
+				break;
+			}
 		}
 	}
 	else

@@ -1,17 +1,29 @@
 /*
- * robot_scan.h
- *
- *  Created on: Apr 14, 2014
- *      Author: ros developer 
- */
+	Copyright Apr 14, 2014 Southwest Research Institute
+
+	Licensed under the Apache License, Version 2.0 (the "License");
+	you may not use this file except in compliance with the License.
+	You may obtain a copy of the License at
+
+		http://www.apache.org/licenses/LICENSE-2.0
+
+	Unless required by applicable law or agreed to in writing, software
+	distributed under the License is distributed on an "AS IS" BASIS,
+	WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+	See the License for the specific language governing permissions and
+	limitations under the License.
+*/
+
 #include <ros/ros.h>
 #include <moveit/move_group_interface/move_group.h>
+#include <moveit_msgs/DisplayTrajectory.h>
 #include <boost/function.hpp>
 #include <tf/transform_listener.h>
 #include <tf/transform_datatypes.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <sensor_msgs/PointCloud2.h>
+#include <geometry_msgs/PoseArray.h>
 
 #ifndef ROBOT_SCAN_H_
 #define ROBOT_SCAN_H_
@@ -26,6 +38,7 @@ class RobotScan {
 public:
 
 	static const double PLANNING_TIME;
+	static const double WAIT_MSG_DURATION;
 
 public:
 	typedef boost::function<bool (pcl::PointCloud<pcl::PointXYZ> &cloud)> ScanCallback;
@@ -36,6 +49,9 @@ public:
 	bool init();
 	bool load_parameters(std::string ns="~");
 	void add_scan_callback(ScanCallback cb);
+	bool get_display_trajectory(moveit_msgs::DisplayTrajectory& traj_data);
+	void get_scan_pose_array(geometry_msgs::PoseArray& poses);
+	bool move_to_pose(geometry_msgs::Pose& target_pose);
 	bool scan();
 
 protected:
@@ -43,7 +59,7 @@ protected:
 	bool parse_pose_parameter(XmlRpc::XmlRpcValue pose_param,tf::Transform &t);
 
 	// generates circular trajectory above target object
-	bool create_scan_trajectory(std::vector<geometry_msgs::Pose> &traj);
+	bool create_scan_trajectory(std::vector<geometry_msgs::Pose> &traj,moveit_msgs::RobotTrajectory& robot_traj);
 
 protected:
 
@@ -68,7 +84,7 @@ public:// parameters
 	tf::Transform world_to_obj_pose_;
 	double cam_to_obj_zoffset_;
 	double cam_to_obj_xoffset_;
-	double cam_tilt_angle_; // rotation relative to object's x axis (radians)
+	double cam_tilt_angle_; // rotation about relative object's y axis (radians)
 	double sweep_angle_start_;
 	double sweep_angle_end_;
 	int num_scan_points_;
