@@ -1,0 +1,26 @@
+robot_scan:
+  group_name: manipulator
+  world_frame: world_frame
+  tcp_frame: tcp
+  tcp_to_cam_pose:
+    x: 0.0
+    y: 0.0
+    z: 0.0
+    rx: 0.0
+    ry: 0.0
+    rz: 0.0
+  world_to_obj_pose:
+    x: 0.9
+    y: -0.1
+    z: 0.04
+    rx: 0.0
+    ry: 0.0
+    rz: 0.0
+  cam_to_obj_zoffset: 0.4
+  cam_to_obj_xoffset: 0.1
+  cam_tilt_angle: -1.57
+  sweep_angle_start: 1.57
+  sweep_angle_end: 4.71
+  scan_topic: point_cloud
+  scan_target_frame: world_frame
+  num_scan_points: 20
