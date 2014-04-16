@@ -8,19 +8,21 @@ robot_scan:
     z: 0.0
     rx: 0.0
     ry: 0.0
-    rz: 0.0
+    rz: -1.57
   world_to_obj_pose:
-    x: 0.9
-    y: -0.1
+    x: 1.2
+    y: 0.0
     z: 0.04
     rx: 0.0
     ry: 0.0
     rz: 0.0
   cam_to_obj_zoffset: 0.4
-  cam_to_obj_xoffset: 0.1
-  cam_tilt_angle: -1.57
-  sweep_angle_start: 1.57
-  sweep_angle_end: 4.71
+  cam_to_obj_xoffset: 0.25
+  cam_tilt_angle: -2.355
+  sweep_angle_start: 2.355
+  sweep_angle_end: 3.925
   scan_topic: point_cloud
   scan_target_frame: world_frame
+  reachable_scan_points_ratio: 1.0
+  stop_on_planning_error: false
   num_scan_points: 20
