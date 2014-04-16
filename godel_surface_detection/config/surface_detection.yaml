@@ -1,7 +1,7 @@
 surface_detection:
   frame_id: world_frame
   stout_mean: 50
-  stout_stdev_threshold: 1
+  stout_stdev_threshold: 1.0
   k_search: 20
   rg_min_cluster_size: 300
   rg_max_cluster_size: 10000
@@ -23,4 +23,4 @@ surface_detection:
   use_tabletop_segmentation: false
   tabletop_seg_distance_thresh: 0.01
   marker_alpha: 0.6
-  ignore_largest_cluster: False
+  ignore_largest_cluster: false
