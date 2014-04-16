@@ -49,24 +49,25 @@ public:
 	bool init();
 	bool load_parameters(std::string ns="~");
 	void add_scan_callback(ScanCallback cb);
-	bool get_display_trajectory(moveit_msgs::DisplayTrajectory& traj_data);
-	void get_scan_pose_array(geometry_msgs::PoseArray& poses);
+	bool get_scan_trajectory(moveit_msgs::DisplayTrajectory& traj_data);
+	void get_scan_poses(geometry_msgs::PoseArray& poses);
+	MoveGroupPtr get_move_group();
 	bool move_to_pose(geometry_msgs::Pose& target_pose);
-	bool scan();
+	int scan(bool move_only = false);
 
 protected:
 
 	bool parse_pose_parameter(XmlRpc::XmlRpcValue pose_param,tf::Transform &t);
 
 	// generates circular trajectory above target object
-	bool create_scan_trajectory(std::vector<geometry_msgs::Pose> &traj,moveit_msgs::RobotTrajectory& robot_traj);
+	bool create_scan_trajectory(std::vector<geometry_msgs::Pose> &scan_poses,moveit_msgs::RobotTrajectory& scan_traj);
 
 protected:
 
 	// moveit
 	MoveGroupPtr move_group_ptr_;
 	TransformListenerPtr tf_listener_ptr_;
-	std::vector<geometry_msgs::Pose> scan_traj_points_;
+	std::vector<geometry_msgs::Pose> scan_traj_poses_;
 
 	// scan
 	std::vector<ScanCallback> callback_list_;
@@ -88,7 +89,9 @@ public:// parameters
 	double sweep_angle_start_;
 	double sweep_angle_end_;
 	int num_scan_points_;
+	double reachable_scan_points_ratio_;
 	std::string scan_topic_;
+	bool stop_on_planning_error_;
 
 	// scan transformation
 	std::string scan_target_frame_;

@@ -42,7 +42,9 @@ RobotScan::RobotScan():
 	sweep_angle_end_(2*M_PI),
 	scan_topic_("point_cloud"),
 	scan_target_frame_("world_frame"),
-	num_scan_points_(20)
+	reachable_scan_points_ratio_(0.5f),
+	num_scan_points_(20),
+	stop_on_planning_error_(true)
 		{
 	// TODO Auto-generated constructor stub
 
@@ -59,7 +61,7 @@ bool RobotScan::init()
 	move_group_ptr_->setPoseReferenceFrame(world_frame_);
 	move_group_ptr_->setPlanningTime(PLANNING_TIME);
 	tf_listener_ptr_ = TransformListenerPtr(new tf::TransformListener());
-	scan_traj_points_.clear();
+	scan_traj_poses_.clear();
 	callback_list_.clear();
 	return true;
 }
@@ -83,7 +85,9 @@ bool RobotScan::load_parameters(std::string ns)
 			nh.getParam("sweep_angle_end",sweep_angle_end_) &&
 			nh.getParam("scan_topic",scan_topic_) &&
 			nh.getParam("num_scan_points",num_scan_points_) &&
-			nh.getParam("scan_target_frame",scan_target_frame_);
+			nh.getParam("reachable_scan_points_ratio",reachable_scan_points_ratio_) &&
+			nh.getParam("scan_target_frame",scan_target_frame_) &&
+			nh.getParam("stop_on_planning_error",stop_on_planning_error_);
 
 	// parsing poses
 	succeeded = succeeded && parse_pose_parameter(tcp_to_cam_param,tcp_to_cam_pose_) &&
@@ -97,13 +101,13 @@ void RobotScan::add_scan_callback(ScanCallback cb)
 	callback_list_.push_back(cb);
 }
 
-bool RobotScan::get_display_trajectory(moveit_msgs::DisplayTrajectory &traj_data)
+bool RobotScan::get_scan_trajectory(moveit_msgs::DisplayTrajectory &traj_data)
 {
 	// create trajectory
-	scan_traj_points_.clear();
+	scan_traj_poses_.clear();
 	bool succeeded = true;
 	moveit_msgs::RobotTrajectory robot_traj;
-	if(create_scan_trajectory(scan_traj_points_,robot_traj))
+	if(create_scan_trajectory(scan_traj_poses_,robot_traj))
 	{
 		traj_data.trajectory.push_back(robot_traj);
 	}
@@ -114,33 +118,58 @@ bool RobotScan::get_display_trajectory(moveit_msgs::DisplayTrajectory &traj_data
 	return succeeded;
 }
 
-void RobotScan::get_scan_pose_array(geometry_msgs::PoseArray& poses)
+void RobotScan::get_scan_poses(geometry_msgs::PoseArray& poses)
 {
 	// create trajectory
-	scan_traj_points_.clear();
+	scan_traj_poses_.clear();
 	bool succeeded = true;
 	moveit_msgs::RobotTrajectory robot_traj;
-	create_scan_trajectory(scan_traj_points_,robot_traj);
-	for(std::vector<geometry_msgs::Pose>::iterator i = scan_traj_points_.begin();
-			i != scan_traj_points_.end(); i++)
+	create_scan_trajectory(scan_traj_poses_,robot_traj);
+	for(std::vector<geometry_msgs::Pose>::iterator i = scan_traj_poses_.begin();
+			i != scan_traj_poses_.end(); i++)
 	{
 		poses.poses.push_back(*i);
 	}
 	poses.header.frame_id = world_frame_;
 }
 
-bool RobotScan::scan()
+bool RobotScan::move_to_pose(geometry_msgs::Pose& target_pose)
+{
+	move_group_ptr_->setPoseTarget(target_pose,tcp_frame_);
+	return move_group_ptr_->move();
+}
+
+int RobotScan::scan(bool move_only)
 {
 	// create trajectory
-	scan_traj_points_.clear();
-	bool succeeded = true;
+	scan_traj_poses_.clear();
+	int poses_reached = 0;
 	moveit_msgs::RobotTrajectory robot_traj;
-	if(create_scan_trajectory(scan_traj_points_,robot_traj))
+	if(create_scan_trajectory(scan_traj_poses_,robot_traj))
 	{
-		for(int i = 0;i < scan_traj_points_.size();i++)
+		for(int i = 0;i < scan_traj_poses_.size();i++)
 		{
-			move_group_ptr_->setPoseTarget(scan_traj_points_[i],tcp_frame_);
+			move_group_ptr_->setPoseTarget(scan_traj_poses_[i],tcp_frame_);
+
 			if(move_group_ptr_->move())
+			{
+				poses_reached++;
+			}
+			else
+			{
+				if(stop_on_planning_error_)
+				{
+					ROS_ERROR_STREAM("Planning error encountered, quitting scan");
+					break;
+				}
+				else
+				{
+					ROS_WARN_STREAM("Move to scan position "<<i <<" failed, skipping scan");
+					continue;
+				}
+			}
+
+			if(!move_only)
 			{
 				// get message
 				sensor_msgs::PointCloud2ConstPtr msg = ros::topic::waitForMessage<sensor_msgs::PointCloud2>(scan_topic_,ros::Duration(WAIT_MSG_DURATION));
@@ -182,23 +211,22 @@ bool RobotScan::scan()
 
 				}
 			}
+			else
+			{
+				ROS_WARN_STREAM("MOVE_ONLY mode, skipping scan");
+			}
 		}
 	}
-	else
-	{
-		succeeded = false;
-	}
 
-	return succeeded;
+	return poses_reached;
 }
 
-bool RobotScan::move_to_pose(geometry_msgs::Pose& target_pose)
+MoveGroupPtr RobotScan::get_move_group()
 {
-	move_group_ptr_->setPoseTarget(target_pose,tcp_frame_);
-	return move_group_ptr_->move();
+	return move_group_ptr_;
 }
 
-bool RobotScan::create_scan_trajectory(std::vector<geometry_msgs::Pose> &traj,moveit_msgs::RobotTrajectory& robot_traj)
+bool RobotScan::create_scan_trajectory(std::vector<geometry_msgs::Pose> &scan_poses,moveit_msgs::RobotTrajectory& scan_traj)
 {
 	// creating poses
 	tf::Transform world_to_tcp = tf::Transform::getIdentity();
@@ -207,8 +235,8 @@ bool RobotScan::create_scan_trajectory(std::vector<geometry_msgs::Pose> &traj,mo
 	geometry_msgs::Pose pose;
 	double alpha;
 	double alpha_incr = (sweep_angle_end_ - sweep_angle_start_)/(num_scan_points_ -1);
-	double eef_step = 2*alpha_incr*cam_to_obj_xoffset_;
-	double jump_threshold = eef_step;
+	double eef_step = 4*alpha_incr*cam_to_obj_xoffset_;
+	double jump_threshold = 0.0f; //num_scan_points_ * eef_step;
 
 
 	// relative transforms
@@ -223,19 +251,19 @@ bool RobotScan::create_scan_trajectory(std::vector<geometry_msgs::Pose> &traj,mo
 		obj_to_cam_pose = zoffset_disp * rot_alpha_about_z*xoffset_disp*rot_tilt_about_y;
 		world_to_tcp = world_to_obj_pose_ * obj_to_cam_pose * tcp_to_cam_pose_.inverse();
 		tf::poseTFToMsg(world_to_tcp,pose);
-		traj.push_back(pose);
+		scan_poses.push_back(pose);
 	}
 
 	ROS_INFO_STREAM("Computing cartesian path for a trajectory with "<<num_scan_points_<<" points");
-	double res = move_group_ptr_->computeCartesianPath(traj,eef_step,jump_threshold,robot_traj,true);
-	double success = res == 1.0d;
+	double res = move_group_ptr_->computeCartesianPath(scan_poses,eef_step,jump_threshold,scan_traj,true);
+	double success = res >= reachable_scan_points_ratio_;
 	if(success)
 	{
-		ROS_INFO_STREAM("All points in the scan trajectory are reachable");
+		ROS_INFO_STREAM("Reachable scan poses percentage "<<res<<" is at or above the acceptance threshold of "<<reachable_scan_points_ratio_);
 	}
 	else
 	{
-		ROS_WARN_STREAM("Only "<<res*100.0d<<"% of the points in the scan trajectory are reachable");
+		ROS_WARN_STREAM("Reachable scan poses percentage "<<res<<" is below the acceptance threshold of "<<reachable_scan_points_ratio_);
 	}
 
 	return success;
@@ -269,7 +297,7 @@ bool RobotScan::parse_pose_parameter(XmlRpc::XmlRpcValue pose_param,tf::Transfor
 
 	tf::Vector3 pos = tf::Vector3(fields_map["x"],fields_map["y"],fields_map["z"]);
 	tf::Quaternion q;
-	q.setEuler(fields_map["rz"],fields_map["ry"],fields_map["rx"]);
+	q.setEuler(fields_map["ry"],fields_map["rx"],fields_map["rz"]);
 	t.setOrigin(pos);
 	t.setRotation(q);
 
