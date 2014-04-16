@@ -17,6 +17,7 @@
 #include <godel_surface_detection/scan/robot_scan.h>
 
 static const std::string DISPLAY_TRAJECTORY_TOPIC = "scan_trajectory";
+static const std::string HOME_POSITION = "home";
 int main(int argc,char** argv)
 {
 	ros::init(argc,argv,"robot_scan_node");
@@ -27,33 +28,44 @@ int main(int argc,char** argv)
 	// publishers
 	ros::Publisher traj_pub = nh.advertise<geometry_msgs::PoseArray>(DISPLAY_TRAJECTORY_TOPIC,1,true);
 
+	// robot scan
 	godel_surface_detection::scan::RobotScan robot_scan;
-	if(robot_scan.load_parameters("~/robot_scan") && robot_scan.init())
+
+	// initializing and moving to home position
+	if(robot_scan.load_parameters("~/robot_scan") && robot_scan.init() )
 	{
+		robot_scan.get_move_group()->setNamedTarget(HOME_POSITION);
+		if(!robot_scan.get_move_group()->move())
+		{
+			ROS_ERROR_STREAM("Robot failed to move home");
+			return 0;
+		}
+
+
 		geometry_msgs::PoseArray poses_msg;
-		robot_scan.get_scan_pose_array(poses_msg);
+		robot_scan.get_scan_poses(poses_msg);
 		ros::Duration loop_duration(0.5f);
 		int counter = 0;
-		while(ros::ok() && counter < poses_msg.poses.size())
+
+		// moving through each pose (do not scan)
+		int reached_points = robot_scan.scan(true);
+
+		ROS_INFO_STREAM("Scan points reached: "<<reached_points);
+
+		robot_scan.get_move_group()->setNamedTarget(HOME_POSITION);
+		if(!robot_scan.get_move_group()->move())
 		{
-			traj_pub.publish(poses_msg);
-			loop_duration.sleep();
-			if(robot_scan.move_to_pose(poses_msg.poses[counter]))
-			{
-				ROS_INFO_STREAM("Move to pose "<<counter<<" succeeded");
-				counter++;
-			}
-			else
-			{
-				ROS_ERROR_STREAM("Move to pose "<<counter<<" failed");
-				break;
-			}
+			ROS_ERROR_STREAM("Robot failed to move home");
+			return 0;
 		}
+
 	}
 	else
 	{
 		ROS_ERROR_STREAM("Robot scan object did not initialized property");
 	}
+
+	spinner.stop();
 
 
 	return 0;
