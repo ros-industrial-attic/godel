@@ -83,8 +83,6 @@ namespace config
 
 namespace params
 {
-	static const std::string PARAMETER_NS = "surface_detection";
-
 	static const std::string FRAME_ID = "frame_id";
 	static const std::string USE_OCTOMAP = "use_octomap";
 
@@ -92,7 +90,7 @@ namespace params
 	static const std::string STOUTLIER_STDEV_THRESHOLD = "stout_stdev_threshold";
 	static const std::string K_SEARCH = "k_search";
 
-	static const std::string REGION_GROWING_MIN_CLUSTER_SIZE="trainingrg_min_cluster_size";
+	static const std::string REGION_GROWING_MIN_CLUSTER_SIZE="rg_min_cluster_size";
 	static const std::string REGION_GROWING_MAX_CLUSTER_SIZE="rg_max_cluster_size";
 	static const std::string REGION_GROWING_NEIGHBORS="rg_neighbors";
 	static const std::string REGION_GROWING_SMOOTHNESS_THRESHOLD="rg_smoothness_threshold";
@@ -131,7 +129,8 @@ public:
 
 public:
 
-	bool init(std::string node_ns = "");
+	bool init();
+	bool load_parameters(std::string node_ns = "");
 	bool find_surfaces();
 	std::string get_results_summary();
 

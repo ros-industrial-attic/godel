@@ -42,49 +42,6 @@ godel_surface_detection::detection::SurfaceDetection SurfDetect;
 // marker server instance
 godel_surface_detection::interactive::InteractiveSurfaceServer SurfServer;
 
-// functions
-bool load_parameters(std::string node_ns = "")
-{
-	ros::NodeHandle nh(node_ns.empty() ? "~" : node_ns);
-	bool succeeded;
-	const std::string ns = params::PARAMETER_NS + "/";
-	if(		nh.getParam(ns + params::FRAME_ID,SurfDetect.frame_id_)&&
-			nh.getParam(ns + params::STOUTLIER_MEAN,SurfDetect.meanK_) &&
-			nh.getParam(ns + params::STOUTLIER_STDEV_THRESHOLD,SurfDetect.stdv_threshold_) &&
-			nh.getParam(ns + params::REGION_GROWING_MIN_CLUSTER_SIZE,SurfDetect.rg_min_cluster_size_) &&
-			nh.getParam(ns + params::REGION_GROWING_MAX_CLUSTER_SIZE,SurfDetect.rg_max_cluster_size_) &&
-			nh.getParam(ns + params::REGION_GROWING_NEIGHBORS,SurfDetect.rg_neightbors_) &&
-			nh.getParam(ns + params::REGION_GROWING_SMOOTHNESS_THRESHOLD,SurfDetect.rg_smoothness_threshold_) &&
-			nh.getParam(ns + params::REGION_GROWING_CURVATURE_THRESHOLD,SurfDetect.rg_curvature_threshold_) &&
-			nh.getParam(ns + params::TRIANGULATION_SEARCH_RADIUS,SurfDetect.tr_search_radius_) &&
-			nh.getParam(ns + params::TRIANGULATION_MU ,SurfDetect.tr_mu_) &&
-			nh.getParam(ns + params::TRIANGULATION_MAX_NEAREST_NEIGHBORS,SurfDetect.tr_max_nearest_neighbors_) &&
-			nh.getParam(ns + params::TRIANGULATION_MAX_SURFACE_ANGLE,SurfDetect.tr_max_surface_angle_) &&
-			nh.getParam(ns + params::TRIANGULATION_MIN_ANGLE,SurfDetect.tr_min_angle_) &&
-			nh.getParam(ns + params::TRIANGULATION_MAX_ANGLE,SurfDetect.tr_max_angle_) &&
-			nh.getParam(ns + params::TRIANGULATION_NORMAL_CONSISTENCY,SurfDetect.tr_normal_consistency_) &&
-			nh.getParam(ns + params::VOXEL_LEAF_SIZE,SurfDetect.voxel_leafsize_) &&
-			nh.getParam(ns + params::OCCUPANCY_THRESHOLD,SurfDetect.occupancy_threshold_) &&
-			nh.getParam(ns + params::MLS_UPSAMPLING_RADIUS,SurfDetect.mls_upsampling_radius_) &&
-			nh.getParam(ns + params::MLS_POINT_DENSITY,SurfDetect.mls_point_density_) &&
-			nh.getParam(ns + params::MLS_SEARCH_RADIUS,SurfDetect.mls_search_radius_) &&
-			nh.getParam(ns + params::USE_TABLETOP_SEGMENTATION,SurfDetect.use_tabletop_seg_) &&
-			nh.getParam(ns + params::TABLETOP_SEG_DISTANCE_THRESH,SurfDetect.tabletop_seg_distance_threshold_) &&
-			nh.getParam(ns + params::MARKER_ALPHA,SurfDetect.marker_alpha_) &&
-			nh.getParam(ns + params::IGNORE_LARGEST_CLUSTER,SurfDetect.ignore_largest_cluster_)
-			)
-	{
-		succeeded = true;
-		ROS_INFO_STREAM("surface detection parameters loaded");
-	}
-	else
-	{
-		succeeded = false;
-		ROS_ERROR_STREAM("surface detection parameter(s) not found");
-	}
-
-	return succeeded;
-}
 
 void point_cloud_subscriber(const sensor_msgs::PointCloud2ConstPtr msg)
 {
@@ -167,7 +124,7 @@ int main(int argc,char** argv)
 
 
 	// load paramters
-	if(!load_parameters() || !SurfDetect.init() || !SurfServer.init())
+	if(!SurfDetect.load_parameters("~/surface_detection/") || !SurfDetect.init())
 	{
 		ROS_ERROR_STREAM("Initialization failed");
 		return 0;
