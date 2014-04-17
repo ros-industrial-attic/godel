@@ -15,48 +15,166 @@
 */
 
 #include <godel_surface_detection/scan/robot_scan.h>
+#include <godel_surface_detection/detection/surface_detection.h>
+#include <godel_surface_detection/interactive/interactive_surface_server.h>
+#include <pcl/console/parse.h>
 
-static const std::string DISPLAY_TRAJECTORY_TOPIC = "scan_trajectory";
-static const std::string HOME_POSITION = "home";
+using namespace godel_surface_detection;
+
+// constants
+const std::string HELP_TEXT = "\n-h Help information\n-m <move mode only (0|1)>\n";
+const std::string SEGMENTS_CLOUD_TOPIC = "segments_cloud";
+const std::string DISPLAY_TRAJECTORY_TOPIC = "scan_trajectory";
+const std::string HOME_POSITION = "home";
+
+// robot scan instance
+godel_surface_detection::scan::RobotScan RobotScan;
+
+// surface detection instance
+godel_surface_detection::detection::SurfaceDetection SurfDetect;
+
+// marker server instance
+godel_surface_detection::interactive::InteractiveSurfaceServer SurfServer;
+
+// defaults
+const bool DEFAULT_MOVE_ONLY_MODE = true;
+
+struct CmdArgs
+{
+	bool move_mode_only_;
+};
+
+// functions
+
+bool parse_arguments(int argc,char** argv,CmdArgs& args)
+{
+	//filling defaults
+	args.move_mode_only_ = true;
+
+	if(argc > 1)
+	{
+		if(pcl::console::find_switch(argc,argv,"-h"))
+		{
+			ROS_INFO_STREAM(HELP_TEXT);
+			return false;
+		}
+
+		if(pcl::console::find_switch(argc,argv,"-m") && pcl::console::parse(argc,argv,"-m",args.move_mode_only_)>=0)
+		{
+			ROS_INFO_STREAM("arg 'move mode only (-m)': "<<(args.move_mode_only_ ? "true" : "false"));
+		}
+
+	}
+
+	return true;
+}
+
+bool init()
+{
+	// load parameters for all objects
+	bool succeeded = SurfDetect.load_parameters("~/surface_detection") && SurfServer.load_parameters("")
+			&& RobotScan.load_parameters("~/robot_scan");
+
+	if(succeeded)
+	{
+		ROS_INFO_STREAM("Parameters loaded");
+
+		if(SurfDetect.init() && SurfServer.init() && RobotScan.init())
+		{
+			// starting server
+			SurfServer.run();
+
+			// adding callbacks to robot scan
+			scan::RobotScan::ScanCallback cb = boost::bind(&detection::SurfaceDetection::add_cloud,&SurfDetect,_1);
+			RobotScan.add_scan_callback(cb);
+		}
+
+	}
+	else
+	{
+		ROS_ERROR_STREAM("Parameters did not load");
+	}
+
+	return succeeded;
+}
+
+
 int main(int argc,char** argv)
 {
-	ros::init(argc,argv,"robot_scan_node");
+	ros::init(argc,argv,"RobotScan_node");
 	ros::AsyncSpinner spinner(2);
 	spinner.start();
 	ros::NodeHandle nh;
 
 	// publishers
 	ros::Publisher traj_pub = nh.advertise<geometry_msgs::PoseArray>(DISPLAY_TRAJECTORY_TOPIC,1,true);
+	ros::Publisher point_cloud_publisher = nh.advertise<sensor_msgs::PointCloud2>(
+			SEGMENTS_CLOUD_TOPIC,1);
 
-	// robot scan
-	godel_surface_detection::scan::RobotScan robot_scan;
-
-	// initializing and moving to home position
-	if(robot_scan.load_parameters("~/robot_scan") && robot_scan.init() )
+	// parsing arguments
+	CmdArgs args;
+	if(!parse_arguments(argc,argv,args))
 	{
-		robot_scan.get_move_group()->setNamedTarget(HOME_POSITION);
-		if(!robot_scan.get_move_group()->move())
+		return 0;
+	}
+
+	// initializing all objects
+	if(init())
+	{
+
+		// moving to home position
+		RobotScan.get_move_group()->setNamedTarget(HOME_POSITION);
+		if(!RobotScan.get_move_group()->move())
 		{
 			ROS_ERROR_STREAM("Robot failed to move home");
 			return 0;
 		}
 
-
+		// publish poses
 		geometry_msgs::PoseArray poses_msg;
-		robot_scan.get_scan_poses(poses_msg);
-		ros::Duration loop_duration(0.5f);
-		int counter = 0;
+		RobotScan.get_scan_poses(poses_msg);
+		traj_pub.publish(poses_msg);
 
 		// moving through each pose (do not scan)
-		int reached_points = robot_scan.scan(true);
+		int reached_points = RobotScan.scan(args.move_mode_only_);
 
 		ROS_INFO_STREAM("Scan points reached: "<<reached_points);
 
-		robot_scan.get_move_group()->setNamedTarget(HOME_POSITION);
-		if(!robot_scan.get_move_group()->move())
+		// moving back to home position
+		RobotScan.get_move_group()->setNamedTarget(HOME_POSITION);
+		if(!RobotScan.get_move_group()->move())
 		{
 			ROS_ERROR_STREAM("Robot failed to move home");
 			return 0;
+		}
+
+		// finding surfaces
+		if(SurfDetect.find_surfaces())
+		{
+			ROS_INFO_STREAM("Publishing segments visuals");
+			sensor_msgs::PointCloud2 cloud_msg;
+			visualization_msgs::MarkerArray markers_msg = SurfDetect.get_surface_markers();
+			SurfDetect.get_region_colored_cloud(cloud_msg);
+
+			// adding markers to server
+			for(int i =0;i < markers_msg.markers.size();i++)
+			{
+				SurfServer.add_surface(markers_msg.markers[i]);
+			}
+
+			ros::Duration loop_rate(0.5f);
+			while(ros::ok() )
+			{
+				point_cloud_publisher.publish(cloud_msg);
+				ros::spinOnce();
+				loop_rate.sleep();
+			}
+
+			point_cloud_publisher.shutdown();
+		}
+		else
+		{
+			ROS_WARN_STREAM("No surfaces were found, exiting");
 		}
 
 	}
