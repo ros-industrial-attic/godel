@@ -41,7 +41,7 @@ public:
 	static const double WAIT_MSG_DURATION;
 
 public:
-	typedef boost::function<bool (pcl::PointCloud<pcl::PointXYZ> &cloud)> ScanCallback;
+	typedef boost::function<void (pcl::PointCloud<pcl::PointXYZ> &cloud)> ScanCallback;
 public:
 	RobotScan();
 	virtual ~RobotScan();
