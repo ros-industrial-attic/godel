@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <robot name="sia20d_workspace" xmlns:xacro="http://ros.org/wiki/xacro">
-	<xacro:include filename="$(find motoman_config)/cfg/sia20d_mesh_macro.xacro"/>
+	<xacro:include filename="$(find motoman_sia20d_support)/urdf/sia20d_macro.xacro"/>
 	<xacro:include filename="$(find godel_robot_config)/urdf/workspace_components.xacro"/>
 	<xacro:include filename="$(find godel_robot_config)/urdf/kinect_sensor_macro.xacro"/>
 
@@ -32,7 +32,7 @@
 	<!-- end of sensor definitions -->
 
 	<!-- instantiating arm  -->	
-	<xacro:sia20d_mesh prefix="${arm_prefix}"/>
+	<xacro:motoman_sia20d prefix="${arm_prefix}"/>
 
 	<!-- start of arm-workcell joint definitions -->
 	<joint name="world_to_base" type="fixed">
@@ -48,17 +48,6 @@
 	</joint>
 		
 
-	<!-- end of arm-workcell joint definitions -->
-  
-	<!-- start of wrist to tcp coupling -->
-	<link name="${arm_prefix}tcp"/>
-	<joint name="${arm_prefix}wrist_to_tcp" type="fixed">
-		<parent link="${arm_prefix}link_t"/>
-		<child link="${arm_prefix}tcp"/>
-		<origin xyz="0 0 0" rpy="0 0 0"/>
-	</joint>
-	
-	<!-- end of wrist to tcp coupling -->
-	
+	<!-- end of arm-workcell joint definitions -->	
 
 </robot>
