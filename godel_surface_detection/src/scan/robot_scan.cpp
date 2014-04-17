@@ -210,6 +210,10 @@ int RobotScan::scan(bool move_only)
 					}
 
 				}
+				else
+				{
+					ROS_ERROR_STREAM("Cloud message not received");
+				}
 			}
 			else
 			{
@@ -236,7 +240,7 @@ bool RobotScan::create_scan_trajectory(std::vector<geometry_msgs::Pose> &scan_po
 	double alpha;
 	double alpha_incr = (sweep_angle_end_ - sweep_angle_start_)/(num_scan_points_ -1);
 	double eef_step = 4*alpha_incr*cam_to_obj_xoffset_;
-	double jump_threshold = 0.0f; //num_scan_points_ * eef_step;
+	double jump_threshold = 0.0f;
 
 
 	// relative transforms
