@@ -43,11 +43,11 @@ InteractiveSurfaceServer::~InteractiveSurfaceServer() {
 }
 
 
-bool InteractiveSurfaceServer::init(std::string node_ns)
+bool InteractiveSurfaceServer::init()
 {
 
 	srand(time(NULL));
-	return load_parameters(node_ns);
+	return true;
 }
 
 void InteractiveSurfaceServer::run()
