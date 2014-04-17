@@ -6,9 +6,11 @@ Panels:
       Expanded:
         - /PoseArray1
         - /RobotModel1
+        - /RobotModel1/Links1
         - /RobotModel1/Links1/kinect_frame1
         - /RobotModel1/Links1/kinect_link1
-        - /RobotModel1/Links1/tcp1
+        - /RobotModel1/Links1/link_t1
+        - /RobotModel1/Links1/tool01
         - /TF1
         - /TF1/Tree1
       Splitter Ratio: 0.74256
@@ -165,7 +167,7 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        tcp:
+        tool0:
           Alpha: 1
           Show Axes: true
           Show Trail: false
@@ -208,17 +210,17 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 3.13278
+      Distance: 2.044
       Focal Point:
         X: 0.573071
         Y: 0.0085656
         Z: 3.29872e-07
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.310204
+      Pitch: 0.230204
       Target Frame: world_frame
       Value: XYOrbit (rviz)
-      Yaw: 1.39178
+      Yaw: 0.481782
     Saved: ~
 Window Geometry:
   Displays:
