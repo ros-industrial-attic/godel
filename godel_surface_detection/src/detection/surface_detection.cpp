@@ -289,6 +289,11 @@ void SurfaceDetection::get_region_colored_cloud(sensor_msgs::PointCloud2 &cloud_
 
 bool SurfaceDetection::find_surfaces()
 {
+	if(full_cloud_ptr_->empty())
+	{
+		return false;
+	}
+
 	// process acquired sensor data
 	process_octree();
 
