@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>378</width>
-    <height>440</height>
+    <height>529</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -28,7 +28,7 @@
      <x>0</x>
      <y>10</y>
      <width>371</width>
-     <height>421</height>
+     <height>511</height>
     </rect>
    </property>
    <property name="currentIndex">
@@ -231,7 +231,7 @@ Library</string>
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>280</y>
+       <y>360</y>
        <width>51</width>
        <height>27</height>
       </rect>
@@ -244,7 +244,7 @@ Library</string>
      <property name="geometry">
       <rect>
        <x>310</x>
-       <y>280</y>
+       <y>360</y>
        <width>51</width>
        <height>27</height>
       </rect>
@@ -257,7 +257,7 @@ Library</string>
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>320</y>
+       <y>400</y>
        <width>341</width>
        <height>61</height>
       </rect>
@@ -337,7 +337,7 @@ p, li { white-space: pre-wrap; }
        <x>10</x>
        <y>90</y>
        <width>351</width>
-       <height>191</height>
+       <height>261</height>
       </rect>
      </property>
      <property name="currentIndex">
@@ -345,15 +345,15 @@ p, li { white-space: pre-wrap; }
      </property>
      <widget class="QWidget" name="tab_1">
       <attribute name="title">
-       <string>Acquire</string>
+       <string>Scan</string>
       </attribute>
       <widget class="QGroupBox" name="groupBox">
        <property name="geometry">
         <rect>
-         <x>10</x>
+         <x>0</x>
          <y>10</y>
-         <width>331</width>
-         <height>141</height>
+         <width>341</width>
+         <height>211</height>
         </rect>
        </property>
        <property name="title">
@@ -365,7 +365,7 @@ p, li { white-space: pre-wrap; }
           <x>0</x>
           <y>40</y>
           <width>234</width>
-          <height>71</height>
+          <height>131</height>
          </rect>
         </property>
         <layout class="QFormLayout" name="formLayout">
@@ -375,36 +375,93 @@ p, li { white-space: pre-wrap; }
          <item row="0" column="0">
           <widget class="QLabel" name="acquisionTimeLabel">
            <property name="text">
-            <string>Acquision Time(s)</string>
+            <string>Number of Scans</string>
            </property>
           </widget>
          </item>
          <item row="0" column="1">
-          <widget class="QSpinBox" name="SpinBoxAcquisitionTime"/>
+          <widget class="QSpinBox" name="SpinBoxNumScans">
+           <property name="minimum">
+            <number>1</number>
+           </property>
+           <property name="maximum">
+            <number>40</number>
+           </property>
+          </widget>
          </item>
          <item row="1" column="0">
           <widget class="QLabel" name="surfaceThresholdMmLabel">
            <property name="text">
-            <string>Surface Threshold (mm)</string>
+            <string>Cam Tilt (Degrees)</string>
            </property>
           </widget>
          </item>
          <item row="1" column="1">
-          <widget class="QDoubleSpinBox" name="DoubleSpinBoxSurfThreshold"/>
+          <widget class="QLineEdit" name="LineEditCamTilt">
+           <property name="inputMask">
+            <string/>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="maxLength">
+            <number>8</number>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="0">
+          <widget class="QLabel" name="sweepAngleStartLabel">
+           <property name="text">
+            <string>Sweep Angle Start</string>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QLineEdit" name="LineEditSweepAngleStart">
+           <property name="inputMask">
+            <string/>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="maxLength">
+            <number>8</number>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="sweepAngleEndLabel">
+           <property name="text">
+            <string>SweepAngleEnd</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <widget class="QLineEdit" name="LineEditSweepAngleEnd">
+           <property name="inputMask">
+            <string/>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="maxLength">
+            <number>8</number>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
-       <widget class="QPushButton" name="PushButtonAcquire">
+       <widget class="QPushButton" name="PushButtonScan">
         <property name="geometry">
          <rect>
-          <x>240</x>
-          <y>40</y>
+          <x>250</x>
+          <y>110</y>
           <width>81</width>
           <height>61</height>
          </rect>
         </property>
         <property name="text">
-         <string>Acquire
+         <string>Scan
 and
 Detect</string>
         </property>
@@ -412,8 +469,8 @@ Detect</string>
        <widget class="QLineEdit" name="LineEditSensorTopic">
         <property name="geometry">
          <rect>
-          <x>90</x>
-          <y>110</y>
+          <x>100</x>
+          <y>180</y>
           <width>231</width>
           <height>27</height>
          </rect>
@@ -422,14 +479,27 @@ Detect</string>
        <widget class="QLabel" name="acquisitionTopicLabel">
         <property name="geometry">
          <rect>
-          <x>0</x>
-          <y>110</y>
+          <x>10</x>
+          <y>180</y>
           <width>85</width>
           <height>21</height>
          </rect>
         </property>
         <property name="text">
          <string>Sensor Topic</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="PushButtonMoreOptions">
+        <property name="geometry">
+         <rect>
+          <x>240</x>
+          <y>40</y>
+          <width>101</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>More Options</string>
         </property>
        </widget>
       </widget>
@@ -444,7 +514,7 @@ Detect</string>
          <x>10</x>
          <y>10</y>
          <width>331</width>
-         <height>171</height>
+         <height>201</height>
         </rect>
        </property>
        <property name="title">
@@ -495,8 +565,34 @@ Detect</string>
           <x>20</x>
           <y>50</y>
           <width>201</width>
-          <height>81</height>
+          <height>141</height>
          </rect>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="PushButtonHideAllSurfaces">
+        <property name="geometry">
+         <rect>
+          <x>230</x>
+          <y>120</y>
+          <width>91</width>
+          <height>27</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Hide All</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="PushButtonShowAllSurfaces">
+        <property name="geometry">
+         <rect>
+          <x>230</x>
+          <y>150</y>
+          <width>91</width>
+          <height>27</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Show All</string>
         </property>
        </widget>
       </widget>
@@ -511,7 +607,7 @@ Detect</string>
          <x>10</x>
          <y>10</y>
          <width>321</width>
-         <height>151</height>
+         <height>191</height>
         </rect>
        </property>
        <property name="title">
@@ -536,7 +632,7 @@ Detect</string>
           <x>130</x>
           <y>40</y>
           <width>181</width>
-          <height>91</height>
+          <height>141</height>
          </rect>
         </property>
        </widget>
