@@ -34,7 +34,7 @@ void RobotBlendingPanel::onInitialize()
 {
 	// creating main layout
 	ROS_INFO_STREAM("Initializing RobotBlendingPanel");
-	widget_ = new widgets::RobotBlendingWidget();
+	widget_ = new widgets::RobotBlendingWidget("~");
 	this->parentWidget()->resize(widget_->width(),widget_->height());
 	QHBoxLayout* main_layout = new QHBoxLayout(this);
 	main_layout->addWidget(widget_);
