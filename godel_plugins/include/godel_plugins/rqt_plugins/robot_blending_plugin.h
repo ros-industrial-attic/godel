@@ -17,8 +17,8 @@
 #ifndef ROBOT_BLENDING_PLUGIN_H_
 #define ROBOT_BLENDING_PLUGIN_H_
 
-#include <rqt_gui_cpp/plugin.h>
 #include <godel_plugins/widgets/robot_blending_widget.h>
+#include <rqt_gui_cpp/plugin.h>
 #include <ui_robot_blending_plugin.h>
 #include <QWidget>
 

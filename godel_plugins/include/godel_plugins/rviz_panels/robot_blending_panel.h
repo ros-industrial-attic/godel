@@ -18,8 +18,8 @@
 #define ROBOT_BLENDING_PANEL_H_
 
 #include <ros/ros.h>
-#include <rviz/panel.h>
 #include <godel_plugins/widgets/robot_blending_widget.h>
+#include <rviz/panel.h>
 
 namespace godel_plugins {
 namespace rviz_panels {
