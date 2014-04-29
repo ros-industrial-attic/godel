@@ -17,14 +17,30 @@
 #ifndef ROBOT_BLENDING_WIDGET_H_
 #define ROBOT_BLENDING_WIDGET_H_
 
-#include <ui_robot_blending_plugin.h>
 #include <godel_surface_detection/detection/surface_detection.h>
 #include <godel_surface_detection/interactive/interactive_surface_server.h>
+#include <godel_surface_detection/scan/robot_scan.h>
+
+#include <ui_robot_blending_plugin.h>
 #include <QWidget>
+#include <QTimer>
+#include <QtConcurrentRun>
+#include <QMainWindow>
+
 
 namespace godel_plugins
 {
 namespace widgets {
+
+class TestWindow: public QMainWindow
+{
+public:
+	TestWindow(QWidget *parent = 0):
+		QMainWindow(parent)
+	{
+		QPushButton* button = new QPushButton("Test",this);
+	}
+};
 
 class RobotBlendingWidget:  public QWidget
 {
@@ -59,21 +75,26 @@ Q_SIGNALS:
 protected:
 
 	void init();
+	void run_scan_and_detect();
 
 
 protected Q_SLOTS:
 
-	void acquire_button_handler();
+	void scan_button_handler();
 	void update_handler();
 	void increase_tab_index_handler();
 	void decrease_tab_index_handler();
 	void selection_changed_handler();
 	void select_all_handler();
 	void deselect_all_handler();
+	void hide_all_handler();
+	void show_all_handler();
+	void more_options_handler();
 
 protected:
 	Ui::RobotBlendingWidget ui_;
 	std::string param_ns_;
+	godel_surface_detection::scan::RobotScan robot_scan_;
 	godel_surface_detection::detection::SurfaceDetection surf_detect_;
 	godel_surface_detection::interactive::InteractiveSurfaceServer surf_server_;
 };
