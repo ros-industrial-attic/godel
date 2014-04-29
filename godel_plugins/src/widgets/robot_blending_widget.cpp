@@ -15,7 +15,9 @@
 */
 
 #include <godel_plugins/widgets/robot_blending_widget.h>
-#include <QTimer>
+
+const double RAD_TO_DEGREES = 180.0f/M_PI;
+const double DEGREES_TO_RAD = M_PI/180.0f;
 
 namespace godel_plugins
 {
@@ -34,18 +36,34 @@ RobotBlendingWidget::~RobotBlendingWidget() {
 
 void RobotBlendingWidget::init()
 {
+	using namespace godel_surface_detection;
+
 	// initializing surface detector
-	if(surf_detect_.init(param_ns_) && surf_server_.init(param_ns_))
+	if(surf_detect_.load_parameters(param_ns_ + "/surface_detection") && robot_scan_.load_parameters(param_ns_ + "/robot_scan") &&
+			surf_server_.load_parameters(param_ns_))
 	{
+
 		ROS_INFO_STREAM("Parameters for surface detector and server loaded successfully");
+		if(surf_detect_.init() && robot_scan_.init() && surf_server_.init())
+		{
+			// adding callbacks
+			scan::RobotScan::ScanCallback cb = boost::bind(&detection::SurfaceDetection::add_cloud,&surf_detect_,_1);
+			robot_scan_.add_scan_callback(cb);
+			ROS_INFO_STREAM("Initialization succeeded");
+		}
+		else
+		{
+			ROS_ERROR_STREAM("Initialization error");
+		}
+
 	}
 	else
 	{
-		ROS_ERROR_STREAM("Parameters for surface detector or server failed to load, using defaults");
+		ROS_ERROR_STREAM("Parameters failed to load, using defaults");
 	}
 
 	// start server
-	godel_surface_detection::interactive::InteractiveSurfaceServer::SelectionCallback f =	boost::bind(
+	interactive::InteractiveSurfaceServer::SelectionCallback f =	boost::bind(
 			&RobotBlendingWidget::emit_signal_selection_change,this);
 	surf_server_.add_selection_callback(f);
 	surf_server_.run();
@@ -53,15 +71,21 @@ void RobotBlendingWidget::init()
 	// initializing gui
 	ui_.setupUi(this);
 	ui_.TabWidget->setCurrentIndex(0);
-	ui_.LineEditSensorTopic->setText(QString::fromStdString(surf_detect_.acquisition_topic_));
-	ui_.SpinBoxAcquisitionTime->setValue(static_cast<int>(surf_detect_.acquisition_time_));
+	ui_.LineEditSensorTopic->setText(QString::fromStdString(robot_scan_.scan_topic_));
+	ui_.SpinBoxNumScans->setValue(static_cast<int>(robot_scan_.num_scan_points_));
+	ui_.LineEditCamTilt->setText(QString::number(RAD_TO_DEGREES* robot_scan_.cam_tilt_angle_));
+	ui_.LineEditSweepAngleStart->setText(QString::number(RAD_TO_DEGREES* robot_scan_.sweep_angle_start_));
+	ui_.LineEditSweepAngleEnd->setText(QString::number(RAD_TO_DEGREES* robot_scan_.sweep_angle_end_));
 
 	// setting signals and slots
-	connect(ui_.PushButtonAcquire,SIGNAL(clicked()),this,SLOT(acquire_button_handler()));
+	connect(ui_.PushButtonMoreOptions,SIGNAL(clicked()),this,SLOT(more_options_handler()));
+	connect(ui_.PushButtonScan,SIGNAL(clicked()),this,SLOT(scan_button_handler()));
 	connect(ui_.PushButtonNext,SIGNAL(clicked()),this,SLOT(increase_tab_index_handler()));
 	connect(ui_.PushButtonBack,SIGNAL(clicked()),this,SLOT(decrease_tab_index_handler()));
 	connect(ui_.PushButtonSelectAllSurfaces,SIGNAL(clicked()),this,SLOT(select_all_handler()));
 	connect(ui_.PushButtonDeselectAllSurfaces,SIGNAL(clicked()),this,SLOT(deselect_all_handler()));
+	connect(ui_.PushButtonHideAllSurfaces,SIGNAL(clicked()),this,SLOT(hide_all_handler()));
+	connect(ui_.PushButtonShowAllSurfaces,SIGNAL(clicked()),this,SLOT(show_all_handler()));
 	connect(this,SIGNAL(selection_changed()),this,SLOT(selection_changed_handler()));
 
 
@@ -79,6 +103,22 @@ void RobotBlendingWidget::select_all_handler()
 void RobotBlendingWidget::deselect_all_handler()
 {
 	surf_server_.select_all(false);
+}
+
+void RobotBlendingWidget::hide_all_handler()
+{
+	surf_server_.show_all(false);
+}
+
+void RobotBlendingWidget::show_all_handler()
+{
+	surf_server_.show_all(true);
+}
+
+void RobotBlendingWidget::more_options_handler()
+{
+	TestWindow *window = new TestWindow();
+	window->show();
 }
 
 
@@ -115,13 +155,24 @@ void RobotBlendingWidget::decrease_tab_index_handler()
 	ui_.TabWidgetCreateLib->setCurrentIndex(ui_.TabWidgetCreateLib->currentIndex() - 1);
 }
 
-void RobotBlendingWidget::acquire_button_handler()
+void RobotBlendingWidget::scan_button_handler()
 {
-	surf_detect_.acquisition_time_ = ui_.SpinBoxAcquisitionTime->value();
-	surf_detect_.acquisition_topic_ = ui_.LineEditSensorTopic->text().toStdString();
-	if(surf_detect_.acquire_data())
+	QFuture<void> future = QtConcurrent::run(this,&RobotBlendingWidget::run_scan_and_detect);
+}
+
+void RobotBlendingWidget::run_scan_and_detect()
+{
+	robot_scan_.num_scan_points_ = ui_.SpinBoxNumScans->value();
+	robot_scan_.cam_tilt_angle_ = ui_.LineEditCamTilt->text().toDouble()*DEGREES_TO_RAD;
+	robot_scan_.sweep_angle_start_ = ui_.LineEditSweepAngleStart->text().toDouble()*DEGREES_TO_RAD;
+	robot_scan_.sweep_angle_end_ = ui_.LineEditSweepAngleEnd->text().toDouble()*DEGREES_TO_RAD;
+	robot_scan_.scan_topic_ = ui_.LineEditSensorTopic->text().toStdString();
+
+	ui_.TabWidget->setEnabled(false);
+	int scans_completed = robot_scan_.scan(false);
+	if(scans_completed > 0)
 	{
-		ROS_INFO_STREAM("Acquisition succeeded");
+		ROS_INFO_STREAM("Scan points reached "<<scans_completed);
 		if(surf_detect_.find_surfaces())
 		{
 			// adding markers to server
@@ -135,8 +186,9 @@ void RobotBlendingWidget::acquire_button_handler()
 	}
 	else
 	{
-		ROS_ERROR_STREAM("Acquisition failed");
+		ROS_ERROR_STREAM("Scan failed");
 	}
+	ui_.TabWidget->setEnabled(true);
 }
 
 } /* namespace widgets */
