@@ -23,8 +23,10 @@
 #include <boost/assert.hpp>
 #include <math.h>
 
+
 namespace godel_surface_detection {
 namespace scan {
+
 
 const double RobotScan::PLANNING_TIME = 60.0f;
 const double RobotScan::WAIT_MSG_DURATION = 2.0f;
@@ -133,6 +135,17 @@ void RobotScan::get_scan_poses(geometry_msgs::PoseArray& poses)
 	poses.header.frame_id = world_frame_;
 }
 
+void RobotScan::publish_scan_poses(std::string topic)
+{
+	ros::NodeHandle nh;
+	ros::Publisher poses_pub = nh.advertise<geometry_msgs::PoseArray>(topic,1,true);
+	geometry_msgs::PoseArray poses_msg;
+	get_scan_poses(poses_msg);
+	poses_msg.header.frame_id = world_frame_;
+	poses_pub.publish(poses_msg);
+	ros::Duration(1.0f).sleep();
+}
+
 bool RobotScan::move_to_pose(geometry_msgs::Pose& target_pose)
 {
 	move_group_ptr_->setPoseTarget(target_pose,tcp_frame_);
@@ -141,6 +154,9 @@ bool RobotScan::move_to_pose(geometry_msgs::Pose& target_pose)
 
 int RobotScan::scan(bool move_only)
 {
+	ros::AsyncSpinner spinner(2);
+	spinner.start();
+
 	// create trajectory
 	scan_traj_poses_.clear();
 	int poses_reached = 0;

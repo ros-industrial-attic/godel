@@ -107,7 +107,6 @@ int main(int argc,char** argv)
 	ros::NodeHandle nh;
 
 	// publishers
-	ros::Publisher traj_pub = nh.advertise<geometry_msgs::PoseArray>(DISPLAY_TRAJECTORY_TOPIC,1,true);
 	ros::Publisher point_cloud_publisher = nh.advertise<sensor_msgs::PointCloud2>(
 			SEGMENTS_CLOUD_TOPIC,1);
 
@@ -131,9 +130,7 @@ int main(int argc,char** argv)
 		}
 
 		// publish poses
-		geometry_msgs::PoseArray poses_msg;
-		RobotScan.get_scan_poses(poses_msg);
-		traj_pub.publish(poses_msg);
+		RobotScan.publish_scan_poses(DISPLAY_TRAJECTORY_TOPIC);
 
 		// moving through each pose (do not scan)
 		int reached_points = RobotScan.scan(args.move_mode_only_);
