@@ -45,12 +45,12 @@ void RobotBlendingPanel::load(const rviz::Config& config)
 {
 	rviz::Panel::load(config);
 	QString text_entry;
-	ROS_INFO_STREAM("Reading config file");
+	ROS_INFO_STREAM("rviz RobotBlendingPanel reading config file");
 	if(config.mapGetString("TextEntry",&text_entry))
 	{
-		ROS_INFO_STREAM("Loaded TextEntry with value: "<<text_entry.toStdString());
+		//ROS_INFO_STREAM("Loaded TextEntry with value: "<<text_entry.toStdString());
 	}
-	ROS_INFO_STREAM("Finish reading config file");
+	ROS_INFO_STREAM("rviz RobotBlendingPanel Finished reading config file");
 }
 
 void RobotBlendingPanel::save(rviz::Config config) const
