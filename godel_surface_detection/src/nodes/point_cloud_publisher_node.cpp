@@ -19,16 +19,20 @@
 #include <boost/filesystem.hpp>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/point_cloud_conversion.h>
+#include <tf/transform_datatypes.h>
+#include <tf_conversions/tf_eigen.h>
 #include <pcl/console/parse.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
+#include <pcl/common/transforms.h>
 #include <pcl/io/pcd_io.h>
 
 using namespace boost::filesystem;
 
 const float DEFAULT_NOISE_RANGE = 0.005f;
 const float DEFAULT_PUBLISH_RATE = 0.5f;
+const std::string CLOUD_TRANSFORM_PARAM = "cloud_transform";
 const std::string DEFAULT_FRAME_ID = "world_frame";
 const std::string POINT_CLOUD_TOPIC="sensor_point_cloud";
 const std::string HELP_TEXT="\n-h Help information\n-f <file name>\n"
@@ -37,6 +41,27 @@ const std::string HELP_TEXT="\n-h Help information\n-f <file name>\n"
 typedef pcl::PointCloud<pcl::PointXYZRGBA> CloudRGBA;
 typedef pcl::PointCloud<pcl::PointXYZRGB> CloudRGB;
 
+bool read_transform(ros::NodeHandle &nh,std::string param_name,tf::Transform &t)
+{
+	XmlRpc::XmlRpcValue val;
+	double x,y,z,rx,ry,rz;
+	bool succeeded = nh.getParam(param_name,val);
+	if(succeeded)
+	{
+		x = val["x"].getType()==val.TypeDouble ? static_cast<double>(val["x"]) : 0;
+		y = val["y"].getType()==val.TypeDouble ? static_cast<double>(val["y"]): 0;
+		z = val["z"].getType()==val.TypeDouble ? static_cast<double>(val["z"]): 0;
+		rx = val["rx"].getType()==val.TypeDouble ? static_cast<double>(val["rx"]): 0;
+		ry = val["ry"].getType()==val.TypeDouble ? static_cast<double>(val["ry"]): 0;
+		rz = val["rz"].getType()==val.TypeDouble ? static_cast<double>(val["rz"]): 0;
+
+		t.setOrigin(tf::Vector3(x,y,z));
+		t.getBasis().setRPY(rx,ry,rz);
+	}
+
+	return succeeded;
+}
+
 
 int main(int argc,char** argv)
 {
@@ -44,6 +69,7 @@ int main(int argc,char** argv)
 
 	// point cloud publisher
 	ros::NodeHandle nh;
+	ros::NodeHandle ph("~"); // private handle for parameter reading
 	ros::Publisher point_cloud_pub = nh.advertise<sensor_msgs::PointCloud2>(
 			POINT_CLOUD_TOPIC,1);
 
@@ -131,6 +157,7 @@ int main(int argc,char** argv)
 
 	// publishing
 	ros::Duration loop_time(rate);
+	tf::Transform cloud_transform = tf::Transform::getIdentity();
 	srand(time(NULL));
 	float noise;
 
@@ -148,6 +175,14 @@ int main(int argc,char** argv)
 			noise_cloud_ptr->points[i].x = p.x + noise;
 			noise_cloud_ptr->points[i].y = p.y + noise;
 			noise_cloud_ptr->points[i].z = p.z + noise;
+		}
+
+		// transforming point_cloud
+		if(read_transform(ph,CLOUD_TRANSFORM_PARAM,cloud_transform))
+		{
+			Eigen::Affine3d eigen_transform;
+			tf::poseTFToEigen(cloud_transform,eigen_transform);
+			pcl::transformPointCloud(*noise_cloud_ptr,*noise_cloud_ptr,(Eigen::Affine3f)(eigen_transform));
 		}
 
 		// convert to msg
