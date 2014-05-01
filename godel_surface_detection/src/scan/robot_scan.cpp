@@ -154,8 +154,6 @@ bool RobotScan::move_to_pose(geometry_msgs::Pose& target_pose)
 
 int RobotScan::scan(bool move_only)
 {
-	//ros::AsyncSpinner spinner(2);
-	//spinner.start();
 
 	// create trajectory
 	scan_traj_poses_.clear();
