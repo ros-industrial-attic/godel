@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
 	moveit_ros_move_group
   moveit_ros_planning_interface
 	tf
+	tf_conversions
 )
 find_package(PCL 1.7 REQUIRED COMPONENTS common io)
 find_package(Boost REQUIRED COMPONENTS system)
@@ -29,7 +30,7 @@ set(godel_surface_detection_INCLUDE_DIRECTORIES
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS pcl_msgs pcl_ros roscpp sensor_msgs interactive_markers octomap_ros
+  CATKIN_DEPENDS pcl_msgs pcl_ros roscpp sensor_msgs interactive_markers octomap_ros tf tf_conversions
   DEPENDS PCL
 )
 
