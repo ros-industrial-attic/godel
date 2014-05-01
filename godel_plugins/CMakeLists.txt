@@ -29,7 +29,9 @@ set(godel_plugins_HDRS
 	include/godel_plugins/widgets/robot_blending_widget.h)
 
 set(godel_plugins_UIS
-	src/widgets/robot_blending_plugin.ui)
+	src/widgets/robot_blending_plugin.ui 
+	src/widgets/robot_scan_configuration.ui
+	src/widgets/pose_widget.ui)
 
 set(godel_plugins_INCLUDE_DIRECTORIES
 	include
