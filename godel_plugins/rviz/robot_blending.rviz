@@ -8,6 +8,7 @@ Panels:
         - /Status1
         - /InteractiveMarkers1
         - /PointCloud21
+        - /PoseArray1
       Splitter Ratio: 0.5
     Tree Height: 186
   - Class: rviz/Selection
@@ -91,6 +92,144 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
+    - Arrow Length: 0.05
+      Class: rviz/PoseArray
+      Color: 0; 255; 255
+      Enabled: true
+      Name: PoseArray
+      Topic: robot_scan_path_preview
+      Value: true
+    - Alpha: 1
+      Class: rviz/RobotModel
+      Collision Enabled: false
+      Enabled: true
+      Links:
+        All Links Enabled: true
+        Expand Joint Details: false
+        Expand Link Details: false
+        Expand Tree: false
+        Link Tree Style: Links in Alphabetic Order
+        back_wall1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        base_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        front_wall1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        kinect_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        kinect_ir_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        kinect_ir_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        kinect_keepout:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        kinect_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        kinect_rgb_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        kinect_rgb_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        left_wall1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link_b:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link_e:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link_l:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link_r:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link_s:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link_t:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        link_u:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        pole1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        right_wall1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        roof1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        table_base1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        tool0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        world_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+      Name: RobotModel
+      Robot Description: robot_description
+      TF Prefix: ""
+      Update Interval: 0
+      Value: true
+      Visual Enabled: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -115,17 +254,17 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 0.999888
+      Distance: 4.24772
       Focal Point:
-        X: 0.00880652
-        Y: 0.0658892
-        Z: -0.692744
+        X: 0.326843
+        Y: -0.235515
+        Z: -0.658081
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.4798
+      Pitch: 0.809801
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 4.64357
+      Yaw: 0.895407
     Saved: ~
 Window Geometry:
   Displays:
