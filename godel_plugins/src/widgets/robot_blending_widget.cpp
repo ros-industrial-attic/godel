@@ -70,14 +70,13 @@ void RobotBlendingWidget::init()
 
 	// initializing gui
 	ui_.setupUi(this);
-	ui_.TabWidget->setCurrentIndex(0);
-	ui_.LineEditSensorTopic->setText(QString::fromStdString(robot_scan_.scan_topic_));
-	ui_.SpinBoxNumScans->setValue(static_cast<int>(robot_scan_.num_scan_points_));
-	ui_.LineEditCamTilt->setText(QString::number(RAD_TO_DEGREES* robot_scan_.cam_tilt_angle_));
-	ui_.LineEditSweepAngleStart->setText(QString::number(RAD_TO_DEGREES* robot_scan_.sweep_angle_start_));
-	ui_.LineEditSweepAngleEnd->setText(QString::number(RAD_TO_DEGREES* robot_scan_.sweep_angle_end_));
+	parameters_changed_handler();
+
+	// initializing config window
+	config_window_= new RobotScanConfigWidget(boost::shared_ptr<godel_surface_detection::scan::RobotScan>(&robot_scan_));
 
 	// setting signals and slots
+	connect(config_window_,SIGNAL(parameters_changed()),this,SLOT(parameters_changed_handler()));
 	connect(ui_.PushButtonMoreOptions,SIGNAL(clicked()),this,SLOT(more_options_handler()));
 	connect(ui_.PushButtonScan,SIGNAL(clicked()),this,SLOT(scan_button_handler()));
 	connect(ui_.PushButtonNext,SIGNAL(clicked()),this,SLOT(increase_tab_index_handler()));
@@ -115,10 +114,19 @@ void RobotBlendingWidget::show_all_handler()
 	surf_server_.show_all(true);
 }
 
+void RobotBlendingWidget::parameters_changed_handler()
+{
+	ui_.LineEditSensorTopic->setText(QString::fromStdString(robot_scan_.scan_topic_));
+	ui_.SpinBoxNumScans->setValue(static_cast<int>(robot_scan_.num_scan_points_));
+	ui_.LineEditCamTilt->setText(QString::number(RAD_TO_DEGREES* robot_scan_.cam_tilt_angle_));
+	ui_.LineEditSweepAngleStart->setText(QString::number(RAD_TO_DEGREES* robot_scan_.sweep_angle_start_));
+	ui_.LineEditSweepAngleEnd->setText(QString::number(RAD_TO_DEGREES* robot_scan_.sweep_angle_end_));
+}
+
 void RobotBlendingWidget::more_options_handler()
 {
-	TestWindow *window = new TestWindow();
-	window->show();
+	save_robot_scan_parameters();
+	config_window_->show();
 }
 
 
@@ -162,13 +170,11 @@ void RobotBlendingWidget::scan_button_handler()
 
 void RobotBlendingWidget::run_scan_and_detect()
 {
-	robot_scan_.num_scan_points_ = ui_.SpinBoxNumScans->value();
-	robot_scan_.cam_tilt_angle_ = ui_.LineEditCamTilt->text().toDouble()*DEGREES_TO_RAD;
-	robot_scan_.sweep_angle_start_ = ui_.LineEditSweepAngleStart->text().toDouble()*DEGREES_TO_RAD;
-	robot_scan_.sweep_angle_end_ = ui_.LineEditSweepAngleEnd->text().toDouble()*DEGREES_TO_RAD;
-	robot_scan_.scan_topic_ = ui_.LineEditSensorTopic->text().toStdString();
+	// saving parameters
+	save_robot_scan_parameters();
 
 	ui_.TabWidget->setEnabled(false);
+	surf_detect_.clear_results();
 	int scans_completed = robot_scan_.scan(false);
 	if(scans_completed > 0)
 	{
@@ -188,8 +194,137 @@ void RobotBlendingWidget::run_scan_and_detect()
 	{
 		ROS_ERROR_STREAM("Scan failed");
 	}
+
 	ui_.TabWidget->setEnabled(true);
+	ui_.TabWidgetCreateLib->setCurrentIndex(1);
 }
+
+void RobotBlendingWidget::save_robot_scan_parameters()
+{
+	robot_scan_.num_scan_points_ = ui_.SpinBoxNumScans->value();
+	robot_scan_.cam_tilt_angle_ = ui_.LineEditCamTilt->text().toDouble()*DEGREES_TO_RAD;
+	robot_scan_.sweep_angle_start_ = ui_.LineEditSweepAngleStart->text().toDouble()*DEGREES_TO_RAD;
+	robot_scan_.sweep_angle_end_ = ui_.LineEditSweepAngleEnd->text().toDouble()*DEGREES_TO_RAD;
+	robot_scan_.scan_topic_ = ui_.LineEditSensorTopic->text().toStdString();
+}
+
+RobotScanConfigWidget::RobotScanConfigWidget(RobotScanPtr r_ptr)
+{
+	robot_scan_ptr_ = r_ptr;
+	init();
+	update_parameters();
+}
+
+void RobotScanConfigWidget::show()
+{
+	update_parameters();
+	QMainWindow::show();
+}
+
+void RobotScanConfigWidget::init()
+{
+
+	ui_.setupUi(this);
+	world_to_obj_pose_widget_ = new PoseWidget(ui_.PoseWidgetWorldToObj);
+	tcp_to_cam_pose_widget_ = new PoseWidget(ui_.PoseWidgetTcpToCam);
+
+	// setting signals and slots
+	connect(ui_.PushButtonAccept,SIGNAL(clicked()),this,SLOT(accept_changes_handler()));
+	connect(ui_.PushButtonCancel,SIGNAL(clicked()),this,SLOT(cancel_changes_handler()));
+}
+
+void RobotScanConfigWidget::accept_changes_handler()
+{
+	save_parameters();
+	Q_EMIT parameters_changed();
+	hide();
+}
+
+void RobotScanConfigWidget::cancel_changes_handler()
+{
+	hide();
+}
+
+void RobotScanConfigWidget::update_parameters()
+{
+	ui_.SpinBoxNumScans->setValue(robot_scan_ptr_->num_scan_points_);
+	ui_.LineEditCamTilt->setText(QString::number(RAD2DEG(robot_scan_ptr_->cam_tilt_angle_)));
+	ui_.LineEditCameraXoffset->setText(QString::number(robot_scan_ptr_->cam_to_obj_xoffset_));
+	ui_.LineEditCameraZoffset->setText(QString::number(robot_scan_ptr_->cam_to_obj_zoffset_));
+	ui_.LineEditSweepAngleStart->setText(QString::number(RAD2DEG(robot_scan_ptr_->sweep_angle_start_)));
+	ui_.LineEditSweepAngleEnd->setText(QString::number(RAD2DEG(robot_scan_ptr_->sweep_angle_end_)));
+	ui_.LineEditReachablePointRatio->setText(QString::number(robot_scan_ptr_->reachable_scan_points_ratio_));
+	ui_.LineEditScanTopic->setText(QString::fromStdString(robot_scan_ptr_->scan_topic_));
+	ui_.LineEditScanTargetFrame->setText(QString::fromStdString(robot_scan_ptr_->scan_target_frame_));
+	ui_.LineEditWorldFrame->setText(QString::fromStdString(robot_scan_ptr_->world_frame_));
+	ui_.LineEditTcpFrame->setText(QString::fromStdString(robot_scan_ptr_->tcp_frame_));
+	ui_.LineEditGroupName->setText(QString::fromStdString(robot_scan_ptr_->group_name_));
+	ui_.CheckBoxStopOnPlanningError->setChecked(robot_scan_ptr_->stop_on_planning_error_);
+
+	world_to_obj_pose_widget_->set_values(robot_scan_ptr_->world_to_obj_pose_);
+	tcp_to_cam_pose_widget_->set_values(robot_scan_ptr_->tcp_to_cam_pose_);
+
+}
+
+void RobotScanConfigWidget::save_parameters()
+{
+	robot_scan_ptr_->num_scan_points_= ui_.SpinBoxNumScans->value();
+	robot_scan_ptr_->cam_tilt_angle_ = DEG2RAD(ui_.LineEditCamTilt->text().toDouble());
+	robot_scan_ptr_->cam_to_obj_xoffset_ = ui_.LineEditCameraXoffset->text().toDouble();
+	robot_scan_ptr_->cam_to_obj_zoffset_ = ui_.LineEditCameraZoffset->text().toDouble();
+	robot_scan_ptr_->sweep_angle_start_ = DEG2RAD(ui_.LineEditSweepAngleStart->text().toDouble());
+	robot_scan_ptr_->sweep_angle_end_ = DEG2RAD(ui_.LineEditSweepAngleEnd->text().toDouble());
+	robot_scan_ptr_->reachable_scan_points_ratio_ = ui_.LineEditReachablePointRatio->text().toDouble();
+	robot_scan_ptr_->scan_topic_ = ui_.LineEditScanTopic->text().toStdString();
+	robot_scan_ptr_->scan_target_frame_ = ui_.LineEditScanTargetFrame->text().toStdString();
+	robot_scan_ptr_->world_frame_ = ui_.LineEditWorldFrame->text().toStdString();
+	robot_scan_ptr_->tcp_frame_ = ui_.LineEditTcpFrame->text().toStdString();
+	robot_scan_ptr_->group_name_ = ui_.LineEditGroupName->text().toStdString();
+	robot_scan_ptr_->stop_on_planning_error_ = ui_.CheckBoxStopOnPlanningError->isChecked();
+
+	robot_scan_ptr_->world_to_obj_pose_ = world_to_obj_pose_widget_->get_values();
+	robot_scan_ptr_->tcp_to_cam_pose_ = tcp_to_cam_pose_widget_->get_values();
+
+}
+
+PoseWidget::PoseWidget(QWidget *parent):
+		QWidget(parent)
+{
+	ui_.setupUi(this);
+	set_values(tf::Transform::getIdentity());
+}
+
+void PoseWidget::set_values(const tf::Transform& t)
+{
+	tf::Vector3 p = t.getOrigin();
+	tfScalar rx,ry,rz;
+	t.getBasis().getRPY(rx,ry,rz,1);
+	ui_.LineEditX->setText(QString::number(p.x()));
+	ui_.LineEditY->setText(QString::number(p.y()));
+	ui_.LineEditZ->setText(QString::number(p.z()));
+	ui_.LineEditRx->setText(QString::number(RAD2DEG(rx)));
+	ui_.LineEditRy->setText(QString::number(RAD2DEG(ry)));
+	ui_.LineEditRz->setText(QString::number(RAD2DEG(rz)));
+}
+
+tf::Transform PoseWidget::get_values()
+{
+	double x,y,z,rx,ry,rz;
+	x = ui_.LineEditX->text().toDouble();
+	y = ui_.LineEditY->text().toDouble();
+	z = ui_.LineEditZ->text().toDouble();
+	rx = DEG2RAD(ui_.LineEditRx->text().toDouble());
+	ry = DEG2RAD(ui_.LineEditRy->text().toDouble());
+	rz = DEG2RAD(ui_.LineEditRz->text().toDouble());
+
+	// create transform
+	tf::Vector3 p(x,y,z);
+	tf::Quaternion q;
+	q.setRPY(rx,ry,rz);
+
+	return tf::Transform(q,p);
+}
+
 
 } /* namespace widgets */
 

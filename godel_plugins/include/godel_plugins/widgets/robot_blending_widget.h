@@ -22,6 +22,8 @@
 #include <godel_surface_detection/scan/robot_scan.h>
 
 #include <ui_robot_blending_plugin.h>
+#include <ui_robot_scan_configuration.h>
+#include <ui_pose_widget.h>
 #include <QWidget>
 #include <QTimer>
 #include <QtConcurrentRun>
@@ -32,14 +34,54 @@ namespace godel_plugins
 {
 namespace widgets {
 
-class TestWindow: public QMainWindow
+
+class PoseWidget: public QWidget
 {
+Q_OBJECT
 public:
-	TestWindow(QWidget *parent = 0):
-		QMainWindow(parent)
-	{
-		QPushButton* button = new QPushButton("Test",this);
-	}
+	PoseWidget(QWidget *parent = NULL);
+
+	void set_values(const tf::Transform &t);
+	tf::Transform get_values();
+
+protected:
+
+	Ui::PoseWidget ui_;
+};
+
+class RobotScanConfigWidget: public QMainWindow
+{
+
+private:
+
+	typedef boost::shared_ptr<godel_surface_detection::scan::RobotScan> RobotScanPtr;
+
+Q_OBJECT
+public:
+
+	RobotScanConfigWidget(RobotScanPtr r_ptr);
+	void show();
+
+Q_SIGNALS:
+	void parameters_changed();
+
+protected:
+
+	void init();
+	void update_parameters();
+	void save_parameters();
+
+protected Q_SLOTS:
+
+	void accept_changes_handler();
+	void cancel_changes_handler();
+
+protected:
+
+	Ui::RobotScanConfigWindow ui_;
+	RobotScanPtr robot_scan_ptr_;
+	PoseWidget *world_to_obj_pose_widget_;
+	PoseWidget *tcp_to_cam_pose_widget_;
 };
 
 class RobotBlendingWidget:  public QWidget
@@ -76,7 +118,7 @@ protected:
 
 	void init();
 	void run_scan_and_detect();
-
+	void save_robot_scan_parameters();
 
 protected Q_SLOTS:
 
@@ -90,9 +132,11 @@ protected Q_SLOTS:
 	void hide_all_handler();
 	void show_all_handler();
 	void more_options_handler();
+	void parameters_changed_handler();
 
 protected:
 	Ui::RobotBlendingWidget ui_;
+	RobotScanConfigWidget *config_window_;
 	std::string param_ns_;
 	godel_surface_detection::scan::RobotScan robot_scan_;
 	godel_surface_detection::detection::SurfaceDetection surf_detect_;
