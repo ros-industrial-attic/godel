@@ -10,6 +10,7 @@
   <arg name="sim" default="true" />
   <arg name="robot_ip" unless="$(arg sim)" />
 	<arg name="controller" unless="$(arg sim)" />
+	<arg name="rviz" default="true"/>
  
   <!-- load the robot_description parameter before launching ROS-I nodes -->
   <include file="$(find godel_sia20d_moveit_config)/launch/planning_context.launch" >
@@ -39,7 +40,7 @@
     <arg name="publish_monitored_planning_scene" value="true" />
   </include>
 
-  <include file="$(find godel_sia20d_moveit_config)/launch/moveit_rviz.launch">
+  <include if="$(arg rviz)" file="$(find godel_sia20d_moveit_config)/launch/moveit_rviz.launch">
     <arg name="config" value="true"/>
   </include>
   
