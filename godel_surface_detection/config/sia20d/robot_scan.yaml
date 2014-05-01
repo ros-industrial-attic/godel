@@ -18,7 +18,7 @@ robot_scan:
     rz: 0.0
   cam_to_obj_zoffset: 0.4
   cam_to_obj_xoffset: 0.20
-  cam_tilt_angle: -2.355
+  cam_tilt_angle: -2.62
   sweep_angle_start: 2.355
   sweep_angle_end: 3.925
   scan_topic: sensor_point_cloud
