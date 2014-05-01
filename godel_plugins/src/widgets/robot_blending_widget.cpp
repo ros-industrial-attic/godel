@@ -182,24 +182,28 @@ void RobotBlendingWidget::scan_button_handler()
 
 void RobotBlendingWidget::run_scan_and_detect()
 {
+	// disable gui
+	ui_.TabWidget->setEnabled(false);
+
 	// saving parameters
 	save_robot_scan_parameters();
 
 	// publishing scan path preview
 	robot_scan_.publish_scan_poses(ROBOT_SCAN_PATH_PREVIEW_TOPIC);
 
-	ui_.TabWidget->setEnabled(false);
+	// clear all results
 	surf_detect_.clear_results();
+
 
 	ROS_INFO_STREAM("Starting scan");
 	int scans_completed = robot_scan_.scan(false);
+	surf_server_.remove_all_surfaces();
 	if(scans_completed > 0)
 	{
 		ROS_INFO_STREAM("Scan points reached "<<scans_completed);
 		if(surf_detect_.find_surfaces())
 		{
 			// adding markers to server
-			surf_server_.remove_all_surfaces();
 			visualization_msgs::MarkerArray markers_msg = surf_detect_.get_surface_markers();
 			for(int i =0;i < markers_msg.markers.size();i++)
 			{
