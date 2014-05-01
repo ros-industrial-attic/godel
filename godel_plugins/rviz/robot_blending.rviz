@@ -4,9 +4,6 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Global Options1
-        - /Status1
-        - /InteractiveMarkers1
         - /PointCloud21
         - /PoseArray1
       Splitter Ratio: 0.5
@@ -63,7 +60,7 @@ Visualization Manager:
       Show Visual Aids: false
       Update Topic: /surface_marker_server/update
       Value: true
-    - Alpha: 0.5
+    - Alpha: 0.4
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
         Max Value: 10
@@ -84,10 +81,10 @@ Visualization Manager:
       Name: PointCloud2
       Position Transformer: XYZ
       Queue Size: 10
-      Selectable: true
+      Selectable: false
       Size (Pixels): 3
       Size (m): 0.01
-      Style: Flat Squares
+      Style: Points
       Topic: /sensor_point_cloud
       Use Fixed Frame: true
       Use rainbow: true
@@ -254,17 +251,17 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.24772
+      Distance: 3.19538
       Focal Point:
         X: 0.326843
         Y: -0.235515
         Z: -0.658081
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.809801
+      Pitch: 1.0148
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.895407
+      Yaw: 1.34041
     Saved: ~
 Window Geometry:
   Displays:
