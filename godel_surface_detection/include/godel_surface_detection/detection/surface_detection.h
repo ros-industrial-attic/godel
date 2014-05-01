@@ -140,6 +140,8 @@ public:
 	// adds point cloud to the occupancy grid, it performs no frame transformation
 	void add_cloud(Cloud& cloud);
 
+	void clear_results();
+
 	// retrieve results
 	visualization_msgs::MarkerArray get_surface_markers();
 	std::vector<Cloud::Ptr> get_surface_clouds();

@@ -83,6 +83,13 @@ bool SurfaceDetection::init()
 	return true;
 }
 
+void SurfaceDetection::clear_results()
+{
+	full_cloud_ptr_->clear();
+	surface_clouds_.clear();
+	meshes_.markers.clear();
+}
+
 bool SurfaceDetection::load_parameters(std::string node_ns)
 {
 	ros::NodeHandle nh(node_ns);
