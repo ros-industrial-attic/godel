@@ -2,11 +2,13 @@
 <robot name="sia20d_workspace" xmlns:xacro="http://ros.org/wiki/xacro">
 	<xacro:include filename="$(find motoman_sia20d_support)/urdf/sia20d_macro.xacro"/>
 	<xacro:include filename="$(find godel_robot_config)/urdf/workspace_components.xacro"/>
+	<xacro:include filename="$(find godel_robot_config)/urdf/blending_eff_macro.xacro"/>
 	<xacro:include filename="$(find godel_robot_config)/urdf/kinect_sensor_macro.xacro"/>
+	
 
 	<!-- property list -->
 	<xacro:property name="workcell_height" value="1"/>
-	<xacro:property name="coupler_height" value="0.087"/>
+	<xacro:property name="coupler_height" value="0.0"/> <!--"0.087"-->
         <xacro:property name="attached_object_length" value="0.10"/>
 	<xacro:property name="attached_object_width" value="0.10"/>
 	<xacro:property name="attached_object_height" value="0.025"/>
@@ -32,7 +34,16 @@
 	<!-- end of sensor definitions -->
 
 	<!-- instantiating arm  -->	
+	<xacro:blending_eff_definition eff_adjustment="0.0"/>
 	<xacro:motoman_sia20d prefix="${arm_prefix}"/>
+
+	<joint name="link_t_to_eff" type="fixed">
+		<parent link="link_t"/>
+		<child link="eff_frame"/>
+		<origin xyz="0 ${coupler_height} 0" rpy="0.0 0.0 0.0"/>
+	</joint>
+
+
 
 	<!-- start of arm-workcell joint definitions -->
 	<joint name="world_to_base" type="fixed">
