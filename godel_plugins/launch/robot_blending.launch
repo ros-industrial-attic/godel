@@ -1,13 +1,29 @@
 <?xml version="1.0"?>
 <launch>
+
+	<!-- arguments -->
+	<arg name="sim_robot" default="true"/>
+	<arg name="robot_ip" unless="$(arg sim_robot)" />
+	<arg name="sim_sensor" default="true"/>
+
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_plugins)/rviz/robot_blending.rviz" output="screen">
 		<rosparam command="load" file="$(find godel_surface_detection)/config/surface_detection.yaml"/>
 		<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/robot_scan.yaml"/>
 	</node>
-	<node name="point_cloud_publisher_node" pkg="godel_surface_detection" type="point_cloud_publisher_node"
-		args="-f data/milk_cartoon_all_small_clorox.pcd -r 0.5 -i world_frame" output="log"/>
 
+	<!-- sensor -->
+	<node if="$(arg sim_sensor)" name="point_cloud_publisher_node" pkg="godel_surface_detection" type="point_cloud_publisher_node"
+		args="-f data/milk_cartoon_all_small_clorox.pcd -r 0.5 -i world_frame" output="log">
+		<rosparam param="cloud_transform">{rx: 0.96, ry: 0.0, rz: -1.57, x: 0.28, y: 0.0, z: 0.48}</rosparam>
+	</node>
+
+	<include unless="$(arg sim_sensor)" file="$(find godel_surface_detection)/launch/sia20d_sensor_setup.launch"/>
+
+	<!-- moveit -->
 	<include file="$(find godel_sia20d_moveit_config)/launch/moveit_planning_execution.launch">
 		<arg name="rviz" value="false"/>
+		<arg name="sim" value="$(arg sim_robot)"/>
+		<arg name="robot_ip" value="$(arg robot_ip)" unless="$(arg sim_robot)"/>
 	</include>
+
 </launch>
