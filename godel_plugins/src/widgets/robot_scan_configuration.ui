@@ -104,7 +104,7 @@
      <rect>
       <x>30</x>
       <y>40</y>
-      <width>271</width>
+      <width>281</width>
       <height>441</height>
      </rect>
     </property>
@@ -119,7 +119,7 @@
       <rect>
        <x>0</x>
        <y>0</y>
-       <width>271</width>
+       <width>281</width>
        <height>503</height>
       </rect>
      </property>
@@ -147,7 +147,7 @@
       <item row="1" column="0">
        <widget class="QLabel" name="surfaceThresholdMmLabel">
         <property name="text">
-         <string>Cam Tilt (Degrees)</string>
+         <string>Cam Tilt (deg)</string>
         </property>
        </widget>
       </item>
@@ -187,7 +187,7 @@
       <item row="4" column="0">
        <widget class="QLabel" name="sweepAngleStartLabel">
         <property name="text">
-         <string>Sweep Angle Start</string>
+         <string>Sweep Angle Start (deg)</string>
         </property>
        </widget>
       </item>
@@ -210,7 +210,7 @@
       <item row="5" column="0">
        <widget class="QLabel" name="sweepAngleEndLabel">
         <property name="text">
-         <string>SweepAngleEnd</string>
+         <string>SweepAngleEnd (deg)</string>
         </property>
        </widget>
       </item>

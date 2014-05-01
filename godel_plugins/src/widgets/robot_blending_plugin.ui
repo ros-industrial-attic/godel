@@ -392,7 +392,7 @@ p, li { white-space: pre-wrap; }
          <item row="1" column="0">
           <widget class="QLabel" name="surfaceThresholdMmLabel">
            <property name="text">
-            <string>Cam Tilt (Degrees)</string>
+            <string>Cam Tilt (deg)</string>
            </property>
           </widget>
          </item>
