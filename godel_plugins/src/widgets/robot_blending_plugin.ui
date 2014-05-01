@@ -363,7 +363,7 @@ p, li { white-space: pre-wrap; }
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>40</y>
+          <y>30</y>
           <width>234</width>
           <height>131</height>
          </rect>
@@ -454,10 +454,10 @@ p, li { white-space: pre-wrap; }
        <widget class="QPushButton" name="PushButtonScan">
         <property name="geometry">
          <rect>
-          <x>250</x>
+          <x>240</x>
           <y>110</y>
-          <width>81</width>
-          <height>61</height>
+          <width>101</width>
+          <height>51</height>
          </rect>
         </property>
         <property name="text">
@@ -493,13 +493,26 @@ Detect</string>
         <property name="geometry">
          <rect>
           <x>240</x>
-          <y>40</y>
+          <y>30</y>
           <width>101</width>
           <height>31</height>
          </rect>
         </property>
         <property name="text">
          <string>More Options</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="PushButtonPreviewPath">
+        <property name="geometry">
+         <rect>
+          <x>240</x>
+          <y>70</y>
+          <width>101</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Preview Path</string>
         </property>
        </widget>
       </widget>

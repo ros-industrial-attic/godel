@@ -85,6 +85,7 @@ void RobotBlendingWidget::init()
 	connect(ui_.PushButtonDeselectAllSurfaces,SIGNAL(clicked()),this,SLOT(deselect_all_handler()));
 	connect(ui_.PushButtonHideAllSurfaces,SIGNAL(clicked()),this,SLOT(hide_all_handler()));
 	connect(ui_.PushButtonShowAllSurfaces,SIGNAL(clicked()),this,SLOT(show_all_handler()));
+	connect(ui_.PushButtonPreviewPath,SIGNAL(clicked()),this,SLOT(preview_path_handler()));
 	connect(this,SIGNAL(selection_changed()),this,SLOT(selection_changed_handler()));
 
 
@@ -121,6 +122,17 @@ void RobotBlendingWidget::parameters_changed_handler()
 	ui_.LineEditCamTilt->setText(QString::number(RAD_TO_DEGREES* robot_scan_.cam_tilt_angle_));
 	ui_.LineEditSweepAngleStart->setText(QString::number(RAD_TO_DEGREES* robot_scan_.sweep_angle_start_));
 	ui_.LineEditSweepAngleEnd->setText(QString::number(RAD_TO_DEGREES* robot_scan_.sweep_angle_end_));
+}
+
+void RobotBlendingWidget::preview_path_handler()
+{
+	// saving parameters
+	save_robot_scan_parameters();
+
+	// publish path
+	robot_scan_.publish_scan_poses(ROBOT_SCAN_PATH_PREVIEW_TOPIC);
+
+	ROS_INFO_STREAM("Publish path preview to 'geometry_msgs/PoseArray' topic "<<ROBOT_SCAN_PATH_PREVIEW_TOPIC);
 }
 
 void RobotBlendingWidget::more_options_handler()
@@ -173,8 +185,13 @@ void RobotBlendingWidget::run_scan_and_detect()
 	// saving parameters
 	save_robot_scan_parameters();
 
+	// publishing scan path preview
+	robot_scan_.publish_scan_poses(ROBOT_SCAN_PATH_PREVIEW_TOPIC);
+
 	ui_.TabWidget->setEnabled(false);
 	surf_detect_.clear_results();
+
+	ROS_INFO_STREAM("Starting scan");
 	int scans_completed = robot_scan_.scan(false);
 	if(scans_completed > 0)
 	{

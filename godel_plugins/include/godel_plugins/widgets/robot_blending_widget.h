@@ -34,6 +34,7 @@ namespace godel_plugins
 {
 namespace widgets {
 
+const std::string ROBOT_SCAN_PATH_PREVIEW_TOPIC = "robot_scan_path_preview";
 
 class PoseWidget: public QWidget
 {
@@ -133,6 +134,7 @@ protected Q_SLOTS:
 	void show_all_handler();
 	void more_options_handler();
 	void parameters_changed_handler();
+	void preview_path_handler();
 
 protected:
 	Ui::RobotBlendingWidget ui_;
