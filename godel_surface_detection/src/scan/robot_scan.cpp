@@ -154,8 +154,8 @@ bool RobotScan::move_to_pose(geometry_msgs::Pose& target_pose)
 
 int RobotScan::scan(bool move_only)
 {
-	ros::AsyncSpinner spinner(2);
-	spinner.start();
+	//ros::AsyncSpinner spinner(2);
+	//spinner.start();
 
 	// create trajectory
 	scan_traj_poses_.clear();
@@ -317,7 +317,7 @@ bool RobotScan::parse_pose_parameter(XmlRpc::XmlRpcValue pose_param,tf::Transfor
 
 	tf::Vector3 pos = tf::Vector3(fields_map["x"],fields_map["y"],fields_map["z"]);
 	tf::Quaternion q;
-	q.setEuler(fields_map["ry"],fields_map["rx"],fields_map["rz"]);
+	q.setRPY(fields_map["rx"],fields_map["ry"],fields_map["rz"]); // fixed axis
 	t.setOrigin(pos);
 	t.setRotation(q);
 
