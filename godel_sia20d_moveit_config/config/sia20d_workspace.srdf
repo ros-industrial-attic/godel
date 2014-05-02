@@ -31,6 +31,40 @@
     <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->
     <virtual_joint name="FixedBase" type="fixed" parent_frame="world_frame" child_link="base_link" />
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
+    <disable_collisions link1="asus_frame" link2="asus_ir_link" reason="Adjacent" />
+    <disable_collisions link1="asus_frame" link2="asus_rgb_link" reason="Default" />
+    <disable_collisions link1="asus_frame" link2="gripper_body" reason="Adjacent" />
+    <disable_collisions link1="asus_frame" link2="kinect_ir_link" reason="Never" />
+    <disable_collisions link1="asus_frame" link2="kinect_rgb_link" reason="Never" />
+    <disable_collisions link1="asus_frame" link2="link_b" reason="Never" />
+    <disable_collisions link1="asus_frame" link2="link_e" reason="Never" />
+    <disable_collisions link1="asus_frame" link2="link_r" reason="Never" />
+    <disable_collisions link1="asus_frame" link2="link_t" reason="Adjacent" />
+    <disable_collisions link1="asus_frame" link2="link_u" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="asus_rgb_link" reason="Adjacent" />
+    <disable_collisions link1="asus_ir_link" link2="base_link" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="gripper_body" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="kinect_frame" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="kinect_ir_link" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="kinect_rgb_link" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="link_b" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="link_e" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="link_l" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="link_r" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="link_t" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="link_u" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="base_link" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="gripper_body" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="kinect_frame" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="kinect_ir_link" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="kinect_rgb_link" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="link_b" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="link_e" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="link_l" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="link_r" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="link_s" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="link_t" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="link_u" reason="Never" />
     <disable_collisions link1="back_wall1" link2="base_link" reason="Adjacent" />
     <disable_collisions link1="back_wall1" link2="front_wall1" reason="Adjacent" />
     <disable_collisions link1="back_wall1" link2="kinect_frame" reason="Never" />
@@ -70,6 +104,14 @@
     <disable_collisions link1="front_wall1" link2="right_wall1" reason="Adjacent" />
     <disable_collisions link1="front_wall1" link2="roof1" reason="Adjacent" />
     <disable_collisions link1="front_wall1" link2="table_base1" reason="Adjacent" />
+    <disable_collisions link1="gripper_body" link2="kinect_frame" reason="Never" />
+    <disable_collisions link1="gripper_body" link2="kinect_ir_link" reason="Never" />
+    <disable_collisions link1="gripper_body" link2="kinect_rgb_link" reason="Never" />
+    <disable_collisions link1="gripper_body" link2="link_b" reason="Never" />
+    <disable_collisions link1="gripper_body" link2="link_e" reason="Never" />
+    <disable_collisions link1="gripper_body" link2="link_r" reason="Never" />
+    <disable_collisions link1="gripper_body" link2="link_t" reason="Adjacent" />
+    <disable_collisions link1="gripper_body" link2="link_u" reason="Never" />
     <disable_collisions link1="kinect_frame" link2="kinect_ir_link" reason="Adjacent" />
     <disable_collisions link1="kinect_frame" link2="kinect_link" reason="Adjacent" />
     <disable_collisions link1="kinect_frame" link2="kinect_rgb_link" reason="Default" />
