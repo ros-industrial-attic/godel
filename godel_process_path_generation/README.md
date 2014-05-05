@@ -24,14 +24,14 @@ This package creates the high-level process path for surface blending.
 - Actions
 	- fitMeshToPlane
 		- Plane represented by origin at COM of mesh, and plane normal
-	- flattenToPlane(vector<points/vertices>)
-	- transformTo2D(vector<points>)
+	- flattenToPlane(vector\<points/vertices>)
+	- transformTo2D(vector\<points>)
 	- fIndPointOnExternalBoundary(const &pcl::mesh)
 	- extractExternalBoundary(const &pcl::mesh, etc)
 - Member Variables
 	- pcl::Mesh pointcloud
 	- transform (calculated from FitMeshToPlane)
 		- transform from global coordinates to local plane coordinates
-	- vector<pcl::points> boundary
+	- vector\<pcl::points> boundary
 
 
