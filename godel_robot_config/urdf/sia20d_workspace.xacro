@@ -55,7 +55,7 @@
 	<joint name="world_to_roof1" type="fixed">
 		<parent link="world_frame"/>
 		<child link="roof1"/>
-		<origin xyz="0.987 0 1.20" rpy="0 0 0"/>
+		<origin xyz="0.987 0 1.40" rpy="0 0 0"/>
 	</joint>
 		
 
