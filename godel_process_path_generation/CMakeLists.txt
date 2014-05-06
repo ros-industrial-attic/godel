@@ -6,10 +6,12 @@ project(godel_process_path_generation)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   roscpp
+  pcl_ros
 )
 
-## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
+find_package(Boost REQUIRED COMPONENTS system)
+find_package(PCL 1.7 REQUIRED) # COMPONENTS)
+#find_package(Eigen REQUIRED)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -91,17 +93,19 @@ catkin_package(
 ## Specify additional locations of header files
 ## Your package locations should be listed before other locations
 # include_directories(include)
-include_directories(
+include_directories(include
   ${catkin_INCLUDE_DIRS}
+  ${Boost_INCLUDE_DIRS}
+#  ${Eigen_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
-# add_library(godel_process_path_generation
-#   src/${PROJECT_NAME}/godel_process_path_generation.cpp
-# )
+add_library(godel_process_path_generation
+  src/mesh_importer.cpp
+)
 
-## Declare a cpp executable
-# add_executable(godel_process_path_generation_node src/godel_process_path_generation_node.cpp)
+add_executable(pcl_test src/mesh_importer.cpp)
+target_link_libraries(pcl_test ${PCL_LIBRARIES})
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
