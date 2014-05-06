@@ -326,7 +326,7 @@
   <joint name="asus_mount_to_asus_link" type="fixed">
     <parent link="asus_mount"/>
     <child link="asus_link"/>
-    <origin rpy="0.0 0.0 0.0" xyz="0 0 0"/>
+    <origin rpy="3.14 0.0 0.0" xyz="0 0 0"/>
   </joint>
   <joint name="gripper_to_palm" type="fixed">
     <parent link="eff_frame"/>
@@ -542,7 +542,7 @@
   <joint name="world_to_roof1" type="fixed">
     <parent link="world_frame"/>
     <child link="roof1"/>
-    <origin rpy="0 0 0" xyz="0.987 0 1.20"/>
+    <origin rpy="0 0 0" xyz="0.987 0 1.40"/>
   </joint>
   <!-- end of arm-workcell joint definitions -->
 </robot>
