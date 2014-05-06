@@ -6,6 +6,9 @@ Panels:
       Expanded:
         - /PointCloud21
         - /PoseArray1
+        - /RobotModel1
+        - /RobotModel1/Links1
+        - /RobotModel1/Links1/asus_frame1
       Splitter Ratio: 0.5
     Tree Height: 186
   - Class: rviz/Selection
@@ -53,13 +56,13 @@ Visualization Manager:
       Value: true
     - Class: rviz/InteractiveMarkers
       Enable Transparency: true
-      Enabled: true
+      Enabled: false
       Name: InteractiveMarkers
       Show Axes: false
       Show Descriptions: true
       Show Visual Aids: false
       Update Topic: /surface_marker_server/update
-      Value: true
+      Value: false
     - Alpha: 0.4
       Autocompute Intensity Bounds: true
       Autocompute Value Bounds:
@@ -80,7 +83,7 @@ Visualization Manager:
       Min Intensity: 0
       Name: PointCloud2
       Position Transformer: XYZ
-      Queue Size: 10
+      Queue Size: 1
       Selectable: false
       Size (Pixels): 3
       Size (m): 0.01
@@ -96,7 +99,7 @@ Visualization Manager:
       Name: PoseArray
       Topic: robot_scan_path_preview
       Value: true
-    - Alpha: 1
+    - Alpha: 0.6
       Class: rviz/RobotModel
       Collision Enabled: false
       Enabled: true
@@ -106,6 +109,37 @@ Visualization Manager:
         Expand Link Details: false
         Expand Tree: false
         Link Tree Style: Links in Alphabetic Order
+        asus_frame:
+          Alpha: 1
+          Show Axes: true
+          Show Trail: false
+          Value: true
+        asus_ir_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        asus_ir_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        asus_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        asus_mount:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+        asus_rgb_link:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        asus_rgb_optical_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         back_wall1:
           Alpha: 1
           Show Axes: false
@@ -116,7 +150,16 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        eff_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         front_wall1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        gripper_body:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -213,6 +256,10 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        tcp_frame:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         tool0:
           Alpha: 1
           Show Axes: false
@@ -251,17 +298,17 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.19538
+      Distance: 3.2922
       Focal Point:
-        X: 0.326843
-        Y: -0.235515
-        Z: -0.658081
+        X: 0.736578
+        Y: -0.655856
+        Z: -0.289782
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 1.0148
+      Pitch: 0.5498
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 1.34041
+      Yaw: 1.44041
     Saved: ~
 Window Geometry:
   Displays:
@@ -282,4 +329,4 @@ Window Geometry:
     collapsed: true
   Width: 1855
   X: 58
-  Y: 1224
+  Y: 24
