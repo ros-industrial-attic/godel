@@ -48,7 +48,6 @@ namespace defaults{
 	static const double ARROW_DISTANCE = 0.02f;
 }
 
-
 class InteractiveSurfaceServer {
 
 public:
@@ -63,6 +62,7 @@ public:
 	bool init();
 	bool load_parameters(std::string node_ns = "");
 	void run();
+	void stop();
 
 	void add_surface(const visualization_msgs::Marker& marker);
 	void add_surface(const visualization_msgs::Marker& marker,const geometry_msgs::Pose& pose);
