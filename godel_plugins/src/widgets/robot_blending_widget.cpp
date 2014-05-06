@@ -117,11 +117,18 @@ void RobotBlendingWidget::show_all_handler()
 
 void RobotBlendingWidget::parameters_changed_handler()
 {
+
+	// updating entries in gui
 	ui_.LineEditSensorTopic->setText(QString::fromStdString(robot_scan_.scan_topic_));
 	ui_.SpinBoxNumScans->setValue(static_cast<int>(robot_scan_.num_scan_points_));
 	ui_.LineEditCamTilt->setText(QString::number(RAD_TO_DEGREES* robot_scan_.cam_tilt_angle_));
 	ui_.LineEditSweepAngleStart->setText(QString::number(RAD_TO_DEGREES* robot_scan_.sweep_angle_start_));
 	ui_.LineEditSweepAngleEnd->setText(QString::number(RAD_TO_DEGREES* robot_scan_.sweep_angle_end_));
+
+	// publish path
+	robot_scan_.publish_scan_poses(ROBOT_SCAN_PATH_PREVIEW_TOPIC);
+
+	ROS_INFO_STREAM("Publish path preview to 'geometry_msgs/PoseArray' topic "<<ROBOT_SCAN_PATH_PREVIEW_TOPIC);
 }
 
 void RobotBlendingWidget::preview_path_handler()
@@ -194,8 +201,8 @@ void RobotBlendingWidget::run_scan_and_detect()
 	// clear all results
 	surf_detect_.clear_results();
 
-
 	ROS_INFO_STREAM("Starting scan");
+	ros::Duration(1.0f).sleep();
 	int scans_completed = robot_scan_.scan(false);
 	surf_server_.remove_all_surfaces();
 	if(scans_completed > 0)
