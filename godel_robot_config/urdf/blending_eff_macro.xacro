@@ -36,7 +36,7 @@
 			<link name="${prefix}asus_mount"/>
 
 		<xacro:asus_sensor_definitions prefix="${prefix}" parent_link="${prefix}asus_mount" 
-				x_val="0" y_val="0" z_val="0" roll="0.0" pitch="0.0" yaw="0.0"/>
+				x_val="0" y_val="0" z_val="0" roll="3.14" pitch="0.0" yaw="0.0"/>
 
 		<!-- joint definitions -->
 			<joint name="${prefix}gripper_to_palm" type="fixed">
