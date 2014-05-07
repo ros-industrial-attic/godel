@@ -1,5 +1,6 @@
 # path planning
 string group_name
+string home_position
 string world_frame
 string tcp_frame
 
@@ -11,8 +12,8 @@ float64 cam_to_obj_xoffset
 float64 cam_tilt_angle # rotation about relative object's y axis (radians)
 float64 sweep_angle_start
 float64 sweep_angle_end
-int32 num_scan_point32s
-float64 reachable_scan_point32s_ratio
+int32 num_scan_points
+float64 reachable_scan_points_ratio
 bool stop_on_planning_error
 
 # scan data source
