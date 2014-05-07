@@ -11,7 +11,7 @@ robot_scan:
     ry: 0.0
     rz: 0.0
   world_to_obj_pose:
-    x: 0.90
+    x: 1.0
     y: 0.0
     z: 0.04
     rx: 0.0
