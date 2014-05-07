@@ -2,7 +2,6 @@
 string frame_id
 
 # filter and normal estimation
-int32 acquired_clouds_counter
 int32 meanK
 int32 k_search
 float64 stdv_threshold
