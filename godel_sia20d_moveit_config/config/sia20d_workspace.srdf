@@ -10,6 +10,15 @@
     <!--CHAINS: When a chain is specified, all the links along the chain (including endpoints) are included in the group. Additionally, all the joints that are parents to included links are also included. This means that joints along the chain and the parent joint of the base link are included in the group-->
     <!--SUBGROUPS: Groups can also be formed by referencing to already defined group names-->
     <group name="manipulator">
+        <link name="base_link" />
+        <link name="link_s" />
+        <link name="link_l" />
+        <link name="link_e" />
+        <link name="link_u" />
+        <link name="link_r" />
+        <link name="link_b" />
+        <link name="link_t" />
+        <link name="tool0" />
         <joint name="joint_s" />
         <joint name="joint_l" />
         <joint name="joint_e" />
@@ -17,6 +26,9 @@
         <joint name="joint_r" />
         <joint name="joint_b" />
         <joint name="joint_t" />
+    </group>
+    <group name="manipulator_asus">
+        <chain base_link="base_link" tip_link="asus_frame" />
     </group>
     <!--GROUP STATES: Purpose: Define a named state for a particular group, in terms of joint values. This is useful to define states like 'folded arms'-->
     <group_state name="home" group="manipulator">
@@ -28,9 +40,52 @@
         <joint name="joint_t" value="0" />
         <joint name="joint_u" value="-1.168" />
     </group_state>
+    <group_state name="home_asus" group="manipulator_asus">
+        <joint name="joint_b" value="-0.837" />
+        <joint name="joint_e" value="0.0333" />
+        <joint name="joint_l" value="1.0087" />
+        <joint name="joint_r" value="0.1059" />
+        <joint name="joint_s" value="-1.3414" />
+        <joint name="joint_t" value="0" />
+        <joint name="joint_u" value="-1.168" />
+    </group_state>
     <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->
     <virtual_joint name="FixedBase" type="fixed" parent_frame="world_frame" child_link="base_link" />
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
+    <disable_collisions link1="asus_frame" link2="asus_ir_link" reason="Adjacent" />
+    <disable_collisions link1="asus_frame" link2="asus_rgb_link" reason="Default" />
+    <disable_collisions link1="asus_frame" link2="gripper_body" reason="Adjacent" />
+    <disable_collisions link1="asus_frame" link2="kinect_ir_link" reason="Never" />
+    <disable_collisions link1="asus_frame" link2="kinect_rgb_link" reason="Never" />
+    <disable_collisions link1="asus_frame" link2="link_b" reason="Never" />
+    <disable_collisions link1="asus_frame" link2="link_e" reason="Never" />
+    <disable_collisions link1="asus_frame" link2="link_r" reason="Never" />
+    <disable_collisions link1="asus_frame" link2="link_t" reason="Adjacent" />
+    <disable_collisions link1="asus_frame" link2="link_u" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="asus_rgb_link" reason="Adjacent" />
+    <disable_collisions link1="asus_ir_link" link2="base_link" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="gripper_body" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="kinect_frame" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="kinect_ir_link" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="kinect_rgb_link" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="link_b" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="link_e" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="link_l" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="link_r" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="link_t" reason="Never" />
+    <disable_collisions link1="asus_ir_link" link2="link_u" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="base_link" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="gripper_body" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="kinect_frame" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="kinect_ir_link" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="kinect_rgb_link" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="link_b" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="link_e" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="link_l" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="link_r" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="link_s" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="link_t" reason="Never" />
+    <disable_collisions link1="asus_rgb_link" link2="link_u" reason="Never" />
     <disable_collisions link1="back_wall1" link2="base_link" reason="Adjacent" />
     <disable_collisions link1="back_wall1" link2="front_wall1" reason="Adjacent" />
     <disable_collisions link1="back_wall1" link2="kinect_frame" reason="Never" />
@@ -70,6 +125,14 @@
     <disable_collisions link1="front_wall1" link2="right_wall1" reason="Adjacent" />
     <disable_collisions link1="front_wall1" link2="roof1" reason="Adjacent" />
     <disable_collisions link1="front_wall1" link2="table_base1" reason="Adjacent" />
+    <disable_collisions link1="gripper_body" link2="kinect_frame" reason="Never" />
+    <disable_collisions link1="gripper_body" link2="kinect_ir_link" reason="Never" />
+    <disable_collisions link1="gripper_body" link2="kinect_rgb_link" reason="Never" />
+    <disable_collisions link1="gripper_body" link2="link_b" reason="Never" />
+    <disable_collisions link1="gripper_body" link2="link_e" reason="Never" />
+    <disable_collisions link1="gripper_body" link2="link_r" reason="Never" />
+    <disable_collisions link1="gripper_body" link2="link_t" reason="Adjacent" />
+    <disable_collisions link1="gripper_body" link2="link_u" reason="Never" />
     <disable_collisions link1="kinect_frame" link2="kinect_ir_link" reason="Adjacent" />
     <disable_collisions link1="kinect_frame" link2="kinect_link" reason="Adjacent" />
     <disable_collisions link1="kinect_frame" link2="kinect_rgb_link" reason="Default" />

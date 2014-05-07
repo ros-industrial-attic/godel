@@ -54,7 +54,6 @@ void InteractiveSurfaceServer::run()
 {
 	marker_server_ptr_ = interactive_markers::InteractiveMarkerServerPtr(
 			new interactive_markers::InteractiveMarkerServer(defaults::MARKER_SERVER_NAME,"",false));
-
 	// create callbacks
 	button_callback_ =  interactive_markers::InteractiveMarkerServer::FeedbackCallback(
 			boost::bind(&InteractiveSurfaceServer::button_marker_callback,this,_1));
@@ -72,6 +71,12 @@ void InteractiveSurfaceServer::run()
 	show_all_entry_id_ = menu_handler_.insert(submenu_handle,"Show All",menu_callback_);
 
 	marker_server_ptr_->applyChanges();
+}
+
+void InteractiveSurfaceServer::stop()
+{
+	marker_server_ptr_.reset();
+	surface_selection_map_.clear();
 }
 
 bool InteractiveSurfaceServer::load_parameters(std::string node_ns)

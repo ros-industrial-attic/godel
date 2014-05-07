@@ -17,6 +17,7 @@
 		<rosparam param="cloud_transform">{rx: 0.96, ry: 0.0, rz: -1.57, x: 0.28, y: 0.0, z: 0.48}</rosparam>
 	</node>
 
+	<remap from="/asus/depth_registered/points" to="/sensor_point_cloud"/>
 	<include unless="$(arg sim_sensor)" file="$(find godel_surface_detection)/launch/sia20d_sensor_setup.launch"/>
 
 	<!-- moveit -->
@@ -24,6 +25,7 @@
 		<arg name="rviz" value="false"/>
 		<arg name="sim" value="$(arg sim_robot)"/>
 		<arg name="robot_ip" value="$(arg robot_ip)" unless="$(arg sim_robot)"/>
+		<arg name="controller" value="fs100" unless="$(arg sim_robot)"/>
 	</include>
 
 </launch>

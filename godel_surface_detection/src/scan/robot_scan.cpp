@@ -22,6 +22,7 @@
 #include <boost/assign/list_of.hpp>
 #include <boost/assert.hpp>
 #include <math.h>
+#include <moveit/robot_state/conversions.h>
 
 
 namespace godel_surface_detection {
@@ -154,6 +155,15 @@ bool RobotScan::move_to_pose(geometry_msgs::Pose& target_pose)
 
 int RobotScan::scan(bool move_only)
 {
+	ros::AsyncSpinner spinner(2);
+	spinner.start();
+
+	// cartesian path generation
+	double alpha_incr = (sweep_angle_end_ - sweep_angle_start_)/(num_scan_points_ -1);
+	double eef_step = 4*alpha_incr*cam_to_obj_xoffset_;
+	double jump_threshold = 0.0f;
+	moveit::planning_interface::MoveGroup::Plan path_plan;
+	path_plan.planning_time_ = PLANNING_TIME;
 
 	// create trajectory
 	scan_traj_poses_.clear();
@@ -161,11 +171,46 @@ int RobotScan::scan(bool move_only)
 	moveit_msgs::RobotTrajectory robot_traj;
 	if(create_scan_trajectory(scan_traj_poses_,robot_traj))
 	{
-		for(int i = 0;i < scan_traj_poses_.size();i++)
-		{
-			move_group_ptr_->setPoseTarget(scan_traj_poses_[i],tcp_frame_);
+		// moving to first position
+		geometry_msgs::PoseArray cartesian_poses;
+		cartesian_poses.poses.push_back(move_group_ptr_->getCurrentPose(tcp_frame_).pose);
+		cartesian_poses.poses.push_back(scan_traj_poses_[0]);
 
-			if(move_group_ptr_->move())
+		robot_state::robotStateToRobotStateMsg(*move_group_ptr_->getCurrentState(),path_plan.start_state_);
+		if(move_group_ptr_->computeCartesianPath(cartesian_poses.poses,eef_step,jump_threshold,path_plan.trajectory_,true)>=1.0f &&
+				move_group_ptr_->execute(path_plan))
+		{
+			ROS_INFO_STREAM("Move to first scan pose reached");
+		}
+		else
+		{
+			ROS_ERROR_STREAM("Move to first scan pose failed");
+			return 0;
+		}
+
+
+		for(int i = 1;i < scan_traj_poses_.size();i++)
+		{
+
+			// reset path plan structure
+			path_plan.start_state_ = moveit_msgs::RobotState();
+			path_plan.trajectory_ = moveit_msgs::RobotTrajectory();
+
+			// filling cartesian poses for next move
+			cartesian_poses.poses.clear();
+			cartesian_poses.poses.push_back(move_group_ptr_->getCurrentPose(tcp_frame_).pose);
+			cartesian_poses.poses.push_back(scan_traj_poses_[i]);
+
+			// getting current robot state
+			robot_state::robotStateToRobotStateMsg(*move_group_ptr_->getCurrentState(),
+					path_plan.start_state_);
+
+			//move_group_ptr_->setPoseTarget(scan_traj_poses_[i],tcp_frame_);
+			//move_group_ptr_->setStartStateToCurrentState();
+
+			// creating path plan structure and execute
+			if(move_group_ptr_->computeCartesianPath(cartesian_poses.poses,eef_step,jump_threshold,path_plan.trajectory_,true)>=1.0f &&
+					move_group_ptr_->execute(path_plan))
 			{
 				poses_reached++;
 			}
@@ -273,6 +318,9 @@ bool RobotScan::create_scan_trajectory(std::vector<geometry_msgs::Pose> &scan_po
 	}
 
 	ROS_INFO_STREAM("Computing cartesian path for a trajectory with "<<num_scan_points_<<" points");
+	move_group_ptr_->setEndEffectorLink(tcp_frame_);
+
+	ROS_INFO_STREAM("Computing cartesian path for link '"<<move_group_ptr_->getEndEffectorLink()<<"'");
 	double res = move_group_ptr_->computeCartesianPath(scan_poses,eef_step,jump_threshold,scan_traj,true);
 	double success = res >= reachable_scan_points_ratio_;
 	if(success)

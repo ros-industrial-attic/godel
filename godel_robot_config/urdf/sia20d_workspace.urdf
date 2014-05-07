@@ -18,6 +18,7 @@
   </material>
   <link name="world_frame"/>
   <!-- property list -->
+  <!--"0.087"-->
   <!-- instantiating workcell definitions -->
   <link name="table_base1">
     <visual>
@@ -239,6 +240,109 @@
   </joint>
   <!-- end of sensor definitions -->
   <!-- instantiating arm  -->
+  <link name="eff_frame"/>
+  <link name="gripper_body">
+    <visual>
+      <geometry>
+        <mesh filename="package://godel_robot_config/meshes/Deburring_eff.STL"/>
+      </geometry>
+      <material name="silver">
+        <color rgba="0.8 0.8 0.8 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://godel_robot_config/meshes/Deburring_eff_Collision_Model.STL"/>
+      </geometry>
+      <material name="another_blue2">
+        <color rgba="0.38 0.54 0.83 1"/>
+      </material>
+    </collision>
+  </link>
+  <link name="tcp_frame"/>
+  <link name="asus_mount"/>
+  <material name="dark_silver">
+    <color rgba="0.1 0.1 0.1 1"/>
+  </material>
+  <link name="asus_link"/>
+  <link name="asus_frame">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.04 0.22 0.04"/>
+      </geometry>
+      <material name="dark_silver"/>
+    </visual>
+    <collision>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.04 0.22 0.04"/>
+      </geometry>
+    </collision>
+  </link>
+  <link name="asus_ir_link">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <sphere radius="0.0005"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="asus_rgb_link">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <sphere radius="0.0005"/>
+      </geometry>
+    </visual>
+  </link>
+  <link name="asus_ir_optical_frame"/>
+  <link name="asus_rgb_optical_frame"/>
+  <joint name="asus_frame_joint" type="fixed">
+    <parent link="asus_link"/>
+    <child link="asus_frame"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+  <joint name="asus_ir_joint" type="fixed">
+    <parent link="asus_frame"/>
+    <child link="asus_ir_link"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
+  </joint>
+  <joint name="asus_ir_optical_frame_joint" type="fixed">
+    <parent link="asus_ir_link"/>
+    <child link="asus_ir_optical_frame"/>
+    <origin rpy="-1.57 0 -1.57" xyz="0 0 0"/>
+  </joint>
+  <joint name="asus_rgb_joint" type="fixed">
+    <parent link="asus_ir_link"/>
+    <child link="asus_rgb_link"/>
+    <origin rpy="0 0 0" xyz="0 -0.03 0"/>
+  </joint>
+  <joint name="asus_rgb_optical_frame_joint" type="fixed">
+    <parent link="asus_rgb_link"/>
+    <child link="asus_rgb_optical_frame"/>
+    <origin rpy="-1.57 0 -1.57" xyz="0 0 0"/>
+  </joint>
+  <joint name="asus_mount_to_asus_link" type="fixed">
+    <parent link="asus_mount"/>
+    <child link="asus_link"/>
+    <origin rpy="3.14 0.0 0.0" xyz="0 0 0"/>
+  </joint>
+  <joint name="gripper_to_palm" type="fixed">
+    <parent link="eff_frame"/>
+    <child link="gripper_body"/>
+    <origin rpy="0 0 3.6651914" xyz="0 0 0.0"/>
+  </joint>
+  <joint name="eff_frame_to_asus_mount" type="fixed">
+    <parent link="eff_frame"/>
+    <child link="asus_mount"/>
+    <origin rpy="3.14 0 2.09" xyz="0 0 0.150"/>
+  </joint>
+  <joint name="gripper_to_tcp" type="fixed">
+    <parent link="eff_frame"/>
+    <child link="tcp_frame"/>
+    <origin rpy="0 0 0" xyz=" 0 0.0 0.0"/>
+  </joint>
   <link name="base_link">
     <visual>
       <geometry>
@@ -424,6 +528,11 @@
     <parent link="link_t"/>
     <child link="tool0"/>
   </joint>
+  <joint name="link_t_to_eff" type="fixed">
+    <parent link="link_t"/>
+    <child link="eff_frame"/>
+    <origin rpy="0.0 0.0 0.0" xyz="0 0.0 0"/>
+  </joint>
   <!-- start of arm-workcell joint definitions -->
   <joint name="world_to_base" type="fixed">
     <parent link="world_frame"/>
@@ -433,15 +542,7 @@
   <joint name="world_to_roof1" type="fixed">
     <parent link="world_frame"/>
     <child link="roof1"/>
-    <origin rpy="0 0 0" xyz="0.987 0 1.20"/>
+    <origin rpy="0 0 0" xyz="0.987 0 1.40"/>
   </joint>
   <!-- end of arm-workcell joint definitions -->
-  <!-- start of wrist to tcp coupling -->
-  <!--<link name="${arm_prefix}tcp"/>
-	<joint name="${arm_prefix}wrist_to_tcp" type="fixed">
-		<parent link="${arm_prefix}link_t"/>
-		<child link="${arm_prefix}tcp"/>
-		<origin xyz="0 0 0" rpy="0 0 0"/>
-	</joint>-->
-  <!-- end of wrist to tcp coupling -->
 </robot>

@@ -357,7 +357,7 @@ p, li { white-space: pre-wrap; }
         </rect>
        </property>
        <property name="title">
-        <string>1 - Acquire and Identify Surfaces</string>
+        <string>1 - Scan and Find Surfaces</string>
        </property>
        <widget class="QWidget" name="formLayoutWidget">
         <property name="geometry">

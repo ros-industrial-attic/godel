@@ -9,7 +9,7 @@
 	<!-- property list -->
 	<xacro:property name="workcell_height" value="1"/>
 	<xacro:property name="coupler_height" value="0.0"/> <!--"0.087"-->
-        <xacro:property name="attached_object_length" value="0.10"/>
+  <xacro:property name="attached_object_length" value="0.10"/>
 	<xacro:property name="attached_object_width" value="0.10"/>
 	<xacro:property name="attached_object_height" value="0.025"/>
 	<xacro:property name="arm_prefix" value=""/>
@@ -34,7 +34,7 @@
 	<!-- end of sensor definitions -->
 
 	<!-- instantiating arm  -->	
-	<xacro:blending_eff_definition eff_adjustment="0.0"/>
+	<xacro:blending_eff_definition prefix="${arm_prefix}" eff_adjustment="0.0"/>
 	<xacro:motoman_sia20d prefix="${arm_prefix}"/>
 
 	<joint name="link_t_to_eff" type="fixed">
@@ -55,7 +55,7 @@
 	<joint name="world_to_roof1" type="fixed">
 		<parent link="world_frame"/>
 		<child link="roof1"/>
-		<origin xyz="0.987 0 1.20" rpy="0 0 0"/>
+		<origin xyz="0.987 0 1.40" rpy="0 0 0"/>
 	</joint>
 		
 
