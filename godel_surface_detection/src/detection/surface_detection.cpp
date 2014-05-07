@@ -211,11 +211,11 @@ void SurfaceDetection::mesh_to_marker(const pcl::PolygonMesh &mesh,
 
 
 	// filling points
+	Cloud points;
+	pcl::fromPCLPointCloud2(mesh.cloud,points);
 	for(int i = 0; i < mesh.polygons.size(); i++)
 	{
 		const pcl::Vertices &v =  mesh.polygons[i];
-		Cloud points;
-		pcl::fromPCLPointCloud2(mesh.cloud,points);
 		for(int j = 0;j < v.vertices.size(); j++)
 		{
 			uint32_t index = v.vertices[j];
