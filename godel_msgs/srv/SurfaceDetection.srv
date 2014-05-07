@@ -1,0 +1,15 @@
+int32 GET_PARAMETERS=0
+int32 PUBLISH_SCAN_PATH=1
+int32 SCAN_AND_FIND_ONLY=2
+int32 SCAN_FIND_AND_RETURN=3
+int32 action
+bool use_default_parameters
+godel_msgs/RobotScanParameters robot_scan
+godel_msgs/SurfaceDetectionParameters surface_detection
+
+---
+bool surfaces_found
+visualization_msgs/MarkerArray surfaces
+geometry_msgs/Pose[] robot_scan_poses
+godel_msgs/RobotScanParameters robot_scan
+godel_msgs/SurfaceDetectionParameters surface_detection

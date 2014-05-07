@@ -1,0 +1,1 @@
+string[] selected_surfaces
