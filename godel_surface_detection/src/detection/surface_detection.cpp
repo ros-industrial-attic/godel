@@ -133,6 +133,55 @@ bool SurfaceDetection::load_parameters(std::string node_ns)
 	return succeeded;
 }
 
+bool SurfaceDetection::load_parameters(godel_msgs::SurfaceDetectionParameters &params,std::string node_ns)
+{
+	ros::NodeHandle nh(node_ns);
+
+	// bool parameters
+	bool tr_normal_consistency, use_tabletop_seg, ignore_largest_cluster;
+
+	bool succeeded;
+	if(		nh.getParam(params::FRAME_ID,params.frame_id)&&
+			nh.getParam(params::STOUTLIER_MEAN,params.meanK) &&
+			nh.getParam(params::STOUTLIER_STDEV_THRESHOLD,params.stdv_threshold) &&
+			nh.getParam(params::REGION_GROWING_MIN_CLUSTER_SIZE,params.rg_min_cluster_size) &&
+			nh.getParam(params::REGION_GROWING_MAX_CLUSTER_SIZE,params.rg_max_cluster_size) &&
+			nh.getParam(params::REGION_GROWING_NEIGHBORS,params.rg_neightbors) &&
+			nh.getParam(params::REGION_GROWING_SMOOTHNESS_THRESHOLD,params.rg_smoothness_threshold) &&
+			nh.getParam(params::REGION_GROWING_CURVATURE_THRESHOLD,params.rg_curvature_threshold) &&
+			nh.getParam(params::TRIANGULATION_SEARCH_RADIUS,params.tr_search_radius) &&
+			nh.getParam(params::TRIANGULATION_MU ,params.tr_mu) &&
+			nh.getParam(params::TRIANGULATION_MAX_NEAREST_NEIGHBORS,params.tr_max_nearest_neighbors) &&
+			nh.getParam(params::TRIANGULATION_MAX_SURFACE_ANGLE,params.tr_max_surface_angle) &&
+			nh.getParam(params::TRIANGULATION_MIN_ANGLE,params.tr_min_angle) &&
+			nh.getParam(params::TRIANGULATION_MAX_ANGLE,params.tr_max_angle) &&
+			nh.getParam(params::TRIANGULATION_NORMAL_CONSISTENCY,tr_normal_consistency) &&
+			nh.getParam(params::VOXEL_LEAF_SIZE,params.voxel_leafsize) &&
+			nh.getParam(params::OCCUPANCY_THRESHOLD,params.occupancy_threshold) &&
+			nh.getParam(params::MLS_UPSAMPLING_RADIUS,params.mls_upsampling_radius) &&
+			nh.getParam(params::MLS_POINT_DENSITY,params.mls_point_density) &&
+			nh.getParam(params::MLS_SEARCH_RADIUS,params.mls_search_radius) &&
+			nh.getParam(params::USE_TABLETOP_SEGMENTATION,use_tabletop_seg) &&
+			nh.getParam(params::TABLETOP_SEG_DISTANCE_THRESH,params.tabletop_seg_distance_threshold) &&
+			nh.getParam(params::MARKER_ALPHA,params.marker_alpha) &&
+			nh.getParam(params::IGNORE_LARGEST_CLUSTER,ignore_largest_cluster)
+			)
+	{
+		params.tr_normal_consistency = tr_normal_consistency;
+		params.use_tabletop_seg = use_tabletop_seg;
+		params.ignore_largest_cluster = ignore_largest_cluster;
+		succeeded = true;
+		ROS_INFO_STREAM("surface detection parameters loaded");
+	}
+	else
+	{
+		succeeded = false;
+		ROS_ERROR_STREAM("surface detection parameter(s) not found under namespace: "<<nh.getNamespace());
+	}
+
+	return succeeded;
+}
+
 void SurfaceDetection::mesh_to_marker(const pcl::PolygonMesh &mesh,
 		visualization_msgs::Marker &marker)
 {

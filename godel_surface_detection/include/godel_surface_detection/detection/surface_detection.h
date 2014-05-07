@@ -27,6 +27,7 @@
 #include <pcl/surface/gp3.h>
 #include <octomap/octomap.h>
 #include <octomap/OcTree.h>
+#include <godel_msgs/SurfaceDetectionParameters.h>
 #include <visualization_msgs/MarkerArray.h>
 
 namespace godel_surface_detection { namespace detection{
@@ -131,6 +132,8 @@ public:
 
 	bool init();
 	bool load_parameters(std::string node_ns = "");
+	static bool load_parameters(godel_msgs::SurfaceDetectionParameters &params,std::string node_ns = "");
+
 	bool find_surfaces();
 	std::string get_results_summary();
 
