@@ -35,38 +35,39 @@ namespace godel_surface_detection { namespace detection{
 
 SurfaceDetection::SurfaceDetection():
 		acquired_clouds_counter_(0),
-		frame_id_(defaults::FRAME_ID),
-		k_search_(defaults::K_SEARCH),
-		meanK_(defaults::STATISTICAL_OUTLIER_MEAN),
-		stdv_threshold_(defaults::STATISTICAL_OUTLIER_STDEV_THRESHOLD),
-		rg_min_cluster_size_(defaults::REGION_GROWING_MIN_CLUSTER_SIZE),
-		rg_max_cluster_size_(defaults::REGION_GROWING_MAX_CLUSTER_SIZE),
-		rg_neightbors_(defaults::REGION_GROWING_NEIGHBORS),
-		rg_smoothness_threshold_(defaults::REGION_GROWING_SMOOTHNESS_THRESHOLD),
-		rg_curvature_threshold_(defaults::REGION_GROWING_CURVATURE_THRESHOLD),
-		//acquisition_time_(defaults::ACQUISITION_TIME),
-		tr_search_radius_(defaults::TRIANGULATION_SEARCH_RADIUS),
-		tr_mu_(defaults::TRIANGULATION_MU),
-		tr_max_nearest_neighbors_(defaults::TRIANGULATION_MAX_NEAREST_NEIGHBORS),
-		tr_max_surface_angle_(defaults::TRIANGULATION_MAX_SURFACE_ANGLE),
-		tr_min_angle_(defaults::TRIANGULATION_MIN_ANGLE),
-		tr_max_angle_(defaults::TRIANGULATION_MAX_ANGLE),
-		tr_normal_consistency_(defaults::TRIANGULATION_NORMAL_CONSISTENCY),
-		voxel_leafsize_(defaults::VOXEL_LEAF_SIZE),
-		marker_alpha_(defaults::MARKER_ALPHA),
-		ignore_largest_cluster_(defaults::IGNORE_LARGEST_CLUSTER),
-		use_octomap_(defaults::USE_OCTOMAP),
-		occupancy_threshold_(defaults::OCCUPANCY_THRESHOLD),
-		mls_upsampling_radius_(defaults::MLS_UPSAMPLING_RADIUS),
-		mls_point_density_(defaults::MLS_POINT_DENSITY),
-		mls_search_radius_(defaults::MLS_SEARCH_RADIUS),
-		use_tabletop_seg_(defaults::USE_TABLETOP_SEGMENTATION),
-		tabletop_seg_distance_threshold_(defaults::TABLETOP_SEG_DISTANCE_THRESH),
 		octree_(new octomap::OcTree(defaults::VOXEL_LEAF_SIZE)),
 		full_cloud_ptr_(new Cloud())
 {
-	// TODO Auto-generated constructor stub
+
+	params_.frame_id = defaults::FRAME_ID;
+	params_.k_search=defaults::K_SEARCH;
+	params_.meanK=defaults::STATISTICAL_OUTLIER_MEAN;
+	params_.stdv_threshold=defaults::STATISTICAL_OUTLIER_STDEV_THRESHOLD;
+	params_.rg_min_cluster_size=defaults::REGION_GROWING_MIN_CLUSTER_SIZE;
+	params_.rg_max_cluster_size=defaults::REGION_GROWING_MAX_CLUSTER_SIZE;
+	params_.rg_neightbors=defaults::REGION_GROWING_NEIGHBORS;
+	params_.rg_smoothness_threshold=defaults::REGION_GROWING_SMOOTHNESS_THRESHOLD;
+	params_.rg_curvature_threshold=defaults::REGION_GROWING_CURVATURE_THRESHOLD;
+	params_.tr_search_radius=defaults::TRIANGULATION_SEARCH_RADIUS;
+	params_.tr_mu=defaults::TRIANGULATION_MU;
+	params_.tr_max_nearest_neighbors=defaults::TRIANGULATION_MAX_NEAREST_NEIGHBORS;
+	params_.tr_max_surface_angle=defaults::TRIANGULATION_MAX_SURFACE_ANGLE;
+	params_.tr_min_angle=defaults::TRIANGULATION_MIN_ANGLE;
+	params_.tr_max_angle=defaults::TRIANGULATION_MAX_ANGLE;
+	params_.tr_normal_consistency=defaults::TRIANGULATION_NORMAL_CONSISTENCY;
+	params_.voxel_leafsize=defaults::VOXEL_LEAF_SIZE;
+	params_.marker_alpha=defaults::MARKER_ALPHA;
+	params_.ignore_largest_cluster=defaults::IGNORE_LARGEST_CLUSTER;
+	params_.use_octomap=defaults::USE_OCTOMAP;
+	params_.occupancy_threshold=defaults::OCCUPANCY_THRESHOLD;
+	params_.mls_upsampling_radius=defaults::MLS_UPSAMPLING_RADIUS;
+	params_.mls_point_density=defaults::MLS_POINT_DENSITY;
+	params_.mls_search_radius=defaults::MLS_SEARCH_RADIUS;
+	params_.use_tabletop_seg=defaults::USE_TABLETOP_SEGMENTATION;
+	params_.tabletop_seg_distance_threshold=defaults::TABLETOP_SEG_DISTANCE_THRESH;
+
 	srand(time(NULL));
+	clear_results();
 }
 
 SurfaceDetection::~SurfaceDetection()
@@ -76,15 +77,16 @@ SurfaceDetection::~SurfaceDetection()
 
 bool SurfaceDetection::init()
 {
-	octree_->setResolution(voxel_leafsize_);
-	octree_->setOccupancyThres(occupancy_threshold_);
-	full_cloud_ptr_->header.frame_id = frame_id_;
+	octree_->setResolution(params_.voxel_leafsize);
+	octree_->setOccupancyThres(params_.occupancy_threshold);
+	full_cloud_ptr_->header.frame_id = params_.frame_id;
 	acquired_clouds_counter_ = 0;
 	return true;
 }
 
 void SurfaceDetection::clear_results()
 {
+	acquired_clouds_counter_ = 0;
 	full_cloud_ptr_->clear();
 	surface_clouds_.clear();
 	meshes_.markers.clear();
@@ -92,45 +94,7 @@ void SurfaceDetection::clear_results()
 
 bool SurfaceDetection::load_parameters(std::string node_ns)
 {
-	ros::NodeHandle nh(node_ns);
-
-	bool succeeded;
-	if(		nh.getParam(params::FRAME_ID,frame_id_)&&
-			nh.getParam(params::STOUTLIER_MEAN,meanK_) &&
-			nh.getParam(params::STOUTLIER_STDEV_THRESHOLD,stdv_threshold_) &&
-			nh.getParam(params::REGION_GROWING_MIN_CLUSTER_SIZE,rg_min_cluster_size_) &&
-			nh.getParam(params::REGION_GROWING_MAX_CLUSTER_SIZE,rg_max_cluster_size_) &&
-			nh.getParam(params::REGION_GROWING_NEIGHBORS,rg_neightbors_) &&
-			nh.getParam(params::REGION_GROWING_SMOOTHNESS_THRESHOLD,rg_smoothness_threshold_) &&
-			nh.getParam(params::REGION_GROWING_CURVATURE_THRESHOLD,rg_curvature_threshold_) &&
-			nh.getParam(params::TRIANGULATION_SEARCH_RADIUS,tr_search_radius_) &&
-			nh.getParam(params::TRIANGULATION_MU ,tr_mu_) &&
-			nh.getParam(params::TRIANGULATION_MAX_NEAREST_NEIGHBORS,tr_max_nearest_neighbors_) &&
-			nh.getParam(params::TRIANGULATION_MAX_SURFACE_ANGLE,tr_max_surface_angle_) &&
-			nh.getParam(params::TRIANGULATION_MIN_ANGLE,tr_min_angle_) &&
-			nh.getParam(params::TRIANGULATION_MAX_ANGLE,tr_max_angle_) &&
-			nh.getParam(params::TRIANGULATION_NORMAL_CONSISTENCY,tr_normal_consistency_) &&
-			nh.getParam(params::VOXEL_LEAF_SIZE,voxel_leafsize_) &&
-			nh.getParam(params::OCCUPANCY_THRESHOLD,occupancy_threshold_) &&
-			nh.getParam(params::MLS_UPSAMPLING_RADIUS,mls_upsampling_radius_) &&
-			nh.getParam(params::MLS_POINT_DENSITY,mls_point_density_) &&
-			nh.getParam(params::MLS_SEARCH_RADIUS,mls_search_radius_) &&
-			nh.getParam(params::USE_TABLETOP_SEGMENTATION,use_tabletop_seg_) &&
-			nh.getParam(params::TABLETOP_SEG_DISTANCE_THRESH,tabletop_seg_distance_threshold_) &&
-			nh.getParam(params::MARKER_ALPHA,marker_alpha_) &&
-			nh.getParam(params::IGNORE_LARGEST_CLUSTER,ignore_largest_cluster_)
-			)
-	{
-		succeeded = true;
-		ROS_INFO_STREAM("surface detection parameters loaded");
-	}
-	else
-	{
-		succeeded = false;
-		ROS_ERROR_STREAM("surface detection parameter(s) not found under namespace: "<<nh.getNamespace());
-	}
-
-	return succeeded;
+	return load_parameters(params_,node_ns);
 }
 
 bool SurfaceDetection::load_parameters(godel_msgs::SurfaceDetectionParameters &params,std::string node_ns)
@@ -230,7 +194,7 @@ void SurfaceDetection::mesh_to_marker(const pcl::PolygonMesh &mesh,
 
 void SurfaceDetection::add_cloud(Cloud& cloud)
 {
-	if(use_octomap_)
+	if(params_.use_octomap)
 	{
 		Cloud::iterator i;
 		for( int i = 0
@@ -251,9 +215,14 @@ void SurfaceDetection::add_cloud(Cloud& cloud)
 	acquired_clouds_counter_++;
 }
 
+int SurfaceDetection::get_acquired_clouds_count()
+{
+	return acquired_clouds_counter_;
+}
+
 void SurfaceDetection::process_octree()
 {
-	if(use_octomap_)
+	if(params_.use_octomap)
 	{
 		Cloud::Ptr buffer_cloud_ptr(new Cloud());
 		buffer_cloud_ptr->reserve(octree_->getNumLeafNodes());
@@ -277,7 +246,7 @@ void SurfaceDetection::process_octree()
 		if(buffer_cloud_ptr->size() > 0)
 		{
 			pcl::copyPointCloud(*buffer_cloud_ptr,*full_cloud_ptr_);
-			full_cloud_ptr_->header.frame_id = frame_id_;
+			full_cloud_ptr_->header.frame_id = params_.frame_id;
 
 		}
 
@@ -334,13 +303,13 @@ void SurfaceDetection::get_full_cloud(sensor_msgs::PointCloud2 cloud_msg)
 void SurfaceDetection::get_region_colored_cloud(CloudRGB& cloud )
 {
 	pcl::copyPointCloud(*region_colored_cloud_ptr_,cloud);
-	cloud.header.frame_id = frame_id_;
+	cloud.header.frame_id = params_.frame_id;
 }
 
 void SurfaceDetection::get_region_colored_cloud(sensor_msgs::PointCloud2 &cloud_msg)
 {
 	pcl::toROSMsg(*region_colored_cloud_ptr_,cloud_msg);
-	cloud_msg.header.frame_id = frame_id_;
+	cloud_msg.header.frame_id = params_.frame_id;
 }
 
 bool SurfaceDetection::find_surfaces()
@@ -363,7 +332,7 @@ bool SurfaceDetection::find_surfaces()
 	std::vector<pcl::PointIndices> clusters_indices;
 	std::vector<Normals::Ptr> segment_normals;
 
-	if(!use_octomap_ )
+	if(!params_.use_octomap )
 	{
 		if(apply_voxel_downsampling(*full_cloud_ptr_))
 		{
@@ -376,7 +345,7 @@ bool SurfaceDetection::find_surfaces()
 		}
 	}
 
-	if(use_tabletop_seg_)
+	if(params_.use_tabletop_seg)
 	{
 		int count = full_cloud_ptr_->size();
 		if(apply_tabletop_segmentation(*full_cloud_ptr_,*full_cloud_ptr_))
@@ -424,7 +393,7 @@ bool SurfaceDetection::find_surfaces()
 		// filling cloud array
 		for(int i =0;i< clusters_indices.size(); i++)
 		{
-			if(clusters_indices[i].indices.size() < rg_min_cluster_size_)
+			if(clusters_indices[i].indices.size() < params_.rg_min_cluster_size)
 			{
 				continue;
 			}
@@ -448,14 +417,14 @@ bool SurfaceDetection::find_surfaces()
 				pcl::copyPointCloud(*normals,clusters_indices[i],*segment_normal_ptr);
 			}
 
-			segment_cloud_ptr->header.frame_id = frame_id_;
+			segment_cloud_ptr->header.frame_id = params_.frame_id;
 			surface_clouds_.push_back(segment_cloud_ptr);
 			segment_normals.push_back(segment_normal_ptr);
 		}
 
 		ROS_INFO_STREAM("\nRegion growing succeeded:\n"<<
 				"\tTotal surface clusters found: "<<clusters_indices.size()<<"\n"
-				"\tValid surface clusters (> "<<rg_min_cluster_size_<<" points ) found: "<<surface_clouds_.size());
+				"\tValid surface clusters (> "<<params_.rg_min_cluster_size<<" points ) found: "<<surface_clouds_.size());
 	}
 	else
 	{
@@ -463,7 +432,7 @@ bool SurfaceDetection::find_surfaces()
 		return false;
 	}
 
-	if(ignore_largest_cluster_ && surface_clouds_.size() > 1)
+	if(params_.ignore_largest_cluster && surface_clouds_.size() > 1)
 	{
 		int largest_index = 0;
 		int largest_size = 0;
@@ -493,7 +462,7 @@ bool SurfaceDetection::find_surfaces()
 		mesh_to_marker(mesh,marker);
 		marker.header.frame_id = surface_clouds_[i]->header.frame_id;
 		marker.id = i;
-		marker.color.a = marker_alpha_;
+		marker.color.a = params_.marker_alpha;
 		meshes_.markers.push_back(marker);
 	}
 	ROS_INFO_STREAM("Triangulation of surfaces completed");
@@ -506,8 +475,8 @@ bool SurfaceDetection::apply_statistical_filter(const Cloud& in,Cloud& out)
 	pcl::StatisticalOutlierRemoval<pcl::PointXYZ> filter;
 	Cloud::ConstPtr cloud_ptr = boost::make_shared<Cloud>(in);
 	filter.setInputCloud(cloud_ptr);
-	filter.setMeanK(meanK_);
-	filter.setStddevMulThresh(stdv_threshold_);
+	filter.setMeanK(params_.meanK);
+	filter.setStddevMulThresh(params_.stdv_threshold);
 	filter.filter(out);
 
 	return !out.empty();
@@ -520,7 +489,7 @@ bool SurfaceDetection::apply_normal_estimation(const Cloud &cloud,Normals& norma
 	pcl::NormalEstimation<pcl::PointXYZ,pcl::Normal> normal_estimator;
 	normal_estimator.setSearchMethod(tree);
 	normal_estimator.setInputCloud(cloud_ptr);
-	normal_estimator.setKSearch(k_search_);
+	normal_estimator.setKSearch(params_.k_search);
 	normal_estimator.compute(normals);
 
 	return !normals.empty();
@@ -535,14 +504,14 @@ bool SurfaceDetection::apply_region_growing_segmentation(const Cloud& in,
 	const Normals::Ptr normals_ptr = boost::make_shared<Normals>(normals);
 	pcl::search::Search<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
 	pcl::RegionGrowing<pcl::PointXYZ,pcl::Normal> rg;
-	rg.setMinClusterSize(rg_min_cluster_size_);
-	rg.setMaxClusterSize(rg_max_cluster_size_);
+	rg.setMinClusterSize(params_.rg_min_cluster_size);
+	rg.setMaxClusterSize(params_.rg_max_cluster_size);
 	rg.setSearchMethod(tree);
-	rg.setNumberOfNeighbours(rg_neightbors_);
+	rg.setNumberOfNeighbours(params_.rg_neightbors);
 	rg.setInputCloud(cloud_ptr);
 	rg.setInputNormals(normals_ptr);
-	rg.setSmoothnessThreshold(rg_smoothness_threshold_);
-	rg.setCurvatureThreshold(rg_curvature_threshold_);
+	rg.setSmoothnessThreshold(params_.rg_smoothness_threshold);
+	rg.setCurvatureThreshold(params_.rg_curvature_threshold);
 	rg.extract(clusters);
 
 	pcl::copyPointCloud(*rg.getColoredCloud(),colored_cloud);
@@ -567,13 +536,13 @@ bool SurfaceDetection::apply_fast_triangulation(const Cloud& in,
 
 	// triangulation
 	pcl::GreedyProjectionTriangulation<pcl::PointNormal> gt;
-	gt.setSearchRadius(tr_search_radius_);
-	gt.setMu(tr_mu_);
-	gt.setMaximumNearestNeighbors(tr_max_nearest_neighbors_);
-	gt.setMaximumSurfaceAngle(tr_max_surface_angle_);
-	gt.setMinimumAngle(tr_min_angle_);
-	gt.setMaximumAngle(tr_max_angle_);
-	gt.setNormalConsistency(tr_normal_consistency_);
+	gt.setSearchRadius(params_.tr_search_radius);
+	gt.setMu(params_.tr_mu);
+	gt.setMaximumNearestNeighbors(params_.tr_max_nearest_neighbors);
+	gt.setMaximumSurfaceAngle(params_.tr_max_surface_angle);
+	gt.setMinimumAngle(params_.tr_min_angle);
+	gt.setMaximumAngle(params_.tr_max_angle);
+	gt.setNormalConsistency(params_.tr_normal_consistency);
 
 	gt.setInputCloud(cloud_with_normals);
 	gt.setSearchMethod(tree);
@@ -591,7 +560,7 @@ bool SurfaceDetection::apply_voxel_downsampling(Cloud& cloud)
 
 	pcl::VoxelGrid<pcl::PCLPointCloud2> vg;
 	vg.setInputCloud(pcl_cloud_ptr);
-	vg.setLeafSize(voxel_leafsize_,voxel_leafsize_,voxel_leafsize_);
+	vg.setLeafSize(params_.voxel_leafsize,params_.voxel_leafsize,params_.voxel_leafsize);
 	vg.filter(*pcl_cloud_ptr);
 	pcl::fromPCLPointCloud2(*pcl_cloud_ptr,cloud);
 	return true;
@@ -607,11 +576,11 @@ bool SurfaceDetection::apply_mls_surface_smoothing(const Cloud& cloud_in,Cloud& 
 	mls.setPolynomialFit(true);
 
 	mls.setUpsamplingMethod(pcl::MovingLeastSquares<pcl::PointXYZ,pcl::PointNormal>::RANDOM_UNIFORM_DENSITY);
-	mls.setUpsamplingRadius(mls_upsampling_radius_);
-	mls.setPointDensity(mls_point_density_);
+	mls.setUpsamplingRadius(params_.mls_upsampling_radius);
+	mls.setPointDensity(params_.mls_point_density);
 
 	mls.setSearchMethod(tree);
-	mls.setSearchRadius(mls_search_radius_);
+	mls.setSearchRadius(params_.mls_search_radius);
 	mls.process(mls_points);
 
 	bool succeeded = mls_points.size() > 0;
@@ -634,7 +603,7 @@ bool SurfaceDetection::apply_tabletop_segmentation(const Cloud& cloud_in,Cloud& 
 	seg.setModelType(pcl::SACMODEL_PLANE);
 	seg.setMethodType(pcl::SAC_RANSAC);
 	seg.setMaxIterations (1000);
-	seg.setDistanceThreshold(tabletop_seg_distance_threshold_);
+	seg.setDistanceThreshold(params_.tabletop_seg_distance_threshold);
 	seg.setInputCloud(boost::make_shared<Cloud>(cloud_in));
 	seg.segment(*inliers_ptr,*coeff_ptr);
 

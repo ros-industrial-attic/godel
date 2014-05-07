@@ -24,6 +24,7 @@
 #include <pcl/point_types.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/PoseArray.h>
+#include <godel_msgs/RobotScanParameters.h>
 
 #ifndef ROBOT_SCAN_H_
 #define ROBOT_SCAN_H_
@@ -48,6 +49,7 @@ public:
 
 	bool init();
 	bool load_parameters(std::string ns="~");
+	static bool load_parameters(godel_msgs::RobotScanParameters &params,std::string ns="");
 	void add_scan_callback(ScanCallback cb);
 	bool get_scan_trajectory(moveit_msgs::DisplayTrajectory& traj_data);
 	void get_scan_poses(geometry_msgs::PoseArray& poses);
@@ -58,7 +60,8 @@ public:
 
 protected:
 
-	bool parse_pose_parameter(XmlRpc::XmlRpcValue pose_param,tf::Transform &t);
+	static bool parse_pose_parameter(XmlRpc::XmlRpcValue pose_param,tf::Transform &t);
+	static bool parse_pose_parameter(XmlRpc::XmlRpcValue pose_param,geometry_msgs::Pose &p);
 
 	// generates circular trajectory above target object
 	bool create_scan_trajectory(std::vector<geometry_msgs::Pose> &scan_poses,moveit_msgs::RobotTrajectory& scan_traj);
@@ -76,7 +79,9 @@ protected:
 
 public:// parameters
 
-	// robot move
+	godel_msgs::RobotScanParameters params_;
+
+/*	// robot move
 	std::string group_name_;
 	std::string world_frame_;
 	std::string tcp_frame_;
@@ -95,7 +100,7 @@ public:// parameters
 	bool stop_on_planning_error_;
 
 	// scan transformation
-	std::string scan_target_frame_;
+	std::string scan_target_frame_;*/
 };
 
 } /* namespace detection */
