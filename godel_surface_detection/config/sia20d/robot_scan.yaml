@@ -1,5 +1,6 @@
 robot_scan:
   group_name: manipulator_asus
+  home_position: home_asus
   world_frame: world_frame
   tcp_frame: asus_frame
   tcp_to_cam_pose:
@@ -10,7 +11,7 @@ robot_scan:
     ry: 0.0
     rz: 0.0
   world_to_obj_pose:
-    x: 1.0
+    x: 0.90
     y: 0.0
     z: 0.04
     rx: 0.0
