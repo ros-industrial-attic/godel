@@ -46,7 +46,7 @@ public:
 		using namespace godel_surface_detection;
 
 		// initializing surface detector
-		if(surface_detection_.load_parameters("surface_detection") && robot_scan_.load_parameters("robot_scan") &&
+		if(surface_detection_.load_parameters("~/surface_detection") && robot_scan_.load_parameters("~/robot_scan") &&
 				surface_server_.load_parameters())
 		{
 
@@ -96,7 +96,10 @@ protected:
 
 	void publish_selected_surfaces_changed()
 	{
-
+		godel_msgs::SelectedSurfacesChanged msg;
+		msg.selected_surfaces.clear();
+		surface_server_.get_selected_list(msg.selected_surfaces);
+		selected_surf_changed_pub_.publish(msg);
 	}
 
 	bool run_robot_scan(visualization_msgs::MarkerArray &surfaces)
@@ -159,15 +162,34 @@ protected:
 
 		case req.PUBLISH_SCAN_PATH:
 
+			if(!req.use_default_parameters)
+			{
+				robot_scan_.params_ = req.robot_scan;
+			}
+
 			robot_scan_.publish_scan_poses(ROBOT_SCAN_PATH_PREVIEW_TOPIC);
 			break;
 
 		case req.SCAN_AND_FIND_ONLY:
+
+			if(!req.use_default_parameters)
+			{
+				robot_scan_.params_ = req.robot_scan;
+				surface_detection_.params_ = req.surface_detection;
+			}
+
 			res.surfaces_found =  run_robot_scan(res.surfaces);
 			res.surfaces.markers.clear();
 			break;
 
 		case req.SCAN_FIND_AND_RETURN:
+
+			if(!req.use_default_parameters)
+			{
+				robot_scan_.params_ = req.robot_scan;
+				surface_detection_.params_ = req.surface_detection;
+			}
+
 			res.surfaces_found =  run_robot_scan(res.surfaces);
 			break;
 
@@ -178,6 +200,44 @@ protected:
 
 	bool select_surface_server_callback(godel_msgs::SelectSurface::Request &req, godel_msgs::SelectSurface::Response &res)
 	{
+		switch(req.action)
+		{
+		case req.SELECT:
+
+			for(int i = 0; req.select_surfaces.size();i++)
+			{
+				surface_server_.set_selection_flag(req.select_surfaces[i],true);
+			}
+			break;
+
+		case req.DESELECT:
+
+			for(int i = 0; req.select_surfaces.size();i++)
+			{
+				surface_server_.set_selection_flag(req.select_surfaces[i],false);
+			}
+			break;
+
+		case req.SELECT_ALL:
+
+			surface_server_.select_all(true);
+			break;
+
+		case req.DESELECT_ALL:
+
+			surface_server_.select_all(false);
+			break;
+
+		case req.HIDE_ALL:
+
+			surface_server_.show_all(false);
+			break;
+
+		case req.SHOW_ALL:
+			surface_server_.show_all(true);
+			break;
+		}
+
 		return true;
 	}
 
@@ -206,7 +266,10 @@ int main(int argc,char** argv)
 	ros::AsyncSpinner spinner(4);
 	spinner.start();
 	SurfaceDetectionService service;
-	service.run();
+	if(service.init())
+	{
+		service.run();
+	}
 
 	ros::waitForShutdown();
 }
