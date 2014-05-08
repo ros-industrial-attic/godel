@@ -40,6 +40,7 @@ public:
 
 	static const double PLANNING_TIME;
 	static const double WAIT_MSG_DURATION;
+	static const double EEF_STEP;
 
 public:
 	typedef boost::function<void (pcl::PointCloud<pcl::PointXYZ> &cloud)> ScanCallback;
@@ -51,8 +52,9 @@ public:
 	bool load_parameters(std::string ns="~");
 	static bool load_parameters(godel_msgs::RobotScanParameters &params,std::string ns="");
 	void add_scan_callback(ScanCallback cb);
-	bool get_scan_trajectory(moveit_msgs::DisplayTrajectory& traj_data);
-	void get_scan_poses(geometry_msgs::PoseArray& poses);
+	bool generate_scan_display_trajectory(moveit_msgs::DisplayTrajectory& traj_data);
+	bool generate_scan_poses(geometry_msgs::PoseArray& poses);
+	void get_latest_scan_poses(geometry_msgs::PoseArray poses);
 	void publish_scan_poses(std::string topic);
 	MoveGroupPtr get_move_group();
 	bool move_to_pose(geometry_msgs::Pose& target_pose);

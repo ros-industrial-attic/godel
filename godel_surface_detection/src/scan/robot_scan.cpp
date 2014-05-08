@@ -31,6 +31,7 @@ namespace scan {
 
 const double RobotScan::PLANNING_TIME = 60.0f;
 const double RobotScan::WAIT_MSG_DURATION = 2.0f;
+const double RobotScan::EEF_STEP = 0.1f; // 10cm
 
 RobotScan::RobotScan()
 {
@@ -116,13 +117,13 @@ void RobotScan::add_scan_callback(ScanCallback cb)
 	callback_list_.push_back(cb);
 }
 
-bool RobotScan::get_scan_trajectory(moveit_msgs::DisplayTrajectory &traj_data)
+bool RobotScan::generate_scan_display_trajectory(moveit_msgs::DisplayTrajectory &traj_data)
 {
 	// create trajectory
-	scan_traj_poses_.clear();
+	std::vector<geometry_msgs::Pose> poses;
 	bool succeeded = true;
 	moveit_msgs::RobotTrajectory robot_traj;
-	if(create_scan_trajectory(scan_traj_poses_,robot_traj))
+	if(create_scan_trajectory(poses,robot_traj))
 	{
 		traj_data.trajectory.push_back(robot_traj);
 	}
@@ -133,18 +134,20 @@ bool RobotScan::get_scan_trajectory(moveit_msgs::DisplayTrajectory &traj_data)
 	return succeeded;
 }
 
-void RobotScan::get_scan_poses(geometry_msgs::PoseArray& poses)
+bool RobotScan::generate_scan_poses(geometry_msgs::PoseArray& poses)
 {
 	// create trajectory
-	scan_traj_poses_.clear();
 	bool succeeded = true;
 	moveit_msgs::RobotTrajectory robot_traj;
-	create_scan_trajectory(scan_traj_poses_,robot_traj);
-	for(std::vector<geometry_msgs::Pose>::iterator i = scan_traj_poses_.begin();
-			i != scan_traj_poses_.end(); i++)
-	{
-		poses.poses.push_back(*i);
-	}
+	succeeded = create_scan_trajectory(poses.poses,robot_traj);
+	poses.header.frame_id = params_.world_frame;
+
+	return succeeded;
+}
+
+void RobotScan::get_latest_scan_poses(geometry_msgs::PoseArray poses)
+{
+	poses.poses.insert(poses.poses.begin(),scan_traj_poses_.begin(),scan_traj_poses_.end());
 	poses.header.frame_id = params_.world_frame;
 }
 
@@ -153,7 +156,7 @@ void RobotScan::publish_scan_poses(std::string topic)
 	ros::NodeHandle nh;
 	ros::Publisher poses_pub = nh.advertise<geometry_msgs::PoseArray>(topic,1,true);
 	geometry_msgs::PoseArray poses_msg;
-	get_scan_poses(poses_msg);
+	generate_scan_poses(poses_msg);
 	poses_msg.header.frame_id = params_.world_frame;
 	poses_pub.publish(poses_msg);
 	ros::Duration(1.0f).sleep();
@@ -168,8 +171,8 @@ bool RobotScan::move_to_pose(geometry_msgs::Pose& target_pose)
 int RobotScan::scan(bool move_only)
 {
 	// cartesian path generation
-	double alpha_incr = (params_.sweep_angle_end - params_.sweep_angle_start)/(params_.num_scan_points -1);
-	double eef_step = 4*alpha_incr*params_.cam_to_obj_xoffset;
+	//double alpha_incr = (params_.sweep_angle_end - params_.sweep_angle_start)/(params_.num_scan_points -1);
+	double eef_step = EEF_STEP;//1*alpha_incr*params_.cam_to_obj_xoffset;
 	double jump_threshold = 0.0f;
 	moveit::planning_interface::MoveGroup::Plan path_plan;
 	geometry_msgs::PoseArray cartesian_poses;
