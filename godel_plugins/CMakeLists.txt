@@ -7,7 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
   rqt_gui
   rqt_gui_cpp
 	rviz
-	godel_surface_detection
+	godel_msgs
 )
 
 # c++11

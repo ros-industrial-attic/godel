@@ -81,9 +81,8 @@ void InteractiveSurfaceServer::stop()
 
 bool InteractiveSurfaceServer::load_parameters(std::string node_ns)
 {
-	ros::NodeHandle nh(node_ns.empty() ? "~" : node_ns);
-	std::string ns = params::PARAMETER_NS + "/";
-	bool succeeded = true;//nh.getParam(ns +params::FRAME_ID,frame_id_);
+	ros::NodeHandle nh(node_ns);
+	bool succeeded = true;
 	return succeeded;
 }
 

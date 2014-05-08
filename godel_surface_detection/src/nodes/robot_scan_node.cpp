@@ -25,7 +25,7 @@ using namespace godel_surface_detection;
 const std::string HELP_TEXT = "\n-h Help information\n-m <move mode only (0|1)>\n";
 const std::string SEGMENTS_CLOUD_TOPIC = "segments_cloud";
 const std::string DISPLAY_TRAJECTORY_TOPIC = "scan_trajectory";
-const std::string HOME_POSITION = "home";
+const std::string HOME_POSITION = "home_asus";
 
 // robot scan instance
 godel_surface_detection::scan::RobotScan RobotScan;
@@ -78,6 +78,7 @@ bool init()
 	if(succeeded)
 	{
 		ROS_INFO_STREAM("Parameters loaded");
+		ROS_INFO_STREAM("Robot Scan Parameters: \n"<<RobotScan.params_);
 
 		if(SurfDetect.init() && SurfServer.init() && RobotScan.init())
 		{

@@ -57,25 +57,25 @@ void point_cloud_subscriber(const sensor_msgs::PointCloud2ConstPtr msg)
 
 	// transform to frame id
 	tf::StampedTransform source_to_target_tf;
-	if(SurfDetect.frame_id_.compare(msg->header.frame_id) !=0)
+	if(SurfDetect.params_.frame_id.compare(msg->header.frame_id) !=0)
 	{
 		ROS_INFO_STREAM("Source cloud with frame id '"<<msg->header.frame_id<<"' will be transformed to frame id: '"
-				<<SurfDetect.frame_id_<<"'");
+				<<SurfDetect.params_.frame_id<<"'");
 		try
 		{
-			tf_listener.lookupTransform(SurfDetect.frame_id_,msg->header.frame_id,
+			tf_listener.lookupTransform(SurfDetect.params_.frame_id,msg->header.frame_id,
 					ros::Time::now() - ros::Duration(0.2f),source_to_target_tf);
 			pcl_ros::transformPointCloud(*new_cloud_ptr,*new_cloud_ptr,source_to_target_tf);
 		}
 		catch(tf::LookupException &e)
 		{
 			ROS_ERROR_STREAM("Transform lookup error, using source frame id '"<< msg->header.frame_id<<"'");
-			SurfDetect.frame_id_ = msg->header.frame_id;
+			SurfDetect.params_.frame_id= msg->header.frame_id;
 		}
 		catch(tf::ExtrapolationException &e)
 		{
 			ROS_ERROR_STREAM("Transform lookup error, using source frame id '"<< msg->header.frame_id<<"'");
-			SurfDetect.frame_id_ = msg->header.frame_id;
+			SurfDetect.params_.frame_id = msg->header.frame_id;
 		}
 
 	}
@@ -147,7 +147,7 @@ int main(int argc,char** argv)
 	cloud_subs.shutdown();
 
 	// processing data
-	bool succeeded = SurfDetect.acquired_clouds_counter_ >  0;
+	bool succeeded = SurfDetect.get_acquired_clouds_count() >  0;
 	if(succeeded)
 	{
 		if(SurfDetect.find_surfaces())

@@ -27,6 +27,7 @@
 #include <pcl/surface/gp3.h>
 #include <octomap/octomap.h>
 #include <octomap/OcTree.h>
+#include <godel_msgs/SurfaceDetectionParameters.h>
 #include <visualization_msgs/MarkerArray.h>
 
 namespace godel_surface_detection { namespace detection{
@@ -131,6 +132,8 @@ public:
 
 	bool init();
 	bool load_parameters(std::string node_ns = "");
+	static bool load_parameters(godel_msgs::SurfaceDetectionParameters &params,std::string node_ns = "");
+
 	bool find_surfaces();
 	std::string get_results_summary();
 
@@ -139,6 +142,7 @@ public:
 
 	// adds point cloud to the occupancy grid, it performs no frame transformation
 	void add_cloud(Cloud& cloud);
+	int get_acquired_clouds_count();
 
 	void clear_results();
 
@@ -170,51 +174,8 @@ protected:
 
 public:
 
-	// acquisition
-	std::string frame_id_;
-	OctreePtr octree_;
-
-	// filter and normal estimation
-	int acquired_clouds_counter_;
-	int meanK_;
-	int k_search_;
-	double stdv_threshold_;
-
-	// region growing
-	int rg_min_cluster_size_;
-	int rg_max_cluster_size_;
-	int rg_neightbors_;
-	double rg_smoothness_threshold_;
-	double rg_curvature_threshold_;
-
-	// fast triangulation
-	double tr_search_radius_;
-	double tr_mu_;
-	int tr_max_nearest_neighbors_;
-	double tr_max_surface_angle_;
-	double tr_min_angle_;
-	double tr_max_angle_;
-	bool tr_normal_consistency_;
-
-	// voxel downsampling
-	double voxel_leafsize_;
-
-	// octomap occupancy
-	bool use_octomap_;
-	double occupancy_threshold_;
-
-	// moving least square smoothing
-	double mls_upsampling_radius_;
-	double mls_search_radius_;
-	int mls_point_density_;
-
-	// tabletop segmentation
-	bool use_tabletop_seg_;
-	double tabletop_seg_distance_threshold_;
-
-	// options
-	double marker_alpha_;
-	bool ignore_largest_cluster_;
+	// parameters
+	godel_msgs::SurfaceDetectionParameters params_;
 
 protected:
 
@@ -226,6 +187,12 @@ protected:
 	CloudRGB::Ptr region_colored_cloud_ptr_;
 	std::vector<Cloud::Ptr> surface_clouds_;
 	visualization_msgs::MarkerArray meshes_;
+
+	// octomap
+	OctreePtr octree_;
+
+	// counter
+	int acquired_clouds_counter_;
 
 };
 

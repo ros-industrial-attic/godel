@@ -1,0 +1,11 @@
+int32 SELECT=0
+int32 DESELECT=1
+int32 SELECT_ALL=2
+int32 DESELECT_ALL=3
+int32 HIDE_ALL=4
+int32 SHOW_ALL=5
+int32 action
+
+string[] select_surfaces
+---
+bool succeeded

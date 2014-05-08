@@ -17,9 +17,12 @@
 #ifndef ROBOT_BLENDING_WIDGET_H_
 #define ROBOT_BLENDING_WIDGET_H_
 
-#include <godel_surface_detection/detection/surface_detection.h>
-#include <godel_surface_detection/interactive/interactive_surface_server.h>
-#include <godel_surface_detection/scan/robot_scan.h>
+#include <godel_msgs/SurfaceDetection.h>
+#include <godel_msgs/SelectSurface.h>
+#include <godel_msgs/SelectedSurfacesChanged.h>
+#include <tf/transform_datatypes.h>
+#include <ros/ros.h>
+#include <geometry_msgs/Pose.h>
 
 #include <ui_robot_blending_plugin.h>
 #include <ui_robot_scan_configuration.h>
@@ -29,12 +32,24 @@
 #include <QtConcurrentRun>
 #include <QMainWindow>
 
+// macros
+#ifndef DEG2RAD
+#define DEG2RAD(x) ((x)*0.017453293)
+#endif
+
+#ifndef RAD2DEG
+#define RAD2DEG(x) ((x)*57.29578)
+#endif
+
 
 namespace godel_plugins
 {
 namespace widgets {
 
-const std::string ROBOT_SCAN_PATH_PREVIEW_TOPIC = "robot_scan_path_preview";
+const std::string SURFACE_DETECTION_SERVICE = "surface_detection";
+const std::string SELECT_SURFACE_SERVICE = "select_surface";
+const std::string SELECTED_SURFACES_CHANGED_TOPIC = "selected_surfaces_changed";
+
 
 class PoseWidget: public QWidget
 {
@@ -42,6 +57,7 @@ Q_OBJECT
 public:
 	PoseWidget(QWidget *parent = NULL);
 
+	void set_values(const geometry_msgs::Pose& p);
 	void set_values(const tf::Transform &t);
 	tf::Transform get_values();
 
@@ -55,12 +71,10 @@ class RobotScanConfigWidget: public QMainWindow
 
 private:
 
-	typedef boost::shared_ptr<godel_surface_detection::scan::RobotScan> RobotScanPtr;
-
 Q_OBJECT
 public:
 
-	RobotScanConfigWidget(RobotScanPtr r_ptr);
+	RobotScanConfigWidget(godel_msgs::RobotScanParameters params);
 	void show();
 
 Q_SIGNALS:
@@ -77,10 +91,13 @@ protected Q_SLOTS:
 	void accept_changes_handler();
 	void cancel_changes_handler();
 
+public:
+
+	godel_msgs::RobotScanParameters robot_scan_parameters_;
+
 protected:
 
 	Ui::RobotScanConfigWindow ui_;
-	RobotScanPtr robot_scan_ptr_;
 	PoseWidget *world_to_obj_pose_widget_;
 	PoseWidget *tcp_to_cam_pose_widget_;
 };
@@ -114,17 +131,23 @@ public:
 
 Q_SIGNALS:
 	void selection_changed();
+	void surface_detection_started();
+	void surface_detection_completed();
 
 protected:
 
 	void init();
 	void run_scan_and_detect();
 	void save_robot_scan_parameters();
+	bool call_select_surface_service(godel_msgs::SelectSurface::Request &req);
+	bool call_surface_detection_service(godel_msgs::SurfaceDetection& s);
+	void selected_surface_changed_callback(godel_msgs::SelectedSurfacesChangedConstPtr msg);
 
 protected Q_SLOTS:
 
 	void scan_button_handler();
 	void update_handler();
+	void connect_to_services();
 	void increase_tab_index_handler();
 	void decrease_tab_index_handler();
 	void selection_changed_handler();
@@ -132,17 +155,25 @@ protected Q_SLOTS:
 	void deselect_all_handler();
 	void hide_all_handler();
 	void show_all_handler();
-	void more_options_handler();
+	void robot_scan_options_handler();
 	void parameters_changed_handler();
 	void preview_path_handler();
+	void surface_detection_started_handler();
+	void surface_detection_completed_handler();
 
 protected:
 	Ui::RobotBlendingWidget ui_;
-	RobotScanConfigWidget *config_window_;
+	RobotScanConfigWidget *robot_scan_config_window_;
+
+	ros::ServiceClient surface_detection_client_;
+	ros::ServiceClient select_surface_client_;
+	ros::Subscriber selected_surfaces_subs_;
 	std::string param_ns_;
-	godel_surface_detection::scan::RobotScan robot_scan_;
-	godel_surface_detection::detection::SurfaceDetection surf_detect_;
-	godel_surface_detection::interactive::InteractiveSurfaceServer surf_server_;
+	godel_msgs::RobotScanParameters robot_scan_parameters_;
+	godel_msgs::SurfaceDetectionParameters surf_detect_;
+	godel_msgs::SurfaceDetection::Response latest_result_;
+	godel_msgs::SurfaceDetection::Request latest_request_;
+	godel_msgs::SelectedSurfacesChanged selected_surfaces_msg_;
 };
 
 } /* namespace widgets */
