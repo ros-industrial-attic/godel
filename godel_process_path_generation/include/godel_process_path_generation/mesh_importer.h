@@ -28,8 +28,6 @@
 #include <pcl/PolygonMesh.h>
 #include <Eigen/Geometry>
 
-using pcl::geometry::PolygonMesh;
-
 
 namespace godel_process_path
 {
@@ -38,7 +36,7 @@ typedef pcl::PointCloud<pcl::PointXYZ> Cloud;
 
 struct PolygonPt
 {
-  PolygonPt();
+  PolygonPt() {};
   PolygonPt(double _x, double _y)
   {
     x = _x;
@@ -50,7 +48,7 @@ struct PolygonPt
 
 struct PolygonBoundary
 {
-  PolygonBoundary();
+  PolygonBoundary() {};
   PolygonBoundary(unsigned int reserve_size)
   {
     pts.reserve(reserve_size);
@@ -66,7 +64,7 @@ public:
   bool inputData(const pcl::PolygonMesh &input_mesh);
 
 private:
-  bool computePlaneCoefficients(const Cloud &cloud, Eigen::Vector4d &output);
+  bool computePlaneCoefficients(Cloud::ConstPtr cloud, Eigen::Vector4d &output);
 
 
   Eigen::Affine3d plane_frame_;                 /**< @brief Transform to local frame of plane **/

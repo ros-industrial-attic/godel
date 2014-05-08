@@ -105,7 +105,7 @@ add_library(godel_process_path_generation
 )
 
 add_executable(pcl_test src/mesh_importer.cpp)
-target_link_libraries(pcl_test ${PCL_LIBRARIES})
+target_link_libraries(pcl_test ${catkin_LIBRARIES} ${Eigen_LIBRARIES} ${PCL_LIBRARIES})
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
