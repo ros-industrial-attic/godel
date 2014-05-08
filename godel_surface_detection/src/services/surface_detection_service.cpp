@@ -49,6 +49,10 @@ public:
 		if(surface_detection_.load_parameters("~/surface_detection") && robot_scan_.load_parameters("~/robot_scan") &&
 				surface_server_.load_parameters())
 		{
+			// save default parameters
+			default_robot_scan_params__ = robot_scan_.params_;
+			default_surf_detection_params_ = surface_detection_.params_;
+
 
 			ROS_INFO_STREAM("Surface detection service loaded parameters successfully");
 			if(surface_detection_.init() && robot_scan_.init() && surface_server_.init())
@@ -112,6 +116,8 @@ protected:
 		// clear all results
 		surface_detection_.clear_results();
 
+		// saving parameters used
+
 		ROS_INFO_STREAM("Starting scan");
 
 		int scans_completed = robot_scan_.scan(false);
@@ -132,6 +138,13 @@ protected:
 
 				// copying to output argument
 				surfaces.markers.insert(surfaces.markers.begin(),markers_msg.markers.begin(),markers_msg.markers.end());
+
+				// saving latest successful results
+				latest_results_.robot_scan = robot_scan_.params_;
+				latest_results_.surface_detection = surface_detection_.params_;
+				latest_results_.surfaces_found = true;
+				latest_results_.surfaces = surfaces;
+				robot_scan_.get_latest_scan_poses(latest_results_.robot_scan_poses);
 			}
 			else
 			{
@@ -155,16 +168,27 @@ protected:
 
 		switch(req.action)
 		{
-		case req.GET_PARAMETERS:
+		case req.GET_CURRENT_PARAMETERS:
 			res.robot_scan = robot_scan_.params_;
 			res.surface_detection = surface_detection_.params_;
 			break;
 
+		case req.GET_DEFAULT_PARAMETERS:
+			res.robot_scan = default_robot_scan_params__;
+			res.surface_detection = default_surf_detection_params_;
+			break;
+
 		case req.PUBLISH_SCAN_PATH:
 
-			if(!req.use_default_parameters)
+			if(req.use_default_parameters)
+			{
+				robot_scan_.params_ = default_robot_scan_params__;
+				//surface_detection_.params_ = default_surf_detection_params_;
+			}
+			else
 			{
 				robot_scan_.params_ = req.robot_scan;
+				//surface_detection_.params_ = req.surface_detection;
 			}
 
 			robot_scan_.publish_scan_poses(ROBOT_SCAN_PATH_PREVIEW_TOPIC);
@@ -172,7 +196,12 @@ protected:
 
 		case req.SCAN_AND_FIND_ONLY:
 
-			if(!req.use_default_parameters)
+			if(req.use_default_parameters)
+			{
+				robot_scan_.params_ = default_robot_scan_params__;
+				surface_detection_.params_ = default_surf_detection_params_;
+			}
+			else
 			{
 				robot_scan_.params_ = req.robot_scan;
 				surface_detection_.params_ = req.surface_detection;
@@ -184,13 +213,23 @@ protected:
 
 		case req.SCAN_FIND_AND_RETURN:
 
-			if(!req.use_default_parameters)
+			if(req.use_default_parameters)
+			{
+				robot_scan_.params_ = default_robot_scan_params__;
+				surface_detection_.params_ = default_surf_detection_params_;
+			}
+			else
 			{
 				robot_scan_.params_ = req.robot_scan;
 				surface_detection_.params_ = req.surface_detection;
 			}
 
 			res.surfaces_found =  run_robot_scan(res.surfaces);
+			break;
+
+		case req.GET_LATEST_RESULTS:
+
+			res = latest_results_;
 			break;
 
 		}
@@ -257,6 +296,11 @@ protected:
 
 	// marker server instance
 	godel_surface_detection::interactive::InteractiveSurfaceServer surface_server_;
+
+	// default parameters
+	godel_msgs::RobotScanParameters default_robot_scan_params__;
+	godel_msgs::SurfaceDetectionParameters default_surf_detection_params_;
+	godel_msgs::SurfaceDetection::Response latest_results_;
 
 };
 
