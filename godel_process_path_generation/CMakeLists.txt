@@ -100,12 +100,17 @@ include_directories(include
 )
 
 ## Declare a cpp library
-add_library(godel_process_path_generation
+add_library(mesh_importer
   src/mesh_importer.cpp
 )
+target_link_libraries(mesh_importer
+					  ${catkin_LIBRARIES}
+					  ${Eigen_LIBRARIES}
+					  ${PCL_LIBRARIES}
+)
 
-add_executable(pcl_test src/mesh_importer.cpp)
-target_link_libraries(pcl_test ${catkin_LIBRARIES} ${Eigen_LIBRARIES} ${PCL_LIBRARIES})
+#add_executable(pcl_test src/mesh_importer.cpp)
+#target_link_libraries(pcl_test ${catkin_LIBRARIES} ${Eigen_LIBRARIES} ${PCL_LIBRARIES})
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
@@ -156,9 +161,12 @@ target_link_libraries(pcl_test ${catkin_LIBRARIES} ${Eigen_LIBRARIES} ${PCL_LIBR
 #############
 
 ## Add gtest based cpp test target and link libraries
-# catkin_add_gtest(${PROJECT_NAME}-test test/test_godel_process_path_generation.cpp)
-# if(TARGET ${PROJECT_NAME}-test)
-#   target_link_libraries(${PROJECT_NAME}-test ${PROJECT_NAME})
+ catkin_add_gtest(test_MeshImporter test/test_MeshImporter.cpp)
+target_link_libraries(test_MeshImporter
+                      mesh_importer
+)
+# if(TARGET test_MeshImporter)
+#   target_link_libraries(test_MeshImporter ${PROJECT_NAME})
 # endif()
 
 ## Add folders to be run by python nosetests

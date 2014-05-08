@@ -40,54 +40,20 @@ using Eigen::Vector4d;
 namespace godel_process_path
 {
 
-MeshImporter::MeshImporter()
-{
-}
-
-MeshImporter::~MeshImporter()
-{
-}
-
-bool MeshImporter::computePlaneCoefficients(Cloud::ConstPtr cloud, Eigen::Vector4d &output)
-{
-  pcl::ModelCoefficients coefficients;
-  pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
-  // Create the segmentation object
-  pcl::SACSegmentation<pcl::PointXYZ> seg;
-  // Optional
-  seg.setOptimizeCoefficients (true);
-  // Mandatory
-  seg.setModelType (pcl::SACMODEL_PLANE);
-  seg.setMethodType (pcl::SAC_RANSAC);
-  seg.setDistanceThreshold (0.01);
-
-  seg.setInputCloud (cloud);
-  seg.segment (*inliers, coefficients);
-  if (static_cast<double>(inliers->indices.size())/static_cast<double>(cloud->height * cloud->width) < 0.9)
-  {
-    ROS_WARN("Less than 90%% of points included in plane fit.");
-    return false;
-  }
-
-  ROS_ASSERT(coefficients.values.size() == 4);
-  output(0) = coefficients.values.at(0);
-  output(1) = coefficients.values.at(1);
-  output(2) = coefficients.values.at(2);
-  output(3) = coefficients.values.at(3);
-  return true;
-}
-
-bool MeshImporter::inputData(const pcl::PolygonMesh &input_mesh)
+bool MeshImporter::calculateBoundaryData(const pcl::PolygonMesh &input_mesh)
 {
   typedef pcl::geometry::TriangleMesh<pcl::geometry::DefaultMeshTraits<> > Mesh;
+
+  plane_frame_.setIdentity();
+  boundaries_.clear();
 
   Cloud::Ptr points(new Cloud);
   pcl::fromPCLPointCloud2(input_mesh.cloud,*points);
 
 
   /* Find plane coefficients from point cloud data.
-   * Find centroid of point cloud (projected onto plane) as origin of local coordinate system.
-   * Create local coordinate frame for plane
+   * Find centroid of point cloud as origin of local coordinate system.
+   * Create local coordinate frame for plane.
    */
   Eigen::Hyperplane<double, 3> hplane;
   if (!computePlaneCoefficients(points, hplane.coeffs()))
@@ -95,30 +61,14 @@ bool MeshImporter::inputData(const pcl::PolygonMesh &input_mesh)
     ROS_WARN("Could not compute plane coefficients");
     return false;
   }
+  if (verbose_)
+  {
+    ROS_INFO_STREAM("Normal: " << hplane.coeffs().transpose());
+  }
 
   Eigen::Vector4d centroid4;
   pcl::compute3DCentroid(*points, centroid4);
-  Eigen::Vector3d centroid = centroid4.head(3);
-  centroid = hplane.projection(centroid);       // Project centroid onto plane
-
-  // Check if z_axis (plane normal) is closely aligned with world x_axis:
-  // If not, construct transform rotation from X,Z axes. Otherwise, use Y,Z axes.
-  const Eigen::Vector3d& z_axis = hplane.coeffs().head(3);
-  if (std::abs(z_axis.dot(Vector3d::UnitX())) < 0.8)
-  {
-    Eigen::Vector3d x_axis = hplane.projection(centroid + Eigen::Vector3d::UnitX());
-    plane_frame_.matrix().col(0).head(3) = x_axis.normalized();
-    plane_frame_.matrix().col(2).head(3) = z_axis.normalized();
-    plane_frame_.matrix().col(1).head(3) = (z_axis.normalized().cross(x_axis.normalized())).normalized();
-  }
-  else
-  {
-    Eigen::Vector3d y_axis = hplane.projection(centroid + Eigen::Vector3d::UnitY());
-    plane_frame_.matrix().col(1).head(3) = y_axis.normalized();
-    plane_frame_.matrix().col(2).head(3) = z_axis.normalized();
-    plane_frame_.matrix().col(1).head(3) = (y_axis.normalized().cross(z_axis.normalized())).normalized();
-  }
-  plane_frame_.translation() = centroid;
+  computeLocalPlaneFrame(hplane, centroid4.head(3));
 
 
   /* Use pcl::geometry::PolygonMesh to extract boundaries.
@@ -158,22 +108,90 @@ bool MeshImporter::inputData(const pcl::PolygonMesh &input_mesh)
     for (Mesh::HalfEdgeIndices::const_iterator edge = boundary->begin(), edge_end = boundary->end();
          edge != edge_end; ++edge)
     {
-      pcl::PointXYZ cloudpt = points->points.at(mesh_index_map.right.at(mesh.getOriginatingVertexIndex(*edge))); // pt on boundary
+      Cloud::PointType cloudpt = points->points.at(mesh_index_map.right.at(mesh.getOriginatingVertexIndex(*edge))); // pt on boundary
       Eigen::Vector3d projected_pt = hplane.projection(Eigen::Vector3d(cloudpt.x, cloudpt.y, cloudpt.z));        // pt projected onto plane
       Eigen::Vector3d plane_pt = plane_inverse * projected_pt;                                                   // pt in plane frame
       ROS_ASSERT(std::abs(plane_pt(2)) < .001);
       pbound.pts.push_back(PolygonPt(plane_pt(0), plane_pt(1)));
     }
+
     boundaries_.push_back(pbound);
   }
 
   return true;
 }
 
+void MeshImporter::computeLocalPlaneFrame(const Eigen::Hyperplane<double, 3> &plane, const Vector3d &centroid)
+{
+  Eigen::Vector3d origin = plane.projection(centroid);       // Project centroid onto plane
+
+  // Check if z_axis (plane normal) is closely aligned with world x_axis:
+  // If not, construct transform rotation from X,Z axes. Otherwise, use Y,Z axes.
+  const Eigen::Vector3d& plane_normal = plane.coeffs().head(3);
+  if (std::abs(plane_normal.dot(Vector3d::UnitX())) < 0.8)
+  {
+    Eigen::Vector3d x_axis = plane.projection(origin + Eigen::Vector3d::UnitX());
+    plane_frame_.matrix().col(0).head(3) = x_axis.normalized();
+    plane_frame_.matrix().col(2).head(3) = plane_normal.normalized();
+    plane_frame_.matrix().col(1).head(3) = (plane_normal.normalized().cross(x_axis.normalized())).normalized();
+  }
+  else
+  {
+    Eigen::Vector3d y_axis = plane.projection(origin + Eigen::Vector3d::UnitY());
+    plane_frame_.matrix().col(1).head(3) = y_axis.normalized();
+    plane_frame_.matrix().col(2).head(3) = plane_normal.normalized();
+    plane_frame_.matrix().col(0).head(3) = (y_axis.normalized().cross(plane_normal.normalized())).normalized();
+  }
+  plane_frame_.translation() = origin;
+}
+
+bool MeshImporter::computePlaneCoefficients(Cloud::ConstPtr cloud, Eigen::Vector4d &output)
+{
+  pcl::ModelCoefficients coefficients;
+  pcl::PointIndices::Ptr inliers (new pcl::PointIndices);
+  // Create the segmentation object
+  pcl::SACSegmentation<Cloud::PointType> seg;
+  // Optional
+  seg.setOptimizeCoefficients (true);
+  // Mandatory
+  seg.setModelType (pcl::SACMODEL_PLANE);
+  seg.setMethodType (pcl::SAC_RANSAC);
+  seg.setDistanceThreshold (0.01);
+  const Cloud::PointType &p0 = cloud->points.at(0);
+  Eigen::Vector3f expected_normal(p0.normal_x, p0.normal_y, p0.normal_z);
+  seg.setAxis(expected_normal);
+  seg.setEpsAngle(0.5);
+
+  seg.setInputCloud (cloud);
+  seg.segment (*inliers, coefficients);
+  ROS_ASSERT(coefficients.values.size() == 4);
+
+  // Check that points match a plane fit
+  if (static_cast<double>(inliers->indices.size())/static_cast<double>(cloud->height * cloud->width) < 0.9)
+  {
+    ROS_WARN("Less than 90%% of points included in plane fit.");
+    return false;
+  }
+
+  // Check that normal is aligned with pointcloud data
+  Eigen::Vector3f actual_normal(coefficients.values.at(0), coefficients.values.at(1), coefficients.values.at(2));
+  if (actual_normal.dot(expected_normal) < 0.0)
+  {
+    ROS_WARN("Flipping RANSAC plane normal");
+    actual_normal *= -1;
+  }
+  if (actual_normal.dot(expected_normal) < std::cos(seg.getEpsAngle()))
+  {
+    ROS_WARN("RANSAC plane normal out of tolerance! cosines: %f / %f", actual_normal.dot(expected_normal), std::cos(seg.getEpsAngle()));
+    return false;
+  }
+
+  output(0) = actual_normal(0);
+  output(1) = actual_normal(1);
+  output(2) = actual_normal(2);
+  output(3) = coefficients.values.at(3);
+  return true;
+}
+
 } /* namespace godel_process_path */
 
-int
- main (int argc, char** argv)
-{
-  godel_process_path::MeshImporter mi;
-}
