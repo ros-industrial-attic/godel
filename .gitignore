@@ -1,0 +1,25 @@
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+# Compiled Dynamic libraries
+*.so
+*.dylib
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
+
+# Cmake/catkin files
+CMakeFiles
+Makefile
+catkin_generated
+*.cmake
+CMakeCache.txt
+devel
+
+# Eclipse files
+.project
+.cproject
