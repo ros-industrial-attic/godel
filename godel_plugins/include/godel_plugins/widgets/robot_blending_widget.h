@@ -133,6 +133,8 @@ Q_SIGNALS:
 	void selection_changed();
 	void surface_detection_started();
 	void surface_detection_completed();
+	void connect_started();
+	void connect_completed();
 
 protected:
 
@@ -160,6 +162,8 @@ protected Q_SLOTS:
 	void preview_path_handler();
 	void surface_detection_started_handler();
 	void surface_detection_completed_handler();
+	void connect_started_handler();
+	void connect_completed_hanlder();
 
 protected:
 	Ui::RobotBlendingWidget ui_;

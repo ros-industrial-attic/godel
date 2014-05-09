@@ -64,6 +64,8 @@ void RobotBlendingWidget::init()
 	connect(this,SIGNAL(selection_changed()),this,SLOT(selection_changed_handler()));
 	connect(this,SIGNAL(surface_detection_started()),this,SLOT(surface_detection_started_handler()));
 	connect(this,SIGNAL(surface_detection_completed()),this,SLOT(surface_detection_completed_handler()));
+	connect(this,SIGNAL(connect_started()),this,SLOT(connect_started_handler()));
+	connect(this,SIGNAL(connect_completed()),this,SLOT(connect_completed_handler()));
 
 
 	// setting up timer
@@ -85,10 +87,9 @@ void RobotBlendingWidget::connect_to_services()
 
 
 	// disable gui
-	ui_.TabWidget->setEnabled(false);
+	Q_EMIT connect_started();
 
 	// wait for services to connect
-
 	while(ros::ok())
 	{
 
@@ -113,7 +114,7 @@ void RobotBlendingWidget::connect_to_services()
 
 
 				// enable gui
-				ui_.TabWidget->setEnabled(true);
+				Q_EMIT connect_completed();
 
 				ROS_INFO_STREAM("Call to service for parameters succeeded");
 				break;
@@ -313,6 +314,16 @@ void RobotBlendingWidget::surface_detection_started_handler()
 }
 
 void RobotBlendingWidget::surface_detection_completed_handler()
+{
+	ui_.TabWidget->setEnabled(true);
+}
+
+void RobotBlendingWidget::connect_started_handler()
+{
+	ui_.TabWidget->setEnabled(false);
+}
+
+void RobotBlendingWidget::connect_completed_hanlder()
 {
 	ui_.TabWidget->setEnabled(true);
 }
