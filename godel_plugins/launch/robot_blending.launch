@@ -15,7 +15,7 @@
 		</node>
 
 		<!-- rviz blending plugin -->
-		<node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_plugins)/rviz/robot_blending.rviz" output="screen"/>
+		<node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_plugins)/rviz/robot_blending.rviz" output="screen" launch-prefix="nice"/>
 			<!--<rosparam command="load" file="$(find godel_surface_detection)/config/surface_detection.yaml"/>
 			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/robot_scan.yaml"/>
 		</node>-->
