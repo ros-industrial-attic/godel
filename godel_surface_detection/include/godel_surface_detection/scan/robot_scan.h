@@ -41,6 +41,7 @@ public:
 	static const double PLANNING_TIME;
 	static const double WAIT_MSG_DURATION;
 	static const double EEF_STEP;
+	static const double MIN_TRAJECTORY_TIME_STEP;
 
 public:
 	typedef boost::function<void (pcl::PointCloud<pcl::PointXYZ> &cloud)> ScanCallback;
@@ -60,10 +61,19 @@ public:
 	bool move_to_pose(geometry_msgs::Pose& target_pose);
 	int scan(bool move_only = false);
 
-protected:
 
 	static bool parse_pose_parameter(XmlRpc::XmlRpcValue pose_param,tf::Transform &t);
 	static bool parse_pose_parameter(XmlRpc::XmlRpcValue pose_param,geometry_msgs::Pose &p);
+
+	/**
+	 * \Fills the velocity array of the input trajectory with an estimate computed as the ration of the difference between
+	 * \two joint points and the elapsed time.
+	 * \param[out] traj: Robot trajectory with populated joint values and time stamps for each
+	 */
+	static void apply_simple_trajectory_filter(moveit_msgs::RobotTrajectory& traj);
+
+protected:
+
 
 	// generates circular trajectory above target object
 	bool create_scan_trajectory(std::vector<geometry_msgs::Pose> &scan_poses,moveit_msgs::RobotTrajectory& scan_traj);
