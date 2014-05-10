@@ -31,7 +31,8 @@ set(godel_plugins_HDRS
 set(godel_plugins_UIS
 	src/widgets/robot_blending_plugin.ui 
 	src/widgets/robot_scan_configuration.ui
-	src/widgets/pose_widget.ui)
+	src/widgets/pose_widget.ui
+	src/widgets/surface_detection_configuration.ui)
 
 set(godel_plugins_INCLUDE_DIRECTORIES
 	include
