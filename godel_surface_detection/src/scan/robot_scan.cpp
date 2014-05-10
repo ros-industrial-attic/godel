@@ -31,7 +31,8 @@ namespace scan {
 
 const double RobotScan::PLANNING_TIME = 60.0f;
 const double RobotScan::WAIT_MSG_DURATION = 2.0f;
-const double RobotScan::EEF_STEP = 0.1f; // 10cm
+const double RobotScan::MIN_TRAJECTORY_TIME_STEP = 0.5f; // seconds
+const double RobotScan::EEF_STEP = 0.05f; // 5cm
 
 RobotScan::RobotScan()
 {
@@ -207,21 +208,42 @@ int RobotScan::scan(bool move_only)
 					path_plan.start_state_);
 
 			// creating path plan structure and execute
-			if(move_group_ptr_->computeCartesianPath(cartesian_poses.poses,eef_step,jump_threshold,path_plan.trajectory_,true)>=1.0f &&
-					move_group_ptr_->execute(path_plan))
+			if(move_group_ptr_->computeCartesianPath(cartesian_poses.poses,eef_step,jump_threshold,path_plan.trajectory_,true)>=1.0f)
 			{
-				poses_reached++;
+				// applying simple filtering
+				apply_simple_trajectory_filter(path_plan.trajectory_);
+				//ROS_INFO_STREAM("Robot trajectory "<<i<<":\n"<<path_plan.trajectory_);
 			}
 			else
 			{
 				if(params_.stop_on_planning_error)
 				{
-					ROS_ERROR_STREAM("Planning error encountered, quitting scan");
+					ROS_ERROR_STREAM("Path Planning to scan position "<<i <<" failed, quitting scan");
 					break;
 				}
 				else
 				{
-					ROS_WARN_STREAM("Move to scan position "<<i <<" failed, skipping scan");
+					ROS_WARN_STREAM("Path Planning to scan position "<<i <<" failed, skipping scan");
+					continue;
+				}
+
+			}
+
+			if(move_group_ptr_->execute(path_plan))
+			{
+				poses_reached++;
+
+			}
+			else
+			{
+				if(params_.stop_on_planning_error)
+				{
+					ROS_ERROR_STREAM("Path Execution to scan position "<<i <<" failed, quitting scan");
+					break;
+				}
+				else
+				{
+					ROS_WARN_STREAM("Path Execution to scan position "<<i <<" failed, skipping scan");
 					continue;
 				}
 			}
@@ -276,6 +298,8 @@ int RobotScan::scan(bool move_only)
 			{
 				ROS_WARN_STREAM("MOVE_ONLY mode, skipping scan");
 			}
+
+			ros::Duration(0.5f).sleep();
 		}
 	}
 
@@ -384,6 +408,48 @@ bool RobotScan::parse_pose_parameter(XmlRpc::XmlRpcValue pose_param,geometry_msg
 	else
 	{
 		return false;
+	}
+}
+
+void RobotScan::apply_simple_trajectory_filter(	moveit_msgs::RobotTrajectory& traj)
+{
+	std::vector<trajectory_msgs::JointTrajectoryPoint> &points = traj.joint_trajectory.points;
+
+	// filling first and last points with 0 velocities
+	points.front().velocities.resize(traj.joint_trajectory.joint_names.size());
+	points.back().velocities.resize(traj.joint_trajectory.joint_names.size());
+
+	double dt;
+	double dtheta;
+	for(unsigned int i = 1;i < points.size()-1; i++)
+	{
+		trajectory_msgs::JointTrajectoryPoint &p1 = points[i-1];
+		trajectory_msgs::JointTrajectoryPoint &p2 = points[i];
+		p2.velocities.resize(p2.positions.size());
+
+		// time elapsed between p1 and p2
+		dt = (p2.time_from_start - p1.time_from_start).toSec();
+		if(dt<MIN_TRAJECTORY_TIME_STEP)
+		{
+			dt = MIN_TRAJECTORY_TIME_STEP;
+			p2.time_from_start = p1.time_from_start + ros::Duration(dt);
+		}
+
+		// computing velocity for each joint
+		for(unsigned int j = 0; j < p2.velocities.size(); j++)
+		{
+			p2.velocities[j] = (p2.positions[j] - p1.positions[j])/dt;
+/*			ROS_INFO_STREAM("joint velocity for joint "<<traj.joint_trajectory.joint_names[j]<<
+					" :" <<p2.velocities[j]<<" for dt: "<<dt);*/
+		}
+	}
+
+	// checking time stamp for last joint point
+	trajectory_msgs::JointTrajectoryPoint &p_last = points.back();
+	trajectory_msgs::JointTrajectoryPoint &p_before_last = *(points.end()-2);
+	if((p_last.time_from_start - p_before_last.time_from_start).toSec() < MIN_TRAJECTORY_TIME_STEP)
+	{
+		p_last.time_from_start = p_before_last.time_from_start + ros::Duration(MIN_TRAJECTORY_TIME_STEP);
 	}
 }
 

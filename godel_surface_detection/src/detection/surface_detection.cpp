@@ -106,6 +106,7 @@ bool SurfaceDetection::load_parameters(godel_msgs::SurfaceDetectionParameters &p
 
 	bool succeeded;
 	if(		nh.getParam(params::FRAME_ID,params.frame_id)&&
+			nh.getParam(params::K_SEARCH,params.k_search) &&
 			nh.getParam(params::STOUTLIER_MEAN,params.meanK) &&
 			nh.getParam(params::STOUTLIER_STDEV_THRESHOLD,params.stdv_threshold) &&
 			nh.getParam(params::REGION_GROWING_MIN_CLUSTER_SIZE,params.rg_min_cluster_size) &&
@@ -390,6 +391,9 @@ bool SurfaceDetection::find_surfaces()
 			*region_colored_cloud_ptr_))
 	{
 
+		ROS_INFO_STREAM("Region growing succeeded");
+		ROS_INFO_STREAM("Total surface clusters found: "<<clusters_indices.size());
+
 		// filling cloud array
 		for(int i =0;i< clusters_indices.size(); i++)
 		{
@@ -422,9 +426,7 @@ bool SurfaceDetection::find_surfaces()
 			segment_normals.push_back(segment_normal_ptr);
 		}
 
-		ROS_INFO_STREAM("\nRegion growing succeeded:\n"<<
-				"\tTotal surface clusters found: "<<clusters_indices.size()<<"\n"
-				"\tValid surface clusters (> "<<params_.rg_min_cluster_size<<" points ) found: "<<surface_clouds_.size());
+		ROS_INFO_STREAM("Selected surface clusters (> "<<params_.rg_min_cluster_size<<" points ) found: "<<surface_clouds_.size());
 	}
 	else
 	{
@@ -487,6 +489,7 @@ bool SurfaceDetection::apply_normal_estimation(const Cloud &cloud,Normals& norma
 	Cloud::ConstPtr cloud_ptr = boost::make_shared<Cloud>(cloud);
 	pcl::search::Search<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>);
 	pcl::NormalEstimation<pcl::PointXYZ,pcl::Normal> normal_estimator;
+	normal_estimator.setViewPoint(0,0,5.0f);
 	normal_estimator.setSearchMethod(tree);
 	normal_estimator.setInputCloud(cloud_ptr);
 	normal_estimator.setKSearch(params_.k_search);
@@ -514,7 +517,10 @@ bool SurfaceDetection::apply_region_growing_segmentation(const Cloud& in,
 	rg.setCurvatureThreshold(params_.rg_curvature_threshold);
 	rg.extract(clusters);
 
-	pcl::copyPointCloud(*rg.getColoredCloud(),colored_cloud);
+	if(rg.getColoredCloud() != 0)
+	{
+		pcl::copyPointCloud(*rg.getColoredCloud(),colored_cloud);
+	}
 
 
 	return clusters.size()>0;
