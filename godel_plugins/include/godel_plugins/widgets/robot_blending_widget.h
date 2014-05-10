@@ -27,6 +27,7 @@
 #include <ui_robot_blending_plugin.h>
 #include <ui_robot_scan_configuration.h>
 #include <ui_pose_widget.h>
+#include <ui_surface_detection_configuration.h>
 #include <QWidget>
 #include <QTimer>
 #include <QtConcurrentRun>
@@ -102,6 +103,40 @@ protected:
 	PoseWidget *tcp_to_cam_pose_widget_;
 };
 
+class SurfaceDetectionConfigWidget: public QMainWindow
+{
+
+private:
+
+Q_OBJECT
+public:
+
+	SurfaceDetectionConfigWidget(godel_msgs::SurfaceDetectionParameters params);
+	void show();
+
+Q_SIGNALS:
+	void parameters_changed();
+
+protected:
+
+	void init();
+	void update_parameters();
+	void save_parameters();
+
+protected Q_SLOTS:
+
+	void accept_changes_handler();
+	void cancel_changes_handler();
+
+public:
+
+	godel_msgs::SurfaceDetectionParameters surface_detection_parameters_;
+
+protected:
+
+	Ui::SurfaceDetectionConfigWindow ui_;
+};
+
 class RobotBlendingWidget:  public QWidget
 {
 Q_OBJECT
@@ -157,24 +192,27 @@ protected Q_SLOTS:
 	void deselect_all_handler();
 	void hide_all_handler();
 	void show_all_handler();
-	void robot_scan_options_handler();
-	void parameters_changed_handler();
+	void scan_options_click_handler();
+	void surface_options_click_handler();
+	void robot_scan_params_changed_handler();
+	void surface_detect_params_changed_handler();
 	void preview_path_handler();
 	void surface_detection_started_handler();
 	void surface_detection_completed_handler();
 	void connect_started_handler();
-	void connect_completed_hanlder();
+	void connect_completed_handler();
 
 protected:
 	Ui::RobotBlendingWidget ui_;
 	RobotScanConfigWidget *robot_scan_config_window_;
+	SurfaceDetectionConfigWidget *surface_detect_config_window_;
 
 	ros::ServiceClient surface_detection_client_;
 	ros::ServiceClient select_surface_client_;
 	ros::Subscriber selected_surfaces_subs_;
 	std::string param_ns_;
 	godel_msgs::RobotScanParameters robot_scan_parameters_;
-	godel_msgs::SurfaceDetectionParameters surf_detect_;
+	godel_msgs::SurfaceDetectionParameters surf_detect_parameters_;
 	godel_msgs::SurfaceDetection::Response latest_result_;
 	godel_msgs::SurfaceDetection::Request latest_request_;
 	godel_msgs::SelectedSurfacesChanged selected_surfaces_msg_;
