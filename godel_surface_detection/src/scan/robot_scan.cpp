@@ -32,7 +32,7 @@ namespace scan {
 const double RobotScan::PLANNING_TIME = 60.0f;
 const double RobotScan::WAIT_MSG_DURATION = 2.0f;
 const double RobotScan::MIN_TRAJECTORY_TIME_STEP = 0.5f; // seconds
-const double RobotScan::EEF_STEP = 0.04f; // 5cm
+const double RobotScan::EEF_STEP = 0.05f; // 5cm
 
 RobotScan::RobotScan()
 {
