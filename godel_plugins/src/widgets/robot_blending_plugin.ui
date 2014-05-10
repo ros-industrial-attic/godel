@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>378</width>
+    <width>398</width>
     <height>529</height>
    </rect>
   </property>
@@ -27,7 +27,7 @@
     <rect>
      <x>0</x>
      <y>10</y>
-     <width>371</width>
+     <width>391</width>
      <height>511</height>
     </rect>
    </property>
@@ -216,7 +216,7 @@ Library</string>
       <rect>
        <x>10</x>
        <y>10</y>
-       <width>341</width>
+       <width>361</width>
        <height>81</height>
       </rect>
      </property>
@@ -258,7 +258,7 @@ Library</string>
       <rect>
        <x>10</x>
        <y>400</y>
-       <width>341</width>
+       <width>371</width>
        <height>61</height>
       </rect>
      </property>
@@ -290,7 +290,7 @@ p, li { white-space: pre-wrap; }
        <rect>
         <x>70</x>
         <y>30</y>
-        <width>181</width>
+        <width>201</width>
         <height>27</height>
        </rect>
       </property>
@@ -301,7 +301,7 @@ p, li { white-space: pre-wrap; }
      <widget class="QPushButton" name="pushButton">
       <property name="geometry">
        <rect>
-        <x>260</x>
+        <x>280</x>
         <y>30</y>
         <width>71</width>
         <height>27</height>
@@ -336,12 +336,12 @@ p, li { white-space: pre-wrap; }
       <rect>
        <x>10</x>
        <y>90</y>
-       <width>351</width>
+       <width>371</width>
        <height>261</height>
       </rect>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab_1">
       <attribute name="title">
@@ -352,7 +352,7 @@ p, li { white-space: pre-wrap; }
         <rect>
          <x>0</x>
          <y>10</y>
-         <width>341</width>
+         <width>351</width>
          <height>211</height>
         </rect>
        </property>
@@ -365,7 +365,7 @@ p, li { white-space: pre-wrap; }
           <x>0</x>
           <y>30</y>
           <width>234</width>
-          <height>131</height>
+          <height>141</height>
          </rect>
         </property>
         <layout class="QFormLayout" name="formLayout">
@@ -455,15 +455,13 @@ p, li { white-space: pre-wrap; }
         <property name="geometry">
          <rect>
           <x>240</x>
-          <y>110</y>
-          <width>101</width>
-          <height>51</height>
+          <y>140</y>
+          <width>111</width>
+          <height>31</height>
          </rect>
         </property>
         <property name="text">
-         <string>Scan
-and
-Detect</string>
+         <string>Scan and Find</string>
         </property>
        </widget>
        <widget class="QLineEdit" name="LineEditSensorTopic">
@@ -493,26 +491,39 @@ Detect</string>
         <property name="geometry">
          <rect>
           <x>240</x>
-          <y>30</y>
-          <width>101</width>
+          <y>20</y>
+          <width>111</width>
           <height>31</height>
          </rect>
         </property>
         <property name="text">
-         <string>More Options</string>
+         <string>Scan Options</string>
         </property>
        </widget>
        <widget class="QPushButton" name="PushButtonPreviewPath">
         <property name="geometry">
          <rect>
           <x>240</x>
-          <y>70</y>
-          <width>101</width>
+          <y>100</y>
+          <width>111</width>
           <height>31</height>
          </rect>
         </property>
         <property name="text">
          <string>Preview Path</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="PushButtonSurfaceOptions">
+        <property name="geometry">
+         <rect>
+          <x>240</x>
+          <y>60</y>
+          <width>111</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Surface Options</string>
         </property>
        </widget>
       </widget>
@@ -526,7 +537,7 @@ Detect</string>
         <rect>
          <x>10</x>
          <y>10</y>
-         <width>331</width>
+         <width>341</width>
          <height>201</height>
         </rect>
        </property>
@@ -549,7 +560,7 @@ Detect</string>
        <widget class="QPushButton" name="PushButtonDeselectAllSurfaces">
         <property name="geometry">
          <rect>
-          <x>230</x>
+          <x>240</x>
           <y>90</y>
           <width>91</width>
           <height>27</height>
@@ -562,7 +573,7 @@ Detect</string>
        <widget class="QPushButton" name="PushButtonSelectAllSurfaces">
         <property name="geometry">
          <rect>
-          <x>230</x>
+          <x>240</x>
           <y>60</y>
           <width>91</width>
           <height>27</height>
@@ -577,7 +588,7 @@ Detect</string>
          <rect>
           <x>20</x>
           <y>50</y>
-          <width>201</width>
+          <width>211</width>
           <height>141</height>
          </rect>
         </property>
@@ -585,7 +596,7 @@ Detect</string>
        <widget class="QPushButton" name="PushButtonHideAllSurfaces">
         <property name="geometry">
          <rect>
-          <x>230</x>
+          <x>240</x>
           <y>120</y>
           <width>91</width>
           <height>27</height>
@@ -598,7 +609,7 @@ Detect</string>
        <widget class="QPushButton" name="PushButtonShowAllSurfaces">
         <property name="geometry">
          <rect>
-          <x>230</x>
+          <x>240</x>
           <y>150</y>
           <width>91</width>
           <height>27</height>
@@ -619,7 +630,7 @@ Detect</string>
         <rect>
          <x>10</x>
          <y>10</y>
-         <width>321</width>
+         <width>341</width>
          <height>191</height>
         </rect>
        </property>
@@ -644,7 +655,7 @@ Detect</string>
          <rect>
           <x>130</x>
           <y>40</y>
-          <width>181</width>
+          <width>201</width>
           <height>141</height>
          </rect>
         </property>
@@ -652,7 +663,7 @@ Detect</string>
        <widget class="QLabel" name="label_4">
         <property name="geometry">
          <rect>
-          <x>180</x>
+          <x>210</x>
           <y>20</y>
           <width>66</width>
           <height>17</height>
