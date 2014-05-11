@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 #include <pcl/PCLPointCloud2.h>
 #include <pcl/conversions.h>
+#include "godel_process_path_generation/polygon_pts.hpp"
 #include "godel_process_path_generation/mesh_importer.h"
 #include "test_common_functions.h"
 

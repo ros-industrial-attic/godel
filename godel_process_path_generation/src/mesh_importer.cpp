@@ -116,7 +116,7 @@ bool MeshImporter::calculateBoundaryData(const pcl::PolygonMesh &input_mesh)
       Eigen::Vector3d projected_pt = hplane.projection(Eigen::Vector3d(cloudpt.x, cloudpt.y, cloudpt.z));        // pt projected onto plane
       Eigen::Vector3d plane_pt = plane_inverse * projected_pt;                                                   // pt in plane frame
       ROS_ASSERT(std::abs(plane_pt(2)) < .001);
-      pbound.pts.push_back(PolygonPt(plane_pt(0), plane_pt(1)));
+      pbound.push_back(PolygonPt(plane_pt(0), plane_pt(1)));
     }
 
     boundaries_.push_back(pbound);
