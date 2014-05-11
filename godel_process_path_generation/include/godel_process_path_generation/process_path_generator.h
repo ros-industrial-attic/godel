@@ -26,6 +26,7 @@
 #define PROCESS_PATH_GENERATOR_H_
 
 #include "godel_process_path_generation/polygon_pts.hpp"
+#include <openvoronoi/voronoidiagram.hpp>
 
 namespace godel_process_path
 {
@@ -33,10 +34,34 @@ namespace godel_process_path
 class ProcessPathGenerator
 {
 public:
-  ProcessPathGenerator() {};
+  ProcessPathGenerator(): vd_(new ovd::VoronoiDiagram(1,100)), tool_radius_(0.), margin_(0.), overlap_(0.) {};
   virtual ~ProcessPathGenerator() {};
 
   bool configure(PolygonBoundaryCollection boundaries);
+  bool createProcessPath();
+
+  void setMargin(double margin) {margin_=margin;}
+  void setOverlap(double overlap) {overlap_=overlap;}
+  void setToolRadius(double radius) {tool_radius_=radius;}
+
+
+private:
+
+  /*ovd::VoronoiDiagram* vd = new ovd::VoronoiDiagram(1,100); // (r, bins)
+   * double r: radius of circle within which all input geometry must fall. use 1 (unit-circle). Scale geometry if necessary.
+   * int bins:  bins for face-grid search. roughly sqrt(n), where n is the number of sites is good according to Held. */
+   boost::shared_ptr<ovd::VoronoiDiagram> vd_;
+
+   double tool_radius_; /**<Tool radius(m) used for offsetting paths */
+   double margin_;      /**<Margin (m) around boundary to leave untouched (first pass only) */
+   double overlap_;     /**<Amount of overlap(m) between adjacent passes. */
+
+   bool variables_ok()
+   {
+     return  tool_radius_ >= 0. &&
+             margin_ >= 0. &&
+             overlap_ < 2.*tool_radius_;
+   }
 };
 
 } /* namespace godel_process_path */
