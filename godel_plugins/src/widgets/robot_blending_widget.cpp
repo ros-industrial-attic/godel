@@ -71,6 +71,9 @@ void RobotBlendingWidget::init()
 	connect(this,SIGNAL(connect_started()),this,SLOT(connect_started_handler()));
 	connect(this,SIGNAL(connect_completed()),this,SLOT(connect_completed_handler()));
 
+	// moving to first tab
+	ui_.TabWidgetCreateLib->setCurrentIndex(0);
+
 
 	// setting up timer
 	QTimer *timer = new QTimer(this);
