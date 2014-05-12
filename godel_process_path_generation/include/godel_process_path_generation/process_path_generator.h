@@ -27,6 +27,8 @@
 
 #include "godel_process_path_generation/polygon_pts.hpp"
 #include <openvoronoi/voronoidiagram.hpp>
+#include <openvoronoi/offset_sorter.hpp>
+
 
 namespace godel_process_path
 {
@@ -34,7 +36,7 @@ namespace godel_process_path
 class ProcessPathGenerator
 {
 public:
-  ProcessPathGenerator(): vd_(new ovd::VoronoiDiagram(1,100)), tool_radius_(0.), margin_(0.), overlap_(0.) {};
+  ProcessPathGenerator(): vd_(new ovd::VoronoiDiagram(1,100)), tool_radius_(0.), margin_(0.), overlap_(0.), configure_ok_(false) {};
   virtual ~ProcessPathGenerator() {};
 
   bool configure(PolygonBoundaryCollection boundaries);
@@ -47,6 +49,35 @@ public:
 
 private:
 
+  //TODO comment
+  //TODO write
+  bool addPolygonToProcessPath(const PolygonBoundary &bnd);
+
+  //TODO comment (calls arc/linear)
+  //TODO write
+  bool createOffsetPolygons(PolygonBoundaryCollection &polygons, std::vector<double> &offset_depths);
+
+  //TODO comment (calls arc/linear)
+  //TODO write
+  void discretizeSegment(const ovd::OffsetVertex &p1, const ovd::OffsetVertex &p2, PolygonBoundary &bnd) const;
+
+  //TODO comment
+  //TODO write
+  void discretizeArc(const ovd::OffsetVertex &p1, const ovd::OffsetVertex &p2, PolygonBoundary &bnd) const;
+
+  //TODO comment
+  //TODO write
+  void discretizeLinear(const ovd::OffsetVertex &p1, const ovd::OffsetVertex &p2, PolygonBoundary &bnd) const;
+
+  /**@brief Check if values of offset variables are acceptable */
+   bool variables_ok() const
+   {
+     return  tool_radius_ >= 0. &&
+             margin_ >= 0. &&
+             overlap_ < 2.*tool_radius_;
+   }
+
+
   /*ovd::VoronoiDiagram* vd = new ovd::VoronoiDiagram(1,100); // (r, bins)
    * double r: radius of circle within which all input geometry must fall. use 1 (unit-circle). Scale geometry if necessary.
    * int bins:  bins for face-grid search. roughly sqrt(n), where n is the number of sites is good according to Held. */
@@ -56,12 +87,10 @@ private:
    double margin_;      /**<Margin (m) around boundary to leave untouched (first pass only) */
    double overlap_;     /**<Amount of overlap(m) between adjacent passes. */
 
-   bool variables_ok()
-   {
-     return  tool_radius_ >= 0. &&
-             margin_ >= 0. &&
-             overlap_ < 2.*tool_radius_;
-   }
+   double max_discretization_distance_; /**<(m) When discretizing segments, use this or less distance between points */
+
+   bool configure_ok_;
+
 };
 
 } /* namespace godel_process_path */

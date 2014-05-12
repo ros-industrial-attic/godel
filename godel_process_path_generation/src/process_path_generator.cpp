@@ -25,7 +25,6 @@
 #include <ros/ros.h>
 #include "godel_process_path_generation/process_path_generator.h"
 #include <openvoronoi/offset.hpp>
-#include <openvoronoi/offset_sorter.hpp>
 #include <openvoronoi/polygon_interior_filter.hpp>
 #include <boost/tuple/tuple.hpp>
 
@@ -41,6 +40,7 @@ namespace godel_process_path
 typedef std::vector<ovd::MGVertex> MachiningLoopList;
 bool getChild(const ovd::MGVertex &parent, const ovd::MachiningGraph &mg, ovd::MGVertex &child);
 void moveLoopItem(const ovd::MGVertex &item, MachiningLoopList &from, MachiningLoopList &to);
+bool exists(const ovd::MGVertex &item, const MachiningLoopList &container);
 
 
 bool ProcessPathGenerator::configure(PolygonBoundaryCollection boundaries)
@@ -69,65 +69,56 @@ bool ProcessPathGenerator::configure(PolygonBoundaryCollection boundaries)
   if (!vd_->check())
   {
     ROS_ERROR("Voroni diagram check failed.");
-    return false;
+    configure_ok_ = false;
+  }
+  else
+  {
+    ovd::polygon_interior_filter pi(true);
+    vd_->filter(&pi);
+
+    configure_ok_ = true;
   }
 
-  ovd::polygon_interior_filter pi(true);
-  vd_->filter(&pi);
-
-  return true;
+  return configure_ok_;
 }
 
-bool ProcessPathGenerator::createProcessPath()
+bool ProcessPathGenerator::createOffsetPolygons(PolygonBoundaryCollection &polygons, std::vector<double> &offset_depths)
 {
-  if (!variables_ok())
-  {
-    ROS_WARN_STREAM("Problem with variable values in ProcessPathGenerator, were they set properly?" << std::endl <<
-                    "Tool Radius: " << tool_radius_ << "(m)" << std::endl <<
-                    "Margin: " << margin_ << "(m)" << std::endl <<
-                    "Overlap: " << overlap_ << "(m)");
-    return false;
-  }
-
-  // Perform initial offset
   ovd::HEGraph& g = vd_->get_graph_reference();
   ovd::Offset offsetter(g);
   ovd::OffsetSorter sorter(g);
+
+  // Perform offsets
   double offset_distance(tool_radius_ + margin_);
-
-  ovd::OffsetLoops offset_list = offsetter.offset(offset_distance);
-  if (offset_list.size() == 0)
-  {
-    ROS_WARN_STREAM("No path was generated for initial offset: " << offset_distance << std::endl <<
-                    "Tool Radius: " << tool_radius_ << "(m)" << std::endl <<
-                    "Margin: " << margin_ << "(m)");
-    return false;
-  }
-  for (ovd::OffsetLoops::const_iterator loop=offset_list.begin(), loops_end=offset_list.end(); loop!=loops_end; ++loop)
-  {
-    sorter.add_loop(*loop);
-  }
-
-  // Perform subsequent offsets
+  size_t loop_count(0);
   while (true)
   {
-    offset_distance += (2. * tool_radius_ - overlap_);
-    offset_list = offsetter.offset(offset_distance);
+    ovd::OffsetLoops offset_list = offsetter.offset(offset_distance);
     if (offset_list.size() == 0)
     {
       break;
     }
+    loop_count += offset_list.size();
     for (ovd::OffsetLoops::const_iterator loop=offset_list.begin(), loops_end=offset_list.end(); loop!=loops_end; ++loop)
     {
       sorter.add_loop(*loop);
     }
+    offset_distance += (2. * tool_radius_ - overlap_);
+  }
+  if (loop_count == 0)
+  {
+    ROS_WARN_STREAM("No offsets were generated: " << std::endl <<
+                    "Tool Radius: " << tool_radius_ << " (m)" << std::endl <<
+                    "Margin: " << margin_ << " (m)" << std::endl <<
+                    "Initial offset: " << offset_distance << " (m)");
+    return false;
   }
 
   sorter.sort_loops();
-  ovd::MachiningGraph mg = sorter.getMachiningGraph();
-  size_t num_vertices = boost::num_vertices(mg);
-  MachiningLoopList ordered_loops(num_vertices), unordered_loops(num_vertices);       // For tracking order of loops for machining
-  typedef std::vector<ovd::MGVertex>::iterator LoopItr;
+  const ovd::MachiningGraph &mg = sorter.getMachiningGraph();
+
+  MachiningLoopList ordered_loops, unordered_loops;       // For tracking order of loops for machining
+//  typedef std::vector<ovd::MGVertex>::iterator MGLoopListItr;
 
   // Populate unordered loops with all graph vertices
   ovd::MGVertexItr loop, vertex_end;
@@ -145,35 +136,110 @@ bool ProcessPathGenerator::createProcessPath()
   {
     // Find deepest loop
     double largest_offset(0);
-    LoopItr deepest_loop;
-    for (LoopItr loop = unordered_loops.begin(); loop!=unordered_loops.end(); ++loop)
+    ovd::MGVertex deepest_loop;
+    BOOST_FOREACH(ovd::MGVertex loop_descriptor, unordered_loops)
     {
-      if (mg[*loop].offset_distance > largest_offset)
+      if (mg[loop_descriptor].offset_distance > largest_offset)
       {
-        largest_offset = mg[*loop].offset_distance;
-        deepest_loop = loop;
+        largest_offset = mg[loop_descriptor].offset_distance;
+        deepest_loop = loop_descriptor;
       }
     }
-
-    // Move deepest loop to ordered
-//    moveLoopItem(*loop, unordered_loops, ordered_loops);
-    ordered_loops.push_back(*deepest_loop);
-    unordered_loops.erase(deepest_loop);
+    moveLoopItem(deepest_loop, unordered_loops, ordered_loops);
 
     // Find child of deepest loop (TODO check for multiple children, should never happen!)
     // Move child to ordered
     ovd::MGVertex child;
     while (getChild(ordered_loops.back(), mg, child))
     {
-      moveLoopItem(child, unordered_loops, ordered_loops);
+      if (exists(child, unordered_loops))
+      {
+        moveLoopItem(child, unordered_loops, ordered_loops);
+      }
+      else
+      {
+        break;
+      }
     }
   }
+
+//  for (LoopItr loop_it=ordered_loops.begin(); loop_it != ordered_loops.end(); ++loop_it)
+  BOOST_FOREACH(ovd::MGVertex loop_descriptor, ordered_loops)
+  {
+    PolygonBoundary path;
+    const ovd::OffsetLoop &loop = mg[loop_descriptor];
+    const ovd::OffsetVertex &prior_vtx = loop.vertices.front();
+    for (std::list<ovd::OffsetVertex>::const_iterator vtx=boost::next(loop.vertices.begin()); vtx!=loop.vertices.end(); ++vtx)
+    {
+        discretizeSegment(prior_vtx, *vtx, path);
+    }
+    polygons.push_back(path);
+    offset_depths.push_back(loop.offset_distance);
+  }
+
+  return true;
+}
+
+bool ProcessPathGenerator::createProcessPath()
+{
+  if (!variables_ok())
+  {
+    ROS_WARN_STREAM("Problem with variable values in ProcessPathGenerator, were they set properly?" << std::endl <<
+                    "Tool Radius: " << tool_radius_ << "(m)" << std::endl <<
+                    "Margin: " << margin_ << "(m)" << std::endl <<
+                    "Overlap: " << overlap_ << "(m)");
+    return false;
+  }
+  if (!configure_ok_)
+  {
+    ROS_WARN("Configuration incomplete. Run configure() successfully before creating process path.");
+    return false;
+  }
+
+  /* Create a series of polygons to represent the paths for blending
+   * Polygons are ordered so as to begin at most inner, spiral out to most outer,
+   *  jump to next incomplete inner, spiral out to largest incomplete outer, etc. */
+  PolygonBoundaryCollection polygons;
+  std::vector<double> offset_depths;    // Each depth corresponds to item in polygons
+  if (!createOffsetPolygons(polygons, offset_depths))
+  {
+    ROS_WARN("Failure during offset procedure.");
+    return false;
+  }
+
+
+
+//  addPolygonToProcessPath(bnd);
 
 
 
   return true;
 }
 
+void ProcessPathGenerator::discretizeSegment(const ovd::OffsetVertex &p1, const ovd::OffsetVertex &p2, PolygonBoundary &bnd) const
+{
+  if (p1.r == -1 or p2.r == -1)
+  {
+    discretizeLinear(p1, p2, bnd);
+  }
+  else
+  {
+    discretizeArc(p1, p2, bnd);
+  }
+}
+
+
+bool exists(const ovd::MGVertex &item, const MachiningLoopList &container)
+{
+  for (MachiningLoopList::const_iterator iter=container.begin(); iter !=container.end(); ++iter)
+  {
+    if (item == *iter)
+    {
+      return true;
+    }
+  }
+  return false;
+}
 
 bool getChild(const ovd::MGVertex &parent, const ovd::MachiningGraph &mg, ovd::MGVertex &child)
 {
