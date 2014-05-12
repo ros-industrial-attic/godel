@@ -5,8 +5,8 @@ project(godel_process_path_generation)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  pcl_ros
+             roscpp
+             pcl_ros
 )
 
 find_package(Boost REQUIRED COMPONENTS system)
@@ -94,19 +94,28 @@ catkin_package(
 ## Your package locations should be listed before other locations
 # include_directories(include)
 include_directories(include
-  ${catkin_INCLUDE_DIRS}
-  ${Boost_INCLUDE_DIRS}
-#  ${Eigen_INCLUDE_DIRS}
+                    ${catkin_INCLUDE_DIRS}
+                    ${Boost_INCLUDE_DIRS}
+#                    ${Eigen_INCLUDE_DIRS}
+                    /usr/local/include/openvoronoi
+                    /usr/local/include/openvoronoi/common
 )
 
 ## Declare a cpp library
 add_library(mesh_importer
-  src/mesh_importer.cpp
+            src/mesh_importer.cpp
 )
 target_link_libraries(mesh_importer
 					  ${catkin_LIBRARIES}
 					  ${Eigen_LIBRARIES}
 					  ${PCL_LIBRARIES}
+)
+
+add_library(process_path_generator
+            src/process_path_generator.cpp
+)
+target_link_libraries(process_path_generator
+                      ${catkin_LIBRARIES}
 )
 
 #add_executable(pcl_test src/mesh_importer.cpp)

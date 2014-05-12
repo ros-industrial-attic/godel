@@ -1,0 +1,97 @@
+--- /usr/local/include/openvoronoi/offset_sorter.hpp	2014-05-05 08:12:55.022576693 -0500
++++ offset_sorter.hpp	2014-05-11 15:29:36.799805932 -0500
+@@ -142,6 +142,11 @@
+         write_dotfile();
+     }
+     
++    /// Return reference to machining graph
++    const MachiningGraph& getMachiningGraph() const {
++      return g;
++    }
++
+     /// try to connect the new vertex to existing vertices    
+     void connect_vertex(MGVertex v) {
+ 
+@@ -292,44 +297,44 @@
+         boost::write_graphviz( out, g, lbl_wrt);
+     }
+     
+-    /// return list of offsets 
+-/*    boost::python::list offset_list_py() {
+-        boost::python::list py_offsets;
+-        BOOST_FOREACH( MGVertex v, boost::vertices(g) ) { // loop through each loop
+-            boost::python::list py_loop;
+-            bool first = true;
+-            int vdeg =boost::out_degree( v, g );
+-            /*
+-            BOOST_FOREACH( Edge e, boost::out_edges( v, g ) ) {
+-                vdeg++;
+-            }*/
+-            
+-  /*          
+-            BOOST_FOREACH( OffsetVertex lpt, g[v].vertices ) { //loop through each line/arc
+-                boost::python::list py_lpt;
+-                double offset_distance = g[v].offset_distance;
+-                if (first) {
+-                    first = false;
+-                    py_lpt.append( lpt.p ); // 0
+-                    py_lpt.append( -1 ); // 1
+-                    py_lpt.append( offset_distance ); // 2
+-                    py_lpt.append( vdeg ); // 3
+-                } else {
+-                    py_lpt.append( lpt.p ); // 0, position
+-                    py_lpt.append( lpt.r ); // 1, radius
+-                    py_lpt.append( lpt.c ); // 2, center
+-                    py_lpt.append( lpt.cw ); // 3, cw or ccw
+-                    py_lpt.append( lpt.f ); // 4, face
+-                    py_lpt.append( offset_distance ); // 5
+-                    py_lpt.append( vdeg ); // 6
+-                }
+-                py_loop.append( py_lpt );
+-            }
+-            py_offsets.append( py_loop );
+-        }
+-        return py_offsets;
+-    }
+- */   
++//    /// return list of offsets
++//    boost::python::list offset_list_py() {
++//        boost::python::list py_offsets;
++//        BOOST_FOREACH( MGVertex v, boost::vertices(g) ) { // loop through each loop
++//            boost::python::list py_loop;
++//            bool first = true;
++//            int vdeg =boost::out_degree( v, g );
++//            /*
++//            BOOST_FOREACH( Edge e, boost::out_edges( v, g ) ) {
++//                vdeg++;
++//            }*/
++//
++//
++//            BOOST_FOREACH( OffsetVertex lpt, g[v].vertices ) { //loop through each line/arc
++//                boost::python::list py_lpt;
++//                double offset_distance = g[v].offset_distance;
++//                if (first) {
++//                    first = false;
++//                    py_lpt.append( lpt.p ); // 0
++//                    py_lpt.append( -1 ); // 1
++//                    py_lpt.append( offset_distance ); // 2
++//                    py_lpt.append( vdeg ); // 3
++//                } else {
++//                    py_lpt.append( lpt.p ); // 0, position
++//                    py_lpt.append( lpt.r ); // 1, radius
++//                    py_lpt.append( lpt.c ); // 2, center
++//                    py_lpt.append( lpt.cw ); // 3, cw or ccw
++//                    py_lpt.append( lpt.f ); // 4, face
++//                    py_lpt.append( offset_distance ); // 5
++//                    py_lpt.append( vdeg ); // 6
++//                }
++//                py_loop.append( py_lpt );
++//            }
++//            py_offsets.append( py_loop );
++//        }
++//        return py_offsets;
++//    }
++//
+ protected:
+     /// set of Loops, sorted by decreasing offset-distance
+     std::multiset<OffsetLoop, OffsetLoopCompare> distance_sorted_loops; 
