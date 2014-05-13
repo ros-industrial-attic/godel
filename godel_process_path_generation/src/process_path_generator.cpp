@@ -82,6 +82,7 @@ void ProcessPathGenerator::addTraverseToProcessPath(const PolygonPt &from, const
 
 bool ProcessPathGenerator::configure(PolygonBoundaryCollection boundaries)
 {
+  vd_.reset(new ovd::VoronoiDiagram(1,100));
   ROS_INFO_COND(verbose_, "Creating voroni diagram from polygons");
 
   for (PolygonBoundaryCollection::const_iterator boundary=boundaries.begin(), bs_end=boundaries.end(); boundary!=bs_end; ++boundary)
@@ -91,18 +92,13 @@ bool ProcessPathGenerator::configure(PolygonBoundaryCollection boundaries)
     bool first=true;
     for (PolygonBoundary::const_iterator pt=boundary->begin(), b_end=boundary->end(); pt!=b_end; ++pt)
     {
-      int id = vd_->insert_point_site(ovd::Point(pt->x, pt->y));
-      ROS_INFO_COND(verbose_, "Added point %i at location %f, %f", id, pt->x, pt->y);
-      if (first)
-      {
-        first=false;
-      }
-      else
-      {
-        ROS_INFO_COND(verbose_, "Adding line from pt %i to pt %i", pt_id.back(), id);
-        vd_->insert_line_site(pt_id.back(), id);
-      }
-      pt_id.push_back(id);
+      pt_id.push_back(vd_->insert_point_site(ovd::Point(pt->x, pt->y)));
+      ROS_INFO_COND(verbose_, "Added point %i at location %f, %f", pt_id.back(), pt->x, pt->y);
+    }
+    for (size_t ii=0; ii<pt_id.size()-1; ++ii)
+    {
+      ROS_INFO_COND(verbose_, "Adding line from pt %i to pt %i", pt_id.at(ii), pt_id.at(ii+1));
+      vd_->insert_line_site(pt_id.at(ii), pt_id.at(ii+1));
     }
     ROS_INFO_COND(verbose_, "Closing loop from pt %i to pt %i", pt_id.back(), pt_id.front());
     vd_->insert_line_site(pt_id.back(), pt_id.front());
@@ -121,6 +117,7 @@ bool ProcessPathGenerator::configure(PolygonBoundaryCollection boundaries)
     configure_ok_ = true;
   }
 
+  ROS_INFO_COND(verbose_, "Configure complete.");
   return configure_ok_;
 }
 
@@ -135,6 +132,7 @@ bool ProcessPathGenerator::createOffsetPolygons(PolygonBoundaryCollection &polyg
   size_t loop_count(0);
   while (true)
   {
+    ROS_INFO_COND(verbose_, "Creating offset with distance %f", offset_distance);
     ovd::OffsetLoops offset_list = offsetter.offset(offset_distance);
     if (offset_list.size() == 0)
     {
@@ -155,12 +153,12 @@ bool ProcessPathGenerator::createOffsetPolygons(PolygonBoundaryCollection &polyg
                     "Initial offset: " << offset_distance << " (m)");
     return false;
   }
+  ROS_INFO_COND(verbose_, "Created %li offset loops", loop_count);
 
   sorter.sort_loops();
   const ovd::MachiningGraph &mg = sorter.getMachiningGraph();
 
   MachiningLoopList ordered_loops, unordered_loops;       // For tracking order of loops for machining
-//  typedef std::vector<ovd::MGVertex>::iterator MGLoopListItr;
 
   // Populate unordered loops with all graph vertices
   ovd::MGVertexItr loop, vertex_end;
@@ -187,6 +185,7 @@ bool ProcessPathGenerator::createOffsetPolygons(PolygonBoundaryCollection &polyg
         deepest_loop = loop_descriptor;
       }
     }
+    ROS_INFO_COND(verbose_, "Moving loop at depth %f to ordered list.", largest_offset);
     moveLoopItem(deepest_loop, unordered_loops, ordered_loops);
 
     // Find child of deepest loop (TODO check for multiple children, should never happen!)
@@ -196,6 +195,7 @@ bool ProcessPathGenerator::createOffsetPolygons(PolygonBoundaryCollection &polyg
     {
       if (exists(child, unordered_loops))
       {
+        ROS_INFO_COND(verbose_, "Moving loop at depth %f to ordered list.", mg[child].offset_distance);
         moveLoopItem(child, unordered_loops, ordered_loops);
       }
       else
@@ -353,17 +353,18 @@ bool getChild(const ovd::MGVertex &parent, const ovd::MachiningGraph &mg, ovd::M
 void moveLoopItem(const ovd::MGVertex &item, MachiningLoopList &from, MachiningLoopList &to)
 {
   // delete item from, add item to
+  to.push_back(item);
   MachiningLoopList::iterator iter;
   for (iter=from.begin(); iter !=from.end(); ++iter)
   {
     if (item == *iter)
     {
+      std::cout << "erasing " << iter-from.begin() << std::endl;
       from.erase(iter);
-      break;
+      return;
     }
   }
   ROS_ASSERT(iter != from.end());
-  to.push_back(item);
 }
 
 void operator<<(ProcessPt &pr_pt, const PolygonPt &pg_pt)
