@@ -22,20 +22,37 @@
  *      Author: ros
  */
 
-#include "../include/godel_process_path_generation/process_path.h"
+#include "godel_process_path_generation/process_path.h"
+#include <geometry_msgs/Point.h>
+#include <eigen_conversions/eigen_msg.h>
 
 namespace descartes
 {
 
-ProcessPath::ProcessPath()
+visualization_msgs::Marker ProcessPath::asMarker()
 {
-  // TODO Auto-generated constructor stub
+  visualization_msgs::Marker marker;
+  marker.action = visualization_msgs::Marker::ADD;
+  marker.pose.position.x = marker.pose.position.y = marker.pose.position.z = 0.;
+  marker.scale.x = .001;        /*1mm line width*/
+  marker.type = visualization_msgs::Marker::LINE_STRIP;
+  for (std::vector<ProcessPt>::const_iterator pt = pts_.begin(); pt!=pts_.end(); ++pt)
+  {
+    geometry_msgs::Point marker_pt;
+    marker_pt.x = pt->pose().translation()(0);
+    marker_pt.y = pt->pose().translation()(1);
+    marker_pt.z = pt->pose().translation()(2);
 
-}
+    marker.points.push_back(marker_pt);
+  }
 
-ProcessPath::~ProcessPath()
-{
-  // TODO Auto-generated destructor stub
+  std_msgs::ColorRGBA red;
+  red.a = 1.f;
+  red.r = 1.f;
+  red.g = red.b = 0.f;
+  marker.colors = std::vector<std_msgs::ColorRGBA>(marker.points.size(), red);
+
+  return marker;
 }
 
 } /* namespace descartes */

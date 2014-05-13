@@ -26,6 +26,7 @@
 #define PROCESS_PATH_H_
 
 #include "godel_process_path_generation/process_pt.h"
+#include <visualization_msgs/Marker.h>
 
 namespace descartes
 {
@@ -35,6 +36,19 @@ class ProcessPath
 public:
   ProcessPath() {};
   virtual ~ProcessPath() {};
+
+  /**@ Add a ProcessPt to pts
+   * @param pt Reference to ProcessPt to add to points
+   */
+  void addPoint(const ProcessPt &pt) {pts_.push_back(pt);}
+
+  /**@brief Convert ProcessPath to line_list marker
+   * Does not populate header, ns, id, lifetime, frame_locked
+   * @return Marker populated with red lines
+   */
+  visualization_msgs::Marker asMarker();
+
+  void clear() {pts_.clear();}
 
 protected:
   std::vector<ProcessPt> pts_;

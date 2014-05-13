@@ -26,6 +26,7 @@
 #define POLYGON_PTS_H_
 
 #include <ostream>
+#include <cmath>
 
 using std::ostream;
 

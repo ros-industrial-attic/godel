@@ -24,10 +24,13 @@
 
 #include <ros/ros.h>
 #include "godel_process_path_generation/process_path_generator.h"
+#include "godel_process_path_generation/polygon_pts.hpp"
 #include <openvoronoi/offset.hpp>
 #include <openvoronoi/polygon_interior_filter.hpp>
 #include <boost/tuple/tuple.hpp>
 
+
+using descartes::ProcessPt;
 
 namespace ovd
 {
@@ -41,28 +44,67 @@ typedef std::vector<ovd::MGVertex> MachiningLoopList;
 bool getChild(const ovd::MGVertex &parent, const ovd::MachiningGraph &mg, ovd::MGVertex &child);
 void moveLoopItem(const ovd::MGVertex &item, MachiningLoopList &from, MachiningLoopList &to);
 bool exists(const ovd::MGVertex &item, const MachiningLoopList &container);
+void operator<<(ProcessPt &pr_pt, const PolygonPt &pg_pt);
 
+void ProcessPathGenerator::addInterpolatedProcessPts(const ProcessPt &start, const ProcessPt &end)
+{
+  //TODO currently adds no points
+}
+
+void ProcessPathGenerator::addPolygonToProcessPath(const PolygonBoundary &bnd)
+{
+  BOOST_FOREACH(const PolygonPt &pg_pt, bnd)
+  {
+    ProcessPt process_pt;
+    process_pt << pg_pt;
+    process_path_.addPoint(process_pt);
+  }
+}
+
+void ProcessPathGenerator::addTraverseToProcessPath(const PolygonPt &from, const PolygonPt &to)
+{
+  ProcessPt start,      /*last point from previous path*/
+            retract,    /*safe point above previous path*/
+            approach,   /*safe point above next path*/
+            end;        /*start point of next path*/
+
+  start << from;
+  retract.setPosePosition(from.x, from.y, safe_traverse_height_);
+  approach.setPosePosition(to.x, to.y, safe_traverse_height_);
+  end << to;
+
+  addInterpolatedProcessPts(start, retract);
+  process_path_.addPoint(retract);      /*addInterpolatedPoints does not add endpoints */
+  addInterpolatedProcessPts(retract, approach);
+  process_path_.addPoint(approach);
+  addInterpolatedProcessPts(approach, end);
+}
 
 bool ProcessPathGenerator::configure(PolygonBoundaryCollection boundaries)
 {
+  ROS_INFO_COND(verbose_, "Creating voroni diagram from polygons");
+
   for (PolygonBoundaryCollection::const_iterator boundary=boundaries.begin(), bs_end=boundaries.end(); boundary!=bs_end; ++boundary)
   {
     std::vector<int> pt_id;
-    pt_id.reserve(boundary->size());
+//    pt_id.reserve(boundary->size());
     bool first=true;
     for (PolygonBoundary::const_iterator pt=boundary->begin(), b_end=boundary->end(); pt!=b_end; ++pt)
     {
       int id = vd_->insert_point_site(ovd::Point(pt->x, pt->y));
+      ROS_INFO_COND(verbose_, "Added point %i at location %f, %f", id, pt->x, pt->y);
       if (first)
       {
         first=false;
       }
       else
       {
+        ROS_INFO_COND(verbose_, "Adding line from pt %i to pt %i", pt_id.back(), id);
         vd_->insert_line_site(pt_id.back(), id);
       }
       pt_id.push_back(id);
     }
+    ROS_INFO_COND(verbose_, "Closing loop from pt %i to pt %i", pt_id.back(), pt_id.front());
     vd_->insert_line_site(pt_id.back(), pt_id.front());
 
   }
@@ -207,13 +249,68 @@ bool ProcessPathGenerator::createProcessPath()
     return false;
   }
 
+  /* Create initial approach pts
+   * Do loops until offset increases; addTraverseToProcessPath
+   * Create retract pt */
+  process_path_.clear();
+  ProcessPt approach, start;
+  const PolygonPt &first = *(polygons.begin()->begin());
+  approach.setPosePosition(first.x, first.y, safe_traverse_height_);
+  start << first;
+  process_path_.addPoint(approach);
+  addInterpolatedProcessPts(approach, start);
 
+  double current_offset = std::numeric_limits<double>::max();
+  size_t pgIdx(0);
+  while (pgIdx < polygons.size()-1)
+  {
+    current_offset = offset_depths.at(pgIdx);
+    PolygonBoundary &polygon = polygons.at(pgIdx);
+    addPolygonToProcessPath(polygon);
 
-//  addPolygonToProcessPath(bnd);
+    const PolygonPt &last_pgpt = polygon.back();
+    ProcessPt last;
+    last << last_pgpt;
+    ++pgIdx;
+    polygon = polygons.at(pgIdx);
 
+    if (offset_depths.at(pgIdx) < current_offset)
+    {   /*Take one step out*/
+      std::rotate(polygon.begin(), closestPoint(last_pgpt, polygon).first, polygon.end());
+      ProcessPt next;
+      next << polygon.front();
+      addInterpolatedProcessPts(last, next);
+    }
+    else
+    {
+      addTraverseToProcessPath(last_pgpt, polygon.front());
+    }
+  }
+  // Add last loop and retract
+  addPolygonToProcessPath(polygons.back());
+  const PolygonPt &last_pgpt = polygons.back().back();
+  ProcessPt last, retract;
+  last << last_pgpt;
+  retract.setPosePosition(last_pgpt.x, last_pgpt.y, safe_traverse_height_);
+  addInterpolatedProcessPts(last, retract);
+  process_path_.addPoint(retract);
 
 
   return true;
+}
+
+void ProcessPathGenerator::discretizeArc(const ovd::OffsetVertex &p1, const ovd::OffsetVertex &p2, PolygonBoundary &bnd) const
+{
+  //TODO this only adds endpoints
+  bnd.push_back(PolygonPt(p1.p.x, p1.p.y));
+  bnd.push_back(PolygonPt(p2.p.x, p2.p.y));
+}
+
+void ProcessPathGenerator::discretizeLinear(const ovd::OffsetVertex &p1, const ovd::OffsetVertex &p2, PolygonBoundary &bnd) const
+{
+  //TODO this only adds endpoints
+  bnd.push_back(PolygonPt(p1.p.x, p1.p.y));
+  bnd.push_back(PolygonPt(p2.p.x, p2.p.y));
 }
 
 void ProcessPathGenerator::discretizeSegment(const ovd::OffsetVertex &p1, const ovd::OffsetVertex &p2, PolygonBoundary &bnd) const
@@ -269,5 +366,9 @@ void moveLoopItem(const ovd::MGVertex &item, MachiningLoopList &from, MachiningL
   to.push_back(item);
 }
 
+void operator<<(ProcessPt &pr_pt, const PolygonPt &pg_pt)
+{
+  pr_pt.setPosePosition(pg_pt.x, pg_pt.y, 0.);
+}
 
 } /* namespace godel_process_path */

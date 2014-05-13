@@ -32,7 +32,7 @@ protected:
 
     pointcloud_ = CloudN::Ptr(new CloudN);
     mesh_ = pcl::PolygonMeshPtr(new pcl::PolygonMesh);
-    expected_boundary_.pts.clear();
+    expected_boundary_.clear();
 
     pcl::PointXYZINormal p0, p1, p2, p3, p4;
     /*  0---1
@@ -68,10 +68,10 @@ protected:
       p4.x=1;  p4.y=-1; p4.z=0; pointcloud_->push_back(p4);
     }
 
-    expected_boundary_.pts.push_back(PolygonPt(-1,-1));
-    expected_boundary_.pts.push_back(PolygonPt(-1, 1));
-    expected_boundary_.pts.push_back(PolygonPt( 1, 1));
-    expected_boundary_.pts.push_back(PolygonPt( 1,-1));
+    expected_boundary_.push_back(PolygonPt(-1,-1));
+    expected_boundary_.push_back(PolygonPt(-1, 1));
+    expected_boundary_.push_back(PolygonPt( 1, 1));
+    expected_boundary_.push_back(PolygonPt( 1,-1));
 
     pcl::toPCLPointCloud2(*pointcloud_, mesh_->cloud);
     pcl::Vertices polygon;
@@ -117,7 +117,7 @@ TEST_F(calcBoundaryData, fixedMeshes)
   EXPECT_EQ(actual_collection.size(), 1);
 
   PolygonBoundary actual = actual_collection.front();
-  EXPECT_TRUE(::isCircularPermutation(actual.pts, expected_boundary_.pts));
+  EXPECT_TRUE(::isCircularPermutation(actual, expected_boundary_));
 //  std::cout << "Actual:\n" << actual << std::endl << "Expected:\n" << expected_boundary_ << std::endl;
 
 
@@ -128,7 +128,7 @@ TEST_F(calcBoundaryData, fixedMeshes)
   EXPECT_EQ(actual_collection.size(), 1);
 
   actual = actual_collection.front();
-  EXPECT_TRUE(::isCircularPermutation(actual.pts, expected_boundary_.pts));
+  EXPECT_TRUE(::isCircularPermutation(actual, expected_boundary_));
 //  std::cout << "Actual:\n" << actual << std::endl << "Expected:\n" << expected_boundary_ << std::endl;
 
   // Flat mesh with Normal along Y
@@ -138,7 +138,7 @@ TEST_F(calcBoundaryData, fixedMeshes)
   EXPECT_EQ(actual_collection.size(), 1);
 
   actual = actual_collection.front();
-  EXPECT_TRUE(::isCircularPermutation(actual.pts, expected_boundary_.pts));
+  EXPECT_TRUE(::isCircularPermutation(actual, expected_boundary_));
 //  std::cout << "Actual:\n" << actual << std::endl << "Expected:\n" << expected_boundary_ << std::endl;
 }
 

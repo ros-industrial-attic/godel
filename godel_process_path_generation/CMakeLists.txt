@@ -170,10 +170,17 @@ target_link_libraries(process_path_generator
 #############
 
 ## Add gtest based cpp test target and link libraries
- catkin_add_gtest(test_MeshImporter test/test_MeshImporter.cpp)
+catkin_add_gtest(test_MeshImporter test/test_MeshImporter.cpp)
 target_link_libraries(test_MeshImporter
                       mesh_importer
 )
+
+catkin_add_gtest(test_ProcessPathGenerator test/test_ProcessPathGenerator.cpp)
+target_link_libraries(test_ProcessPathGenerator
+                      process_path_generator
+                      openvoronoi
+)
+
 # if(TARGET test_MeshImporter)
 #   target_link_libraries(test_MeshImporter ${PROJECT_NAME})
 # endif()

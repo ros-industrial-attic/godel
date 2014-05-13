@@ -78,18 +78,26 @@ protected:
 typedef boost::shared_ptr<PositionConstraint> PositionConstraintPtr;
 
 
-
 class ProcessPt
 {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 public:
-  ProcessPt() {};
+  ProcessPt(): nominal_pose_(Eigen::Affine3d::Identity()) {};
   virtual ~ProcessPt() {};
 
+  const Eigen::Affine3d& getFrame() {return frame_transform_;}
+
+  Eigen::Affine3d& pose() {return nominal_pose_;}
+  const Eigen::Affine3d& pose() const {return nominal_pose_;}
+
+  void setFrame(const std::pair<std::string, Eigen::Affine3d> &frame) {pt_frame_=frame.first; frame_transform_=frame.second;}
+
+  void setPosePosition(double x, double y, double z) {nominal_pose_.translation() << x, y, z; }
+
 private:
-  Eigen::Affine3d nominal_pose_;
+  Eigen::Affine3d nominal_pose_;        /**<Default pose of process point */
   std::string pt_frame_;                /**<Frame pt is expressed in */
   Eigen::Affine3d frame_transform_;     /**<Transform from planning frame to current pt_frame */
   PositionConstraintPtr position_constraint_;
