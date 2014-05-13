@@ -69,6 +69,9 @@ private:
   //TODO comment
   void addTraverseToProcessPath(const PolygonPt &from, const PolygonPt &to);
 
+  //TODO comment
+  void convertPolygonsToProcessPath(PolygonBoundaryCollection &polygons, const std::vector<double> &offsets);
+
   //TODO comment (calls arc/linear)
   bool createOffsetPolygons(PolygonBoundaryCollection &polygons, std::vector<double> &offset_depths);
 

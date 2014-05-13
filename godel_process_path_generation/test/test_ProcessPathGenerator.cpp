@@ -48,6 +48,25 @@ TEST(ProcessPathGeneratorTest, init)
   EXPECT_TRUE(ppg.createProcessPath());
 }
 
+TEST(ProcessPathGeneratorTest, complete)
+{
+  ProcessPathGenerator ppg;
+  ppg.setTraverseHeight(.05);
+  ppg.setMargin(.005);
+  ppg.setOverlap(.01);
+  ppg.setToolRadius(.025);
+
+  godel_process_path::PolygonBoundary boundary;
+  boundary.push_back(PolygonPt(0., 0.));
+  boundary.push_back(PolygonPt(.5, 0.));
+  boundary.push_back(PolygonPt(.5, .5));
+  boundary.push_back(PolygonPt(.25, .125));
+  boundary.push_back(PolygonPt(.0, .5));
+  ppg.verbose_ = true;
+  EXPECT_TRUE(ppg.configure(godel_process_path::PolygonBoundaryCollection(1, boundary)));
+  EXPECT_TRUE(ppg.createProcessPath());
+}
+
 int main(int argc, char **argv)
 {
   testing::InitGoogleTest(&argc, argv);
