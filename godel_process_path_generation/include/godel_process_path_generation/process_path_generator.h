@@ -36,7 +36,10 @@ namespace godel_process_path
 class ProcessPathGenerator
 {
 public:
-  ProcessPathGenerator(): vd_(new ovd::VoronoiDiagram(1,100)), tool_radius_(0.), margin_(0.), overlap_(0.), configure_ok_(false) {};
+  ProcessPathGenerator(): vd_(new ovd::VoronoiDiagram(1,100)),
+                          tool_radius_(0.), margin_(0.), overlap_(0.), safe_traverse_height_(-1.),
+                          configure_ok_(false)
+  {};
   virtual ~ProcessPathGenerator() {};
 
   bool configure(PolygonBoundaryCollection boundaries);
@@ -74,7 +77,8 @@ private:
    {
      return  tool_radius_ >= 0. &&
              margin_ >= 0. &&
-             overlap_ < 2.*tool_radius_;
+             overlap_ < 2.*tool_radius_ &&
+             safe_traverse_height_ >= 0.;
    }
 
 
@@ -86,10 +90,13 @@ private:
    double tool_radius_; /**<Tool radius(m) used for offsetting paths */
    double margin_;      /**<Margin (m) around boundary to leave untouched (first pass only) */
    double overlap_;     /**<Amount of overlap(m) between adjacent passes. */
+   double safe_traverse_height_;        /**<Height to move to when traversing to new loops */
 
    double max_discretization_distance_; /**<(m) When discretizing segments, use this or less distance between points */
 
    bool configure_ok_;
+
+   descartes::ProcessPath process_path_;
 
 };
 
