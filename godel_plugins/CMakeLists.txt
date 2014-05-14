@@ -58,6 +58,7 @@ include_directories(${godel_plugins_INCLUDE_DIRECTORIES} ${catkin_INCLUDE_DIRS})
 	${godel_plugins_MOCS}
 	${godel_plugins_SRCS})
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${QT_LIBRARIES} ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY})
+add_dependencies(${PROJECT_NAME} godel_msgs_generate_messages_cpp)
 
 find_package(class_loader)
 class_loader_hide_library_symbols(${PROJECT_NAME})
