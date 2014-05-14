@@ -214,6 +214,7 @@ void SurfaceDetection::add_cloud(Cloud& cloud)
 		ROS_INFO_STREAM("Concatenated new cloud to acquired clouds");
 	}
 	acquired_clouds_counter_++;
+	ROS_INFO_STREAM("Surface Detection is currently holding "<<acquired_clouds_counter_<<" point clouds");
 }
 
 int SurfaceDetection::get_acquired_clouds_count()

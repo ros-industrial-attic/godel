@@ -23,6 +23,7 @@
 #include <boost/assert.hpp>
 #include <math.h>
 #include <moveit/robot_state/conversions.h>
+#include <moveit/trajectory_processing/iterative_time_parameterization.h>
 
 
 namespace godel_surface_detection {
@@ -30,9 +31,10 @@ namespace scan {
 
 
 const double RobotScan::PLANNING_TIME = 60.0f;
-const double RobotScan::WAIT_MSG_DURATION = 2.0f;
-const double RobotScan::MIN_TRAJECTORY_TIME_STEP = 0.5f; // seconds
-const double RobotScan::EEF_STEP = 0.05f; // 5cm
+const double RobotScan::WAIT_MSG_DURATION = 5.0f;
+const double RobotScan::MIN_TRAJECTORY_TIME_STEP = 0.8f; // seconds
+const double RobotScan::EEF_STEP = 0.04f; // 5cm
+const double RobotScan::MIN_JOINT_VELOCITY = 0.01f ; // rad/sect
 
 RobotScan::RobotScan()
 {
@@ -210,9 +212,11 @@ int RobotScan::scan(bool move_only)
 			// creating path plan structure and execute
 			if(move_group_ptr_->computeCartesianPath(cartesian_poses.poses,eef_step,jump_threshold,path_plan.trajectory_,true)>=1.0f)
 			{
-				// applying simple filtering
+				// apply filter
+				//robot_trajectory::RobotTrajectory rt(move_group_ptr_->getCurrentState()->getRobotModel(),move_group_ptr_->getName());
+				//rt.setRobotTrajectoryMsg(*move_group_ptr_->getCurrentState(),path_plan.trajectory_);
+				//apply_trajectory_parabolic_time_parameterization(rt,path_plan.trajectory_);
 				apply_simple_trajectory_filter(path_plan.trajectory_);
-				//ROS_INFO_STREAM("Robot trajectory "<<i<<":\n"<<path_plan.trajectory_);
 			}
 			else
 			{
@@ -413,36 +417,52 @@ bool RobotScan::parse_pose_parameter(XmlRpc::XmlRpcValue pose_param,geometry_msg
 
 void RobotScan::apply_simple_trajectory_filter(	moveit_msgs::RobotTrajectory& traj)
 {
-	std::vector<trajectory_msgs::JointTrajectoryPoint> &points = traj.joint_trajectory.points;
-
-	// filling first and last points with 0 velocities
-	points.front().velocities.resize(traj.joint_trajectory.joint_names.size());
-	points.back().velocities.resize(traj.joint_trajectory.joint_names.size());
-
+	std::vector<trajectory_msgs::JointTrajectoryPoint> &current_points = traj.joint_trajectory.points;
+	std::vector<trajectory_msgs::JointTrajectoryPoint> points;
 	double dt;
-	double dtheta;
-	for(unsigned int i = 1;i < points.size()-1; i++)
+
+	// setting first point timestamp to zero
+	current_points.front().time_from_start = ros::Duration(0);
+
+	// removing redundant joint points
+	points.push_back(current_points.front());
+	trajectory_msgs::JointTrajectoryPoint last_point = current_points.front();
+	for(unsigned int i = 1;i < current_points.size(); i++)
 	{
-		trajectory_msgs::JointTrajectoryPoint &p1 = points[i-1];
-		trajectory_msgs::JointTrajectoryPoint &p2 = points[i];
-		p2.velocities.resize(p2.positions.size());
+		trajectory_msgs::JointTrajectoryPoint &next_point = current_points[i];
 
 		// time elapsed between p1 and p2
-		dt = (p2.time_from_start - p1.time_from_start).toSec();
+		dt = (next_point.time_from_start - last_point.time_from_start).toSec();
 		if(dt<MIN_TRAJECTORY_TIME_STEP)
 		{
 			dt = MIN_TRAJECTORY_TIME_STEP;
-			p2.time_from_start = p1.time_from_start + ros::Duration(dt);
+			next_point.time_from_start = last_point.time_from_start + ros::Duration(dt);
 		}
 
 		// computing velocity for each joint
-		for(unsigned int j = 0; j < p2.velocities.size(); j++)
+		int zero_vel_counter = 0;
+		next_point.velocities.resize(next_point.positions.size());
+		for(unsigned int j = 0; j < next_point.positions.size(); j++)
 		{
-			p2.velocities[j] = (p2.positions[j] - p1.positions[j])/dt;
-/*			ROS_INFO_STREAM("joint velocity for joint "<<traj.joint_trajectory.joint_names[j]<<
-					" :" <<p2.velocities[j]<<" for dt: "<<dt);*/
+			next_point.velocities[j] = (next_point.positions[j] - last_point.positions[j])/dt;
+			if(next_point.velocities[j] < MIN_JOINT_VELOCITY)
+			{
+				zero_vel_counter++;
+			}
+		}
+
+
+		if(zero_vel_counter < next_point.positions.size())
+		{
+
+			points.push_back(next_point);
+			last_point = next_point;
 		}
 	}
+
+	// filling first and last points with 0 velocities
+	points.front().velocities.assign(traj.joint_trajectory.joint_names.size(),0);
+	points.back().velocities.assign(traj.joint_trajectory.joint_names.size(),0);
 
 	// checking time stamp for last joint point
 	trajectory_msgs::JointTrajectoryPoint &p_last = points.back();
@@ -451,6 +471,42 @@ void RobotScan::apply_simple_trajectory_filter(	moveit_msgs::RobotTrajectory& tr
 	{
 		p_last.time_from_start = p_before_last.time_from_start + ros::Duration(MIN_TRAJECTORY_TIME_STEP);
 	}
+
+	traj.joint_trajectory.points.assign(points.begin(),points.end());
+
+	ROS_INFO_STREAM("Filtered trajectory: "<<traj);
+}
+
+void RobotScan::apply_trajectory_parabolic_time_parameterization(robot_trajectory::RobotTrajectory& rt,
+		moveit_msgs::RobotTrajectory &traj,
+		unsigned int max_iterations,
+		double max_time_change_per_it)
+{
+
+
+	trajectory_processing::IterativeParabolicTimeParameterization iter_prmt(max_iterations,max_time_change_per_it);
+
+	iter_prmt.computeTimeStamps(rt);
+	rt.getRobotTrajectoryMsg(traj);
+
+	// removing redundant points
+	std::vector<trajectory_msgs::JointTrajectoryPoint> &points = traj.joint_trajectory.points;
+	std::vector<trajectory_msgs::JointTrajectoryPoint>::iterator iter = points.begin()+1;
+	while(iter != points.end())
+	{
+		trajectory_msgs::JointTrajectoryPoint &p = *iter;
+		if(p.time_from_start.toSec() < 0.01f)
+		{
+			iter = points.erase(iter);
+		}
+		else
+		{
+			iter++;
+		}
+	}
+
+	ROS_INFO_STREAM("Parameterized trajectory: "<<traj);
+
 }
 
 } /* namespace scan */

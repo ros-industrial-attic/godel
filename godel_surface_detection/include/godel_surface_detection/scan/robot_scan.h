@@ -16,6 +16,7 @@
 
 #include <ros/ros.h>
 #include <moveit/move_group_interface/move_group.h>
+#include <moveit/robot_trajectory/robot_trajectory.h>
 #include <moveit_msgs/DisplayTrajectory.h>
 #include <boost/function.hpp>
 #include <tf/transform_listener.h>
@@ -42,6 +43,7 @@ public:
 	static const double WAIT_MSG_DURATION;
 	static const double EEF_STEP;
 	static const double MIN_TRAJECTORY_TIME_STEP;
+	static const double MIN_JOINT_VELOCITY;
 
 public:
 	typedef boost::function<void (pcl::PointCloud<pcl::PointXYZ> &cloud)> ScanCallback;
@@ -71,6 +73,9 @@ public:
 	 * \param[out] traj: Robot trajectory with populated joint values and time stamps for each
 	 */
 	static void apply_simple_trajectory_filter(moveit_msgs::RobotTrajectory& traj);
+
+	static void apply_trajectory_parabolic_time_parameterization(robot_trajectory::RobotTrajectory& rt,
+			moveit_msgs::RobotTrajectory &traj,unsigned int max_iterations=200,double max_time_change_per_it=.6);
 
 protected:
 
