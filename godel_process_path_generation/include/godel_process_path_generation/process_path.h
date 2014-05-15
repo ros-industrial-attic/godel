@@ -19,13 +19,14 @@
  * process_path.h
  *
  *  Created on: May 13, 2014
- *      Author: ros
+ *      Author: Dan Solomon
  */
 
 #ifndef PROCESS_PATH_H_
 #define PROCESS_PATH_H_
 
 #include "godel_process_path_generation/process_pt.h"
+#include "godel_process_path_generation/process_transition.h"
 #include <visualization_msgs/Marker.h>
 
 namespace descartes
@@ -37,21 +38,32 @@ public:
   ProcessPath() {};
   virtual ~ProcessPath() {};
 
-  /**@ Add a ProcessPt to pts
+  /**@brief Add a ProcessPt to pts
    * @param pt Reference to ProcessPt to add to points
    */
   void addPoint(const ProcessPt &pt) {pts_.push_back(pt);}
+
+  /**@brief Add a ProcessTranstition to transition_
+   * @param trans Reference to ProcessTransition to add to points
+   */
+  void addTransition(const ProcessTransition &trans) {transitions_.push_back(trans);}
+
+  /**@brief Get copy of data */
+  std::pair<std::vector<ProcessPt>, std::vector<ProcessTransition> > data() const {
+    return std::make_pair(pts_, transitions_); }
 
   /**@brief Convert ProcessPath to line_list marker
    * Does not populate header, ns, id, lifetime, frame_locked
    * @return Marker populated with red lines
    */
-  visualization_msgs::Marker asMarker();
+  visualization_msgs::Marker asMarker() const;
 
-  void clear() {pts_.clear();}
+  void clear() {pts_.clear(); transitions_.clear();}
+
 
 protected:
   std::vector<ProcessPt> pts_;
+  std::vector<ProcessTransition> transitions_;
 };
 
 } /* namespace descartes */

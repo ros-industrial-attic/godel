@@ -19,7 +19,7 @@
  * process_path_generator.h
  *
  *  Created on: May 9, 2014
- *      Author: ros
+ *      Author: Dan Solomon
  */
 
 #ifndef PROCESS_PATH_GENERATOR_H_
@@ -37,6 +37,14 @@ using descartes::ProcessPath;
 namespace godel_process_path
 {
 
+struct ProcessVelocity
+{
+  ProcessVelocity(): approach(0.), blending(0.), retract(0.), traverse(0.) {};
+  ProcessVelocity(double a, double b, double r, double t): approach(a), blending(b), retract(r), traverse(t) {};
+  double approach, blending, retract, traverse;
+};
+
+
 class ProcessPathGenerator
 {
 public:
@@ -48,12 +56,14 @@ public:
 
   bool configure(PolygonBoundaryCollection boundaries);
   bool createProcessPath();
+  const descartes::ProcessPath& getProcessPath() const {return process_path_;}
 
   void setDiscretizationDistance(double d) {max_discretization_distance_ = std::abs(d);}
   void setMargin(double margin) {margin_=margin;}
   void setOverlap(double overlap) {overlap_=overlap;}
   void setToolRadius(double radius) {tool_radius_=std::abs(radius);}
   void setTraverseHeight(double height) {safe_traverse_height_=height;}
+  void setVelocity(const ProcessVelocity &vel) {velocity_=vel;}
 
 
   bool verbose_;
@@ -61,10 +71,10 @@ private:
 
   //TODO comment Does not add start/end
   //TODO write
-  void addInterpolatedProcessPts(const ProcessPt &start, const ProcessPt &end);
+  void addInterpolatedProcessPts(const ProcessPt &start, const ProcessPt &end, double vel=0.);
 
   //TODO comment
-  void addPolygonToProcessPath(const PolygonBoundary &bnd);
+  void addPolygonToProcessPath(const PolygonBoundary &bnd, double vel=0.);
 
   //TODO comment
   void addTraverseToProcessPath(const PolygonPt &from, const PolygonPt &to);
@@ -77,6 +87,7 @@ private:
 
   /**@brief Adds either an interpolated line or arc to PolygonBoundary
    * (See discretizeArc and discretizeLinear)
+   * p1 is added to boundary, but p2 is not
    * @param p1 Start point (from offset operation)
    * @param p2 End point (from offset operation)
    * @param bnd Boundary to add polygon points to.
@@ -101,6 +112,16 @@ private:
              safe_traverse_height_ >= 0.;               /*negative traverse height may be inside part!*/
    }
 
+   /**@brief Create a ProcessTransition with linear velocity
+    * ProcessTransition will be populated with linear velocity [0, vel, double::max()]
+    * @param vel Desired path velocity
+    * @return descartes::ProcessTransition
+    */
+   descartes::ProcessTransition velToTransition(double vel) {
+     descartes::ProcessTransition pt;
+     pt.setLinearVelocityConstraint(descartes::LinearVelocityConstraint(vel));
+     return pt;
+   }
 
   /*ovd::VoronoiDiagram* vd = new ovd::VoronoiDiagram(1,100); // (r, bins)
    * double r: radius of circle within which all input geometry must fall. use 1 (unit-circle). Scale geometry if necessary.
@@ -117,6 +138,7 @@ private:
    bool configure_ok_;
 
    descartes::ProcessPath process_path_;
+   ProcessVelocity velocity_;                   /**<Velocities for different types of path movements */
 
 };
 

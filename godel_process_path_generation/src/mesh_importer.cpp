@@ -19,7 +19,7 @@
  * mesh_importer.cpp
  *
  *  Created on: May 5, 2014
- *      Author: ros
+ *      Author: Dan Solomon
  */
 
 #include <ros/ros.h>

@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(PCL 1.7 REQUIRED) # COMPONENTS)
-#find_package(Eigen REQUIRED)
+find_package(Eigen REQUIRED)
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -80,7 +80,7 @@ find_package(PCL 1.7 REQUIRED) # COMPONENTS)
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+               INCLUDE_DIRS include
 #  LIBRARIES godel_process_path_generation
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
@@ -111,11 +111,32 @@ target_link_libraries(mesh_importer
 					  ${PCL_LIBRARIES}
 )
 
+add_library(process_path
+            src/process_path.cpp
+            src/process_pt.cpp
+            src/process_transition.cpp
+)
+target_link_libraries(process_path
+                      ${catkin_LIBRARIES}
+)
+
 add_library(process_path_generator
             src/process_path_generator.cpp
 )
 target_link_libraries(process_path_generator
                       ${catkin_LIBRARIES}
+                      process_path
+                      openvoronoi
+)
+
+add_executable(process_visualization_node
+               src/process_path_visualization_node
+)
+target_link_libraries(process_visualization_node
+                      ${catkin_LIBRARIES}
+                      process_path
+                      mesh_importer
+                      process_path_generator
 )
 
 #add_executable(pcl_test src/mesh_importer.cpp)

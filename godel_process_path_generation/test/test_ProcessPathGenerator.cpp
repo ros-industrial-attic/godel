@@ -55,6 +55,7 @@ TEST(ProcessPathGeneratorTest, complete)
   ppg.setMargin(.005);
   ppg.setOverlap(.01);
   ppg.setToolRadius(.025);
+  ppg.setVelocity(godel_process_path::ProcessVelocity());
 
   godel_process_path::PolygonBoundary boundary;
   boundary.push_back(PolygonPt(0., 0.));

@@ -19,7 +19,7 @@
  * mesh_importer.h
  *
  *  Created on: May 5, 2014
- *      Author: ros
+ *      Author: Dan Solomon
  */
 
 #ifndef MESH_IMPORTER_H_
@@ -28,6 +28,7 @@
 #include <ros/ros.h>
 #include <pcl/PolygonMesh.h>
 #include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
 #include <Eigen/Geometry>
 #include "godel_process_path_generation/polygon_pts.hpp"
 

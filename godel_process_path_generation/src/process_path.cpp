@@ -19,7 +19,7 @@
  * process_path.cpp
  *
  *  Created on: May 13, 2014
- *      Author: ros
+ *      Author: Dan Solomon
  */
 
 #include "godel_process_path_generation/process_path.h"
@@ -29,12 +29,12 @@
 namespace descartes
 {
 
-visualization_msgs::Marker ProcessPath::asMarker()
+visualization_msgs::Marker ProcessPath::asMarker() const
 {
   visualization_msgs::Marker marker;
   marker.action = visualization_msgs::Marker::ADD;
   marker.pose.position.x = marker.pose.position.y = marker.pose.position.z = 0.;
-  marker.scale.x = .001;        /*1mm line width*/
+  marker.scale.x = .002;        /*1mm line width*/
   marker.type = visualization_msgs::Marker::LINE_STRIP;
   for (std::vector<ProcessPt>::const_iterator pt = pts_.begin(); pt!=pts_.end(); ++pt)
   {

@@ -19,7 +19,7 @@
  * process_pt.h
  *
  *  Created on: May 12, 2014
- *      Author: ros
+ *      Author: Dan Solomon
  */
 
 #ifndef PROCESS_PT_H_
@@ -87,7 +87,7 @@ public:
   ProcessPt(): nominal_pose_(Eigen::Affine3d::Identity()) {};
   virtual ~ProcessPt() {};
 
-  const Eigen::Affine3d& getFrame() {return frame_transform_;}
+  const Eigen::Affine3d& getFrame() const {return frame_transform_;}
 
   Eigen::Affine3d& pose() {return nominal_pose_;}
   const Eigen::Affine3d& pose() const {return nominal_pose_;}

@@ -19,7 +19,7 @@
  * polygon_pts.h
  *
  *  Created on: May 10, 2014
- *      Author: ros
+ *      Author: Dan Solomon
  */
 
 #ifndef POLYGON_PTS_H_
@@ -59,7 +59,7 @@ ostream& operator<<(ostream &out, const PolygonPt &ppt)
 typedef std::vector<PolygonPt> PolygonBoundary;
 ostream& operator<<(ostream &out, const PolygonBoundary &pb)
 {
-  for (std::vector<PolygonPt>::const_iterator pt=pb.begin(), pt_end=pb.end(); pt != pt_end; ++pt)
+  for (PolygonBoundary::const_iterator pt=pb.begin(), pt_end=pb.end(); pt != pt_end; ++pt)
   {
     out << *pt;
   }
@@ -67,20 +67,31 @@ ostream& operator<<(ostream &out, const PolygonBoundary &pb)
 }
 
 typedef std::vector<PolygonBoundary> PolygonBoundaryCollection;
-
-std::pair<PolygonBoundary::iterator, float> closestPoint(const PolygonPt &pt, PolygonBoundary &bnd)
+ostream& operator<<(ostream &out, const PolygonBoundaryCollection &pbc)
 {
-  PolygonBoundary::iterator close_pt;
-  double dist2(std::numeric_limits<double>::max());
-  for (PolygonBoundary::iterator bnd_pt=bnd.begin(), bnd_end=bnd.end(); bnd_pt!=bnd_end; ++bnd_pt)
+  size_t idx(0);
+  for (PolygonBoundaryCollection::const_iterator pb=pbc.begin(), pb_end=pbc.end(); pb != pb_end; ++pb, ++idx)
   {
-    if (pt.dist2(*bnd_pt) < dist2)
+    out << "Polygon " << idx << std::endl << *pb;
+  }
+  return out;
+}
+
+std::pair<size_t, float> closestPoint(const PolygonPt &pt, const PolygonBoundary &bnd)
+{
+  size_t point_num;
+  double close_dist2(std::numeric_limits<double>::max());
+  for (size_t idx=0, max=bnd.size()-1; idx != max; ++idx )
+  {
+    double prox2 = pt.dist2(bnd.at(idx));
+//    std::cout << "*" << prox2 << std::endl;
+    if (prox2 < close_dist2)
     {
-      dist2 = pt.dist2(*bnd_pt);
-      close_pt = bnd_pt;
+      close_dist2 = prox2;
+      point_num = idx;
     }
   }
-  return std::make_pair(close_pt, std::sqrt(static_cast<float>(dist2)));
+  return std::make_pair(point_num, std::sqrt(static_cast<float>(close_dist2)));
 }
 
 } /* namespace godel_process_path */

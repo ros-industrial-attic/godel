@@ -16,15 +16,52 @@
  * limitations under the License.
  */
 /*
- * process_pt.cpp
+ * process_transition.cpp
  *
- *  Created on: May 12, 2014
+ *  Created on: May 14, 2014
  *      Author: Dan Solomon
  */
 
-#include "godel_process_path_generation/process_pt.h"
+#include "godel_process_path_generation/process_transition.h"
+
 
 namespace descartes
 {
+
+bool JointVelocityConstraint::isValid()
+{
+  if (min.size() != max.size() || min.size() != desired.size())
+  {
+    return false;
+  }
+  for (size_t ii=0; ii<min.size(); ++ii)
+  {
+    if (min.at(ii) > max.at(ii) || min.at(ii) > desired.at(ii) || desired.at(ii) > max.at(ii))
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool LinearVelocityConstraint::isValid()
+{
+  if (min > max || min > desired || desired > max)
+  {
+    return false;
+  }
+  return true;
+}
+
+bool RotationalVelocityConstraint::isValid()
+{
+  if (min > max || min > desired || desired > max)
+  {
+    return false;
+  }
+  return true;
+}
+
+
 
 } /* namespace descartes */

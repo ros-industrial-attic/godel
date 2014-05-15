@@ -20,7 +20,7 @@
  * test_common_functions.h
  *
  *  Created on: May 8, 2014
- *      Author: ros
+ *      Author: Dan Solomon
  */
 
 #ifndef TEST_COMMON_FUNCTIONS_H_
