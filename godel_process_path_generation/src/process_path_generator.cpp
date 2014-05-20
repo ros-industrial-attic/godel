@@ -32,6 +32,9 @@
 
 
 using descartes::ProcessPt;
+using std::cos;
+using std::sin;
+using std::asin;
 
 namespace godel_process_path
 {
@@ -46,7 +49,24 @@ void operator<<(ProcessPt &pr_pt, const PolygonPt &pg_pt);
 
 void ProcessPathGenerator::addInterpolatedProcessPts(const ProcessPt &start, const ProcessPt &end, double vel)
 {
-  //TODO currently adds no points
+  const Eigen::Affine3d &p1 = start.pose();
+  const Eigen::Affine3d &p2 = end.pose();
+  double sep = (p2.translation() - p1.translation()).norm();
+  if (sep > max_discretization_distance_)
+  {
+    size_t new_ptcnt = static_cast<size_t>(std::ceil(sep/max_discretization_distance_) - 1.);
+    for (size_t ii=1; ii<=new_ptcnt; ++ii)
+    {
+      double t = static_cast<double>(ii)/static_cast<double>(new_ptcnt+1.);
+      Eigen::Vector3d pos = (1-t) * p1.translation() + t * p2.translation();
+      Eigen::Quaterniond rot(Eigen::Quaterniond(p1.rotation()).slerp(t, Eigen::Quaterniond(p2.rotation())));
+
+      ProcessPt new_pt = start;
+      new_pt.pose() = Eigen::Translation3d(pos) * rot;
+      process_path_.addPoint(new_pt);
+      process_path_.addTransition(velToTransition(vel));
+    }
+  }
 }
 
 void ProcessPathGenerator::addPolygonToProcessPath(const PolygonBoundary &bnd_ref, double vel)
@@ -148,7 +168,6 @@ void ProcessPathGenerator::convertPolygonsToProcessPath(PolygonBoundaryCollectio
   {
     current_offset = offsets.at(pgIdx);
     PolygonBoundary &polygon = polygons.at(pgIdx);
-    std::cout << "Index " << pgIdx << std::endl << polygon;
     addPolygonToProcessPath(polygon, velocity_.blending);
 
     const PolygonPt last_pgpt = polygon.front(); //Each polygon ends where it starts
@@ -324,29 +343,69 @@ bool ProcessPathGenerator::createProcessPath()
   return true;
 }
 
-void ProcessPathGenerator::discretizeArc(const ovd::OffsetVertex &p1, const ovd::OffsetVertex &p2, PolygonBoundary &bnd) const
+void ProcessPathGenerator::discretizeArc(const ovd::OffsetVertex &op1, const ovd::OffsetVertex &op2, PolygonBoundary &bnd) const
 {
-  //TODO this only adds endpoints
-  bnd.push_back(PolygonPt(p1.p.x, p1.p.y));
-//  bnd.push_back(PolygonPt(p2.p.x, p2.p.y));   DO NOT ADD P2
-}
+  PolygonPt p1(op1.p.x, op1.p.y), p2(op2.p.x, op2.p.y);
+  PolygonPt c(op2.c.x, op2.c.y);
+  bnd.push_back(p1);    // Add first point
 
-void ProcessPathGenerator::discretizeLinear(const ovd::OffsetVertex &p1, const ovd::OffsetVertex &p2, PolygonBoundary &bnd) const
-{
-  //TODO this only adds endpoints
-  bnd.push_back(PolygonPt(p1.p.x, p1.p.y));
-//  bnd.push_back(PolygonPt(p2.p.x, p2.p.y));   DO NOT ADD P2
-}
-
-void ProcessPathGenerator::discretizeSegment(const ovd::OffsetVertex &p1, const ovd::OffsetVertex &p2, PolygonBoundary &bnd) const
-{
-  if (p1.r == -1 or p2.r == -1)
+  // Find angle from p1 to p2. Check direction of theta against known direction of arc.
+  double theta = std::atan2( (p1-c).cross(p2-c), (p1-c).dot(p2-c) );
+  if (theta<0. && !op2.cw)
   {
-    discretizeLinear(p1, p2, bnd);
+    theta += 2.*M_PI;
+  }
+  else if  (theta>0. && op2.cw)
+  {
+    theta -= 2.*M_PI;
+  }
+
+  double max_theta(max_discretization_distance_/op2.r);
+  if (std::abs(theta) > max_theta)
+  {
+    size_t new_ptcnt = static_cast<size_t>(std::ceil(std::abs(theta/max_theta)) -1.);
+    double disc_angle = theta/static_cast<double>(new_ptcnt+1.);
+    Eigen::Vector3d start_pt(op1.p.x-op2.c.x, op1.p.y-op2.c.y, 1.);
+    for (size_t ii=1; ii<=new_ptcnt; ++ii)
+    {
+      double angle = disc_angle * static_cast<double>(ii);      // what angle this point is added at
+      Eigen::Matrix3d rotator;
+      rotator << cos(angle), -sin(angle), op2.c.x, sin(angle), cos(angle), op2.c.y, 0, 0, 1;
+      Eigen::Vector3d new_pt = rotator * start_pt;
+      bnd.push_back(PolygonPt(new_pt(0), new_pt(1)));
+    }
+  }
+
+
+}
+
+void ProcessPathGenerator::discretizeLinear(const ovd::OffsetVertex &op1, const ovd::OffsetVertex &op2, PolygonBoundary &bnd) const
+{
+  //add [p1-p2) with interpolated points between
+  PolygonPt p1(op1.p.x, op1.p.y), p2(op2.p.x, op2.p.y);
+  bnd.push_back(p1);    // Add first point
+
+  double sep = p1.dist(p2);
+  if (sep > max_discretization_distance_)
+  {
+    size_t new_ptcnt = static_cast<size_t>(std::ceil(sep/max_discretization_distance_) - 1.);
+    double disc_dist = sep/static_cast<double>(new_ptcnt+1.);
+    for (size_t ii=1; ii<=new_ptcnt; ++ii)
+    {
+      bnd.push_back(p1 + (p2-p1)*(static_cast<double>(ii)*disc_dist/sep));
+    }
+  }
+}
+
+void ProcessPathGenerator::discretizeSegment(const ovd::OffsetVertex &op1, const ovd::OffsetVertex &op2, PolygonBoundary &bnd) const
+{
+  if (op2.r == -1)// or true /*always use linear for now TODO implement arc*/)
+  {
+    discretizeLinear(op1, op2, bnd);
   }
   else
   {
-    discretizeArc(p1, p2, bnd);
+    discretizeArc(op1, op2, bnd);
   }
 }
 
@@ -384,7 +443,6 @@ void moveLoopItem(const ovd::MGVertex &item, MachiningLoopList &from, MachiningL
   {
     if (item == *iter)
     {
-//      std::cout << "erasing " << iter-from.begin() << std::endl;
       from.erase(iter);
       return;
     }

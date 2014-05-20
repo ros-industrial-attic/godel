@@ -70,7 +70,6 @@ public:
 private:
 
   //TODO comment Does not add start/end
-  //TODO write
   void addInterpolatedProcessPts(const ProcessPt &start, const ProcessPt &end, double vel=0.);
 
   //TODO comment
@@ -88,19 +87,18 @@ private:
   /**@brief Adds either an interpolated line or arc to PolygonBoundary
    * (See discretizeArc and discretizeLinear)
    * p1 is added to boundary, but p2 is not
-   * @param p1 Start point (from offset operation)
-   * @param p2 End point (from offset operation)
+   * @param op1 Start point (from offset operation)
+   * @param op2 End point (from offset operation)
    * @param bnd Boundary to add polygon points to.
    */
-  void discretizeSegment(const ovd::OffsetVertex &p1, const ovd::OffsetVertex &p2, PolygonBoundary &bnd) const;
+  void discretizeSegment(const ovd::OffsetVertex &op1, const ovd::OffsetVertex &op2, PolygonBoundary &bnd) const;
 
   //TODO comment
   //TODO write
-  void discretizeArc(const ovd::OffsetVertex &p1, const ovd::OffsetVertex &p2, PolygonBoundary &bnd) const;
+  void discretizeArc(const ovd::OffsetVertex &op1, const ovd::OffsetVertex &op2, PolygonBoundary &bnd) const;
 
   //TODO comment
-  //TODO write
-  void discretizeLinear(const ovd::OffsetVertex &p1, const ovd::OffsetVertex &p2, PolygonBoundary &bnd) const;
+  void discretizeLinear(const ovd::OffsetVertex &op1, const ovd::OffsetVertex &op2, PolygonBoundary &bnd) const;
 
   /**@brief Check if values of offset variables are acceptable */
    bool variables_ok() const

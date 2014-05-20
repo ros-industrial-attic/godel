@@ -83,7 +83,7 @@ int main(int argc, char **argv)
   if (vm.count("help"))
   {
       std::cout << desc << "\n";
-      return 1;
+      return 0;
   }
 
   ros::init(argc, argv, "process_path_visualization");
@@ -116,8 +116,10 @@ int main(int argc, char **argv)
   }
   else
   {
-
+    ROS_ERROR("Only demo mode is implemented. Run node with --demo option.");
+    return -1;
   }
+
   ppg.configure(PolygonBoundaryCollection(1,boundary));
   if (!ppg.createProcessPath())
   {
@@ -144,11 +146,11 @@ int main(int argc, char **argv)
   marker.colors.at(0) = green;
 
   size_t idx = 0;
-  double time_factor = .2;
+  double time_factor = .02;
   while (ros::ok() && idx < timestamps.size())
   {
     path_pub.publish(marker);
-    std::cout << "Waiting " << timestamps.at(idx) << std::endl;
+//    std::cout << "Waiting " << timestamps.at(idx) << std::endl;
     ros::Duration(timestamps.at(idx)*time_factor).sleep();
     marker.colors.at(idx+1) = green;
     ++idx;
