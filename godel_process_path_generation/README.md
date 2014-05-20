@@ -3,6 +3,11 @@ Godel Process Path Generation
 
 This package creates the high-level process path for surface blending.
 
+# Running Visualization #
+
+- rosrun rviz rviz (use path_visualization.rviz in test)
+- rosrun godel_process_path_generation process_visualization_node --demo
+
 # Input #
 
 - Pointcloud of a surface.
