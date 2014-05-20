@@ -30,6 +30,7 @@
 #include "godel_process_path_generation/process_path_generator.h"
 #include <boost/foreach.hpp>
 #include <boost/next_prior.hpp>
+#include <visualization_msgs/MarkerArray.h>
 
 
 using descartes::ProcessPt;
@@ -38,6 +39,10 @@ using godel_process_path::PolygonPt;
 using godel_process_path::PolygonBoundary;
 using godel_process_path::PolygonBoundaryCollection;
 
+const float TOOL_DIA = .050;
+const float TOOL_THK = .008;
+const float TOOL_SHAFT_DIA = .006;
+const float TOOL_SHAFT_LEN = .050;
 
 double dist(const Eigen::Affine3d &from, const Eigen::Affine3d &to)
 {
@@ -66,6 +71,45 @@ std::vector<double> pathDataToTimestamps(const std::vector<ProcessPt> &pts, cons
   return timestamps;
 }
 
+visualization_msgs::MarkerArray toolMarker(double x, double y, double z)
+{
+  visualization_msgs::MarkerArray tool;
+  tool.markers.resize(2);
+  visualization_msgs::Marker &disk = tool.markers.at(0);
+  visualization_msgs::Marker &shaft = tool.markers.at(1);
+
+  std_msgs::ColorRGBA blue;
+  blue.r = 0.;
+  blue.g = .1;
+  blue.b = 1.;
+  blue.a = 0.7;
+
+  disk.action = visualization_msgs::Marker::ADD;
+  disk.color = blue;
+  disk.frame_locked = true;
+  disk.header.frame_id = "world";
+  disk.header.seq = 0;
+  disk.header.stamp = ros::Time::now();
+  disk.lifetime = ros::Duration(0.);
+  disk.pose.position.x = x;
+  disk.pose.position.y = y;
+  disk.pose.orientation.x = disk.pose.orientation.y = disk.pose.orientation.z = 0.;
+  disk.pose.orientation.w = 1.;
+  disk.type = visualization_msgs::Marker::CYLINDER;
+  shaft = disk;
+
+  disk.id = 0;
+  disk.pose.position.z = z + .5*TOOL_THK;
+  disk.scale.x = disk.scale.y = TOOL_DIA;
+  disk.scale.z = TOOL_THK;
+
+  shaft.id = 1;
+  shaft.pose.position.z = z + TOOL_THK + 0.5*TOOL_SHAFT_LEN;
+  shaft.scale.x = shaft.scale.y = TOOL_SHAFT_DIA;
+  shaft.scale.z = TOOL_SHAFT_LEN;
+
+  return tool;
+}
 
 int main(int argc, char **argv)
 {
@@ -89,6 +133,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "process_path_visualization");
   ros::NodeHandle nh;
   ros::Publisher path_pub = nh.advertise<visualization_msgs::Marker>("process_path", 1, true);
+  ros::Publisher tool_pub = nh.advertise<visualization_msgs::MarkerArray>("sanding_tool", 1, true);
   ROS_INFO_STREAM("Started node '" << ros::this_node::getName() << "'");
 
   godel_process_path::ProcessPathGenerator ppg;
@@ -146,10 +191,12 @@ int main(int argc, char **argv)
   marker.colors.at(0) = green;
 
   size_t idx = 0;
-  double time_factor = .02;
+  double time_factor = .05;
   while (ros::ok() && idx < timestamps.size())
   {
     path_pub.publish(marker);
+    geometry_msgs::Point &pt = marker.points.at(idx);
+    tool_pub.publish(toolMarker(pt.x, pt.y, pt.z));
 //    std::cout << "Waiting " << timestamps.at(idx) << std::endl;
     ros::Duration(timestamps.at(idx)*time_factor).sleep();
     marker.colors.at(idx+1) = green;

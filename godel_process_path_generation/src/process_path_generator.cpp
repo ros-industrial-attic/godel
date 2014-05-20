@@ -71,7 +71,6 @@ void ProcessPathGenerator::addInterpolatedProcessPts(const ProcessPt &start, con
 
 void ProcessPathGenerator::addPolygonToProcessPath(const PolygonBoundary &bnd_ref, double vel)
 {
-  //TODO add interpolation
   PolygonBoundary bnd = bnd_ref;
   bnd.push_back(bnd.front());
   ProcessPt process_pt;
@@ -399,7 +398,7 @@ void ProcessPathGenerator::discretizeLinear(const ovd::OffsetVertex &op1, const 
 
 void ProcessPathGenerator::discretizeSegment(const ovd::OffsetVertex &op1, const ovd::OffsetVertex &op2, PolygonBoundary &bnd) const
 {
-  if (op2.r == -1)// or true /*always use linear for now TODO implement arc*/)
+  if (op2.r == -1)
   {
     discretizeLinear(op1, op2, bnd);
   }
