@@ -136,8 +136,6 @@ void InteractiveSurfaceServer::show_all(bool show_surf)
 	}
 }
 
-
-
 void InteractiveSurfaceServer::invoke_callbacks()
 {
 	for(unsigned int i = 0;i < selection_callbacks_.size();i++)
