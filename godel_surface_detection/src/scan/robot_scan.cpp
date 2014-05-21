@@ -33,7 +33,7 @@ namespace scan {
 const double RobotScan::PLANNING_TIME = 60.0f;
 const double RobotScan::WAIT_MSG_DURATION = 5.0f;
 const double RobotScan::MIN_TRAJECTORY_TIME_STEP = 0.8f; // seconds
-const double RobotScan::EEF_STEP = 0.04f; // 5cm
+const double RobotScan::EEF_STEP = 0.1f; // 5cm
 const double RobotScan::MIN_JOINT_VELOCITY = 0.01f ; // rad/sect
 
 RobotScan::RobotScan()
@@ -148,7 +148,7 @@ bool RobotScan::generate_scan_poses(geometry_msgs::PoseArray& poses)
 	return succeeded;
 }
 
-void RobotScan::get_latest_scan_poses(geometry_msgs::PoseArray poses)
+void RobotScan::get_latest_scan_poses(geometry_msgs::PoseArray &poses)
 {
 	poses.poses.insert(poses.poses.begin(),scan_traj_poses_.begin(),scan_traj_poses_.end());
 	poses.header.frame_id = params_.world_frame;
@@ -474,7 +474,7 @@ void RobotScan::apply_simple_trajectory_filter(	moveit_msgs::RobotTrajectory& tr
 
 	traj.joint_trajectory.points.assign(points.begin(),points.end());
 
-	ROS_INFO_STREAM("Filtered trajectory: "<<traj);
+	//ROS_INFO_STREAM("Filtered trajectory: "<<traj);
 }
 
 void RobotScan::apply_trajectory_parabolic_time_parameterization(robot_trajectory::RobotTrajectory& rt,
