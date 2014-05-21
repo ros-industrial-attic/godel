@@ -50,6 +50,7 @@ add_library(${PROJECT_NAME}
   src/scan/robot_scan.cpp
 	src/interactive/interactive_surface_server.cpp )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${PCL_COMMON_LIBRARIES})
+add_dependencies(${PROJECT_NAME} godel_msgs_generate_messages_cpp)
 
 ## point cloud publisher node
 add_executable(point_cloud_publisher_node src/nodes/point_cloud_publisher_node.cpp)

@@ -19,7 +19,7 @@
  * mesh_importer.h
  *
  *  Created on: May 5, 2014
- *      Author: ros
+ *      Author: Dan Solomon
  */
 
 #ifndef MESH_IMPORTER_H_
@@ -28,55 +28,16 @@
 #include <ros/ros.h>
 #include <pcl/PolygonMesh.h>
 #include <pcl/point_types.h>
+#include <pcl/point_cloud.h>
 #include <Eigen/Geometry>
+#include "godel_process_path_generation/polygon_pts.hpp"
 
 
 namespace godel_process_path
 {
 
 typedef pcl::PointCloud<pcl::PointXYZINormal> Cloud;
-using std::ostream;
 
-/**@brief Represents a point on the boundary of a 2D polygon */
-struct PolygonPt
-{
-  PolygonPt() {};
-  PolygonPt(double _x, double _y): x(_x), y(_y) {};
-  double x;
-  double y;
-
-  inline bool operator==(const PolygonPt& other) const {return x==other.x && y==other.y;}
-  inline bool operator!=(const PolygonPt& other) const {return !operator==(other);}
-
-  friend ostream& operator<<(ostream &out, const PolygonPt &ppt);
-};
-ostream& operator<<(ostream &out, const PolygonPt &ppt)
-{
-  out << "(" << ppt.x << ", " << ppt.y << ")" << std::endl;
-  return out;
-}
-
-/**@brief A collection of polygon points that represent the boundary of a polygon */
-struct PolygonBoundary
-{
-  PolygonBoundary() {};
-  PolygonBoundary(unsigned int reserve_size) {pts.reserve(reserve_size);}
-  std::vector<PolygonPt> pts;
-
-  void reverse() {std::reverse(pts.begin(), pts.end());}
-
-  friend ostream& operator<<(ostream &out, const PolygonBoundary &pb);
-};
-ostream& operator<<(ostream &out, const PolygonBoundary &pb)
-{
-  for (std::vector<PolygonPt>::const_iterator pt=pb.pts.begin(), pt_end=pb.pts.end(); pt != pt_end; ++pt)
-  {
-    out << *pt;
-  }
-  return out;
-}
-
-typedef std::vector<PolygonBoundary> PolygonBoundaryCollection;
 
 class MeshImporter
 {

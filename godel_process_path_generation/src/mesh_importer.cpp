@@ -19,7 +19,7 @@
  * mesh_importer.cpp
  *
  *  Created on: May 5, 2014
- *      Author: ros
+ *      Author: Dan Solomon
  */
 
 #include <ros/ros.h>
@@ -71,7 +71,7 @@ bool MeshImporter::calculateBoundaryData(const pcl::PolygonMesh &input_mesh)
   computeLocalPlaneFrame(hplane, centroid4.head(3));
 
 
-  /* Use pcl::geometry::PolygonMesh to extract boundaries.
+  /* Use pcl::geometry::TriangleMesh to extract boundaries.
    * Project boundaries to local plane, and add to boundaries_ list.
    * Note: External boundary is CCW ordered, internal boundaries are CW ordered.
    */
@@ -81,7 +81,11 @@ bool MeshImporter::calculateBoundaryData(const pcl::PolygonMesh &input_mesh)
   for (size_t ii = 0; ii < input_mesh.polygons.size(); ++ii)
   {
     const std::vector<uint32_t> &vertices = input_mesh.polygons.at(ii).vertices;
-    ROS_ASSERT(vertices.size() == 3);
+    if (vertices.size() != 3)
+    {
+      ROS_ERROR_STREAM("Found polygon with " << vertices.size() << " sides, only triangle mesh supported!");
+      return false;
+    }
     Mesh::VertexIndices vi;
     for (std::vector<uint32_t>::const_iterator vidx = vertices.begin(), viend = vertices.end(); vidx != viend; ++vidx)
     {
@@ -112,7 +116,7 @@ bool MeshImporter::calculateBoundaryData(const pcl::PolygonMesh &input_mesh)
       Eigen::Vector3d projected_pt = hplane.projection(Eigen::Vector3d(cloudpt.x, cloudpt.y, cloudpt.z));        // pt projected onto plane
       Eigen::Vector3d plane_pt = plane_inverse * projected_pt;                                                   // pt in plane frame
       ROS_ASSERT(std::abs(plane_pt(2)) < .001);
-      pbound.pts.push_back(PolygonPt(plane_pt(0), plane_pt(1)));
+      pbound.push_back(PolygonPt(plane_pt(0), plane_pt(1)));
     }
 
     boundaries_.push_back(pbound);
