@@ -222,42 +222,35 @@ int SurfaceDetection::get_acquired_clouds_count()
 	return acquired_clouds_counter_;
 }
 
-void SurfaceDetection::process_octree()
+void SurfaceDetection::process_octree(Cloud& processed_cloud)
 {
-	if(params_.use_octomap)
-	{
-		Cloud::Ptr buffer_cloud_ptr(new Cloud());
-		buffer_cloud_ptr->reserve(octree_->getNumLeafNodes());
-		full_cloud_ptr_->clear();
-		octomap::OcTree::tree_iterator i;
+	Cloud::Ptr buffer_cloud_ptr(new Cloud());
+	buffer_cloud_ptr->reserve(octree_->getNumLeafNodes());
+	processed_cloud.clear();
+	octomap::OcTree::tree_iterator i;
 
-		ROS_INFO_STREAM("Searching voxels with threshold > "<<octree_->getOccupancyThres());
-		for(i = octree_->begin_tree(); i != octree_->end_tree(); i++)
-		{
-
-			if(octree_->isNodeOccupied(*i))
-			{
-				pcl::PointXYZ p;
-				p.x = i.getX();
-				p.y = i.getY();
-				p.z = i.getZ();
-				buffer_cloud_ptr->push_back(p);
-			}
-		}
-
-		if(buffer_cloud_ptr->size() > 0)
-		{
-			pcl::copyPointCloud(*buffer_cloud_ptr,*full_cloud_ptr_);
-			full_cloud_ptr_->header.frame_id = params_.frame_id;
-
-		}
-
-		ROS_INFO_STREAM("Total voxels found: "<<buffer_cloud_ptr->size());
-	}
-	else
+	ROS_INFO_STREAM("Searching voxels with threshold > "<<octree_->getOccupancyThres());
+	for(i = octree_->begin_tree(); i != octree_->end_tree(); i++)
 	{
 
+		if(octree_->isNodeOccupied(*i))
+		{
+			pcl::PointXYZ p;
+			p.x = i.getX();
+			p.y = i.getY();
+			p.z = i.getZ();
+			buffer_cloud_ptr->push_back(p);
+		}
 	}
+
+	if(buffer_cloud_ptr->size() > 0)
+	{
+		pcl::copyPointCloud(*buffer_cloud_ptr,processed_cloud);
+		processed_cloud.header.frame_id = params_.frame_id;
+
+	}
+
+	ROS_INFO_STREAM("Total voxels found: "<<buffer_cloud_ptr->size());
 
 }
 
@@ -316,13 +309,25 @@ void SurfaceDetection::get_region_colored_cloud(sensor_msgs::PointCloud2 &cloud_
 
 bool SurfaceDetection::find_surfaces()
 {
-	if(full_cloud_ptr_->empty())
-	{
-		return false;
-	}
+	// main process point cloud
+	Cloud::Ptr process_cloud_ptr = Cloud::Ptr(new Cloud());
 
-	// process acquired sensor data
-	process_octree();
+	// prepare acquired data
+	if(params_.use_octomap)
+	{
+		process_octree(*process_cloud_ptr);
+	}
+	else
+	{
+		if(full_cloud_ptr_->empty())
+		{
+			return false;
+		}
+		else
+		{
+			pcl::copyPointCloud(*full_cloud_ptr_,*process_cloud_ptr);
+		}
+	}
 
 	// reset members
 	region_colored_cloud_ptr_ = CloudRGB::Ptr(new CloudRGB());
@@ -336,23 +341,23 @@ bool SurfaceDetection::find_surfaces()
 
 	if(!params_.use_octomap )
 	{
-		if(apply_voxel_downsampling(*full_cloud_ptr_))
+		if(apply_voxel_downsampling(*process_cloud_ptr))
 		{
 			ROS_INFO_STREAM("Voxel downsampling succeeded, downsampled cloud size: "<<
-					full_cloud_ptr_->size());
+					process_cloud_ptr->size());
 		}
 		else
 		{
-			ROS_WARN_STREAM("Voxel downsampling failed, cloud size :"<<full_cloud_ptr_->size());
+			ROS_WARN_STREAM("Voxel downsampling failed, cloud size :"<<process_cloud_ptr->size());
 		}
 	}
 
 	if(params_.use_tabletop_seg)
 	{
-		int count = full_cloud_ptr_->size();
-		if(apply_tabletop_segmentation(*full_cloud_ptr_,*full_cloud_ptr_))
+		int count = process_cloud_ptr->size();
+		if(apply_tabletop_segmentation(*process_cloud_ptr,*process_cloud_ptr))
 		{
-			ROS_INFO_STREAM("Tabletop segmentation successfully applied, new point count: "<<full_cloud_ptr_->size()
+			ROS_INFO_STREAM("Tabletop segmentation successfully applied, new point count: "<<process_cloud_ptr->size()
 					<<", old point cloud: "<<count);
 		}
 		else
@@ -366,7 +371,7 @@ bool SurfaceDetection::find_surfaces()
 	}
 
 	// apply statistical filter
-	if(apply_statistical_filter(*full_cloud_ptr_,*full_cloud_ptr_))
+	if(apply_statistical_filter(*process_cloud_ptr,*process_cloud_ptr))
 	{
 		ROS_INFO_STREAM("Statistical filter succeeded");
 	}
@@ -377,7 +382,7 @@ bool SurfaceDetection::find_surfaces()
 	}
 
 	// estimate normals
-	if(apply_normal_estimation(*full_cloud_ptr_,*normals))
+	if(apply_normal_estimation(*process_cloud_ptr,*normals))
 	{
 		ROS_INFO_STREAM("Normal estimation succeeded");
 	}
@@ -388,7 +393,7 @@ bool SurfaceDetection::find_surfaces()
 	}
 
 	// applying region growing segmentation
-	if(apply_region_growing_segmentation(*full_cloud_ptr_,*normals,clusters_indices,
+	if(apply_region_growing_segmentation(*process_cloud_ptr,*normals,clusters_indices,
 			*region_colored_cloud_ptr_))
 	{
 
@@ -407,7 +412,7 @@ bool SurfaceDetection::find_surfaces()
 			Normals::Ptr segment_normal_ptr(new Normals());
 
 			// apply smoothing
-			pcl::copyPointCloud(*full_cloud_ptr_,clusters_indices[i],
+			pcl::copyPointCloud(*process_cloud_ptr,clusters_indices[i],
 					*segment_cloud_ptr);
 
 			int count = segment_cloud_ptr->size();

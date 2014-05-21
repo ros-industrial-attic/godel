@@ -156,7 +156,7 @@ public:
 
 protected:
 
-	void process_octree();
+	void process_octree(Cloud &processed_cloud);
 	bool apply_statistical_filter(const Cloud& in,Cloud& out);
 	bool apply_region_growing_segmentation(const Cloud& in,
 			const Normals& normals,
