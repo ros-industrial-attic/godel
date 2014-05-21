@@ -159,6 +159,38 @@ protected:
 		return succeeded;
 	}
 
+	bool find_surfaces(visualization_msgs::MarkerArray &surfaces)
+	{
+		bool succeeded = true;
+		if(surface_detection_.find_surfaces())
+		{
+			// clear current surfaces
+			surface_server_.remove_all_surfaces();
+
+			// adding markers to server
+			visualization_msgs::MarkerArray markers_msg = surface_detection_.get_surface_markers();
+			for(int i =0;i < markers_msg.markers.size();i++)
+			{
+				surface_server_.add_surface(markers_msg.markers[i]);
+			}
+
+			// copying to output argument
+			surfaces.markers.insert(surfaces.markers.begin(),markers_msg.markers.begin(),markers_msg.markers.end());
+
+			// saving latest successful results
+			latest_results_.surface_detection = surface_detection_.params_;
+			latest_results_.surfaces_found = true;
+			latest_results_.surfaces = surfaces;
+			robot_scan_.get_latest_scan_poses(latest_results_.robot_scan_poses);
+		}
+		else
+		{
+			succeeded = false;
+		}
+
+		return succeeded;
+	}
+
 	bool surface_detection_server_callback(godel_msgs::SurfaceDetection::Request &req,
 			godel_msgs::SurfaceDetection::Response &res)
 	{
@@ -227,7 +259,36 @@ protected:
 			res.surfaces_found =  run_robot_scan(res.surfaces);
 			break;
 
-		case req.GET_LATEST_RESULTS:
+		case req.FIND_ONLY:
+
+			if(req.use_default_parameters)
+			{
+				surface_detection_.params_ = default_surf_detection_params_;
+			}
+			else
+			{
+				surface_detection_.params_ = req.surface_detection;
+			}
+
+			res.surfaces_found =  find_surfaces(res.surfaces);
+			res.surfaces.markers.clear();
+			break;
+
+		case req.FIND_AND_RETURN:
+
+			if(req.use_default_parameters)
+			{
+				surface_detection_.params_ = default_surf_detection_params_;
+			}
+			else
+			{
+				surface_detection_.params_ = req.surface_detection;
+			}
+
+			res.surfaces_found =  find_surfaces(res.surfaces);
+			break;
+
+		case req.RETURN_LATEST_RESULTS:
 
 			res = latest_results_;
 			break;
