@@ -57,7 +57,7 @@ public:
 	void add_scan_callback(ScanCallback cb);
 	bool generate_scan_display_trajectory(moveit_msgs::DisplayTrajectory& traj_data);
 	bool generate_scan_poses(geometry_msgs::PoseArray& poses);
-	void get_latest_scan_poses(geometry_msgs::PoseArray poses);
+	void get_latest_scan_poses(geometry_msgs::PoseArray &poses);
 	void publish_scan_poses(std::string topic);
 	MoveGroupPtr get_move_group();
 	bool move_to_pose(geometry_msgs::Pose& target_pose);
