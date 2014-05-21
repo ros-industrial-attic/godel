@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>398</width>
-    <height>529</height>
+    <height>549</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -28,7 +28,7 @@
      <x>0</x>
      <y>10</y>
      <width>391</width>
-     <height>511</height>
+     <height>531</height>
     </rect>
    </property>
    <property name="currentIndex">
@@ -231,10 +231,15 @@ Library</string>
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>360</y>
-       <width>51</width>
-       <height>27</height>
+       <y>396</y>
+       <width>61</width>
+       <height>31</height>
       </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>14</pointsize>
+      </font>
      </property>
      <property name="text">
       <string>Back</string>
@@ -244,10 +249,15 @@ Library</string>
      <property name="geometry">
       <rect>
        <x>310</x>
-       <y>360</y>
-       <width>51</width>
-       <height>27</height>
+       <y>396</y>
+       <width>61</width>
+       <height>31</height>
       </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>14</pointsize>
+      </font>
      </property>
      <property name="text">
       <string>Next</string>
@@ -257,7 +267,7 @@ Library</string>
      <property name="geometry">
       <rect>
        <x>10</x>
-       <y>400</y>
+       <y>430</y>
        <width>371</width>
        <height>61</height>
       </rect>
@@ -337,7 +347,7 @@ p, li { white-space: pre-wrap; }
        <x>10</x>
        <y>90</y>
        <width>371</width>
-       <height>261</height>
+       <height>301</height>
       </rect>
      </property>
      <property name="currentIndex">
@@ -352,8 +362,8 @@ p, li { white-space: pre-wrap; }
         <rect>
          <x>0</x>
          <y>10</y>
-         <width>351</width>
-         <height>211</height>
+         <width>361</width>
+         <height>261</height>
         </rect>
        </property>
        <property name="title">
@@ -363,9 +373,9 @@ p, li { white-space: pre-wrap; }
         <property name="geometry">
          <rect>
           <x>0</x>
-          <y>30</y>
+          <y>40</y>
           <width>234</width>
-          <height>141</height>
+          <height>161</height>
          </rect>
         </property>
         <layout class="QFormLayout" name="formLayout">
@@ -449,6 +459,16 @@ p, li { white-space: pre-wrap; }
            </property>
           </widget>
          </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="sensorTopicLabel">
+           <property name="text">
+            <string>Sensor Topic</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <widget class="QLineEdit" name="LineEditSensorTopic"/>
+         </item>
         </layout>
        </widget>
        <widget class="QPushButton" name="PushButtonScan">
@@ -462,29 +482,6 @@ p, li { white-space: pre-wrap; }
         </property>
         <property name="text">
          <string>Scan and Find</string>
-        </property>
-       </widget>
-       <widget class="QLineEdit" name="LineEditSensorTopic">
-        <property name="geometry">
-         <rect>
-          <x>100</x>
-          <y>180</y>
-          <width>231</width>
-          <height>27</height>
-         </rect>
-        </property>
-       </widget>
-       <widget class="QLabel" name="acquisitionTopicLabel">
-        <property name="geometry">
-         <rect>
-          <x>10</x>
-          <y>180</y>
-          <width>85</width>
-          <height>21</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Sensor Topic</string>
         </property>
        </widget>
        <widget class="QPushButton" name="PushButtonMoreOptions">
@@ -526,6 +523,35 @@ p, li { white-space: pre-wrap; }
          <string>Surface Options</string>
         </property>
        </widget>
+       <widget class="QPushButton" name="PushButtonFindSurface">
+        <property name="geometry">
+         <rect>
+          <x>240</x>
+          <y>180</y>
+          <width>111</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Find Surface</string>
+        </property>
+       </widget>
+       <widget class="QLineEdit" name="LineEditOperationStatus">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>220</y>
+          <width>341</width>
+          <height>31</height>
+         </rect>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+        <property name="readOnly">
+         <bool>true</bool>
+        </property>
+       </widget>
       </widget>
      </widget>
      <widget class="QWidget" name="tab_2">
@@ -538,7 +564,7 @@ p, li { white-space: pre-wrap; }
          <x>10</x>
          <y>10</y>
          <width>341</width>
-         <height>201</height>
+         <height>241</height>
         </rect>
        </property>
        <property name="title">
@@ -589,7 +615,7 @@ p, li { white-space: pre-wrap; }
           <x>20</x>
           <y>50</y>
           <width>211</width>
-          <height>141</height>
+          <height>181</height>
          </rect>
         </property>
        </widget>
@@ -631,7 +657,7 @@ p, li { white-space: pre-wrap; }
          <x>10</x>
          <y>10</y>
          <width>341</width>
-         <height>191</height>
+         <height>231</height>
         </rect>
        </property>
        <property name="title">
@@ -656,7 +682,7 @@ p, li { white-space: pre-wrap; }
           <x>130</x>
           <y>40</y>
           <width>201</width>
-          <height>141</height>
+          <height>181</height>
          </rect>
         </property>
        </widget>
