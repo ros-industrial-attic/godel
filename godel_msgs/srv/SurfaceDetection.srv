@@ -3,7 +3,9 @@ int32 GET_DEFAULT_PARAMETERS=1
 int32 PUBLISH_SCAN_PATH=2
 int32 SCAN_AND_FIND_ONLY=3
 int32 SCAN_FIND_AND_RETURN=4
-int32 GET_LATEST_RESULTS=5
+int32 RETURN_LATEST_RESULTS=5
+int32 FIND_ONLY=6
+int32 FIND_AND_RETURN=7
 int32 action
 bool use_default_parameters
 godel_msgs/RobotScanParameters robot_scan
