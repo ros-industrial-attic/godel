@@ -174,7 +174,8 @@ Q_SIGNALS:
 protected:
 
 	void init();
-	void run_scan_and_detect();
+	void send_scan_and_find_request();
+	void send_find_surface_request();
 	void save_robot_scan_parameters();
 	bool call_select_surface_service(godel_msgs::SelectSurface::Request &req);
 	bool call_surface_detection_service(godel_msgs::SurfaceDetection& s);
@@ -183,6 +184,7 @@ protected:
 protected Q_SLOTS:
 
 	void scan_button_handler();
+	void find_surface_button_handler();
 	void update_handler();
 	void connect_to_services();
 	void increase_tab_index_handler();
@@ -216,6 +218,10 @@ protected:
 	godel_msgs::SurfaceDetection::Response latest_result_;
 	godel_msgs::SurfaceDetection::Request latest_request_;
 	godel_msgs::SelectedSurfacesChanged selected_surfaces_msg_;
+
+	// service results
+	bool surface_detection_op_succeeded_;
+	std::string surface_detection_op_message_;
 };
 
 } /* namespace widgets */

@@ -58,6 +58,7 @@ void RobotBlendingWidget::init()
 	connect(ui_.PushButtonMoreOptions,SIGNAL(clicked()),this,SLOT(scan_options_click_handler()));
 	connect(ui_.PushButtonSurfaceOptions,SIGNAL(clicked()),this,SLOT(surface_options_click_handler()));
 	connect(ui_.PushButtonScan,SIGNAL(clicked()),this,SLOT(scan_button_handler()));
+	connect(ui_.PushButtonFindSurface,SIGNAL(clicked()),this,SLOT(find_surface_button_handler()));
 	connect(ui_.PushButtonNext,SIGNAL(clicked()),this,SLOT(increase_tab_index_handler()));
 	connect(ui_.PushButtonBack,SIGNAL(clicked()),this,SLOT(decrease_tab_index_handler()));
 	connect(ui_.PushButtonSelectAllSurfaces,SIGNAL(clicked()),this,SLOT(select_all_handler()));
@@ -290,11 +291,56 @@ void RobotBlendingWidget::decrease_tab_index_handler()
 
 void RobotBlendingWidget::scan_button_handler()
 {
-	QFuture<void> future = QtConcurrent::run(this,&RobotBlendingWidget::run_scan_and_detect);
+	QFuture<void> future = QtConcurrent::run(this,&RobotBlendingWidget::send_scan_and_find_request);
 }
 
-void RobotBlendingWidget::run_scan_and_detect()
+void RobotBlendingWidget::find_surface_button_handler()
 {
+	QFuture<void> future = QtConcurrent::run(this,&RobotBlendingWidget::send_find_surface_request);
+}
+
+void RobotBlendingWidget::send_find_surface_request()
+{
+	surface_detection_op_message_ = "FIND IN PROGRESS";
+
+	// disable gui
+	Q_EMIT surface_detection_started();
+
+	// creating surface detection request
+	godel_msgs::SurfaceDetection s;
+	s.request.action = s.request.FIND_ONLY;
+	s.request.use_default_parameters = false;
+	s.request.robot_scan = robot_scan_parameters_;
+	s.request.surface_detection = surf_detect_parameters_;
+
+	if(call_surface_detection_service(s) )
+	{
+		if(s.response.surfaces_found)
+		{
+			surface_detection_op_succeeded_ = true;
+			surface_detection_op_message_ = "FIND COMPLETED";
+		}
+		else
+		{
+			surface_detection_op_succeeded_ = false;
+			surface_detection_op_message_ = "FIND FAILED";
+		}
+	}
+	else
+	{
+		surface_detection_op_succeeded_ = false;
+		surface_detection_op_message_ = "SERVICE CALL FAILED";
+	}
+
+	// enable widget
+	Q_EMIT surface_detection_completed();
+}
+
+
+void RobotBlendingWidget::send_scan_and_find_request()
+{
+	surface_detection_op_message_ = "SCAN & FIND IN PROGRESS";
+
 	// disable gui
 	Q_EMIT surface_detection_started();
 
@@ -309,17 +355,23 @@ void RobotBlendingWidget::run_scan_and_detect()
 	s.request.robot_scan = robot_scan_parameters_;
 	s.request.surface_detection = surf_detect_parameters_;
 
-	if(call_surface_detection_service(s))
+	if(call_surface_detection_service(s) )
 	{
-
 		if(s.response.surfaces_found)
 		{
-			ui_.TabWidgetCreateLib->setCurrentIndex(1);
+			surface_detection_op_succeeded_ = true;
+			surface_detection_op_message_ = "SCAN & FIND COMPLETED";
+		}
+		else
+		{
+			surface_detection_op_succeeded_ = false;
+			surface_detection_op_message_ = "SCAN & FIND FAILED";
 		}
 	}
 	else
 	{
-
+		surface_detection_op_succeeded_ = false;
+		surface_detection_op_message_ = "SERVICE CALL FAILED";
 	}
 
 	Q_EMIT surface_detection_completed();
@@ -327,21 +379,29 @@ void RobotBlendingWidget::run_scan_and_detect()
 
 void RobotBlendingWidget::surface_detection_started_handler()
 {
+	ui_.LineEditOperationStatus->setText(QString::fromStdString(surface_detection_op_message_));
 	ui_.TabWidget->setEnabled(false);
 }
 
 void RobotBlendingWidget::surface_detection_completed_handler()
 {
+	ui_.LineEditOperationStatus->setText(QString::fromStdString(surface_detection_op_message_));
+	if(surface_detection_op_succeeded_)
+	{
+		ui_.TabWidgetCreateLib->setCurrentIndex(1);
+	}
 	ui_.TabWidget->setEnabled(true);
 }
 
 void RobotBlendingWidget::connect_started_handler()
 {
+	ui_.LineEditOperationStatus->setText("CONNECTING TO SERVICE");
 	ui_.TabWidget->setEnabled(false);
 }
 
 void RobotBlendingWidget::connect_completed_handler()
 {
+	ui_.LineEditOperationStatus->setText("READY");
 	ui_.TabWidget->setEnabled(true);
 }
 
