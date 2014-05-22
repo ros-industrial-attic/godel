@@ -28,7 +28,7 @@
   <buildtool_depend>catkin</buildtool_depend>
   
   <build_depend>roscpp</build_depend>
-  
+  <build_depend>catkin_modules</build_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

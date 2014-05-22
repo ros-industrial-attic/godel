@@ -7,11 +7,22 @@ project(godel_process_path_generation)
 find_package(catkin REQUIRED COMPONENTS
              roscpp
              pcl_ros
+             cmake_modules
 )
 
-find_package(Boost REQUIRED COMPONENTS system)
-find_package(PCL 1.7 REQUIRED) # COMPONENTS)
+find_package(Boost REQUIRED COMPONENTS system python)
+find_package(PCL 1.7 REQUIRED QUIET) # COMPONENTS)
 find_package(Eigen REQUIRED)
+
+
+# OpenVoronoi and dependencies
+list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
+find_package(OpenVoronoi REQUIRED)
+
+# python devel libs needed because of OpenVoronoi python bindings?
+find_package(PythonLibs REQUIRED)
+list(APPEND OpenVoronoi_LIBRARIES ${PYTHON_LIBRARIES})
+list(APPEND OpenVoronoi_INCLUDE_DIRS ${PYTHON_INCLUDE_DIRS})
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -96,9 +107,8 @@ catkin_package(
 include_directories(include
                     ${catkin_INCLUDE_DIRS}
                     ${Boost_INCLUDE_DIRS}
+                    ${OpenVoronoi_INCLUDE_DIRS}
 #                    ${Eigen_INCLUDE_DIRS}
-                    /usr/local/include/openvoronoi
-                    /usr/local/include/openvoronoi/common
 )
 
 ## Declare a cpp library
@@ -124,16 +134,14 @@ add_library(process_path_generator
             src/process_path_generator.cpp
 )
 target_link_libraries(process_path_generator
-                      ${catkin_LIBRARIES}
                       process_path
-                      openvoronoi
+                      ${OpenVoronoi_LIBRARIES}
 )
 
 add_executable(process_visualization_node
                src/process_path_visualization_node
 )
 target_link_libraries(process_visualization_node
-                      ${catkin_LIBRARIES}
                       process_path
                       mesh_importer
                       process_path_generator
@@ -199,7 +207,7 @@ target_link_libraries(test_MeshImporter
 catkin_add_gtest(test_ProcessPathGenerator test/test_ProcessPathGenerator.cpp)
 target_link_libraries(test_ProcessPathGenerator
                       process_path_generator
-                      openvoronoi
+                      ${OpenVoronoi_LIBRARIES}
 )
 
 # if(TARGET test_MeshImporter)
