@@ -21,6 +21,7 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <interactive_markers/interactive_marker_server.h>
 #include <interactive_markers/menu_handler.h>
+#include <pcl/PolygonMesh.h>
 #include <functional>
 
 namespace interactive_markers
@@ -46,6 +47,7 @@ namespace defaults{
 	static const double ARROW_HEAD_DIAMETER = 0.04f;
 	static const double ARROW_HEAD_LENGTH = 0.02f;
 	static const double ARROW_DISTANCE = 0.02f;
+	static const double MARKER_ALPHA = 0.6f;
 }
 
 class InteractiveSurfaceServer {
@@ -54,6 +56,14 @@ public:
 
 	typedef std::pair<std::string, bool> Selection;
 	typedef boost::function<void ()> SelectionCallback;
+
+public:
+
+	static void mesh_to_marker(const pcl::PolygonMesh &mesh,
+			visualization_msgs::Marker &marker);
+	static void marker_to_mesh(const visualization_msgs::Marker &marker,
+			pcl::PolygonMesh &mesh);
+
 public:
 	InteractiveSurfaceServer();
 	virtual ~InteractiveSurfaceServer();
@@ -64,8 +74,10 @@ public:
 	void run();
 	void stop();
 
-	void add_surface(const visualization_msgs::Marker& marker);
-	void add_surface(const visualization_msgs::Marker& marker,const geometry_msgs::Pose& pose);
+	void add_surface(const visualization_msgs::Marker &marker);
+	void add_surface(const visualization_msgs::Marker &marker, const geometry_msgs::Pose &pose);
+	void add_surface(const pcl::PolygonMesh& mesh);
+	void add_surface(const pcl::PolygonMesh& mesh,const geometry_msgs::Pose& pose);
 	void add_random_surface_marker();
 	void remove_all_surfaces();
 	int get_surface_count()
@@ -75,6 +87,7 @@ public:
 
 	void get_selected_list(std::vector<std::string>& list);
 	void get_selected_surfaces(visualization_msgs::MarkerArray& surfaces);
+	void get_selected_surfaces(std::vector<pcl::PolygonMesh>& meshes);
 	void add_selection_callback(SelectionCallback &f);
 	void clear_selection_callbacks();
 	void select_all(bool select = true);
@@ -88,6 +101,7 @@ protected:
 	interactive_markers::InteractiveMarkerServerPtr marker_server_ptr_;
 	interactive_markers::MenuHandler menu_handler_;
 	std::map<std::string,bool> surface_selection_map_;
+	std::map<std::string,pcl::PolygonMesh> meshes_map_;
 	std::vector<SelectionCallback> selection_callbacks_;
 
 protected:

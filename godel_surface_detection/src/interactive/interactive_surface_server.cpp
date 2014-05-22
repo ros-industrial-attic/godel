@@ -21,6 +21,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/common/common.h>
+#include <pcl_ros/transforms.h>
 
 namespace godel_surface_detection {
 namespace interactive {
@@ -42,6 +43,77 @@ InteractiveSurfaceServer::~InteractiveSurfaceServer() {
 	// TODO Auto-generated destructor stub
 }
 
+void InteractiveSurfaceServer::mesh_to_marker(const pcl::PolygonMesh &mesh,
+		visualization_msgs::Marker &marker)
+{
+	// color value ranges
+	static const double color_val_min = 0.5f;
+	static const double color_val_max = 1.0f;
+	std_msgs::ColorRGBA color;
+	color.a =  1;
+
+	// set marker properties
+	tf::poseTFToMsg(tf::Transform::getIdentity(),marker.pose );
+	marker.scale.x = marker.scale.y = marker.scale.z = 1;
+	marker.type = marker.TRIANGLE_LIST;
+	marker.action = marker.ADD;
+	marker.header.frame_id = mesh.header.frame_id;
+
+	// create color
+	color.r = color_val_min +
+			(static_cast<double>(rand())/static_cast<double>(RAND_MAX))
+			* (color_val_max - color_val_min);
+	color.g = color_val_min +
+					(static_cast<double>(rand())/static_cast<double>(RAND_MAX))
+					* (color_val_max - color_val_min);
+	color.b = color_val_min +
+					(static_cast<double>(rand())/static_cast<double>(RAND_MAX))
+					* (color_val_max - color_val_min);
+	marker.color = color;
+
+
+	// filling points
+	pcl::PointCloud<pcl::PointXYZ> points;
+	pcl::fromPCLPointCloud2(mesh.cloud,points);
+	for(int i = 0; i < mesh.polygons.size(); i++)
+	{
+		const pcl::Vertices &v =  mesh.polygons[i];
+		for(int j = 0;j < v.vertices.size(); j++)
+		{
+			uint32_t index = v.vertices[j];
+			geometry_msgs::Point p;
+			p.x = points.points[index].x;
+			p.y = points.points[index].y;
+			p.z = points.points[index].z;
+			marker.points.push_back(p);
+		}
+	}
+}
+
+void InteractiveSurfaceServer::marker_to_mesh(const visualization_msgs::Marker &marker,
+		pcl::PolygonMesh &mesh)
+{
+	pcl::PointCloud<pcl::PointXYZ> points;
+	for(int i = 0; i <marker.points.size(); i+=3)
+	{
+		pcl::Vertices v;
+		for(int j = 0; j < 3; j++)
+		{
+			v.vertices.push_back(j+1);
+
+			pcl::PointXYZ p;
+			p.x = marker.points[i+j].x;
+			p.y = marker.points[i+j].y;
+			p.z = marker.points[i+j].z;
+			points.points.push_back(p);
+		}
+
+		mesh.polygons.push_back(v);
+	}
+
+	pcl::toPCLPointCloud2(points,mesh.cloud);
+	mesh.header.frame_id = marker.header.frame_id;
+}
 
 bool InteractiveSurfaceServer::init()
 {
@@ -171,6 +243,18 @@ void InteractiveSurfaceServer::get_selected_surfaces(visualization_msgs::MarkerA
 	}
 }
 
+void InteractiveSurfaceServer::get_selected_surfaces(std::vector<pcl::PolygonMesh>& meshes)
+{
+	std::map<std::string,bool>::iterator i;
+	for(i = surface_selection_map_.begin();i != surface_selection_map_.end();i++)
+	{
+		if(i->second)
+		{
+			meshes.push_back(meshes_map_[i->first]);
+		}
+	}
+}
+
 void InteractiveSurfaceServer::toggle_selection_flag(std::string marker_name)
 {
 	if(surface_selection_map_.count(marker_name)>0 )
@@ -292,10 +376,16 @@ void InteractiveSurfaceServer::create_arrow_marker(
 
 }
 
-void InteractiveSurfaceServer::add_surface(const visualization_msgs::Marker& marker,
+void InteractiveSurfaceServer::add_surface(const pcl::PolygonMesh& mesh,
 		const geometry_msgs::Pose &pose)
 {
-	// create marker
+	// convert polygon mesh to marker
+	visualization_msgs::Marker marker;
+	mesh_to_marker(mesh,marker);
+	marker.id = meshes_map_.size();
+	marker.color.a = defaults::MARKER_ALPHA;
+
+	// create interactive marker
 	std::stringstream ss;
 	ss<<marker_name_<<"_" <<surface_selection_map_.size() +1;
 	visualization_msgs::InteractiveMarker int_marker;
@@ -329,8 +419,9 @@ void InteractiveSurfaceServer::add_surface(const visualization_msgs::Marker& mar
 	marker_server_ptr_->insert(int_marker,button_callback_);
 	menu_handler_.apply(*marker_server_ptr_,int_marker.name);
 
-	// save name
+	// save mesh
 	surface_selection_map_.insert(std::make_pair(int_marker.name,false));
+	meshes_map_.insert(std::make_pair(int_marker.name,mesh));
 	set_selection_flag(int_marker.name,false);
 
 	// apply changes
@@ -345,11 +436,26 @@ void InteractiveSurfaceServer::remove_all_surfaces()
 	marker_server_ptr_->applyChanges();
 }
 
-void InteractiveSurfaceServer::add_surface(const visualization_msgs::Marker& marker)
+void InteractiveSurfaceServer::add_surface(const pcl::PolygonMesh& mesh)
 {
 	geometry_msgs::Pose pose;
 	tf::poseTFToMsg(tf::Transform::getIdentity(),pose);
-	add_surface(marker,pose);
+	add_surface(mesh,pose);
+}
+
+void InteractiveSurfaceServer::add_surface(const visualization_msgs::Marker &marker)
+{
+	pcl::PolygonMesh mesh;
+	marker_to_mesh(marker,mesh);
+	add_surface(mesh);
+}
+
+void InteractiveSurfaceServer::add_surface(const visualization_msgs::Marker &marker,
+		const geometry_msgs::Pose &pose)
+{
+	pcl::PolygonMesh mesh;
+	marker_to_mesh(marker,mesh);
+	add_surface(mesh,pose);
 }
 
 void InteractiveSurfaceServer::add_selection_callback(SelectionCallback &f)

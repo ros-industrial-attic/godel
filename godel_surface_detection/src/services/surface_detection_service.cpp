@@ -129,14 +129,16 @@ protected:
 				// clear current surfaces
 				surface_server_.remove_all_surfaces();
 
-				// adding markers to server
-				visualization_msgs::MarkerArray markers_msg = surface_detection_.get_surface_markers();
-				for(int i =0;i < markers_msg.markers.size();i++)
+				// adding meshes to server
+				std::vector<pcl::PolygonMesh> meshes;
+				surface_detection_.get_meshes(meshes);
+				for(int i =0;i < meshes.size();i++)
 				{
-					surface_server_.add_surface(markers_msg.markers[i]);
+					surface_server_.add_surface(meshes[i]);
 				}
 
-				// copying to output argument
+				// copying to surface markers to output argument
+				visualization_msgs::MarkerArray markers_msg = surface_detection_.get_surface_markers();
 				surfaces.markers.insert(surfaces.markers.begin(),markers_msg.markers.begin(),markers_msg.markers.end());
 
 				// saving latest successful results
@@ -167,14 +169,16 @@ protected:
 			// clear current surfaces
 			surface_server_.remove_all_surfaces();
 
-			// adding markers to server
-			visualization_msgs::MarkerArray markers_msg = surface_detection_.get_surface_markers();
-			for(int i =0;i < markers_msg.markers.size();i++)
+			// adding meshes to server
+			std::vector<pcl::PolygonMesh> meshes;
+			surface_detection_.get_meshes(meshes);
+			for(int i =0;i < meshes.size();i++)
 			{
-				surface_server_.add_surface(markers_msg.markers[i]);
+				surface_server_.add_surface(meshes[i]);
 			}
 
-			// copying to output argument
+			// copying to surface markers to output argument
+			visualization_msgs::MarkerArray markers_msg = surface_detection_.get_surface_markers();
 			surfaces.markers.insert(surfaces.markers.begin(),markers_msg.markers.begin(),markers_msg.markers.end());
 
 			// saving latest successful results

@@ -151,13 +151,14 @@ int main(int argc,char** argv)
 		{
 			ROS_INFO_STREAM("Publishing segments visuals");
 			sensor_msgs::PointCloud2 cloud_msg;
-			visualization_msgs::MarkerArray markers_msg = SurfDetect.get_surface_markers();
+			std::vector<pcl::PolygonMesh> meshes;
+			SurfDetect.get_meshes(meshes);
 			SurfDetect.get_region_colored_cloud(cloud_msg);
 
 			// adding markers to server
-			for(int i =0;i < markers_msg.markers.size();i++)
+			for(int i =0;i < meshes.size();i++)
 			{
-				SurfServer.add_surface(markers_msg.markers[i]);
+				SurfServer.add_surface(meshes[i]);
 			}
 
 			ros::Duration loop_rate(0.5f);
