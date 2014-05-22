@@ -77,6 +77,8 @@ public:
 	static void apply_trajectory_parabolic_time_parameterization(robot_trajectory::RobotTrajectory& rt,
 			moveit_msgs::RobotTrajectory &traj,unsigned int max_iterations=200,double max_time_change_per_it=.6);
 
+	static void apply_speed_reduction(moveit_msgs::RobotTrajectory &traj,double percent_reduction);
+
 protected:
 
 
