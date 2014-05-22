@@ -148,6 +148,7 @@ public:
 
 	// retrieve results
 	visualization_msgs::MarkerArray get_surface_markers();
+	void get_meshes(std::vector<pcl::PolygonMesh>& meshes);
 	std::vector<Cloud::Ptr> get_surface_clouds();
 	void get_full_cloud(Cloud& cloud);
 	void get_full_cloud(sensor_msgs::PointCloud2 cloud_msg);
@@ -186,7 +187,9 @@ protected:
 	pcl::PointCloud<pcl::PointXYZ>::Ptr full_cloud_ptr_;
 	CloudRGB::Ptr region_colored_cloud_ptr_;
 	std::vector<Cloud::Ptr> surface_clouds_;
-	visualization_msgs::MarkerArray meshes_;
+	visualization_msgs::MarkerArray mesh_markers_;
+	std::vector<pcl::PolygonMesh> meshes_;
+
 
 	// octomap
 	OctreePtr octree_;

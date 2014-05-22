@@ -89,7 +89,8 @@ void SurfaceDetection::clear_results()
 	acquired_clouds_counter_ = 0;
 	full_cloud_ptr_->clear();
 	surface_clouds_.clear();
-	meshes_.markers.clear();
+	mesh_markers_.markers.clear();
+	meshes_.clear();
 }
 
 bool SurfaceDetection::load_parameters(std::string node_ns)
@@ -256,7 +257,12 @@ void SurfaceDetection::process_octree(Cloud& processed_cloud)
 
 visualization_msgs::MarkerArray SurfaceDetection::get_surface_markers()
 {
-	return visualization_msgs::MarkerArray(meshes_);
+	return visualization_msgs::MarkerArray(mesh_markers_);
+}
+
+void SurfaceDetection::get_meshes(std::vector<pcl::PolygonMesh> &meshes)
+{
+	meshes.insert(meshes.end(),meshes_.begin(),meshes_.end());
 }
 
 std::vector<Cloud::Ptr> SurfaceDetection::get_surface_clouds()
@@ -332,7 +338,8 @@ bool SurfaceDetection::find_surfaces()
 	// reset members
 	region_colored_cloud_ptr_ = CloudRGB::Ptr(new CloudRGB());
 	surface_clouds_.clear();
-	meshes_.markers.clear();
+	mesh_markers_.markers.clear();
+	meshes_.clear();
 
 	// variables to hold intermediate results
 	Normals::Ptr normals(new Normals());
@@ -468,10 +475,13 @@ bool SurfaceDetection::find_surfaces()
 		visualization_msgs::Marker marker;
 		apply_fast_triangulation(*surface_clouds_[i],*segment_normals[i],mesh);
 		mesh_to_marker(mesh,marker);
-		marker.header.frame_id = surface_clouds_[i]->header.frame_id;
+
+		// saving other properties
+		marker.header.frame_id = mesh.header.frame_id = surface_clouds_[i]->header.frame_id;
 		marker.id = i;
 		marker.color.a = params_.marker_alpha;
-		meshes_.markers.push_back(marker);
+		mesh_markers_.markers.push_back(marker);
+		meshes_.push_back(mesh);
 	}
 	ROS_INFO_STREAM("Triangulation of surfaces completed");
 
