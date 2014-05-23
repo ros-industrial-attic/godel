@@ -56,6 +56,10 @@ add_dependencies(${PROJECT_NAME} godel_msgs_generate_messages_cpp)
 add_executable(point_cloud_publisher_node src/nodes/point_cloud_publisher_node.cpp)
 target_link_libraries(point_cloud_publisher_node ${PROJECT_NAME})
 
+## point cloud generator node
+add_executable(point_cloud_generator_node src/nodes/point_cloud_generator_node.cpp)
+target_link_libraries(point_cloud_generator_node ${PROJECT_NAME})
+
 ## surface detection node
 add_executable(surface_detection_node src/nodes/surface_detection_node.cpp)
 target_link_libraries(surface_detection_node ${PROJECT_NAME})

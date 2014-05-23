@@ -1,0 +1,54 @@
+frame_id: world_frame
+point_cloud_descriptions:
+  - x: 0.9
+    y: 0.4
+    z: 0.08
+    rx: 0.0
+    ry: 0.0
+    rz: 0.0
+    l: 0.04
+    w: 0.12
+    h: 0.0
+    resolution: 0.002
+  - x: 0.72
+    y: 0.4
+    z: 0.02
+    rx: 0.0
+    ry: 0.0
+    rz: 0.0
+    l: 0.04
+    w: 0.14
+    h: 0.0
+    resolution: 0.002
+  - x: 0.88
+    y: 0.27
+    z: 0.03
+    rx: 0.0
+    ry: 0.0
+    rz: 0.0
+    l: 0.10
+    w: 0.08
+    h: 0.0
+    resolution: 0.002
+  - x: 0.80
+    y: 0.40
+    z: 0.042
+    rx: 0.0
+    ry: 0.0
+    rz: 0.0
+    l: 0.12
+    w: 0.18
+    h: 0.0
+    resolution: 0.002
+  - x: 0.78
+    y: 0.24
+    z: 0.06
+    rx: 0.0
+    ry: 0.0
+    rz: 0.0
+    l: 0.10
+    w: 0.14
+    h: 0.0
+    resolution: 0.002
+
+
