@@ -18,10 +18,15 @@
 		<!-- rviz blending plugin -->
 		<node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_plugins)/rviz/robot_blending.rviz" output="screen" launch-prefix="nice"/>
 
-		<!-- recorded data -->
-		<node if="$(arg sim_sensor)" name="point_cloud_publisher_node" pkg="godel_surface_detection" type="point_cloud_publisher_node"
+		<!-- simulated sensor data -->
+		<!--<node if="$(arg sim_sensor)" name="point_cloud_publisher_node" pkg="godel_surface_detection" type="point_cloud_publisher_node"
 			args="-f data/milk_cartoon_all_small_clorox.pcd -r 0.5 -i world_frame" output="log">
 			<rosparam param="cloud_transform">{rx: 0.96, ry: 0.0, rz: -1.57, x: 0.28, y: 0.0, z: 0.48}</rosparam>
+		</node>-->
+
+		<remap if="$(arg sim_sensor)" from="generated_cloud" to="sensor_point_cloud"/>
+		<node if="$(arg sim_sensor)" pkg="godel_surface_detection" type="point_cloud_generator_node" name="point_cloud_generator_node" output="screen">
+			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/point_cloud_descriptions.yaml"/>
 		</node>
 
 		<!-- sensor -->
