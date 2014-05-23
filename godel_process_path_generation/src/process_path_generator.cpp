@@ -109,16 +109,22 @@ bool ProcessPathGenerator::configure(PolygonBoundaryCollection boundaries)
   vd_.reset(new ovd::VoronoiDiagram(1,100));
   ROS_INFO_COND(verbose_, "Creating voroni diagram from polygons");
 
-  for (PolygonBoundaryCollection::const_iterator boundary=boundaries.begin(), bs_end=boundaries.end(); boundary!=bs_end; ++boundary)
+  std::vector<std::vector<int> > pt_id_collection;
+  PolygonBoundaryCollection::const_iterator boundary, bs_end;
+  for (boundary=boundaries.begin(), bs_end=boundaries.end(); boundary!=bs_end; ++boundary)
   {
     std::vector<int> pt_id;
-//    pt_id.reserve(boundary->size());
     bool first=true;
     for (PolygonBoundary::const_iterator pt=boundary->begin(), b_end=boundary->end(); pt!=b_end; ++pt)
     {
       pt_id.push_back(vd_->insert_point_site(ovd::Point(pt->x, pt->y)));
       ROS_INFO_COND(verbose_, "Added point %i at location %f, %f", pt_id.back(), pt->x, pt->y);
     }
+    pt_id_collection.push_back(pt_id);
+  }
+  for (boundary=boundaries.begin(), bs_end=boundaries.end(); boundary!=bs_end; ++boundary)
+  {
+    std::vector<int> &pt_id = pt_id_collection.at(boundary-boundaries.begin());
     for (size_t ii=0; ii<pt_id.size()-1; ++ii)
     {
       ROS_INFO_COND(verbose_, "Adding line from pt %i to pt %i", pt_id.at(ii), pt_id.at(ii+1));

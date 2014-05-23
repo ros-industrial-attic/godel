@@ -137,6 +137,7 @@ int main(int argc, char **argv)
   ROS_INFO_STREAM("Started node '" << ros::this_node::getName() << "'");
 
   godel_process_path::ProcessPathGenerator ppg;
+  ppg.verbose_ = true;
   ppg.setTraverseHeight(.05);
   ppg.setMargin(.005);
   ppg.setOverlap(.01);
@@ -150,14 +151,25 @@ int main(int argc, char **argv)
   ppg.setDiscretizationDistance(.0025);
 
   PolygonBoundary boundary;
+  PolygonBoundaryCollection pbc;
   if (vm.count("demo"))
   {
     ROS_INFO("Running in demo mode");
+    // Outer boundary
     boundary.push_back(PolygonPt(0., 0.));
     boundary.push_back(PolygonPt(.5, 0.));
     boundary.push_back(PolygonPt(.5, .5));
-    boundary.push_back(PolygonPt(.25, .125));
+//    boundary.push_back(PolygonPt(.25, .125));
+    boundary.push_back(PolygonPt(.25, .45));
     boundary.push_back(PolygonPt(.0, .5));
+    pbc.push_back(boundary);
+
+    // Inner boundary (can only use with .25,.45 not with .25,.125)
+    boundary.clear();
+    boundary.push_back(PolygonPt(.3,.1));
+    boundary.push_back(PolygonPt(.2,.1));
+    boundary.push_back(PolygonPt(.25,.2));
+    pbc.push_back(boundary);
   }
   else
   {
@@ -165,7 +177,7 @@ int main(int argc, char **argv)
     return -1;
   }
 
-  ppg.configure(PolygonBoundaryCollection(1,boundary));
+  ppg.configure(pbc);
   if (!ppg.createProcessPath())
   {
     ROS_ERROR("Could not create process path");
