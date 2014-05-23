@@ -14,14 +14,16 @@ add_message_files(
    FILES
    RobotScanParameters.msg
    SurfaceDetectionParameters.msg
-	 SelectedSurfacesChanged.msg
+   SelectedSurfacesChanged.msg
+   BlendingPlanParameters.msg
 )
 
 ## Generate services in the 'srv' folder
 add_service_files(
    FILES
    SurfaceDetection.srv
-	 SelectSurface.srv
+   SelectSurface.srv
+   BlendingPlan.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
