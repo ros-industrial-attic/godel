@@ -24,13 +24,15 @@
 
 #include <ros/ros.h>
 #include <boost/program_options.hpp>
-#include <godel_process_path_generation/polygon_pts.hpp>
-#include "godel_process_path_generation/process_path.h"
-#include "godel_process_path_generation/mesh_importer.h"
-#include "godel_process_path_generation/process_path_generator.h"
 #include <boost/foreach.hpp>
 #include <boost/next_prior.hpp>
 #include <visualization_msgs/MarkerArray.h>
+#include "godel_process_path_generation/polygon_pts.hpp"
+#include "godel_process_path_generation/process_path.h"
+#include "godel_process_path_generation/mesh_importer.h"
+#include "godel_process_path_generation/process_path_generator.h"
+#include "godel_msgs/OffsetBoundary.h"
+#include "godel_process_path_generation/utils.h"
 
 
 using descartes::ProcessPt;
@@ -40,9 +42,12 @@ using godel_process_path::PolygonBoundary;
 using godel_process_path::PolygonBoundaryCollection;
 
 const float TOOL_DIA = .050;
-const float TOOL_THK = .008;
+const float TOOL_THK = .005;
 const float TOOL_SHAFT_DIA = .006;
-const float TOOL_SHAFT_LEN = .050;
+const float TOOL_SHAFT_LEN = .045;
+const float MARGIN = .005;
+const float PATH_OVERLAP = .01;
+const float DISCRETIZATION = .0025;
 
 double dist(const Eigen::Affine3d &from, const Eigen::Affine3d &to)
 {
@@ -132,6 +137,7 @@ int main(int argc, char **argv)
 
   ros::init(argc, argv, "process_path_visualization");
   ros::NodeHandle nh;
+  ros::ServiceClient boundary_offset_client=nh.serviceClient<godel_msgs::OffsetBoundary>("offset_polygon");
   ros::Publisher path_pub = nh.advertise<visualization_msgs::Marker>("process_path", 1, true);
   ros::Publisher tool_pub = nh.advertise<visualization_msgs::MarkerArray>("sanding_tool", 1, true);
   ROS_INFO_STREAM("Started node '" << ros::this_node::getName() << "'");
@@ -139,37 +145,43 @@ int main(int argc, char **argv)
   godel_process_path::ProcessPathGenerator ppg;
   ppg.verbose_ = true;
   ppg.setTraverseHeight(.05);
-  ppg.setMargin(.005);
-  ppg.setOverlap(.01);
-  ppg.setToolRadius(.025);
+  ppg.setMargin(MARGIN);
+  ppg.setOverlap(PATH_OVERLAP);
+  ppg.setToolRadius(TOOL_DIA/2.);
   godel_process_path::ProcessVelocity vel;
   vel.approach = .005;
   vel.blending = .01;
   vel.retract = .02;
   vel.traverse = .05;
   ppg.setVelocity(vel);
-  ppg.setDiscretizationDistance(.0025);
+  ppg.setDiscretizationDistance(DISCRETIZATION);
 
-  PolygonBoundary boundary;
-  PolygonBoundaryCollection pbc;
+  // Populate request for boundary offsets
+  godel_msgs::OffsetBoundaryRequest boundary_offset_request;
+  boundary_offset_request.discretization = DISCRETIZATION;
+  boundary_offset_request.initial_offset = TOOL_DIA/2. + MARGIN;
+  boundary_offset_request.offset_distance = TOOL_DIA/2. - PATH_OVERLAP;
+  std::vector<geometry_msgs::Polygon> &boundaries = boundary_offset_request.polygons;
   if (vm.count("demo"))
   {
     ROS_INFO("Running in demo mode");
     // Outer boundary
-    boundary.push_back(PolygonPt(0., 0.));
-    boundary.push_back(PolygonPt(.5, 0.));
-    boundary.push_back(PolygonPt(.5, .5));
-//    boundary.push_back(PolygonPt(.25, .125));
-    boundary.push_back(PolygonPt(.25, .45));
-    boundary.push_back(PolygonPt(.0, .5));
-    pbc.push_back(boundary);
+    geometry_msgs::Point32 pt;
+    geometry_msgs::Polygon boundary;
+    pt.x = 0.; pt.y = 0.; boundary.points.push_back(pt);
+    pt.x = .5; pt.y = 0.; boundary.points.push_back(pt);
+    pt.x = .5; pt.y = .5; boundary.points.push_back(pt);
+//    pt.x = .25; pt.y = .125; boundary.points.push_back(pt);
+    pt.x = .25; pt.y = .45; boundary.points.push_back(pt);
+    pt.x = 0.; pt.y = .5; boundary.points.push_back(pt);
+    boundaries.push_back(boundary);
 
     // Inner boundary (can only use with .25,.45 not with .25,.125)
-    boundary.clear();
-    boundary.push_back(PolygonPt(.3,.1));
-    boundary.push_back(PolygonPt(.2,.1));
-    boundary.push_back(PolygonPt(.25,.2));
-    pbc.push_back(boundary);
+    boundary.points.clear();
+    pt.x = .3; pt.y = .1; boundary.points.push_back(pt);
+    pt.x = .2; pt.y = .1; boundary.points.push_back(pt);
+    pt.x = .25; pt.y = .2; boundary.points.push_back(pt);
+    boundaries.push_back(boundary);
   }
   else
   {
@@ -177,7 +189,23 @@ int main(int argc, char **argv)
     return -1;
   }
 
-  ppg.configure(pbc);
+  // Call service to offset boundaries
+  godel_msgs::OffsetBoundaryResponse boundary_offset_response;
+  ROS_INFO("Calling offset service.");
+  if (boundary_offset_client.call(boundary_offset_request, boundary_offset_response))
+  {
+    ROS_INFO("Call returned successfully.");
+  }
+  else
+  {
+    ROS_ERROR("Call returned unsuccessfully.");
+    return -1;
+  }
+
+  godel_process_path::PolygonBoundaryCollection pbc;
+  godel_process_path::utils::translations::geometryMsgsToGodel(pbc, boundary_offset_response.offset_polygons);
+
+  ppg.setPathPolygons(&pbc, &boundary_offset_response.offsets);
   if (!ppg.createProcessPath())
   {
     ROS_ERROR("Could not create process path");

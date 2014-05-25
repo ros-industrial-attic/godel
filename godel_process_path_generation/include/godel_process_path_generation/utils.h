@@ -30,6 +30,12 @@
 #include <Eigen/Geometry>
 #include <algorithm>
 #include <boost/graph/adjacency_list.hpp>
+#include <geometry_msgs/Polygon.h>
+#include <godel_process_path_generation/polygon_pts.hpp>
+
+using std::cos;
+using std::sin;
+using std::asin;
 
 
 namespace godel_process_path
@@ -101,7 +107,49 @@ std::vector<Pt> discretizeLinear(const Pt &p1, const Pt &p2, double max_sep)
   return vec;
 }
 
-}  /* end geometry */
+}  /* namespace geometry */
+
+namespace translations
+{
+
+/**@brief Convert a godel type to a geometry_msg type. This function operates on PolygonBoundaryCollection and vector<Polygon>
+ * @param polygons_msg vector of Polygons populated from PolygonBoundaryCollection. Z-value is ignore.
+ * @param pbc Collection of PolygonBoundaries.
+ */
+void godelToGeometryMsgs(std::vector<geometry_msgs::Polygon> &polygons_msg, const godel_process_path::PolygonBoundaryCollection &pbc)
+{
+  polygons_msg.clear();
+  BOOST_FOREACH(godel_process_path::PolygonBoundary polygon, pbc)
+  {
+    geometry_msgs::Polygon polygon_msg;
+    BOOST_FOREACH(godel_process_path::PolygonPt pt, polygon)
+    {
+      geometry_msgs::Point32 pt_msg;
+      pt_msg.x = pt.x;
+      pt_msg.y = pt.y;
+      polygon_msg.points.push_back(pt_msg);
+    }
+    polygons_msg.push_back(polygon_msg);
+  }
+}
+
+void geometryMsgsToGodel(godel_process_path::PolygonBoundaryCollection &pbc, const std::vector<geometry_msgs::Polygon> &polygons_msg)
+{
+  pbc.clear();
+  BOOST_FOREACH(geometry_msgs::Polygon polygon_msg, polygons_msg)
+  {
+    godel_process_path::PolygonBoundary polygon;
+    BOOST_FOREACH(geometry_msgs::Point32 pt, polygon_msg.points)
+    {
+      polygon.push_back(godel_process_path::PolygonPt(pt.x, pt.y));
+    }
+    pbc.push_back(polygon);
+  }
+}
+
+}  /* namespace translations */
+
+/* General utility functions */
 
 /**@brief Wrapper for std::find()
  * @return True if item exists in container.

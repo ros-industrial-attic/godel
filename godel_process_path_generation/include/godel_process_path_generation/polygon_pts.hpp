@@ -27,6 +27,7 @@
 
 #include <ostream>
 #include <cmath>
+#include <vector>
 
 using std::ostream;
 
@@ -74,6 +75,7 @@ ostream& operator<<(ostream &out, const PolygonBoundary &pb)
   return out;
 }
 
+/**@brief A collection of polygonal boundaries that make up a complex shape */
 typedef std::vector<PolygonBoundary> PolygonBoundaryCollection;
 ostream& operator<<(ostream &out, const PolygonBoundaryCollection &pbc)
 {
@@ -85,6 +87,34 @@ ostream& operator<<(ostream &out, const PolygonBoundaryCollection &pbc)
   return out;
 }
 
+/**@brief Checks that PolygonBoundary is valid (non-self-intersecting)
+ * NOTE: Not currently implemented (TODO implement)
+ * @param bnd Polygon to check
+ * @return True if polygon has no self-intersections
+ */
+bool checkBoundary(const PolygonBoundary &bnd)
+{
+  //TODO complete with intersection checks
+  return false;
+}
+
+/**@brief Checks that PolygonBoundaryCollection is valid
+ * Checks for self-intersection of each polygon, and global intersections of polygons
+ * NOTE: Not currently implemented (TODO implement)
+ * @param pbc PolygonBoundaryCollection to check
+ * @return False if any intersection check is invalid, True otherwise
+ */
+bool checkBoundaryCollection(const PolygonBoundaryCollection &pbc)
+{
+  //TODO complete with self- and global- intersection checks for all boundaries
+  return false;
+}
+
+/**@brief Find closest pt in PolygonBoundary to another pt on the plane
+ * @param pt PolygonPt to compare against
+ * @param bnd PolygonBoundary to find closest point in
+ * @return pair(index into PolygonBoundary, distance)
+ */
 std::pair<size_t, float> closestPoint(const PolygonPt &pt, const PolygonBoundary &bnd)
 {
   size_t point_num;
