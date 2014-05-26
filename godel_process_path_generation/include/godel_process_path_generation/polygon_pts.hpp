@@ -122,7 +122,6 @@ std::pair<size_t, float> closestPoint(const PolygonPt &pt, const PolygonBoundary
   for (size_t idx=0, max=bnd.size()-1; idx != max; ++idx )
   {
     double prox2 = pt.dist2(bnd.at(idx));
-//    std::cout << "*" << prox2 << std::endl;
     if (prox2 < close_dist2)
     {
       close_dist2 = prox2;

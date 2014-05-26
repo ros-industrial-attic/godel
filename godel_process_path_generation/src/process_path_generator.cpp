@@ -118,6 +118,7 @@ bool ProcessPathGenerator::convertPolygonsToProcessPath()
   start << first;
   process_path_.addPoint(approach);
   addInterpolatedProcessPts(approach, start, velocity_.approach);
+  ROS_INFO_COND(verbose_, "Created approach path.");
 
   // Do all loops until last
   double current_offset = std::numeric_limits<double>::max();
@@ -127,6 +128,7 @@ bool ProcessPathGenerator::convertPolygonsToProcessPath()
     current_offset = path_offsets_->at(pgIdx);
     const PolygonBoundary &polygon = path_polygons_->at(pgIdx);
     addPolygonToProcessPath(polygon, velocity_.blending);
+    ROS_INFO_COND(verbose_, "Added polygon %li to process path.", pgIdx);
 
     const PolygonPt last_pgpt = polygon.front(); //Each polygon ends where it starts
     ProcessPt last_pt;
@@ -142,16 +144,19 @@ bool ProcessPathGenerator::convertPolygonsToProcessPath()
       ProcessPt next_pt;
       next_pt << next_polygon.front();
       addInterpolatedProcessPts(last_pt, next_pt, velocity_.approach);
+      ROS_INFO_COND(verbose_, "Added connection to polygon %li.", pgIdx);
     }
     else
     {
       addTraverseToProcessPath(last_pgpt, next_polygon.front());
+      ROS_INFO_COND(verbose_, "Added traverse to polygon %li.", pgIdx);
     }
   }
 
   // Add last loop and retract
   const PolygonBoundary &polygon = path_polygons_->at(pgIdx);
   addPolygonToProcessPath(polygon, velocity_.blending);
+  ROS_INFO_COND(verbose_, "Added polygon %li to process path.", pgIdx);
   const PolygonPt last_pgpt = polygon.front();
   ProcessPt last, retract;
   last << last_pgpt;
@@ -159,6 +164,7 @@ bool ProcessPathGenerator::convertPolygonsToProcessPath()
   addInterpolatedProcessPts(last, retract);
   process_path_.addPoint(retract);
   process_path_.addTransition(velToTransition(velocity_.retract));
+  ROS_INFO_COND(verbose_, "Added retract path.");
 
   ROS_INFO_COND(verbose_, "Successfully converted Polygons to ProcessPath.");
   return true;
@@ -180,6 +186,7 @@ bool ProcessPathGenerator::createProcessPath()
    *  jump to next incomplete inner, spiral out to largest incomplete outer, etc. */
   if (!convertPolygonsToProcessPath())
   {
+    ROS_ERROR("Could not convert polygons to process path.");
     return false;
   }
 

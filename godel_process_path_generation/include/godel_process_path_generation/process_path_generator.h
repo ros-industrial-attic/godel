@@ -58,8 +58,8 @@ public:
   //TODO comment
   void setPathPolygons(PolygonBoundaryCollection *polygons, std::vector<double> *offset_depths)
   {
-    path_polygons_.reset(polygons);
-    path_offsets_.reset(offset_depths);
+    path_polygons_ = polygons;
+    path_offsets_ = offset_depths;
   }
 
   void setDiscretizationDistance(double d) {max_discretization_distance_ = std::abs(d);}
@@ -113,8 +113,8 @@ private:
 
    double max_discretization_distance_; /**<(m) When discretizing segments, use this or less distance between points */
 
-   boost::shared_ptr<PolygonBoundaryCollection> path_polygons_;
-   boost::shared_ptr<const std::vector<double> > path_offsets_;
+   PolygonBoundaryCollection *path_polygons_;
+   const std::vector<double> *path_offsets_;
 
    descartes::ProcessPath process_path_;
    ProcessVelocity velocity_;                   /**<Velocities for different types of path movements */
