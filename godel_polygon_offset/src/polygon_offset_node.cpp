@@ -30,51 +30,27 @@
 #include "godel_polygon_offset/OffsetPolygon.h"
 #include "godel_polygon_offset/polygon_offset.h"
 #include "godel_process_path_generation/polygon_pts.hpp"
+#include "godel_process_path_generation/utils.h"
 
 using godel_polygon_offset::OffsetPolygonRequest;
 using godel_polygon_offset::OffsetPolygonResponse;
+using namespace godel_process_path;
 
-
-void godelToGeometryMsgs(std::vector<geometry_msgs::Polygon> &polygons_msg, const godel_process_path::PolygonBoundaryCollection &pbc)
-{
-  polygons_msg.clear();
-  BOOST_FOREACH(godel_process_path::PolygonBoundary polygon, pbc)
-  {
-    geometry_msgs::Polygon polygon_msg;
-    BOOST_FOREACH(godel_process_path::PolygonPt pt, polygon)
-    {
-      geometry_msgs::Point32 pt_msg;
-      pt_msg.x = pt.x;
-      pt_msg.y = pt.y;
-      polygon_msg.points.push_back(pt_msg);
-    }
-    polygons_msg.push_back(polygon_msg);
-  }
-}
-
-void geometryMsgsToGodel(godel_process_path::PolygonBoundaryCollection &pbc, const std::vector<geometry_msgs::Polygon> &polygons_msg)
-{
-  pbc.clear();
-  BOOST_FOREACH(geometry_msgs::Polygon polygon_msg, polygons_msg)
-  {
-    godel_process_path::PolygonBoundary polygon;
-    BOOST_FOREACH(geometry_msgs::Point32 pt, polygon_msg.points)
-    {
-      polygon.push_back(godel_process_path::PolygonPt(pt.x, pt.y));
-    }
-    pbc.push_back(polygon);
-  }
-}
 
 bool offset_polygons_cb(OffsetPolygonRequest &req, OffsetPolygonResponse &res)
 {
   godel_polygon_offset::PolygonOffset po;
+  po.verbose_ = true;
+
   godel_process_path::PolygonBoundaryCollection pbc;
-  geometryMsgsToGodel(pbc, req.polygons);
+  utils::translations::geometryMsgsToGodel(pbc, req.polygons);
+  ROS_INFO_STREAM("Received request with " << pbc.size() << " boundary polygons.");
+
   po.init(pbc, req.offset_distance, req.initial_offset, req.discretization);
   po.generateOrderedOffsets(pbc, res.offsets);
-  godelToGeometryMsgs(res.offset_polygons, pbc);
-  return false;
+  utils::translations::godelToGeometryMsgs(res.offset_polygons, pbc);
+  ROS_INFO_STREAM("Returning " << pbc.size() << " offset polygons.");
+  return true;
 }
 
 int main(int argc, char **argv)
@@ -82,6 +58,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "polygon_offset_node");
   ros::NodeHandle nh;
   ros::ServiceServer service = nh.advertiseService("offset_polygon", offset_polygons_cb);
+  ROS_INFO("%s ready to service requests.", service.getService().c_str());
   ros::spin();
   return 0;
 }

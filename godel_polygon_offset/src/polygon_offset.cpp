@@ -197,15 +197,18 @@ bool PolygonOffset::generateOrderedOffsets(PolygonBoundaryCollection &polygons, 
     while ( vtx!=loop.vertices.end() )
     {
       PolygonPt prior(prior_vtx.p.x, prior_vtx.p.y), current(vtx->p.x, vtx->p.y);
+      std::vector<PolygonPt> pts;
       if (vtx->r == -1)
       {
-        godel_process_path::utils::geometry::discretizeLinear(prior, current, discretization_);
+        pts = godel_process_path::utils::geometry::discretizeLinear(prior, current, discretization_);
       }
       else
       {
         PolygonPt arc_center(vtx->c.x, vtx->c.y);
-        godel_process_path::utils::geometry::discretizeArc2D(prior, current, arc_center, !vtx->cw, discretization_);
+        pts = godel_process_path::utils::geometry::discretizeArc2D(prior, current, arc_center, !vtx->cw, discretization_);
       }
+      polygon.insert(polygon.end(), pts.begin(), pts.end());
+      pts.clear();
       prior_vtx = *vtx;
       ++vtx;
     }

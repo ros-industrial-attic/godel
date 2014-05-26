@@ -210,7 +210,6 @@ bool moveIterFrom(Container &from, Container &to, typename Container::iterator i
 template <class Container, class Item>
 bool moveItemFrom(Container &from, Container &to, const Item &item)
 {
-  to.push_back(item);
   typename Container::iterator iter = std::find(from.begin(), from.end(), item);
   if (iter!=from.end())
   {
