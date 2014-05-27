@@ -26,8 +26,6 @@
 #define PROCESS_PATH_GENERATOR_H_
 
 #include "godel_process_path_generation/polygon_pts.hpp"
-#include <openvoronoi/voronoidiagram.hpp>
-#include <openvoronoi/offset_sorter.hpp>
 #include <godel_process_path_generation/process_path.h>
 
 
@@ -48,15 +46,21 @@ struct ProcessVelocity
 class ProcessPathGenerator
 {
 public:
-  ProcessPathGenerator(): vd_(new ovd::VoronoiDiagram(1,100)),
-                          tool_radius_(0.), margin_(0.), overlap_(0.), safe_traverse_height_(-1.),
-                          configure_ok_(false), verbose_(false)
+  ProcessPathGenerator(): tool_radius_(0.), margin_(0.), overlap_(0.), safe_traverse_height_(-1.),
+                          verbose_(false)
   {};
   virtual ~ProcessPathGenerator() {};
 
   bool configure(PolygonBoundaryCollection boundaries);
   bool createProcessPath();
   const descartes::ProcessPath& getProcessPath() const {return process_path_;}
+
+  //TODO comment
+  void setPathPolygons(PolygonBoundaryCollection *polygons, std::vector<double> *offset_depths)
+  {
+    path_polygons_ = polygons;
+    path_offsets_ = offset_depths;
+  }
 
   void setDiscretizationDistance(double d) {max_discretization_distance_ = std::abs(d);}
   void setMargin(double margin) {margin_=margin;}
@@ -79,26 +83,7 @@ private:
   void addTraverseToProcessPath(const PolygonPt &from, const PolygonPt &to);
 
   //TODO comment
-  void convertPolygonsToProcessPath(PolygonBoundaryCollection &polygons, const std::vector<double> &offsets);
-
-  //TODO comment (calls arc/linear)
-  bool createOffsetPolygons(PolygonBoundaryCollection &polygons, std::vector<double> &offset_depths);
-
-  /**@brief Adds either an interpolated line or arc to PolygonBoundary
-   * (See discretizeArc and discretizeLinear)
-   * p1 is added to boundary, but p2 is not
-   * @param op1 Start point (from offset operation)
-   * @param op2 End point (from offset operation)
-   * @param bnd Boundary to add polygon points to.
-   */
-  void discretizeSegment(const ovd::OffsetVertex &op1, const ovd::OffsetVertex &op2, PolygonBoundary &bnd) const;
-
-  //TODO comment
-  //TODO write
-  void discretizeArc(const ovd::OffsetVertex &op1, const ovd::OffsetVertex &op2, PolygonBoundary &bnd) const;
-
-  //TODO comment
-  void discretizeLinear(const ovd::OffsetVertex &op1, const ovd::OffsetVertex &op2, PolygonBoundary &bnd) const;
+  bool convertPolygonsToProcessPath();
 
   /**@brief Check if values of offset variables are acceptable */
    bool variables_ok() const
@@ -121,11 +106,6 @@ private:
      return pt;
    }
 
-  /*ovd::VoronoiDiagram* vd = new ovd::VoronoiDiagram(1,100); // (r, bins)
-   * double r: radius of circle within which all input geometry must fall. use 1 (unit-circle). Scale geometry if necessary.
-   * int bins:  bins for face-grid search. roughly sqrt(n), where n is the number of sites is good according to Held. */
-   boost::shared_ptr<ovd::VoronoiDiagram> vd_;
-
    double tool_radius_; /**<Tool radius(m) used for offsetting paths */
    double margin_;      /**<Margin (m) around boundary to leave untouched (first pass only) */
    double overlap_;     /**<Amount of overlap(m) between adjacent passes. */
@@ -133,7 +113,8 @@ private:
 
    double max_discretization_distance_; /**<(m) When discretizing segments, use this or less distance between points */
 
-   bool configure_ok_;
+   PolygonBoundaryCollection *path_polygons_;
+   const std::vector<double> *path_offsets_;
 
    descartes::ProcessPath process_path_;
    ProcessVelocity velocity_;                   /**<Velocities for different types of path movements */

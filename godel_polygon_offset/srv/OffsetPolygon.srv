@@ -1,0 +1,7 @@
+geometry_msgs/Polygon[] polygons    # Boundary order CCW external, CW internal
+float64 offset_distance             # Distance (m) to perform typical offset
+float64 initial_offset              # If specified (>0), distance (m) to perform initial offset
+float64 discretization              # Max Distance (m) used to discretize lines/arcs
+---
+geometry_msgs/Polygon[] offset_polygons     # Ordered list of offset polygons
+float64[] offsets                           # List of distances, each offset corresponds to offset_polygon depth
