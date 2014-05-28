@@ -30,8 +30,10 @@
 #include <Eigen/Geometry>
 #include <algorithm>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/foreach.hpp>
 #include <geometry_msgs/Polygon.h>
-#include <godel_process_path_generation/polygon_pts.hpp>
+#include <visualization_msgs/MarkerArray.h>
+#include "godel_process_path_generation/polygon_pts.hpp"
 
 using std::cos;
 using std::sin;
@@ -45,8 +47,6 @@ namespace utils
 {
 
 
-//PolygonBoundaryToMarker
-//PolygonBoundaryCollectionToMarker
 namespace geometry
 {
 
@@ -112,14 +112,14 @@ std::vector<Pt> discretizeLinear(const Pt &p1, const Pt &p2, double max_sep)
 namespace translations
 {
 
-/**@brief Convert a godel type to a geometry_msg type. This function operates on PolygonBoundaryCollection and vector<Polygon>
- * @param polygons_msg vector of Polygons populated from PolygonBoundaryCollection. Z-value is ignore.
+/**@brief Convert a godel type to a geometry_msg type. This function operates on PolygonBoundaryCollection and vector<Polygon>.
+ * @param polygons_msg vector of Polygons populated from PolygonBoundaryCollection. Z-value is unchanged.
  * @param pbc Collection of PolygonBoundaries.
  */
 void godelToGeometryMsgs(std::vector<geometry_msgs::Polygon> &polygons_msg, const godel_process_path::PolygonBoundaryCollection &pbc)
 {
   polygons_msg.clear();
-  BOOST_FOREACH(godel_process_path::PolygonBoundary polygon, pbc)
+  BOOST_FOREACH(::godel_process_path::PolygonBoundary polygon, pbc)
   {
     geometry_msgs::Polygon polygon_msg;
     BOOST_FOREACH(godel_process_path::PolygonPt pt, polygon)
@@ -133,6 +133,10 @@ void godelToGeometryMsgs(std::vector<geometry_msgs::Polygon> &polygons_msg, cons
   }
 }
 
+/**@brief Convert a geometry_msg type to a godel type. This function operates on vector<Polygon> and PolygonBoundaryCollection.
+ * @param pbc Collection of PolygonBoundaries.
+ * @param polygons_msg vector of Polygons populated from PolygonBoundaryCollection. Z-value is ignored.
+ */
 void geometryMsgsToGodel(godel_process_path::PolygonBoundaryCollection &pbc, const std::vector<geometry_msgs::Polygon> &polygons_msg)
 {
   pbc.clear();
@@ -144,6 +148,50 @@ void geometryMsgsToGodel(godel_process_path::PolygonBoundaryCollection &pbc, con
       polygon.push_back(godel_process_path::PolygonPt(pt.x, pt.y));
     }
     pbc.push_back(polygon);
+  }
+}
+
+
+/**@brief Convert a godel type to a visualization_msg type. This function operates on PolygonBoundary and Marker.
+ * Creates a line list with default color and 1mm thickness.
+ * User's responsibility to complete remainder of message.
+ * @param marker Marker msg populated with points
+ * @param polygon PolygonBoundary containing pts of polygon.
+ * @param default_color Color to use for all points in marker.
+ * @param default_scale Line width.
+ */
+void godelToVisualizationMsgs(visualization_msgs::Marker &marker, const godel_process_path::PolygonBoundary &polygon,
+                              std_msgs::ColorRGBA default_color = std_msgs::ColorRGBA(), double default_scale = .001)
+{
+  marker.type = visualization_msgs::Marker::LINE_STRIP;
+  BOOST_FOREACH(::godel_process_path::PolygonPt pt, polygon)
+  {
+    geometry_msgs::Point pt_msg;
+    pt_msg.x = pt.x;
+    pt_msg.y = pt.y;
+    marker.points.push_back(pt_msg);
+  }
+  marker.colors = std::vector<std_msgs::ColorRGBA>(marker.points.size(), default_color);
+  marker.scale.x = default_scale;
+}
+
+/**@brief Convert a godel type to a visualization_msg type. This function operates on PolygonBoundaryCollection and MarkerArray.
+ * Creates a series of line lists with default color and 1mm thickness.
+ * User's responsibility to complete remainder of message.
+ * @param marker MarkerArray msg populated with line list markers. One marker per PolygonBoundary
+ * @param pbc Collection of PolygonBoundaries.
+ * @param default_color Color to use for all points in all markers.
+ * @param default_scale Line width for all markers.
+ */
+void godelToVisualizationMsgs(visualization_msgs::MarkerArray &markers, const godel_process_path::PolygonBoundaryCollection &pbc,
+                              std_msgs::ColorRGBA default_color = std_msgs::ColorRGBA(), double default_scale = .001)
+{
+  markers.markers.clear();
+  BOOST_FOREACH(::godel_process_path::PolygonBoundary polygon, pbc)
+  {
+    visualization_msgs::Marker marker;
+    godelToVisualizationMsgs(marker, polygon, default_color, default_scale);
+    markers.markers.push_back(marker);
   }
 }
 

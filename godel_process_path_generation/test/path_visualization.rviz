@@ -3,11 +3,7 @@ Panels:
     Help Height: 78
     Name: Displays
     Property Tree Widget:
-      Expanded:
-        - /Grid1
-        - /Marker1
-        - /MarkerArray1
-        - /Axes1
+      Expanded: ~
       Splitter Ratio: 0.5
     Tree Height: 531
   - Class: rviz/Selection
@@ -50,13 +46,14 @@ Visualization Manager:
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
       Value: true
-    - Class: rviz/Marker
+    - Class: rviz/MarkerArray
       Enabled: true
       Marker Topic: /process_path
-      Name: Marker
+      Name: MarkerArray
       Namespaces:
-        "": true
-      Queue Size: 1
+        boundary: true
+        path: true
+      Queue Size: 100
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
@@ -97,7 +94,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 0.916236
+      Distance: 1.60055
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.06
         Stereo Focal Distance: 1
@@ -109,10 +106,10 @@ Visualization Manager:
         Z: -0.204036
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.794797
+      Pitch: 0.574796
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.980399
+      Yaw: 5.25859
     Saved: ~
 Window Geometry:
   Displays:

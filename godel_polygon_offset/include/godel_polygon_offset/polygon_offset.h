@@ -41,6 +41,12 @@ using godel_process_path::PolygonBoundaryCollection;
 namespace godel_polygon_offset
 {
 
+/**@brief PolygonOffset class creates offset paths for closed polygon boundaries.
+ * Can handle multiple boundaries of both inside and outside types.
+ * offset_/initial_offset_ are used as offset distances.
+ * Both line segments and arcs are discretized to line segments.
+ * Resulting polygons are sorted for easy machining: Start at innermost and work outwards, then hop to next innermost.
+ */
 class PolygonOffset
 {
 public:
@@ -53,7 +59,6 @@ public:
    * @param pbc Collection of polygons. CCW(+) ordered points are external boundaries.
    * @return True if voronoi diagram created successfully.
    */
-  //TODO write
   bool init(const PolygonBoundaryCollection &pbc, double _offset, double _initial_offset, double _discretization);
 
   /**@brief Perform offsets on polygons and arrange in a logical order.
