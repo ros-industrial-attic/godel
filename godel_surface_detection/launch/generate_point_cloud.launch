@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<launch>
+
+	<remap from="generated_cloud" to="sensor_point_cloud"/>
+	<node pkg="godel_surface_detection" type="point_cloud_generator_node" name="point_cloud_generator_node" output="screen">
+		<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/point_cloud_descriptions.yaml"/>
+	</node>
+
+	<node name="rviz_godel_surface_detection" pkg="rviz" type="rviz" 
+		args="-d $(find godel_surface_detection)/rviz/surface_detection.rviz" output="screen"/> 
+
+</launch>
