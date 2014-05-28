@@ -346,6 +346,7 @@ bool SurfaceDetection::find_surfaces()
 	std::vector<pcl::PointIndices> clusters_indices;
 	std::vector<Normals::Ptr> segment_normals;
 
+	ROS_INFO_STREAM("Surface detection processing a cloud containing "<<process_cloud_ptr->size()<<" points");
 	if(!params_.use_octomap )
 	{
 		if(apply_voxel_downsampling(*process_cloud_ptr))
@@ -509,6 +510,7 @@ bool SurfaceDetection::apply_normal_estimation(const Cloud &cloud,Normals& norma
 	normal_estimator.setSearchMethod(tree);
 	normal_estimator.setInputCloud(cloud_ptr);
 	normal_estimator.setKSearch(params_.k_search);
+	//normal_estimator.setRadiusSearch(0.002f);
 	normal_estimator.compute(normals);
 
 	return !normals.empty();
@@ -576,15 +578,22 @@ bool SurfaceDetection::apply_fast_triangulation(const Cloud& in,
 
 bool SurfaceDetection::apply_voxel_downsampling(Cloud& cloud)
 {
-	// converting to pcl2 type
-	 pcl::PCLPointCloud2::Ptr pcl_cloud_ptr(new pcl::PCLPointCloud2());
-	 pcl::toPCLPointCloud2(cloud,*pcl_cloud_ptr);
+	if(params_.voxel_leafsize > 0.000001f)
+	{
+		// converting to pcl2 type
+		 pcl::PCLPointCloud2::Ptr pcl_cloud_ptr(new pcl::PCLPointCloud2());
+		 pcl::toPCLPointCloud2(cloud,*pcl_cloud_ptr);
 
-	pcl::VoxelGrid<pcl::PCLPointCloud2> vg;
-	vg.setInputCloud(pcl_cloud_ptr);
-	vg.setLeafSize(params_.voxel_leafsize,params_.voxel_leafsize,params_.voxel_leafsize);
-	vg.filter(*pcl_cloud_ptr);
-	pcl::fromPCLPointCloud2(*pcl_cloud_ptr,cloud);
+		pcl::VoxelGrid<pcl::PCLPointCloud2> vg;
+		vg.setInputCloud(pcl_cloud_ptr);
+		vg.setLeafSize(params_.voxel_leafsize,params_.voxel_leafsize,params_.voxel_leafsize);
+		vg.filter(*pcl_cloud_ptr);
+		pcl::fromPCLPointCloud2(*pcl_cloud_ptr,cloud);
+	}
+	else
+	{
+		ROS_WARN_STREAM("Voxel downsampling leaf too close to 0, skipping.");
+	}
 	return true;
 }
 
