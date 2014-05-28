@@ -176,7 +176,7 @@ int RobotScan::scan(bool move_only)
 	// cartesian path generation
 	//double alpha_incr = (params_.sweep_angle_end - params_.sweep_angle_start)/(params_.num_scan_points -1);
 	double eef_step = EEF_STEP;//1*alpha_incr*params_.cam_to_obj_xoffset;
-	double jump_threshold = 0.0f;
+	double jump_threshold = M_PI;
 	moveit::planning_interface::MoveGroup::Plan path_plan;
 	geometry_msgs::PoseArray cartesian_poses;
 	path_plan.planning_time_ = PLANNING_TIME;
@@ -210,12 +210,13 @@ int RobotScan::scan(bool move_only)
 					path_plan.start_state_);
 
 			// creating path plan structure and execute
+			move_group_ptr_->setStartStateToCurrentState();
 			if(move_group_ptr_->computeCartesianPath(cartesian_poses.poses,eef_step,jump_threshold,path_plan.trajectory_,true)>=1.0f)
 			{
 				// apply filter
 				robot_trajectory::RobotTrajectory rt(move_group_ptr_->getCurrentState()->getRobotModel(),move_group_ptr_->getName());
 				rt.setRobotTrajectoryMsg(*move_group_ptr_->getCurrentState(),path_plan.trajectory_);
-				apply_trajectory_parabolic_time_parameterization(rt,path_plan.trajectory_,100,0.5f);
+				apply_trajectory_parabolic_time_parameterization(rt,path_plan.trajectory_,100,0.05f);
 				//apply_simple_trajectory_filter(path_plan.trajectory_);
 			}
 			else
@@ -233,7 +234,13 @@ int RobotScan::scan(bool move_only)
 
 			}
 
-			if(move_group_ptr_->execute(path_plan))
+/*			geometry_msgs::PoseStamped target;
+			target.pose = trajectory_poses[i];
+			target.header.frame_id = params_.world_frame;
+			move_group_ptr_->setStartStateToCurrentState();
+			move_group_ptr_->setPoseTarget(target,params_.tcp_frame);*/
+
+			if(move_group_ptr_->execute(path_plan)/*move_group_ptr_->move()*/)
 			{
 				poses_reached++;
 
@@ -511,9 +518,9 @@ void RobotScan::apply_trajectory_parabolic_time_parameterization(robot_trajector
 
 	ROS_INFO_STREAM("Parameterized trajectory: "<<traj);
 
-	apply_speed_reduction(traj,0.4f);
+	//apply_speed_reduction(traj,0.4f);
 
-	ROS_INFO_STREAM("Speed reduction trajectory: "<<traj);
+	//ROS_INFO_STREAM("Speed reduction trajectory: "<<traj);
 
 }
 

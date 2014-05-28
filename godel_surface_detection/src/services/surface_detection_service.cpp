@@ -27,11 +27,14 @@ const std::string SURFACE_DETECTION_SERVICE = "surface_detection";
 const std::string SELECT_SURFACE_SERVICE = "select_surface";
 const std::string SELECTED_SURFACES_CHANGED_TOPIC = "selected_surfaces_changed";
 const std::string ROBOT_SCAN_PATH_PREVIEW_TOPIC = "robot_scan_path_preview";
+const std::string PUBLISH_REGION_POINT_CLOUD = "publish_region_point_cloud";
+const std::string REGION_POINT_CLOUD_TOPIC="region_colored_cloud";
 
 class SurfaceDetectionService
 {
 public:
-	SurfaceDetectionService()
+	SurfaceDetectionService():
+		publish_region_point_cloud_(false)
 	{
 
 	}
@@ -44,6 +47,11 @@ public:
 	bool init()
 	{
 		using namespace godel_surface_detection;
+
+		ros::NodeHandle ph("~");
+
+		// loading parameters
+		ph.getParam(PUBLISH_REGION_POINT_CLOUD,publish_region_point_cloud_);
 
 		// initializing surface detector
 		if(surface_detection_.load_parameters("~/surface_detection") && robot_scan_.load_parameters("~/robot_scan") &&
@@ -88,12 +96,27 @@ public:
 
 		selected_surf_changed_pub_ = nh.advertise<godel_msgs::SelectedSurfacesChanged>(SELECTED_SURFACES_CHANGED_TOPIC,1);
 
+		point_cloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>(REGION_POINT_CLOUD_TOPIC,1);
+
 		return true;
 	}
 
 	void run()
 	{
 		surface_server_.run();
+
+
+		ros::Duration loop_duration(1.0f);
+		while(ros::ok() && publish_region_point_cloud_)
+		{
+			if(!region_cloud_msg_.data.empty())
+			{
+				point_cloud_pub_.publish(region_cloud_msg_);
+			}
+			loop_duration.sleep();
+		}
+
+
 	}
 
 protected:
@@ -147,10 +170,15 @@ protected:
 				latest_results_.surfaces_found = true;
 				latest_results_.surfaces = surfaces;
 				robot_scan_.get_latest_scan_poses(latest_results_.robot_scan_poses);
+
+				// saving region colored point cloud
+				region_cloud_msg_ = sensor_msgs::PointCloud2();
+				surface_detection_.get_region_colored_cloud(region_cloud_msg_);
 			}
 			else
 			{
 				succeeded = false;
+				region_cloud_msg_ = sensor_msgs::PointCloud2();
 			}
 		}
 		else
@@ -186,10 +214,15 @@ protected:
 			latest_results_.surfaces_found = true;
 			latest_results_.surfaces = surfaces;
 			robot_scan_.get_latest_scan_poses(latest_results_.robot_scan_poses);
+
+			// saving region colored point cloud
+			region_cloud_msg_ = sensor_msgs::PointCloud2();
+			surface_detection_.get_region_colored_cloud(region_cloud_msg_);
 		}
 		else
 		{
 			succeeded = false;
+			region_cloud_msg_ = sensor_msgs::PointCloud2();
 		}
 
 		return succeeded;
@@ -362,10 +395,19 @@ protected:
 	// marker server instance
 	godel_surface_detection::interactive::InteractiveSurfaceServer surface_server_;
 
+	// cloud publisher
+	ros::Publisher point_cloud_pub_;
+
 	// default parameters
 	godel_msgs::RobotScanParameters default_robot_scan_params__;
 	godel_msgs::SurfaceDetectionParameters default_surf_detection_params_;
 	godel_msgs::SurfaceDetection::Response latest_results_;
+
+	// parameters
+	bool publish_region_point_cloud_;
+
+	// msgs
+	sensor_msgs::PointCloud2 region_cloud_msg_;
 
 };
 
