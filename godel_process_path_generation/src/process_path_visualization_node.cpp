@@ -24,9 +24,13 @@
 
 #include <ros/ros.h>
 #include <boost/program_options.hpp>
+#include <boost/foreach.hpp>
+#include <tf/transform_datatypes.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <geometry_msgs/Pose.h>
 #include "godel_process_path_generation/mesh_importer.h"
 #include "godel_msgs/BlendingPlan.h"
+#include "godel_process_path_generation/utils.h"
 
 
 const float TOOL_DIA = .050;
@@ -38,7 +42,7 @@ const float PATH_OVERLAP = .01;
 const float DISCRETIZATION = .0025;
 
 
-visualization_msgs::MarkerArray toolMarker(double x, double y, double z)
+visualization_msgs::MarkerArray toolMarker(const geometry_msgs::Point &pos, const geometry_msgs::Pose &pose)
 {
   visualization_msgs::MarkerArray tool;
   tool.markers.resize(2);
@@ -58,20 +62,25 @@ visualization_msgs::MarkerArray toolMarker(double x, double y, double z)
   disk.header.seq = 0;
   disk.header.stamp = ros::Time::now();
   disk.lifetime = ros::Duration(0.);
-  disk.pose.position.x = x;
-  disk.pose.position.y = y;
-  disk.pose.orientation.x = disk.pose.orientation.y = disk.pose.orientation.z = 0.;
-  disk.pose.orientation.w = 1.;
+  disk.pose = pose;
+  // disk/shaft position filled out below
   disk.type = visualization_msgs::Marker::CYLINDER;
   shaft = disk;
 
+  tf::Transform marker_pose;
+  tf::poseMsgToTF(pose, marker_pose);
+
   disk.id = 0;
-  disk.pose.position.z = z + .5*TOOL_THK;
+  tf::Vector3 marker_pos(pos.x, pos.y, pos.z + .5*TOOL_THK);
+  marker_pos = marker_pose * marker_pos;
+  tf::pointTFToMsg(marker_pos, disk.pose.position);
   disk.scale.x = disk.scale.y = TOOL_DIA;
   disk.scale.z = TOOL_THK;
 
   shaft.id = 1;
-  shaft.pose.position.z = z + TOOL_THK + 0.5*TOOL_SHAFT_LEN;
+  marker_pos = tf::Vector3(pos.x, pos.y, pos.z + TOOL_THK + 0.5*TOOL_SHAFT_LEN);
+  marker_pos = marker_pose * marker_pos;
+  tf::pointTFToMsg(marker_pos, shaft.pose.position);
   shaft.scale.x = shaft.scale.y = TOOL_SHAFT_DIA;
   shaft.scale.z = TOOL_SHAFT_LEN;
 
@@ -99,7 +108,7 @@ int main(int argc, char **argv)
   ros::init(argc, argv, "process_path_visualization");
   ros::NodeHandle nh;
   ros::ServiceClient path_generator_client=nh.serviceClient<godel_msgs::BlendingPlan>("path_generator");
-  ros::Publisher path_pub = nh.advertise<visualization_msgs::Marker>("process_path", 1, true);
+  ros::Publisher path_pub = nh.advertise<visualization_msgs::MarkerArray>("process_path", 1, true);
   ros::Publisher tool_pub = nh.advertise<visualization_msgs::MarkerArray>("sanding_tool", 1, true);
   ROS_INFO_STREAM("Started node '" << ros::this_node::getName() << "'");
 
@@ -120,6 +129,9 @@ int main(int argc, char **argv)
   bp_req.params.overlap = PATH_OVERLAP;
   bp_req.params.safe_traverse_height = .05;
   bp_req.params.tool_radius = TOOL_DIA/2.;
+
+  // Pose of pocket surface
+  geometry_msgs::Pose pocket_pose_msg;
 
   // Populate request for boundary offsets
   std::vector<geometry_msgs::Polygon> &boundaries = bp_req.params.polygons;
@@ -143,6 +155,15 @@ int main(int argc, char **argv)
     pt.x = .2; pt.y = .1; boundary.points.push_back(pt);
     pt.x = .25; pt.y = .2; boundary.points.push_back(pt);
     boundaries.push_back(boundary);
+
+    // Pose of pocket surface
+    tf::Pose pocket_pose;
+    pocket_pose.setIdentity();
+    pocket_pose.setOrigin(tf::Vector3(.25, -.5, .03));
+    tf::Quaternion orient;
+    orient.setEulerZYX(.1, .2, .3);
+    pocket_pose.setRotation(orient);
+    tf::poseTFToMsg(pocket_pose, pocket_pose_msg);
   }
   else
   {
@@ -162,41 +183,60 @@ int main(int argc, char **argv)
     return -1;
   }
 
-  // Set up initial colors for path marker
-  visualization_msgs::Marker marker = bp_res.path;
-  marker.header.frame_id = "world";
-  marker.header.seq = 0;
-  marker.header.stamp = ros::Time::now();
-  marker.id = 0;
-  marker.lifetime = ros::Duration(0);
-  marker.frame_locked = true;
-  marker.ns = "";
+  std_msgs::ColorRGBA yellow;
+  yellow.a = 1.f;
+  yellow.b = 0.f;
+  yellow.r = yellow.g = 1.f;
 
   std_msgs::ColorRGBA green;
   green.a = 1.f;
   green.g = 1.f;
   green.r = green.b = 0.f;
-  marker.colors.at(0) = green;
+
+  godel_process_path::PolygonBoundaryCollection pbc;
+  godel_process_path::utils::translations::geometryMsgsToGodel(pbc, bp_req.params.polygons);
+  BOOST_FOREACH(godel_process_path::PolygonBoundary &boundary, pbc)
+  {
+    boundary.push_back(boundary.front());
+  }
+  visualization_msgs::MarkerArray pocket_marker;
+  godel_process_path::utils::translations::godelToVisualizationMsgs(pocket_marker, pbc, yellow, .001);
+  pocket_marker.markers.push_back(bp_res.path);
+  size_t marker_cnt(0);
+  BOOST_FOREACH(visualization_msgs::Marker &marker, pocket_marker.markers)
+  {
+    marker.header.frame_id = "world";
+    marker.header.seq = marker_cnt;
+    marker.header.stamp = ros::Time::now();
+    marker.id = marker_cnt;
+    marker.lifetime = ros::Duration(0);
+    marker.frame_locked  =true;
+    marker.ns = "boundary";
+    marker.pose = pocket_pose_msg;
+    ++marker_cnt;
+  }
+
+  // Set up initial colors and namespace for path marker
+  visualization_msgs::Marker &path_marker = pocket_marker.markers.back();
+  path_marker.ns = "path";
+  path_marker.colors.at(0) = green;
 
   size_t idx = 0;
   double time_factor = .02;
   while (ros::ok() && idx < bp_res.sleep_times.size())
   {
-    // Show path
-    path_pub.publish(marker);
-
-    // Show tool
-    geometry_msgs::Point &pt = marker.points.at(idx);
-    tool_pub.publish(toolMarker(pt.x, pt.y, pt.z));
+    // Show path and tool
+    path_pub.publish(pocket_marker);
+    tool_pub.publish(toolMarker(path_marker.points.at(idx), pocket_pose_msg));
 
     // Wait for next point, and color current position green
     ros::Duration(bp_res.sleep_times.at(idx)*time_factor).sleep();
-    marker.colors.at(idx+1) = green;
+    path_marker.colors.at(idx+1) = green;
     ++idx;
   }
-  path_pub.publish(marker);     // publish last point
+  path_pub.publish(pocket_marker);     // publish last point
+  tool_pub.publish(toolMarker(path_marker.points.at(idx), pocket_pose_msg));
   ros::Duration(1.).sleep();    // let last message be sent before quitting
 
   return 0;
 }
-

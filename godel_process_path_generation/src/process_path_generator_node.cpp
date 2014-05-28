@@ -79,7 +79,7 @@ bool path_generation_cb(godel_msgs::BlendingPlanRequest &req, godel_msgs::Blendi
 
   if (!ppg.variables_ok())
   {
-    ROS_ERROR("Cannot continue path generation with curent variables.");
+    ROS_ERROR("Cannot continue path generation with current variables.");
     return false;
   }
 

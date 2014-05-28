@@ -8,6 +8,8 @@ find_package(catkin REQUIRED COMPONENTS
              roscpp
              pcl_ros
              godel_msgs
+             tf
+             geometry_msgs
 )
 
 find_package(Boost REQUIRED COMPONENTS system)
