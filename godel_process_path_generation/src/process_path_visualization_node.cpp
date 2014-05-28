@@ -24,22 +24,10 @@
 
 #include <ros/ros.h>
 #include <boost/program_options.hpp>
-#include <boost/foreach.hpp>
-#include <boost/next_prior.hpp>
 #include <visualization_msgs/MarkerArray.h>
-#include "godel_process_path_generation/polygon_pts.hpp"
-#include "godel_process_path_generation/process_path.h"
 #include "godel_process_path_generation/mesh_importer.h"
-#include "godel_process_path_generation/process_path_generator.h"
-#include "godel_msgs/OffsetBoundary.h"
-#include "godel_process_path_generation/utils.h"
+#include "godel_msgs/BlendingPlan.h"
 
-
-using descartes::ProcessPt;
-using descartes::ProcessTransition;
-using godel_process_path::PolygonPt;
-using godel_process_path::PolygonBoundary;
-using godel_process_path::PolygonBoundaryCollection;
 
 const float TOOL_DIA = .050;
 const float TOOL_THK = .005;
@@ -49,32 +37,6 @@ const float MARGIN = .005;
 const float PATH_OVERLAP = .01;
 const float DISCRETIZATION = .0025;
 
-double dist(const Eigen::Affine3d &from, const Eigen::Affine3d &to)
-{
-  return (from.translation()-to.translation()).norm();
-}
-
-std::vector<double> pathDataToTimestamps(const std::vector<ProcessPt> &pts, const std::vector<ProcessTransition> &transitions)
-{
-  size_t n=transitions.size();
-  if (0==n)
-  {
-    ROS_WARN("No data to convert to timestamps.");
-    return std::vector<double>(0);
-  }
-  ROS_ASSERT_MSG(pts.size() == n+1, "Pts size %ld; Trans size %ld", n, pts.size());
-  std::vector<double> timestamps(n);
-  ROS_INFO_STREAM("Creating " << n << " timestamps");
-
-  for (size_t ii=0; ii<n; ++ii)
-  {
-    descartes::LinearVelocityConstraintPtr vel = transitions.at(ii).getLinearVelocity();
-    ROS_ASSERT_MSG(vel != NULL, "At point %ld", ii);
-    timestamps.at(ii) = dist(pts.at(ii+1).pose(), pts.at(ii).pose()) / vel->desired;
-//    std::cout << dist(pts.at(ii+1).pose(), pts.at(ii).pose()) << "/" << vel->desired << "/" << timestamps.at(ii) << std::endl;
-  }
-  return timestamps;
-}
 
 visualization_msgs::MarkerArray toolMarker(double x, double y, double z)
 {
@@ -128,7 +90,6 @@ int main(int argc, char **argv)
   boost::program_options::store(boost::program_options::parse_command_line(argc, argv, desc), vm);
   boost::program_options::notify(vm);
 
-
   if (vm.count("help"))
   {
       std::cout << desc << "\n";
@@ -137,31 +98,31 @@ int main(int argc, char **argv)
 
   ros::init(argc, argv, "process_path_visualization");
   ros::NodeHandle nh;
-  ros::ServiceClient boundary_offset_client=nh.serviceClient<godel_msgs::OffsetBoundary>("offset_polygon");
+  ros::ServiceClient path_generator_client=nh.serviceClient<godel_msgs::BlendingPlan>("path_generator");
   ros::Publisher path_pub = nh.advertise<visualization_msgs::Marker>("process_path", 1, true);
   ros::Publisher tool_pub = nh.advertise<visualization_msgs::MarkerArray>("sanding_tool", 1, true);
   ROS_INFO_STREAM("Started node '" << ros::this_node::getName() << "'");
 
-  godel_process_path::ProcessPathGenerator ppg;
-  ppg.verbose_ = true;
-  ppg.setTraverseHeight(.05);
-  ppg.setMargin(MARGIN);
-  ppg.setOverlap(PATH_OVERLAP);
-  ppg.setToolRadius(TOOL_DIA/2.);
-  godel_process_path::ProcessVelocity vel;
-  vel.approach = .005;
-  vel.blending = .01;
-  vel.retract = .02;
-  vel.traverse = .05;
-  ppg.setVelocity(vel);
-  ppg.setDiscretizationDistance(DISCRETIZATION);
+  godel_msgs::BlendingPlanRequest bp_req;
+  godel_msgs::BlendingPlanResponse bp_res;
+
+  // Blending Velocity
+  bp_req.params.approach_spd = .005;
+  bp_req.params.blending_spd = .01;
+  bp_req.params.retract_spd = .02;
+  bp_req.params.traverse_spd = .05;
+
+  // Blending Misc.
+  bp_req.params.discretization = DISCRETIZATION;
+
+  // Blending Offsets
+  bp_req.params.margin = MARGIN;
+  bp_req.params.overlap = PATH_OVERLAP;
+  bp_req.params.safe_traverse_height = .05;
+  bp_req.params.tool_radius = TOOL_DIA/2.;
 
   // Populate request for boundary offsets
-  godel_msgs::OffsetBoundaryRequest boundary_offset_request;
-  boundary_offset_request.discretization = DISCRETIZATION;
-  boundary_offset_request.initial_offset = TOOL_DIA/2. + MARGIN;
-  boundary_offset_request.offset_distance = TOOL_DIA/2. - PATH_OVERLAP;
-  std::vector<geometry_msgs::Polygon> &boundaries = boundary_offset_request.polygons;
+  std::vector<geometry_msgs::Polygon> &boundaries = bp_req.params.polygons;
   if (vm.count("demo"))
   {
     ROS_INFO("Running in demo mode");
@@ -190,9 +151,8 @@ int main(int argc, char **argv)
   }
 
   // Call service to offset boundaries
-  godel_msgs::OffsetBoundaryResponse boundary_offset_response;
-  ROS_INFO("Calling offset service.");
-  if (boundary_offset_client.call(boundary_offset_request, boundary_offset_response))
+  ROS_INFO("Calling path planning service.");
+  if (path_generator_client.call(bp_req, bp_res))
   {
     ROS_INFO("Call returned successfully.");
   }
@@ -202,20 +162,8 @@ int main(int argc, char **argv)
     return -1;
   }
 
-  godel_process_path::PolygonBoundaryCollection pbc;
-  godel_process_path::utils::translations::geometryMsgsToGodel(pbc, boundary_offset_response.offset_polygons);
-
-  ppg.setPathPolygons(&pbc, &boundary_offset_response.offsets);
-  if (!ppg.createProcessPath())
-  {
-    ROS_ERROR("Could not create process path");
-    return 0;
-  }
-  const descartes::ProcessPath &process_path = ppg.getProcessPath();
-  const std::pair<std::vector<ProcessPt>, std::vector<ProcessTransition> > &data = process_path.data();
-  std::vector<double> timestamps = pathDataToTimestamps(data.first, data.second);
-
-  visualization_msgs::Marker marker = process_path.asMarker();
+  // Set up initial colors for path marker
+  visualization_msgs::Marker marker = bp_res.path;
   marker.header.frame_id = "world";
   marker.header.seq = 0;
   marker.header.stamp = ros::Time::now();
@@ -231,20 +179,24 @@ int main(int argc, char **argv)
   marker.colors.at(0) = green;
 
   size_t idx = 0;
-  double time_factor = .05;
-  while (ros::ok() && idx < timestamps.size())
+  double time_factor = .02;
+  while (ros::ok() && idx < bp_res.sleep_times.size())
   {
+    // Show path
     path_pub.publish(marker);
+
+    // Show tool
     geometry_msgs::Point &pt = marker.points.at(idx);
     tool_pub.publish(toolMarker(pt.x, pt.y, pt.z));
-//    std::cout << "Waiting " << timestamps.at(idx) << std::endl;
-    ros::Duration(timestamps.at(idx)*time_factor).sleep();
+
+    // Wait for next point, and color current position green
+    ros::Duration(bp_res.sleep_times.at(idx)*time_factor).sleep();
     marker.colors.at(idx+1) = green;
     ++idx;
   }
   path_pub.publish(marker);     // publish last point
-  ros::Duration(1.).sleep();
+  ros::Duration(1.).sleep();    // let last message be sent before quitting
 
-  return 1;
+  return 0;
 }
 

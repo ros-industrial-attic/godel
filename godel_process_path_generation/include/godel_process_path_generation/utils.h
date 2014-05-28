@@ -30,6 +30,7 @@
 #include <Eigen/Geometry>
 #include <algorithm>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/foreach.hpp>
 #include <geometry_msgs/Polygon.h>
 #include <godel_process_path_generation/polygon_pts.hpp>
 
@@ -119,7 +120,7 @@ namespace translations
 void godelToGeometryMsgs(std::vector<geometry_msgs::Polygon> &polygons_msg, const godel_process_path::PolygonBoundaryCollection &pbc)
 {
   polygons_msg.clear();
-  BOOST_FOREACH(godel_process_path::PolygonBoundary polygon, pbc)
+  BOOST_FOREACH(::godel_process_path::PolygonBoundary polygon, pbc)
   {
     geometry_msgs::Polygon polygon_msg;
     BOOST_FOREACH(godel_process_path::PolygonPt pt, polygon)

@@ -7,23 +7,12 @@ project(godel_process_path_generation)
 find_package(catkin REQUIRED COMPONENTS
              roscpp
              pcl_ros
-#             cmake_modules
              godel_msgs
 )
 
-find_package(Boost REQUIRED COMPONENTS system python)
-find_package(PCL 1.7 REQUIRED QUIET) # COMPONENTS)
+find_package(Boost REQUIRED COMPONENTS system)
+find_package(PCL 1.7 REQUIRED QUIET)
 find_package(Eigen REQUIRED)
-
-
-# OpenVoronoi and dependencies
-#list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
-#find_package(OpenVoronoi REQUIRED)
-
-# python devel libs needed because of OpenVoronoi python bindings?
-#find_package(PythonLibs REQUIRED)
-#list(APPEND OpenVoronoi_LIBRARIES ${PYTHON_LIBRARIES})
-#list(APPEND OpenVoronoi_INCLUDE_DIRS ${PYTHON_INCLUDE_DIRS})
 
 
 ###################################
@@ -52,8 +41,7 @@ catkin_package(
 include_directories(include
                     ${catkin_INCLUDE_DIRS}
                     ${Boost_INCLUDE_DIRS}
-#                    ${OpenVoronoi_INCLUDE_DIRS}
-#                    ${Eigen_INCLUDE_DIRS}
+                    ${Eigen_INCLUDE_DIRS}
 )
 
 ## Declare a cpp library
@@ -61,9 +49,9 @@ add_library(mesh_importer
             src/mesh_importer.cpp
 )
 target_link_libraries(mesh_importer
-					  ${catkin_LIBRARIES}
-					  ${Eigen_LIBRARIES}
-					  ${PCL_LIBRARIES}
+					            ${catkin_LIBRARIES}
+                      ${Eigen_LIBRARIES}
+                      ${PCL_LIBRARIES}
 )
 
 add_library(process_path
@@ -73,6 +61,7 @@ add_library(process_path
 )
 target_link_libraries(process_path
                       ${catkin_LIBRARIES}
+                      ${Eigen_LIBRARIES}
 )
 
 add_library(process_path_generator
@@ -80,17 +69,22 @@ add_library(process_path_generator
 )
 target_link_libraries(process_path_generator
                       process_path
-#                      ${OpenVoronoi_LIBRARIES}
 )
+
+add_executable(process_path_generator_node
+               src/process_path_generator_node.cpp
+)
+target_link_libraries(process_path_generator_node
+                      process_path
+                      process_path_generator
+)
+add_dependencies(process_path_generator_node godel_msgs_generate_messages_cpp)
 
 add_executable(process_visualization_node
                src/process_path_visualization_node
 )
 target_link_libraries(process_visualization_node
-                      process_path
-                      mesh_importer
-                      process_path_generator
-#                      ${OpenVoronoi_LIBRARIES}
+                      ${catkin_LIBRARIES}
 )
 add_dependencies(process_visualization_node godel_msgs_generate_messages_cpp)
 
@@ -143,7 +137,6 @@ target_link_libraries(test_MeshImporter
 catkin_add_gtest(test_ProcessPathGenerator test/test_ProcessPathGenerator.cpp)
 target_link_libraries(test_ProcessPathGenerator
                       process_path_generator
-                      ${OpenVoronoi_LIBRARIES}
 )
 
 # if(TARGET test_MeshImporter)
