@@ -216,8 +216,7 @@ int RobotScan::scan(bool move_only)
 				// apply filter
 				robot_trajectory::RobotTrajectory rt(move_group_ptr_->getCurrentState()->getRobotModel(),move_group_ptr_->getName());
 				rt.setRobotTrajectoryMsg(*move_group_ptr_->getCurrentState(),path_plan.trajectory_);
-				apply_trajectory_parabolic_time_parameterization(rt,path_plan.trajectory_,100,0.05f);
-				//apply_simple_trajectory_filter(path_plan.trajectory_);
+				apply_trajectory_parabolic_time_parameterization(rt,path_plan.trajectory_,100,0.01f);
 			}
 			else
 			{

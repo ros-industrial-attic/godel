@@ -64,7 +64,8 @@ ostream& operator<<(ostream &out, const PolygonPt &ppt)
   return out;
 }
 
-/**@brief A collection of polygon points that represent the boundary of a polygon */
+/**@brief A collection of polygon points that represent the boundary of a polygon.
+ * Note: Last point assumed to join to 1st pt, not repeated in data. */
 typedef std::vector<PolygonPt> PolygonBoundary;
 ostream& operator<<(ostream &out, const PolygonBoundary &pb)
 {
@@ -85,50 +86,6 @@ ostream& operator<<(ostream &out, const PolygonBoundaryCollection &pbc)
     out << "Polygon " << idx << std::endl << *pb;
   }
   return out;
-}
-
-/**@brief Checks that PolygonBoundary is valid (non-self-intersecting)
- * NOTE: Not currently implemented (TODO implement)
- * @param bnd Polygon to check
- * @return True if polygon has no self-intersections
- */
-bool checkBoundary(const PolygonBoundary &bnd)
-{
-  //TODO complete with intersection checks
-  return false;
-}
-
-/**@brief Checks that PolygonBoundaryCollection is valid
- * Checks for self-intersection of each polygon, and global intersections of polygons
- * NOTE: Not currently implemented (TODO implement)
- * @param pbc PolygonBoundaryCollection to check
- * @return False if any intersection check is invalid, True otherwise
- */
-bool checkBoundaryCollection(const PolygonBoundaryCollection &pbc)
-{
-  //TODO complete with self- and global- intersection checks for all boundaries
-  return false;
-}
-
-/**@brief Find closest pt in PolygonBoundary to another pt on the plane
- * @param pt PolygonPt to compare against
- * @param bnd PolygonBoundary to find closest point in
- * @return pair(index into PolygonBoundary, distance)
- */
-std::pair<size_t, float> closestPoint(const PolygonPt &pt, const PolygonBoundary &bnd)
-{
-  size_t point_num;
-  double close_dist2(std::numeric_limits<double>::max());
-  for (size_t idx=0, max=bnd.size()-1; idx != max; ++idx )
-  {
-    double prox2 = pt.dist2(bnd.at(idx));
-    if (prox2 < close_dist2)
-    {
-      close_dist2 = prox2;
-      point_num = idx;
-    }
-  }
-  return std::make_pair(point_num, std::sqrt(static_cast<float>(close_dist2)));
 }
 
 } /* namespace godel_process_path */

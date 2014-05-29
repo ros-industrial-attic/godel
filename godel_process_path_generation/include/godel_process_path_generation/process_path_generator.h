@@ -26,7 +26,8 @@
 #define PROCESS_PATH_GENERATOR_H_
 
 #include "godel_process_path_generation/polygon_pts.hpp"
-#include <godel_process_path_generation/process_path.h>
+#include "godel_process_path_generation/process_path.h"
+#include "godel_process_path_generation/polygon_utils.h"
 
 
 using descartes::ProcessPt;
@@ -54,11 +55,22 @@ public:
   bool createProcessPath();
   const descartes::ProcessPath& getProcessPath() const {return process_path_;}
 
-  //TODO comment
-  void setPathPolygons(PolygonBoundaryCollection *polygons, std::vector<double> *offset_depths)
+  /**@brief Set data used by path generator.
+   * Note: Polygons data may become rotated during processing, but order will remain consistent.
+   * @param polygons Pointer to collection of polygons that will be joined into ProcessPath
+   * @param offset_depths Offset distance of each polygon
+   */
+  bool setPathPolygons(PolygonBoundaryCollection *polygons, std::vector<double> *offset_depths)
   {
+    if (!polygon_utils::checkBoundaryCollection(*polygons))
+    {
+      ROS_WARN("Malformed polygons detected.");
+      return false;
+    }
+
     path_polygons_ = polygons;
     path_offsets_ = offset_depths;
+    return true;
   }
 
   void setDiscretizationDistance(double d) {max_discretization_distance_ = std::abs(d);}
@@ -90,9 +102,6 @@ private:
 
   //TODO comment
   void addTraverseToProcessPath(const PolygonPt &from, const PolygonPt &to);
-
-  //TODO comment
-  bool convertPolygonsToProcessPath();
 
    /**@brief Create a ProcessTransition with linear velocity
     * ProcessTransition will be populated with linear velocity [0, vel, double::max()]

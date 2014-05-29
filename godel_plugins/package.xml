@@ -5,7 +5,7 @@
   <description>The godel_plugins package</description>
 
   <maintainer email="ros-industrial@todo.todo">ros-industrial</maintainer>
-  <license>TODO</license>
+  <license>Apache2</license>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>

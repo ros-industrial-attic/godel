@@ -46,8 +46,20 @@ bool offset_polygons_cb(OffsetPolygonRequest &req, OffsetPolygonResponse &res)
   utils::translations::geometryMsgsToGodel(pbc, req.polygons);
   ROS_INFO_STREAM("Received request with " << pbc.size() << " boundary polygons.");
 
-  po.init(pbc, req.offset_distance, req.initial_offset, req.discretization);
-  po.generateOrderedOffsets(pbc, res.offsets);
+  if (req.initial_offset <= 0.)
+  {
+    req.initial_offset = req.offset_distance;   // Default initial offset if unspecified.
+  }
+  if (!po.init(pbc, req.offset_distance, req.initial_offset, req.discretization))
+  {
+    ROS_ERROR("Could not initialize PolygonOffset.");
+    return false;
+  }
+  if (!po.generateOrderedOffsets(pbc, res.offsets)) /* Generates polygons and offset list*/
+  {
+    ROS_ERROR("Could not offset boundaries.");
+    return false;
+  }
   utils::translations::godelToGeometryMsgs(res.offset_polygons, pbc);
   ROS_INFO_STREAM("Returning " << pbc.size() << " offset polygons.");
   return true;
