@@ -1,0 +1,3 @@
+#ProcessPath (not currently implemented)
+---
+trajectory_msgs/JointTrajectory trajectory

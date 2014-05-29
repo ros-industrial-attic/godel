@@ -6,14 +6,25 @@ find_package(catkin REQUIRED COMPONENTS
              roscpp
              pcl_ros
              godel_msgs
+             visualization_msgs
              tf
              geometry_msgs
+             message_generation
+             genmsg
+             trajectory_msgs
 )
 
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(PCL 1.7 REQUIRED QUIET)
 find_package(Eigen REQUIRED)
 
+## Generate services in the 'srv' folder
+add_service_files(
+   FILES VisualizeBlendingPlan.srv
+)
+
+generate_messages(DEPENDENCIES godel_msgs visualization_msgs trajectory_msgs)   # Trajectory msgs needed for building msg in Visualize...srv
+add_dependencies(${PROJECT_NAME}_generate_messages_cpp godel_msgs_generate_messages_cpp)
 
 catkin_package(
                INCLUDE_DIRS include
@@ -100,7 +111,7 @@ add_executable(process_visualization_node
 target_link_libraries(process_visualization_node
                       ${catkin_LIBRARIES}
 )
-add_dependencies(process_visualization_node godel_msgs_generate_messages_cpp)
+add_dependencies(process_visualization_node ${PROJECT_NAME}_generate_messages_cpp)
 
 
 ## gtest ##

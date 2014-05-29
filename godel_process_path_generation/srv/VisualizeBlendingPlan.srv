@@ -1,0 +1,7 @@
+# Service used to visualize cartesian blending plan of single surface.
+
+godel_msgs/BlendingPlanParameters params
+godel_msgs/SurfaceBoundaries surface
+---
+visualization_msgs/Marker path
+duration[] sleep_times

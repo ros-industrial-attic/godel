@@ -29,7 +29,7 @@
 #include <visualization_msgs/MarkerArray.h>
 #include <geometry_msgs/Pose.h>
 #include "godel_process_path_generation/mesh_importer.h"
-#include "godel_msgs/BlendingPlan.h"
+#include "godel_process_path_generation/VisualizeBlendingPlan.h"
 #include "godel_process_path_generation/utils.h"
 
 
@@ -107,13 +107,13 @@ int main(int argc, char **argv)
 
   ros::init(argc, argv, "process_path_visualization");
   ros::NodeHandle nh;
-  ros::ServiceClient path_generator_client=nh.serviceClient<godel_msgs::BlendingPlan>("path_generator");
+  ros::ServiceClient path_generator_client=nh.serviceClient<godel_process_path_generation::VisualizeBlendingPlan>("visualize_path_generator");
   ros::Publisher path_pub = nh.advertise<visualization_msgs::MarkerArray>("process_path", 1, true);
   ros::Publisher tool_pub = nh.advertise<visualization_msgs::MarkerArray>("sanding_tool", 1, true);
   ROS_INFO_STREAM("Started node '" << ros::this_node::getName() << "'");
 
-  godel_msgs::BlendingPlanRequest bp_req;
-  godel_msgs::BlendingPlanResponse bp_res;
+  godel_process_path_generation::VisualizeBlendingPlanRequest bp_req;
+  godel_process_path_generation::VisualizeBlendingPlanResponse bp_res;
 
   // Blending Velocity
   bp_req.params.approach_spd = .005;
@@ -134,7 +134,7 @@ int main(int argc, char **argv)
   geometry_msgs::Pose pocket_pose_msg;
 
   // Populate request for boundary offsets
-  std::vector<geometry_msgs::Polygon> &boundaries = bp_req.params.polygons;
+  std::vector<geometry_msgs::Polygon> &boundaries = bp_req.surface.boundaries;
   if (vm.count("demo"))
   {
     ROS_INFO("Running in demo mode");
@@ -194,7 +194,7 @@ int main(int argc, char **argv)
   green.r = green.b = 0.f;
 
   godel_process_path::PolygonBoundaryCollection pbc;
-  godel_process_path::utils::translations::geometryMsgsToGodel(pbc, bp_req.params.polygons);
+  godel_process_path::utils::translations::geometryMsgsToGodel(pbc, bp_req.surface.boundaries);
   BOOST_FOREACH(godel_process_path::PolygonBoundary &boundary, pbc)
   {
     boundary.push_back(boundary.front());
