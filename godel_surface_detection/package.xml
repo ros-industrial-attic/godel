@@ -3,10 +3,8 @@
   <name>godel_surface_detection</name>
   <version>0.0.0</version>
   <description>The godel_surface_detection package</description>
-
-  <maintainer email="ros-industrial@todo.todo">ros-industrial</maintainer>
-
-  <license>BSD</license>
+  <maintainer email="jnicho@swri.org">jnicho</maintainer>
+  <license>Apache2</license>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>pcl</build_depend>
