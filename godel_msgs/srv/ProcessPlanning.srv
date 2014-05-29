@@ -1,0 +1,4 @@
+godel_msgs/BlendingPlanParameters params
+godel_msgs/SurfaceBoundaries surface
+---
+#ProcessPath (not currently implemented)

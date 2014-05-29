@@ -2,7 +2,14 @@ cmake_minimum_required(VERSION 2.8.3)
 project(godel_msgs)
 
 ## Find catkin macros and libraries
-find_package(catkin REQUIRED COMPONENTS message_generation geometry_msgs sensor_msgs visualization_msgs genmsg)
+find_package(catkin REQUIRED COMPONENTS
+             message_generation
+             genmsg
+             geometry_msgs
+             sensor_msgs
+             visualization_msgs
+             trajectory_msgs
+)
 
 
 #######################################
@@ -12,23 +19,24 @@ find_package(catkin REQUIRED COMPONENTS message_generation geometry_msgs sensor_
 ## Generate messages in the 'msg' folder
 add_message_files(
    FILES
-   RobotScanParameters.msg
-   SurfaceDetectionParameters.msg
-   SelectedSurfacesChanged.msg
    BlendingPlanParameters.msg
+   RobotScanParameters.msg
+   SelectedSurfacesChanged.msg
+   SurfaceBoundaries.msg
+   SurfaceDetectionParameters.msg
 )
 
 ## Generate services in the 'srv' folder
 add_service_files(
    FILES
-   SurfaceDetection.srv
-   SelectSurface.srv
    BlendingPlan.srv
    OffsetBoundary.srv
+   SelectSurface.srv
+   SurfaceDetection.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(DEPENDENCIES geometry_msgs sensor_msgs visualization_msgs)
+generate_messages(DEPENDENCIES geometry_msgs sensor_msgs visualization_msgs trajectory_msgs)
 
 ###################################
 ## catkin specific configuration ##

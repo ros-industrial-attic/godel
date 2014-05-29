@@ -1,4 +1,13 @@
+# Blending Plan Service
+# Called by Surface Detection and serviced by Path Planning node
+
+# Parameters defining path planning process
 godel_msgs/BlendingPlanParameters params
+
+# Series of surfaces to plan for.
+# Each surface is planned individually, then plans are linked by joint-moves.
+godel_msgs/SurfaceBoundaries[] surfaces
 ---
-visualization_msgs/Marker path
-duration[] sleep_times
+
+# Resultant Joint Trajectory to process entire Blending Plan
+trajectory_msgs/JointTrajectory trajectory
