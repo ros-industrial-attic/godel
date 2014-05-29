@@ -51,7 +51,6 @@ public:
   {};
   virtual ~ProcessPathGenerator() {};
 
-  bool configure(PolygonBoundaryCollection boundaries);
   bool createProcessPath();
   const descartes::ProcessPath& getProcessPath() const {return process_path_;}
 
@@ -69,6 +68,16 @@ public:
   void setTraverseHeight(double height) {safe_traverse_height_=height;}
   void setVelocity(const ProcessVelocity &vel) {velocity_=vel;}
 
+  /**@brief Check if values of offset variables are acceptable */
+  bool variables_ok() const
+  {
+    return  tool_radius_ >= 0. &&                      /*tool must be real*/
+        margin_ >= 0. &&                           /*negative margin is dangerous*/
+        overlap_ < 2.*tool_radius_ &&              /*offset must increment inward*/
+        (tool_radius_ != 0. || overlap_ != 0.) &&  /*offset must be positive*/
+        safe_traverse_height_ >= 0.;               /*negative traverse height may be inside part!*/
+  }
+
 
   bool verbose_;
 private:
@@ -84,16 +93,6 @@ private:
 
   //TODO comment
   bool convertPolygonsToProcessPath();
-
-  /**@brief Check if values of offset variables are acceptable */
-   bool variables_ok() const
-   {
-     return  tool_radius_ >= 0. &&                      /*tool must be real*/
-             margin_ >= 0. &&                           /*negative margin is dangerous*/
-             overlap_ < 2.*tool_radius_ &&              /*offset must increment inward*/
-             (tool_radius_ != 0. || overlap_ != 0.) &&  /*offset must be positive*/
-             safe_traverse_height_ >= 0.;               /*negative traverse height may be inside part!*/
-   }
 
    /**@brief Create a ProcessTransition with linear velocity
     * ProcessTransition will be populated with linear velocity [0, vel, double::max()]

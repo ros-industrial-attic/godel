@@ -14,3 +14,6 @@ float64 traverse_spd            # Speed to travel while at traverse height
 # Sent as a series of 2D polygons (z-component is ignored)
 # CCW polygons are external boundaries, CW polygons internal "obstacles"
 geometry_msgs/Polygon[] polygons
+
+# Misc
+float64 discretization

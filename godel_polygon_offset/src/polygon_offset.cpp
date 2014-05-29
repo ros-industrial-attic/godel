@@ -50,13 +50,20 @@ namespace godel_polygon_offset
 
 bool PolygonOffset::init(const PolygonBoundaryCollection &pbc, double _offset, double _initial_offset, double _discretization)
 {
+  if (_offset <= 0. || _initial_offset <= 0. || _discretization <= 0)
+  {
+    ROS_ERROR("Cannot initialize PolygonOffset with negative offset parameters.");
+    return false;
+  }
+
+  // Reset PolygonOffset for new operations.
   vd_.reset(new ovd::VoronoiDiagram(1,100));
   offset_ = _offset;
   initial_offset_ = _initial_offset;
   discretization_ = _discretization;
   ROS_INFO_COND(verbose_, "Creating voroni diagram from polygons");
 
-  // Add all points to vd
+  // Add all points to vd.
   std::vector<std::vector<int> > pt_id_collection;
   PolygonBoundaryCollection::const_iterator boundary, bs_end;
   for (boundary=pbc.begin(), bs_end=pbc.end(); boundary!=bs_end; ++boundary)
@@ -71,7 +78,7 @@ bool PolygonOffset::init(const PolygonBoundaryCollection &pbc, double _offset, d
     pt_id_collection.push_back(pt_id);
   }
 
-  // Connect points into boundaries
+  // Connect points into boundaries.
   for (boundary=pbc.begin(); boundary!=bs_end; ++boundary)
   {
     std::vector<int> &pt_id = pt_id_collection.at(boundary-pbc.begin());
@@ -84,7 +91,7 @@ bool PolygonOffset::init(const PolygonBoundaryCollection &pbc, double _offset, d
     vd_->insert_line_site(pt_id.back(), pt_id.front());
   }
 
-  // Check for validity, filter interior points, and return
+  // Check vd for validity, filter interior points.
   if (!vd_->check())
   {
     ROS_ERROR("Voroni diagram check failed.");
@@ -98,17 +105,25 @@ bool PolygonOffset::init(const PolygonBoundaryCollection &pbc, double _offset, d
     init_ok_ = true;
   }
 
-  ROS_INFO_COND(verbose_, "Configure complete.");
+  ROS_INFO_COND(verbose_ && init_ok_, "Configure complete.");
   return init_ok_;
 }
 
 bool PolygonOffset::generateOrderedOffsets(PolygonBoundaryCollection &polygons, std::vector<double> &offsets)
 {
+  if (!init_ok_)
+  {
+    ROS_ERROR("Cannot use PolygonOffset without calling init() first.");
+    return false;
+  }
+
   ovd::HEGraph& g = vd_->get_graph_reference();
   ovd::Offset offsetter(g);
   ovd::OffsetSorter sorter(g);
 
-  // Perform offsets
+  /* Perform offsets:
+   * Start with initial_offset, and proceed with offset distance until no further offsets are generated.
+   * Add each offset to sorter for subsequent sorting. */
   double offset_distance(initial_offset_);
   size_t loop_count(0);
   while (true)
@@ -134,6 +149,7 @@ bool PolygonOffset::generateOrderedOffsets(PolygonBoundaryCollection &polygons, 
   }
   ROS_INFO_COND(verbose_, "Created %li offset loops", loop_count);
 
+  // Perform initial sort.
   sorter.sort_loops();
   const ovd::MachiningGraph &mg = sorter.getMachiningGraph();
 
