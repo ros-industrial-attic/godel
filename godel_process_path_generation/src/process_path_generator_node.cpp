@@ -30,6 +30,7 @@
 #include "godel_process_path_generation/polygon_pts.hpp"
 #include "godel_process_path_generation/process_path_generator.h"
 #include "godel_process_path_generation/process_path.h"
+#include "godel_process_path_generation/polygon_utils.h"
 
 
 double dist(const Eigen::Affine3d &from, const Eigen::Affine3d &to)
@@ -101,7 +102,11 @@ bool path_generation_cb(godel_msgs::BlendingPlanRequest &req, godel_msgs::Blendi
   // Generate process paths.
   godel_process_path::PolygonBoundaryCollection paths;
   godel_process_path::utils::translations::geometryMsgsToGodel(paths, ob_res.offset_polygons);
-  ppg.setPathPolygons(&paths, &ob_res.offsets);
+  if (!ppg.setPathPolygons(&paths, &ob_res.offsets))
+  {
+    ROS_ERROR("Could not set polygon data in path planner.");
+    return false;
+  }
   if (!ppg.createProcessPath())
   {
     ROS_ERROR("Could not create process paths.");

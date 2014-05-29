@@ -23,10 +23,11 @@
  */
 
 #include <ros/ros.h>
+#include <boost/foreach.hpp>
 #include "godel_process_path_generation/process_path_generator.h"
 #include "godel_process_path_generation/polygon_pts.hpp"
-#include <boost/foreach.hpp>
-#include <godel_process_path_generation/utils.h>
+#include "godel_process_path_generation/polygon_utils.h"
+#include "godel_process_path_generation/utils.h"
 
 using descartes::ProcessPt;
 
@@ -97,11 +98,29 @@ void ProcessPathGenerator::addTraverseToProcessPath(const PolygonPt &from, const
   addInterpolatedProcessPts(approach, end, velocity_.approach); //TODO Moving to 1st pt of next path is at vel.blending instead of vel.approach
 }
 
-bool ProcessPathGenerator::convertPolygonsToProcessPath()
+bool ProcessPathGenerator::createProcessPath()
 {
+  if (!variables_ok())
+  {
+    ROS_WARN_STREAM("Problem with variable values in ProcessPathGenerator, were they set properly?" << std::endl <<
+                    "Tool Radius: " << tool_radius_ << "(m)" << std::endl <<
+                    "Margin: " << margin_ << "(m)" << std::endl <<
+                    "Overlap: " << overlap_ << "(m)");
+    return false;
+  }
+
+  /* Create a series of polygons to represent the paths for blending
+   * Polygons are ordered so as to begin at most inner, spiral out to most outer,
+   *  jump to next incomplete inner, spiral out to largest incomplete outer, etc. */
   if (!path_polygons_ || !path_offsets_)
   {
     ROS_WARN("Must set path polygons and path offsets before creating process path.");
+    return false;
+  }
+
+  if (path_polygons_->size() != path_offsets_->size())
+  {
+    ROS_WARN("Must have identical count of Polygons and Offsets.");
     return false;
   }
 
@@ -139,7 +158,7 @@ bool ProcessPathGenerator::convertPolygonsToProcessPath()
 
     if (path_offsets_->at(pgIdx) < current_offset)
     {   /*Take one step out*/
-      size_t rotate_index = closestPoint(last_pgpt, next_polygon).first;
+      size_t rotate_index = polygon_utils::closestPoint(last_pgpt, next_polygon).first;
       std::rotate(next_polygon.begin(), next_polygon.begin()+rotate_index, next_polygon.end());
       ProcessPt next_pt;
       next_pt << next_polygon.front();
@@ -167,29 +186,6 @@ bool ProcessPathGenerator::convertPolygonsToProcessPath()
   ROS_INFO_COND(verbose_, "Added retract path.");
 
   ROS_INFO_COND(verbose_, "Successfully converted Polygons to ProcessPath.");
-  return true;
-}
-
-bool ProcessPathGenerator::createProcessPath()
-{
-  if (!variables_ok())
-  {
-    ROS_WARN_STREAM("Problem with variable values in ProcessPathGenerator, were they set properly?" << std::endl <<
-                    "Tool Radius: " << tool_radius_ << "(m)" << std::endl <<
-                    "Margin: " << margin_ << "(m)" << std::endl <<
-                    "Overlap: " << overlap_ << "(m)");
-    return false;
-  }
-
-  /* Create a series of polygons to represent the paths for blending
-   * Polygons are ordered so as to begin at most inner, spiral out to most outer,
-   *  jump to next incomplete inner, spiral out to largest incomplete outer, etc. */
-  if (!convertPolygonsToProcessPath())
-  {
-    ROS_ERROR("Could not convert polygons to process path.");
-    return false;
-  }
-
   return true;
 }
 
