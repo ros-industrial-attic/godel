@@ -37,30 +37,22 @@ bool PolygonSegment::intersects(const PolygonSegment &other) const
   /* Two vectors: intersection pt = p1 + u(p2-p1) = p3 + v(p3-p1)
    * Cramer's Rule to solve for u,v and check if they are both in bounds of segments.
    */
-  Eigen::Matrix2d A;
-  A << end.x - start.x, other.start.x - other.end.y,
-       end.y - start.y, other.start.y - other.end.y;
-  double denom = A.determinant();
+  double denom = (this->vector()).cross(other.vector());
   if (denom < 1e-12)
   {
     return false;  // Lines are (nearly) parallel
   }
 
   // Solve for u
-  Eigen::Matrix2d A_u = A;
-  A_u.col(0) << other.start.x - start.x,
-                other.start.y - start.y;
-  double u = A_u.determinant() / denom;
+  PolygonPt del = other.start - this->start;
+  double u = del.cross(other.vector()) / denom;
   if (u < 0. || u > length())
   { // Intersection is outside of segment 1
     return false;
   }
   else
   { // Possible intersection, must check segment 2
-    Eigen::Matrix2d A_v = A;
-    A_v.col(1) << other.start.x - start.x,
-                  other.start.y - start.y;
-    double v = A_v.determinant() / denom;
+    double v = this->vector().cross(del) / denom;
     if (v < 0. || v > other.length())
     {
       return false;
@@ -163,6 +155,7 @@ bool checkBoundaryCollection(const PolygonBoundaryCollection &pbc)
   std::cout << "Created segments" << std::endl;
 
   // Check global intersections between boundaries
+  //TODO this can miss intersections between the end of one polygon and the beginning of the next. Truly need to check each polygon against every other polygon
   for (std::vector<PolygonSegment>::const_iterator seg=segments.begin(); seg!=(segments.end()-2); ++seg)
   {
     for (std::vector<PolygonSegment>::const_iterator other_seg=seg+2; other_seg!=segments.end(); ++other_seg)
