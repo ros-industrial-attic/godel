@@ -26,6 +26,7 @@
 #include <boost/tuple/tuple.hpp>
 #include "godel_process_path_generation/utils.h"
 #include "godel_process_path_generation/VisualizeBlendingPlan.h"
+#include "godel_msgs/ProcessPlanning.h"
 #include "godel_msgs/OffsetBoundary.h"
 #include "godel_process_path_generation/polygon_pts.hpp"
 #include "godel_process_path_generation/process_path_generator.h"
@@ -60,7 +61,7 @@ bool pathDataToDurations(std::vector<ros::Duration> &times, const std::vector<de
   return true;
 }
 
-bool path_generation_vis_cb(godel_process_path_generation::VisualizeBlendingPlanRequest &req, godel_process_path_generation::VisualizeBlendingPlanResponse &res)
+bool generateProcessPlan(descartes::ProcessPath &process_path, const godel_msgs::ProcessPlanningRequest &req, ros::ServiceClientPtr offset_service_client)
 {
   // Create ProcessPathGenerator and initialize.
   godel_process_path::ProcessPathGenerator ppg;
@@ -85,17 +86,15 @@ bool path_generation_vis_cb(godel_process_path_generation::VisualizeBlendingPlan
   }
 
   // Call polygon_offset service.
-  ros::NodeHandle nh;
-  ros::ServiceClient boundary_offset_client=nh.serviceClient<godel_msgs::OffsetBoundary>("offset_polygon");
   godel_msgs::OffsetBoundaryRequest ob_req;
   godel_msgs::OffsetBoundaryResponse ob_res;
   ob_req.discretization = req.params.discretization;
   ob_req.initial_offset = req.params.tool_radius + req.params.margin;
   ob_req.offset_distance = req.params.tool_radius - req.params.overlap;
   ob_req.polygons = req.surface.boundaries;
-  if (!boundary_offset_client.call(ob_req, ob_res))
+  if (!offset_service_client->call(ob_req, ob_res))
   {
-    ROS_ERROR("Bad response from %s", boundary_offset_client.getService().c_str());
+    ROS_ERROR("Bad response from %s", offset_service_client->getService().c_str());
     return false;
   }
 
@@ -112,17 +111,48 @@ bool path_generation_vis_cb(godel_process_path_generation::VisualizeBlendingPlan
     ROS_ERROR("Could not create process paths.");
     return false;
   }
+  process_path = ppg.getProcessPath();
 
-  // Populate response
+  return true;
+}
+
+bool pathGen(godel_msgs::ProcessPlanningRequest &req,
+             godel_msgs::ProcessPlanningResponse &res,
+             ros::ServiceClientPtr offset_service_client)
+{
+  ROS_WARN("pathGen not currently implemented.");
+  return false;
+
+  // Call function to generate process path.
+  descartes::ProcessPath process_path;
+  generateProcessPlan(process_path, req, offset_service_client);
+
+  // Translate ProcessPath into ProcessPathMsg
+  //TODO msg not defined
+  return true;
+}
+
+bool pathGenVisual(godel_process_path_generation::VisualizeBlendingPlanRequest &req,
+                   godel_process_path_generation::VisualizeBlendingPlanResponse &res,
+                   ros::ServiceClientPtr offset_service_client)
+{
+  // Call function to generate process path.
+  godel_msgs::ProcessPlanningRequest process_planning_request;
+  process_planning_request.params = req.params;
+  process_planning_request.surface = req.surface;
+  descartes::ProcessPath process_path;
+  generateProcessPlan(process_path, process_planning_request, offset_service_client);
+
+  // Populate service response
   std::vector<descartes::ProcessPt> pts;
   std::vector<descartes::ProcessTransition> transitions;
-  boost::tie(pts, transitions) = ppg.getProcessPath().data();
+  boost::tie(pts, transitions) = process_path.data();
   if (!pathDataToDurations(res.sleep_times, pts, transitions))
   {
     ROS_ERROR("Could not create sleep times.");
     return false;
   }
-  res.path = ppg.getProcessPath().asMarker();
+  res.path = process_path.asMarker();
 
   return true;
 }
@@ -132,8 +162,16 @@ int main(int argc, char **argv)
 
   ros::init(argc, argv, "process_path_generator");
   ros::NodeHandle nh;
-  ros::ServiceServer path_generator_service = nh.advertiseService("visualize_path_generator", path_generation_vis_cb);
-  ROS_INFO("%s ready to service requests.", path_generator_service.getService().c_str());
+  ros::ServiceClientPtr boundary_offset_client(new ros::ServiceClient(nh.serviceClient<godel_msgs::OffsetBoundary>("offset_polygon")));
+  ros::ServiceServer visualize_path_generator = nh.advertiseService<godel_process_path_generation::VisualizeBlendingPlanRequest,
+                                                                    godel_process_path_generation::VisualizeBlendingPlanResponse>
+                                                ("visualize_path_generator", boost::bind(pathGenVisual, _1, _2, boundary_offset_client));
+  ROS_INFO("%s ready to service requests.", visualize_path_generator.getService().c_str());
+
+  ros::ServiceServer path_generator = nh.advertiseService<godel_msgs::ProcessPlanningRequest,
+                                                          godel_msgs::ProcessPlanningResponse>
+                                      ("process_path_generator", boost::bind(pathGen, _1, _2, boundary_offset_client));
+  ROS_INFO("%s ready to service requests.", path_generator.getService().c_str());
   ros::spin();
 
   return 0;

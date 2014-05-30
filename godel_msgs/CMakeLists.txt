@@ -31,8 +31,10 @@ add_service_files(
    FILES
    BlendingPlan.srv
    OffsetBoundary.srv
+   ProcessPlanning.srv
    SelectSurface.srv
    SurfaceDetection.srv
+   TrajectoryPlanning.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
