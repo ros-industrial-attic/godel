@@ -47,12 +47,13 @@ struct PolygonSegment
   inline PolygonPt vector() const {return end-start;};
 };
 
+void boundaryToSegments(std::vector<PolygonSegment> &segments, const PolygonBoundary &polygon);
+
 /**@brief Checks that PolygonBoundary is valid (non-self-intersecting)
  * @param bnd Polygon to check
- * @param fast If true, do no intersection checks
  * @return True if polygon has no self-intersections
  */
-bool checkBoundary(const PolygonBoundary &bnd, bool fast=false);
+bool checkBoundary(const PolygonBoundary &bnd);
 
 /**@brief Checks that PolygonBoundaryCollection is valid
  * Checks for self-intersection of each polygon, and global intersections of polygons
@@ -67,6 +68,12 @@ bool checkBoundaryCollection(const PolygonBoundaryCollection &pbc);
  * @return pair(index into PolygonBoundary, distance)
  */
 std::pair<size_t, float> closestPoint(const PolygonPt &pt, const PolygonBoundary &bnd);
+
+/**@brief Check if a intersects b */
+bool intersects(const PolygonBoundary &a, const PolygonBoundary &b);
+
+/**@brief Check if a intersects b */
+bool intersects(const std::vector<PolygonSegment> &a, const std::vector<PolygonSegment> &b);
 
 } /* namespace polygon_utils */
 } /* namespace godel_process_path */
