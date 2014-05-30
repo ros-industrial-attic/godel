@@ -43,7 +43,8 @@ struct PolygonSegment
   /**@brief Does this segment intersect another
    * Does not account for segments that are within epsilon of touching, or nearly parallel */
   bool intersects(const PolygonSegment &other) const;
-  double length() const {return start.dist(end);};
+  inline double length() const {return start.dist(end);};
+  inline PolygonPt vector() const {return end-start;};
 };
 
 /**@brief Checks that PolygonBoundary is valid (non-self-intersecting)
