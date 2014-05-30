@@ -163,7 +163,8 @@ bool checkBoundaryCollection(const PolygonBoundaryCollection &pbc)
   }
 
   // Precompute vectors of segments for polygonboundaries
-  std::vector<std::vector<PolygonSegment> > segments_list;
+  typedef std::vector<std::vector<PolygonSegment> > SegmentsList;
+  SegmentsList segments_list;
   BOOST_FOREACH(const PolygonBoundary &bnd, pbc)
   {
     std::vector<PolygonSegment> segments;
@@ -184,11 +185,11 @@ bool checkBoundaryCollection(const PolygonBoundaryCollection &pbc)
 //  }
 
   // Check global intersections between boundaries
-  BOOST_FOREACH(const std::vector<PolygonSegment> &a, segments_list)
+  for (SegmentsList::const_iterator a = segments_list.begin(); a != segments_list.end(); ++a)
   {
-    BOOST_FOREACH(const std::vector<PolygonSegment> &b, segments_list)
+    for (SegmentsList::const_iterator b = boost::next(a); b != segments_list.end(); ++b)
     {
-      if ((&a != &b) && intersects(a,b) )
+      if ( intersects(*a,*b) )
       {
         return false;
       }
