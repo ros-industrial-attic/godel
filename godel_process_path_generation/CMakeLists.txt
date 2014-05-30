@@ -24,7 +24,6 @@ add_service_files(
 )
 
 generate_messages(DEPENDENCIES godel_msgs visualization_msgs trajectory_msgs)   # Trajectory msgs needed for building msg in Visualize...srv
-add_dependencies(${PROJECT_NAME}_generate_messages_cpp godel_msgs_generate_messages_cpp)
 
 catkin_package(
                INCLUDE_DIRS include
