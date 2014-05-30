@@ -61,7 +61,47 @@ bool PolygonSegment::intersects(const PolygonSegment &other) const
   return true;
 }
 
-bool checkBoundary(const PolygonBoundary &bnd, bool fast)
+void boundaryToSegments(std::vector<PolygonSegment> &segments, const PolygonBoundary &polygon)
+{
+  segments.clear();
+  PolygonBoundary::const_iterator pt, last_pt;
+  for (pt=polygon.begin(), last_pt=boost::prior(polygon.end()); pt!=polygon.end(); ++pt)
+  {
+    if (pt == last_pt)
+    {
+      segments.push_back(PolygonSegment(*pt, polygon.front()));
+    }
+    else
+    {
+      segments.push_back(PolygonSegment(*pt, *boost::next(pt)));
+    }
+  }
+}
+
+bool intersects(const PolygonBoundary &a, const PolygonBoundary &b)
+{
+  std::vector<PolygonSegment> v_a, v_b;
+  boundaryToSegments(v_a, a);
+  boundaryToSegments(v_b, b);
+  return intersects(v_a, v_b);
+}
+
+bool intersects(const std::vector<PolygonSegment> &a, const std::vector<PolygonSegment> &b)
+{
+  BOOST_FOREACH(const PolygonSegment &seg_a, a)
+  {
+    BOOST_FOREACH(const PolygonSegment &seg_b, b)
+    {
+      if (seg_a.intersects(seg_b))
+      {
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
+bool checkBoundary(const PolygonBoundary &bnd)
 {
   const size_t N = bnd.size();
   if (N < 3)
@@ -93,26 +133,10 @@ bool checkBoundary(const PolygonBoundary &bnd, bool fast)
     return true;
   }
 
-  // Return early if fast check is requested (no intersection check)
-  if (fast)
-  {
-    return true;
-  }
-
-  // Represent entire boundary as segments
+  // Represent entire boundary as segments, and check for self-intersection
   std::vector<PolygonSegment> segments;
+  boundaryToSegments(segments, bnd);
 
-  for (pt=bnd.begin(); pt!=bnd.end(); ++pt)
-  {
-    if (pt == last_pt)
-    {
-      segments.push_back(PolygonSegment(*pt, bnd.front()));
-    }
-    else
-    {
-      segments.push_back(PolygonSegment(*pt, *boost::next(pt)));
-    }
-  }
   for (std::vector<PolygonSegment>::const_iterator seg=segments.begin(); seg!=(segments.end()-2); ++seg)
   {
     for (std::vector<PolygonSegment>::const_iterator other_seg=seg+2; other_seg!=segments.end(); ++other_seg)
@@ -129,38 +153,43 @@ bool checkBoundary(const PolygonBoundary &bnd, bool fast)
 
 bool checkBoundaryCollection(const PolygonBoundaryCollection &pbc)
 {
-  // Check everything except self-intersection for each boundary
-  // Also add each boundary to segments
-  bool fast_check = true;
-  std::vector<PolygonSegment> segments;
+  // Check each boundary individually
   BOOST_FOREACH(const PolygonBoundary &bnd, pbc)
   {
-    if (!checkBoundary(bnd, fast_check)) /*call check boundary without intersection checks*/
+    if (!checkBoundary(bnd)) /*call check boundary without intersection checks*/
     {
       return false;
     }
-    BOOST_FOREACH(const PolygonPt &pt, bnd)
-    {
-      if (&pt == &bnd.back())
-      {
-        segments.push_back(PolygonSegment(pt, bnd.front()));
-      }
-      else
-      {
-        std::vector<PolygonPt>::const_iterator pt_iter(&pt);
-        segments.push_back(PolygonSegment(pt, *boost::next(pt_iter)));
-      }
-    }
   }
-  std::cout << "Created segments" << std::endl;
+
+  // Precompute vectors of segments for polygonboundaries
+  typedef std::vector<std::vector<PolygonSegment> > SegmentsList;
+  SegmentsList segments_list;
+  BOOST_FOREACH(const PolygonBoundary &bnd, pbc)
+  {
+    std::vector<PolygonSegment> segments;
+    boundaryToSegments(segments, bnd);
+    segments_list.push_back(segments);
+  }
+
+//  // Check global intersections between boundaries
+//  BOOST_FOREACH(const PolygonBoundary &a, pbc)
+//  {
+//    BOOST_FOREACH(const PolygonBoundary &b, pbc)
+//    {
+//      if ((&a != &b) && intersects(a,b) )
+//      {
+//        return false;
+//      }
+//    }
+//  }
 
   // Check global intersections between boundaries
-  //TODO this can miss intersections between the end of one polygon and the beginning of the next. Truly need to check each polygon against every other polygon
-  for (std::vector<PolygonSegment>::const_iterator seg=segments.begin(); seg!=(segments.end()-2); ++seg)
+  for (SegmentsList::const_iterator a = segments_list.begin(); a != segments_list.end(); ++a)
   {
-    for (std::vector<PolygonSegment>::const_iterator other_seg=seg+2; other_seg!=segments.end(); ++other_seg)
+    for (SegmentsList::const_iterator b = boost::next(a); b != segments_list.end(); ++b)
     {
-      if (seg->intersects(*other_seg))
+      if ( intersects(*a,*b) )
       {
         return false;
       }
