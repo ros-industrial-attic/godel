@@ -13,12 +13,12 @@ point_cloud_descriptions:
   - x: 0.90
     y: 0.24
     z: 0.03
-    rx: 0.0
+    rx: 0.40
     ry: 0.0
     rz: 0.0
     l: 0.10
     w: 0.08
-    h: 0.0
+    h: 0.04
     resolution: 0.002
   - x: 0.80
     y: 0.40
