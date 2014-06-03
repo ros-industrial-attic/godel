@@ -17,7 +17,7 @@
 		</node>
 
 		<!-- rviz blending plugin -->
-		<node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_plugins)/rviz/robot_blending.rviz" output="screen" launch-prefix="nice"/>
+		<node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_surface_detection)/rviz/robot_blending.rviz" output="screen" launch-prefix="nice"/>
 
 		<!-- simulated sensor data -->
 		<!--<node if="$(arg sim_sensor)" name="point_cloud_publisher_node" pkg="godel_surface_detection" type="point_cloud_publisher_node"

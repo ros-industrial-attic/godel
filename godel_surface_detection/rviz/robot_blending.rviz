@@ -4,11 +4,9 @@ Panels:
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /PointCloud21
-        - /PoseArray1
-        - /RobotModel1
         - /RobotModel1/Links1
         - /RobotModel1/Links1/asus_frame1
+        - /PointCloud22
       Splitter Ratio: 0.5
     Tree Height: 186
   - Class: rviz/Selection
@@ -73,7 +71,7 @@ Visualization Manager:
       Channel Name: intensity
       Class: rviz/PointCloud2
       Color: 255; 255; 255
-      Color Transformer: RGB8
+      Color Transformer: Intensity
       Decay Time: 0
       Enabled: true
       Invert Rainbow: false
@@ -274,6 +272,35 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: RGB8
+      Decay Time: 0
+      Enabled: false
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Max Intensity: 4096
+      Min Color: 0; 0; 0
+      Min Intensity: 0
+      Name: PointCloud2
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.01
+      Style: Points
+      Topic: /region_colored_cloud
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -298,17 +325,17 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.9664
+      Distance: 0.466155
       Focal Point:
-        X: 0.478675
-        Y: 0.365329
-        Z: 0.324974
+        X: 0.68456
+        Y: 0.358814
+        Z: 0.130459
       Name: Current View
       Near Clip Distance: 0.01
-      Pitch: 0.404798
+      Pitch: 0.214798
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 2.15542
+      Yaw: 1.20042
     Saved: ~
 Window Geometry:
   Displays:
@@ -328,5 +355,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1855
-  X: 58
+  X: 218
   Y: 24
