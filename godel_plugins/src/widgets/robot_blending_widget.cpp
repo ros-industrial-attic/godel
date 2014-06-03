@@ -587,9 +587,9 @@ void SurfaceDetectionConfigWidget::update_parameters()
 	ui_.LineEditTrSearchRadius->setText(QString::number(surface_detection_parameters_.tr_search_radius));
 	ui_.LineEditTrMu->setText(QString::number(surface_detection_parameters_.tr_mu));
 	ui_.LineEditTrNearestNeighbors->setText(QString::number(surface_detection_parameters_.tr_max_nearest_neighbors));
-	ui_.LineEditTrMaxSurfaceAngle->setText(QString::number(surface_detection_parameters_.tr_max_surface_angle));
-	ui_.LineEditTrMinAngle->setText(QString::number(surface_detection_parameters_.tr_min_angle));
-	ui_.LineEditTrMaxAngle->setText(QString::number(surface_detection_parameters_.tr_max_angle));
+	ui_.LineEditTrMaxSurfaceAngle->setText(QString::number(RAD2DEG( surface_detection_parameters_.tr_max_surface_angle)));
+	ui_.LineEditTrMinAngle->setText(QString::number(RAD2DEG( surface_detection_parameters_.tr_min_angle)));
+	ui_.LineEditTrMaxAngle->setText(QString::number(RAD2DEG( surface_detection_parameters_.tr_max_angle)));
 	ui_.CheckBoxTrNormalConsistency->setChecked(static_cast<bool>(surface_detection_parameters_.tr_normal_consistency));
 
 }
@@ -621,9 +621,9 @@ void SurfaceDetectionConfigWidget::save_parameters()
 	surface_detection_parameters_.tr_search_radius = ui_.LineEditTrSearchRadius->text().toDouble();
 	surface_detection_parameters_.tr_mu = ui_.LineEditTrMu->text().toDouble();
 	surface_detection_parameters_.tr_max_nearest_neighbors = ui_.LineEditTrNearestNeighbors->text().toDouble();
-	surface_detection_parameters_.tr_max_surface_angle = ui_.LineEditTrMaxSurfaceAngle->text().toDouble();
-	surface_detection_parameters_.tr_min_angle = ui_.LineEditTrMinAngle->text().toDouble();
-	surface_detection_parameters_.tr_max_angle = ui_.LineEditTrMaxAngle->text().toDouble();
+	surface_detection_parameters_.tr_max_surface_angle = DEG2RAD( ui_.LineEditTrMaxSurfaceAngle->text().toDouble());
+	surface_detection_parameters_.tr_min_angle = DEG2RAD(ui_.LineEditTrMinAngle->text().toDouble());
+	surface_detection_parameters_.tr_max_angle = DEG2RAD(ui_.LineEditTrMaxAngle->text().toDouble());
 	surface_detection_parameters_.tr_normal_consistency = ui_.CheckBoxTrNormalConsistency->isChecked();;
 }
 
