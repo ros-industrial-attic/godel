@@ -31,6 +31,7 @@
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/filters/conditional_removal.h>
+#include <pcl/kdtree/kdtree_flann.h>
 #include <tf/transform_datatypes.h>
 #include <octomap_ros/conversions.h>
 
@@ -454,7 +455,7 @@ bool SurfaceDetection::find_surfaces()
 		return false;
 	}
 
-	//applying sac plane segmentation
+	//applying sac plane segmentation to reintegrate ungrouped points
 	for(int i =0;(i< surface_clouds_.size()) && ungrouped_cloud_ptr->size() >0 ; i++)
 	{
 
@@ -463,12 +464,13 @@ bool SurfaceDetection::find_surfaces()
 		if(apply_sac_plane_segmentation(*ungrouped_cloud_ptr,*segment_cloud_ptr,*segment_cloud_ptr))
 		{
 
-			ROS_INFO_STREAM("SAC plane segmentation for cluster "<<i<<" completed with [ star:  "
+			ROS_INFO_STREAM("Reintegration of ungrouped points into cluster "<<i<<" using SAC plane segmentation completed with [ star:  "
 					<<count<<", end: "<<segment_cloud_ptr->size()<<" ] points");
 		}
 		else
 		{
-			ROS_ERROR_STREAM("SAC plane segmentation for cluster "<<i<<" failed");
+			ROS_WARN_STREAM("Reintegration of ungrouped points into cluster "<<i<<" using SAC plane segmentation yielded no matches [ star:  "
+								<<count<<", end: "<<segment_cloud_ptr->size()<<" ] points");
 		}
 	}
 
@@ -629,9 +631,50 @@ bool SurfaceDetection::apply_sac_plane_segmentation(const Cloud& in,
 		model_plane.selectWithinDistance(model_coeff,0.5f*params_.voxel_leafsize,final_inliers);
 		pcl::copyPointCloud(in,final_inliers,*inlier_points_ptr);
 
-		// adding to output cloud
-		out += *inlier_points_ptr;
+		// checking distances to main cluster
+		if(apply_kdtree_radius_search(*inlier_points_ptr,plane_estimate,4*params_.voxel_leafsize,*inlier_points_ptr))
+		{
+			// adding to output cloud
+			out += *inlier_points_ptr;
 
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+
+	}
+	else
+	{
+		return false;
+	}
+
+}
+
+bool SurfaceDetection::apply_kdtree_radius_search(const Cloud& query_points,const Cloud& search_points,double radius,
+		Cloud& close_points)
+{
+	pcl::KdTreeFLANN<pcl::PointXYZ> kdtree;
+	std::vector<int> all_indices;
+	std::vector<int> near_indices;
+	std::vector<float> near_distances;
+
+	kdtree.setInputCloud(search_points.makeShared());
+	for(int i = 0; i < query_points.size();i++)
+	{
+		const pcl::PointXYZ &p = query_points[i];
+		near_indices.clear();
+		near_distances.clear();
+		if(kdtree.radiusSearch(p,radius,near_indices,near_distances)>0)
+		{
+			all_indices.push_back(i);
+		}
+	}
+
+	if(all_indices.size()>0)
+	{
+		pcl::copyPointCloud(query_points,all_indices,close_points);
 		return true;
 	}
 	else

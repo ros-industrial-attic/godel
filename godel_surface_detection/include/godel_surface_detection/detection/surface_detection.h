@@ -168,6 +168,8 @@ protected:
 	bool apply_fast_triangulation(const Cloud& in,
 			const Normals& normals,
 			pcl::PolygonMesh& mesh);
+	bool apply_kdtree_radius_search(const Cloud& query_points,const Cloud& search_points,double radius,
+			Cloud& close_points);
 
 	bool apply_voxel_downsampling(Cloud& cloud);
 
