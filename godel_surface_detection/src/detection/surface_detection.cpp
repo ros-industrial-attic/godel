@@ -27,7 +27,10 @@
 #include <pcl/surface/mls.h>
 #include <pcl/sample_consensus/method_types.h>
 #include <pcl/sample_consensus/model_types.h>
+#include <pcl/sample_consensus/sac_model_plane.h>
 #include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/filters/radius_outlier_removal.h>
+#include <pcl/filters/conditional_removal.h>
 #include <tf/transform_datatypes.h>
 #include <octomap_ros/conversions.h>
 
@@ -379,9 +382,10 @@ bool SurfaceDetection::find_surfaces()
 	}
 
 	// apply statistical filter
+	ROS_INFO_STREAM("Statistical filter started with "<<process_cloud_ptr->size()<<" points");
 	if(apply_statistical_filter(*process_cloud_ptr,*process_cloud_ptr))
 	{
-		ROS_INFO_STREAM("Statistical filter succeeded");
+		ROS_INFO_STREAM("Statistical filter completed with "<<process_cloud_ptr->size()<<" points");
 	}
 	else
 	{
@@ -401,6 +405,9 @@ bool SurfaceDetection::find_surfaces()
 	}
 
 	// applying region growing segmentation
+	Cloud::Ptr ungrouped_cloud_ptr = Cloud::Ptr(new Cloud());  // cloud for storing outliers
+	pcl::ExtractIndices<pcl::PointXYZ> extract;
+	pcl::PointIndices::Ptr inliers_ptr(new pcl::PointIndices());
 	if(apply_region_growing_segmentation(*process_cloud_ptr,*normals,clusters_indices,
 			*region_colored_cloud_ptr_))
 	{
@@ -408,45 +415,86 @@ bool SurfaceDetection::find_surfaces()
 		ROS_INFO_STREAM("Region growing succeeded");
 		ROS_INFO_STREAM("Total surface clusters found: "<<clusters_indices.size());
 
-		// filling cloud array
+		// saving clusters that meet required point count
 		for(int i =0;i< clusters_indices.size(); i++)
 		{
-			if(clusters_indices[i].indices.size() < params_.rg_min_cluster_size)
+
+			Cloud::Ptr segment_cloud_ptr = Cloud::Ptr(new Cloud());
+			pcl::PointIndices& indices =  clusters_indices[i];
+			if(indices.indices.size() == 0)
 			{
 				continue;
 			}
 
-			Cloud::Ptr segment_cloud_ptr(new Cloud());
-			Normals::Ptr segment_normal_ptr(new Normals());
 
-			// apply smoothing
-			pcl::copyPointCloud(*process_cloud_ptr,clusters_indices[i],
+			if(indices.indices.size() >= params_.rg_min_cluster_size)
+			{
+				inliers_ptr->indices.insert(inliers_ptr->indices.end(),
+						indices.indices.begin(),indices.indices.end());
+
+				pcl::copyPointCloud(*process_cloud_ptr,indices,
 					*segment_cloud_ptr);
-
-			int count = segment_cloud_ptr->size();
-			if(apply_mls_surface_smoothing(*segment_cloud_ptr,*segment_cloud_ptr,*segment_normal_ptr))
-			{
-				ROS_INFO_STREAM("Moving least squares smoothing applied successfully for cluster "<<i<<". Count at t0: "<<count
-						<<", Count at tf: "<<segment_cloud_ptr->size());
+				surface_clouds_.push_back(segment_cloud_ptr);
 			}
-			else
-			{
-				ROS_WARN_STREAM("Moving least squares smoothing failed for cluster "<<i<<", using original estimated normals");
-				pcl::copyPointCloud(*normals,clusters_indices[i],*segment_normal_ptr);
-			}
-
-			segment_cloud_ptr->header.frame_id = params_.frame_id;
-			surface_clouds_.push_back(segment_cloud_ptr);
-			segment_normals.push_back(segment_normal_ptr);
 		}
 
-		ROS_INFO_STREAM("Selected surface clusters (> "<<params_.rg_min_cluster_size<<" points ) found: "<<surface_clouds_.size());
+		// saving all ungrouped points
+		extract.setInputCloud(process_cloud_ptr);
+		extract.setIndices(inliers_ptr);
+		extract.setNegative(true);
+		extract.filter(*ungrouped_cloud_ptr);
+
+		ROS_INFO_STREAM("Total ungrouped points: "<<ungrouped_cloud_ptr->size());
+		ROS_INFO_STREAM("Valid surface clusters kept :"<<surface_clouds_.size());
+
 	}
 	else
 	{
 		ROS_ERROR_STREAM("Region growing failed");
 		return false;
 	}
+
+	//applying sac plane segmentation
+	for(int i =0;(i< surface_clouds_.size()) && ungrouped_cloud_ptr->size() >0 ; i++)
+	{
+
+		Cloud::Ptr segment_cloud_ptr = surface_clouds_[i];
+		int count = segment_cloud_ptr->size();
+		if(apply_sac_plane_segmentation(*ungrouped_cloud_ptr,*segment_cloud_ptr,*segment_cloud_ptr))
+		{
+
+			ROS_INFO_STREAM("SAC plane segmentation for cluster "<<i<<" completed with [ star:  "
+					<<count<<", end: "<<segment_cloud_ptr->size()<<" ] points");
+		}
+		else
+		{
+			ROS_ERROR_STREAM("SAC plane segmentation for cluster "<<i<<" failed");
+		}
+	}
+
+	// applying mls surface smoothing
+	for(int i =0;i< surface_clouds_.size(); i++)
+	{
+
+		Normals::Ptr segment_normal_ptr = Normals::Ptr(new Normals());
+		Cloud::Ptr segment_cloud_ptr = surface_clouds_[i];
+		int count = segment_cloud_ptr->size();
+		if(apply_mls_surface_smoothing(*segment_cloud_ptr,*segment_cloud_ptr,*segment_normal_ptr))
+		{
+			ROS_INFO_STREAM("Moving least squares smoothing for cluster "<<i<<" completed with [ star:  "
+					<<count<<", end: "<<segment_cloud_ptr->size()<<" ] points");
+		}
+		else
+		{
+			ROS_WARN_STREAM("Moving least squares smoothing failed for cluster "<<i<<", estimating normals");
+			apply_normal_estimation(*segment_cloud_ptr,*segment_normal_ptr);
+		}
+
+		segment_cloud_ptr->header.frame_id = params_.frame_id;
+		segment_normals.push_back(segment_normal_ptr);
+	}
+
+	ROS_INFO_STREAM("Selected surface clusters (> "<<params_.rg_min_cluster_size<<" points ) found: "<<surface_clouds_.size());
 
 	if(params_.ignore_largest_cluster && surface_clouds_.size() > 1)
 	{
@@ -491,6 +539,12 @@ bool SurfaceDetection::find_surfaces()
 
 bool SurfaceDetection::apply_statistical_filter(const Cloud& in,Cloud& out)
 {
+	if(params_.meanK ==0)
+	{
+		// skip
+		return true;
+	}
+
 	pcl::StatisticalOutlierRemoval<pcl::PointXYZ> filter;
 	Cloud::ConstPtr cloud_ptr = boost::make_shared<Cloud>(in);
 	filter.setInputCloud(cloud_ptr);
@@ -544,6 +598,49 @@ bool SurfaceDetection::apply_region_growing_segmentation(const Cloud& in,
 	return clusters.size()>0;
 }
 
+bool SurfaceDetection::apply_sac_plane_segmentation(const Cloud& in,
+		const Cloud& plane_estimate,Cloud& out)
+{
+	pcl::ModelCoefficients::Ptr coeff_ptr(new pcl::ModelCoefficients());
+	pcl::PointIndices::Ptr plane_inliers_ptr(new pcl::PointIndices());
+	pcl::SACSegmentation<pcl::PointXYZ> seg;
+
+	// setting segmentation options
+	seg.setOptimizeCoefficients(true);
+	seg.setModelType(pcl::SACMODEL_PLANE);
+	seg.setMethodType(pcl::SAC_RANSAC);
+	seg.setMaxIterations(100);
+	seg.setDistanceThreshold(2*params_.voxel_leafsize);
+
+	// finding coefficients
+	seg.setInputCloud(plane_estimate.makeShared());
+	seg.segment(*plane_inliers_ptr,*coeff_ptr);
+
+	// using coefficients to filter out plane
+	pcl::SampleConsensusModelPlane<pcl::PointXYZ> model_plane(in.makeShared());
+	Eigen::VectorXf model_coeff(4);
+
+	if(plane_inliers_ptr->indices.size()> 0)
+	{
+		std::vector<int> final_inliers;
+		Cloud::Ptr inlier_points_ptr = Cloud::Ptr(new Cloud());
+		model_plane.setInputCloud(in.makeShared());
+		model_coeff<< coeff_ptr->values[0],coeff_ptr->values[1],coeff_ptr->values[2],coeff_ptr->values[3];
+		model_plane.selectWithinDistance(model_coeff,0.5f*params_.voxel_leafsize,final_inliers);
+		pcl::copyPointCloud(in,final_inliers,*inlier_points_ptr);
+
+		// adding to output cloud
+		out += *inlier_points_ptr;
+
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+
+}
+
 bool SurfaceDetection::apply_fast_triangulation(const Cloud& in,
 		const Normals& normals,
 		pcl::PolygonMesh& mesh)
@@ -556,10 +653,11 @@ bool SurfaceDetection::apply_fast_triangulation(const Cloud& in,
 	pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals(
 			new pcl::PointCloud<pcl::PointNormal>());
 	pcl::concatenateFields(in,normals,*cloud_with_normals);
-	tree->setInputCloud(cloud_with_normals);
+	//tree->setInputCloud(cloud_with_normals);
 
 	// triangulation
 	pcl::GreedyProjectionTriangulation<pcl::PointNormal> gt;
+	gt.setConsistentVertexOrdering(true);
 	gt.setSearchRadius(params_.tr_search_radius);
 	gt.setMu(params_.tr_mu);
 	gt.setMaximumNearestNeighbors(params_.tr_max_nearest_neighbors);
@@ -580,15 +678,13 @@ bool SurfaceDetection::apply_voxel_downsampling(Cloud& cloud)
 {
 	if(params_.voxel_leafsize > 0.000001f)
 	{
-		// converting to pcl2 type
-		 pcl::PCLPointCloud2::Ptr pcl_cloud_ptr(new pcl::PCLPointCloud2());
-		 pcl::toPCLPointCloud2(cloud,*pcl_cloud_ptr);
-
-		pcl::VoxelGrid<pcl::PCLPointCloud2> vg;
-		vg.setInputCloud(pcl_cloud_ptr);
+		pcl::VoxelGrid<pcl::PointXYZ> vg;
+		double min, max;
+		vg.getFilterLimits(min,max);
+		ROS_INFO_STREAM("Voxel downsampling with filter limits min: "<<min<<", max: "<<max);
+		vg.setInputCloud(cloud.makeShared());
 		vg.setLeafSize(params_.voxel_leafsize,params_.voxel_leafsize,params_.voxel_leafsize);
-		vg.filter(*pcl_cloud_ptr);
-		pcl::fromPCLPointCloud2(*pcl_cloud_ptr,cloud);
+		vg.filter(cloud);
 	}
 	else
 	{

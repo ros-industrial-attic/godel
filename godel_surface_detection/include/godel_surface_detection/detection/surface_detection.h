@@ -162,6 +162,8 @@ protected:
 	bool apply_region_growing_segmentation(const Cloud& in,
 			const Normals& normals,
 			std::vector<pcl::PointIndices>& clusters,CloudRGB& colored_cloud);
+	bool apply_sac_plane_segmentation(const Cloud& in,
+			const Cloud& plane_estimate,Cloud& out);
 	bool apply_normal_estimation(const Cloud &cloud,Normals& normals);
 	bool apply_fast_triangulation(const Cloud& in,
 			const Normals& normals,
