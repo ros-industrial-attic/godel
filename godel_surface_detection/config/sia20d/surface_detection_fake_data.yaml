@@ -15,7 +15,7 @@ surface_detection:
   tr_min_angle: 0.1744
   tr_max_angle: 2.093
   tr_normal_consistency: true
-  voxel_leaf: 0.005
+  voxel_leaf: 0.004
   occupancy_threshold: 0.5
   mls_upsampling_radius: 0.01
   mls_point_density: 100
