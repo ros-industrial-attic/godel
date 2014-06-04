@@ -35,6 +35,7 @@ add_service_files(
    SelectSurface.srv
    SurfaceDetection.srv
    TrajectoryPlanning.srv
+	 SurfaceBlendingParameters.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
