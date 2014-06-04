@@ -13,6 +13,7 @@
 		<node name="surface_detection_service" pkg="godel_surface_detection" type="surface_detection_service" output="screen">
 			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/robot_scan.yaml"/>
 			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/surface_detection_live_data.yaml"/>
+			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/blending_plan.yaml"/>
 			<param name="publish_region_point_cloud" value="True"/>
 		</node>
 
@@ -29,6 +30,7 @@
 			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/robot_scan.yaml"/>
 			<rosparam if="$(arg fake_data)"  command="load" file="$(find godel_surface_detection)/config/sia20d/surface_detection_fake_data.yaml"/>
 			<rosparam unless="$(arg fake_data)"  command="load" file="$(find godel_surface_detection)/config/sia20d/surface_detection_recorded_data.yaml"/>
+			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/blending_plan.yaml"/>
 			<param name="publish_region_point_cloud" value="True"/>
 		</node>
 
