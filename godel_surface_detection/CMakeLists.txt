@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   moveit_ros_planning_interface
 	tf
 	tf_conversions
+	godel_process_path_generation
 	godel_msgs
 )
 find_package(PCL 1.7 REQUIRED COMPONENTS common io)
@@ -31,7 +32,7 @@ set(godel_surface_detection_INCLUDE_DIRECTORIES
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS pcl_msgs pcl_ros roscpp sensor_msgs interactive_markers octomap_ros tf tf_conversions godel_msgs
+  CATKIN_DEPENDS pcl_msgs pcl_ros roscpp sensor_msgs interactive_markers octomap_ros tf tf_conversions godel_process_path_generation godel_msgs
   DEPENDS PCL
 )
 
