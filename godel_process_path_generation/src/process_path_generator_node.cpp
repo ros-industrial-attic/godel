@@ -33,6 +33,7 @@
 #include "godel_process_path_generation/process_path.h"
 #include "godel_process_path_generation/polygon_utils.h"
 
+const std::string OFFSET_POLYGON_SERVICE="offset_polygon";
 
 double dist(const Eigen::Affine3d &from, const Eigen::Affine3d &to)
 {
@@ -162,7 +163,14 @@ int main(int argc, char **argv)
 
   ros::init(argc, argv, "process_path_generator");
   ros::NodeHandle nh;
-  ros::ServiceClientPtr boundary_offset_client(new ros::ServiceClient(nh.serviceClient<godel_msgs::OffsetBoundary>("offset_polygon")));
+
+  // waiting for service
+  while(!ros::service::waitForService(OFFSET_POLYGON_SERVICE,ros::Duration(10.0f)))
+  {
+	  ROS_WARN_STREAM("Connecting to service '"<<OFFSET_POLYGON_SERVICE<<"'");
+  }
+
+  ros::ServiceClientPtr boundary_offset_client(new ros::ServiceClient(nh.serviceClient<godel_msgs::OffsetBoundary>(OFFSET_POLYGON_SERVICE)));
   ros::ServiceServer visualize_path_generator = nh.advertiseService<godel_process_path_generation::VisualizeBlendingPlanRequest,
                                                                     godel_process_path_generation::VisualizeBlendingPlanResponse>
                                                 ("visualize_path_generator", boost::bind(pathGenVisual, _1, _2, boundary_offset_client));

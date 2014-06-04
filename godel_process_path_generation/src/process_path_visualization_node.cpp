@@ -171,6 +171,12 @@ int main(int argc, char **argv)
     return -1;
   }
 
+  // waiting for service
+  while(!path_generator_client.waitForExistence(ros::Duration(10)))
+  {
+	  ROS_WARN_STREAM("Connecting to Service "<<path_generator_client.getService());
+  }
+
   // Call service to offset boundaries
   ROS_INFO("Calling path planning service.");
   if (path_generator_client.call(bp_req, bp_res))
