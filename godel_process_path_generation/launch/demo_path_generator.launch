@@ -1,0 +1,8 @@
+<?xml version="1.0"?>
+<launch>
+		<node name="process_path_generator_node" pkg="godel_process_path_generation" type="process_path_generator_node" output="screen"/>
+    <node name="process_visualization_node" pkg="godel_process_path_generation" type="process_visualization_node" args="--demo" output="screen"/>
+    <node name="polygon_offset_node" pkg="godel_polygon_offset" type="godel_polygon_offset_node" output="screen"/>
+    <node name="rviz_godel_process_visualization" pkg="rviz" type="rviz" 
+        args="-d $(find godel_process_path_generation)/test/path_visualization.rviz" output="screen"/> 
+</launch>
