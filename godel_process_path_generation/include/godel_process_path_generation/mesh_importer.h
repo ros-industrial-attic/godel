@@ -30,6 +30,7 @@
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <Eigen/Geometry>
+#include <eigen_conversions/eigen_msg.h>
 #include "godel_process_path_generation/polygon_pts.hpp"
 
 
@@ -58,6 +59,10 @@ public:
     return boundaries_;
   }
 
+  void getPose(geometry_msgs::Pose& pose)
+  {
+	  tf::poseEigenToMsg(plane_frame_,pose);
+  }
 
   bool verbose_;        /**< @brief Flag to print additional information */
 
