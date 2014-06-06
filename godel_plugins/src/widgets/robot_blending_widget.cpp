@@ -41,6 +41,7 @@ void RobotBlendingWidget::init()
 	ros::NodeHandle nh("");
 	surface_detection_client_ = nh.serviceClient<godel_msgs::SurfaceDetection>(SURFACE_DETECTION_SERVICE);
 	select_surface_client_ = nh.serviceClient<godel_msgs::SelectSurface>(SELECT_SURFACE_SERVICE);
+	process_plan_client_ = nh.serviceClient<godel_msgs::ProcessPlanning>(PROCESS_PATH_SERVICE);
 	selected_surfaces_subs_ = nh.subscribe(SELECTED_SURFACES_CHANGED_TOPIC,1,
 			&RobotBlendingWidget::selected_surface_changed_callback,this);
 
@@ -66,6 +67,7 @@ void RobotBlendingWidget::init()
 	connect(ui_.PushButtonHideAllSurfaces,SIGNAL(clicked()),this,SLOT(hide_all_handler()));
 	connect(ui_.PushButtonShowAllSurfaces,SIGNAL(clicked()),this,SLOT(show_all_handler()));
 	connect(ui_.PushButtonPreviewPath,SIGNAL(clicked()),this,SLOT(preview_path_handler()));
+	connect(ui_.PushButtonGeneratePaths,SIGNAL(clicked()),this,SLOT(generate_process_path_handler()));
 	connect(this,SIGNAL(selection_changed()),this,SLOT(selection_changed_handler()));
 	connect(this,SIGNAL(surface_detection_started()),this,SLOT(surface_detection_started_handler()));
 	connect(this,SIGNAL(surface_detection_completed()),this,SLOT(surface_detection_completed_handler()));
@@ -403,6 +405,15 @@ void RobotBlendingWidget::connect_completed_handler()
 {
 	ui_.LineEditOperationStatus->setText("READY");
 	ui_.TabWidget->setEnabled(true);
+}
+
+void RobotBlendingWidget::generate_process_path_handler()
+{
+	godel_msgs::ProcessPlanning process_plan;
+	process_plan.request.use_default_parameters = true;
+	process_plan.request.action = process_plan.request.GENERATE_MOTION_PLAN_AND_PREVIEW;
+	process_plan_client_.call(process_plan);
+	ROS_INFO_STREAM("process plan request sent");
 }
 
 void RobotBlendingWidget::save_robot_scan_parameters()

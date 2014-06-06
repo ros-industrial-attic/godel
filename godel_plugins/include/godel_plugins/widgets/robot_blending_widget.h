@@ -20,6 +20,7 @@
 #include <godel_msgs/SurfaceDetection.h>
 #include <godel_msgs/SelectSurface.h>
 #include <godel_msgs/SelectedSurfacesChanged.h>
+#include <godel_msgs/ProcessPlanning.h>
 #include <tf/transform_datatypes.h>
 #include <ros/ros.h>
 #include <geometry_msgs/Pose.h>
@@ -49,6 +50,7 @@ namespace widgets {
 
 const std::string SURFACE_DETECTION_SERVICE = "surface_detection";
 const std::string SELECT_SURFACE_SERVICE = "select_surface";
+const std::string PROCESS_PATH_SERVICE="process_path";
 const std::string SELECTED_SURFACES_CHANGED_TOPIC = "selected_surfaces_changed";
 
 
@@ -203,6 +205,7 @@ protected Q_SLOTS:
 	void surface_detection_completed_handler();
 	void connect_started_handler();
 	void connect_completed_handler();
+	void generate_process_path_handler();
 
 protected:
 	Ui::RobotBlendingWidget ui_;
@@ -211,7 +214,9 @@ protected:
 
 	ros::ServiceClient surface_detection_client_;
 	ros::ServiceClient select_surface_client_;
+	ros::ServiceClient process_plan_client_;
 	ros::Subscriber selected_surfaces_subs_;
+
 	std::string param_ns_;
 	godel_msgs::RobotScanParameters robot_scan_parameters_;
 	godel_msgs::SurfaceDetectionParameters surf_detect_parameters_;
