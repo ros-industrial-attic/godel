@@ -46,6 +46,10 @@
 		</node>
 	</group>
 
+	<!-- process path -->
+	<node name="process_path_generator_node" pkg="godel_process_path_generation" type="process_path_generator_node" output="screen"/>
+  <node name="polygon_offset_node" pkg="godel_polygon_offset" type="godel_polygon_offset_node" output="screen"/>
+
 	<!-- rviz blending plugin -->
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_surface_detection)/rviz/robot_blending.rviz" output="screen" launch-prefix="nice"/>
 
