@@ -62,7 +62,8 @@ class SurfaceDetectionService
 {
 public:
 	SurfaceDetectionService():
-		publish_region_point_cloud_(false)
+		publish_region_point_cloud_(false),
+	        mesh_importer_(true) /*True-turn on verbose messages*/
 	{
 
 	}
