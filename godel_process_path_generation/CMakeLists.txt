@@ -12,6 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
              message_generation
              genmsg
              trajectory_msgs
+						 eigen_conversions
 )
 
 find_package(Boost REQUIRED COMPONENTS system)
@@ -27,7 +28,7 @@ generate_messages(DEPENDENCIES godel_msgs visualization_msgs trajectory_msgs)   
 
 catkin_package(
                INCLUDE_DIRS include
-#  LIBRARIES godel_process_path_generation
+   LIBRARIES mesh_importer polygon_utils
 #  CATKIN_DEPENDS other_catkin_pkg
 #  DEPENDS system_lib
 )
