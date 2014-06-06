@@ -27,16 +27,36 @@
 #include <godel_process_path_generation/utils.h>
 #include <pcl/console/parse.h>
 
-
+// topics and services
 const std::string SURFACE_DETECTION_SERVICE = "surface_detection";
 const std::string SURFACE_BLENDING_PARAMETERS_SERVICE = "surface_blending_parameters";
 const std::string SELECT_SURFACE_SERVICE = "select_surface";
 const std::string PROCESS_PATH_SERVICE="process_path";
 const std::string VISUALIZE_BLENDING_PATH_SERVICE = "visualize_path_generator";
+const std::string TOOL_PATH_PREVIEW_TOPIC = "tool_path_preview";
 const std::string SELECTED_SURFACES_CHANGED_TOPIC = "selected_surfaces_changed";
 const std::string ROBOT_SCAN_PATH_PREVIEW_TOPIC = "robot_scan_path_preview";
 const std::string PUBLISH_REGION_POINT_CLOUD = "publish_region_point_cloud";
 const std::string REGION_POINT_CLOUD_TOPIC="region_colored_cloud";
+
+// marker namespaces
+const std::string BOUNDARY_NAMESPACE = "process_boundary";
+const std::string PATH_NAMESPACE = "process_path";
+const std::string TOOL_NAMESPACE = "process_tool";
+
+// tool visual properties
+const float TOOL_DIA = .050;
+const float TOOL_THK = .005;
+const float TOOL_SHAFT_DIA = .006;
+const float TOOL_SHAFT_LEN = .045;
+const std::string TOOL_FRAME_ID = "process_tool";
+
+struct ProcessPathDetails
+{
+	visualization_msgs::MarkerArray process_boundaries_;
+	visualization_msgs::MarkerArray process_paths_;
+	visualization_msgs::MarkerArray tool_parts_;
+};
 
 class SurfaceDetectionService
 {
@@ -114,10 +134,18 @@ public:
 		select_surface_server_ = nh.advertiseService(SELECT_SURFACE_SERVICE,
 				&SurfaceDetectionService::select_surface_server_callback,this);
 
+		process_path_server_ = nh.advertiseService(PROCESS_PATH_SERVICE,
+				&SurfaceDetectionService::process_path_server_callback,this);
+
 		// publishers
 		selected_surf_changed_pub_ = nh.advertise<godel_msgs::SelectedSurfacesChanged>(SELECTED_SURFACES_CHANGED_TOPIC,1);
 
 		point_cloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>(REGION_POINT_CLOUD_TOPIC,1);
+
+		tool_path_markers_pub_ = nh.advertise<visualization_msgs::MarkerArray>(TOOL_PATH_PREVIEW_TOPIC,1);
+
+		// timers
+		tool_animation_timer_ = nh.createTimer(ros::Duration(0.1f),&SurfaceDetectionService::tool_animation_timer_callback,this,true,false);
 
 		return true;
 	}
@@ -128,16 +156,15 @@ public:
 
 
 		ros::Duration loop_duration(1.0f);
-		while(ros::ok() && publish_region_point_cloud_)
+		while(ros::ok())
 		{
-			if(!region_cloud_msg_.data.empty())
+			if(publish_region_point_cloud_ && !region_cloud_msg_.data.empty())
 			{
 				point_cloud_pub_.publish(region_cloud_msg_);
 			}
+
 			loop_duration.sleep();
 		}
-
-
 	}
 
 protected:
@@ -231,6 +258,212 @@ protected:
 		return succeeded;
 	}
 
+	bool generate_process_plan(godel_process_path_generation::VisualizeBlendingPlan &process_plan)
+	{
+		// creating color structures for the different parts for the process path
+		std_msgs::ColorRGBA yellow;
+		yellow.a = 1.f;
+		yellow.b = 0.f;
+		yellow.r = yellow.g = 1.f;
+
+		// saving parameters
+		blending_plan_params_ = process_plan.request.params;
+
+		// clear previous results
+		process_path_results_.process_boundaries_.markers.clear();
+		process_path_results_.process_paths_.markers.clear();
+		process_path_results_.tool_parts_.markers.clear();
+
+		// generating boundaries
+		std::vector<pcl::PolygonMesh> meshes;
+		surface_server_.get_selected_surfaces(meshes);
+		std::vector<geometry_msgs::Polygon> &boundaries = process_plan.request.surface.boundaries;
+
+		int boundaries_found = 0; // successful computations counter
+		int marker_counter = 0;
+		for(int i =0;i <meshes.size();i++)
+		{
+			// markers for saving individual mesh results
+			visualization_msgs::MarkerArray boundary_markers;
+			geometry_msgs::Pose boundary_pose;
+			visualization_msgs::Marker path_marker;
+			const pcl::PolygonMesh &mesh = meshes[i];
+			if(!mesh_importer_.calculateBoundaryData(mesh))
+			{
+				// add boundaries to request
+				boundaries.clear();
+				godel_process_path::utils::translations::godelToGeometryMsgs(boundaries,mesh_importer_.getBoundaries());
+				tf::poseTFToMsg(tf::Transform::getIdentity(),process_plan.request.surface.pose);
+
+				// calling visualization service and saving results
+				if(visualize_process_path_client_.call(process_plan))
+				{
+					// create boundaries markers
+					godel_process_path::utils::translations::godelToVisualizationMsgs(boundary_markers,mesh_importer_.getBoundaries()
+							,yellow);
+					mesh_importer_.getPose(boundary_pose);
+
+					// setting boundary marker properties
+					for(int j =0; j < boundary_markers.markers.size();j++)
+					{
+						visualization_msgs::Marker &m = boundary_markers.markers[j];
+						m.header.frame_id = meshes[i].header.frame_id;
+						m.id = marker_counter;
+						m.lifetime = ros::Duration(0);
+						m.ns = BOUNDARY_NAMESPACE;
+						m.pose = boundary_pose;
+
+						marker_counter++;
+					}
+
+					// create path marker
+					path_marker = process_plan.response.path;
+					path_marker.id = marker_counter;
+					path_marker.lifetime = ros::Duration(0);
+					path_marker.ns = PATH_NAMESPACE;
+					path_marker.pose = boundary_pose;
+
+					// saving into results structure;
+					process_path_results_.process_boundaries_.markers.insert(process_path_results_.process_boundaries_.markers.end(),
+							boundary_markers.markers.begin(),boundary_markers.markers.end());
+					process_path_results_.process_paths_.markers.push_back(path_marker);
+
+					boundaries_found++;
+					marker_counter++;
+				}
+			}
+		}
+
+
+		return boundaries_found >0;
+	}
+
+	bool animate_tool_path()
+	{
+		bool succeeded = !process_path_results_.process_paths_.markers.empty();
+		stop_tool_animation_ = true;
+		ros::Duration(0.5f).sleep();
+
+		if(succeeded)
+		{
+
+			ROS_INFO_STREAM("tool path animation started");
+			tool_animation_timer_.start();
+		}
+		else
+		{
+			ROS_WARN_STREAM("No tool path markers found, exiting animation routine");
+		}
+
+		return succeeded;
+	}
+
+	void tool_animation_timer_callback(const ros::TimerEvent& event)
+	{
+		stop_tool_animation_ = false;
+
+		// path progress color
+		std_msgs::ColorRGBA green;
+		green.a = 1.f;
+		green.g = 1.f;
+		green.r = green.b = 0.f;
+
+		// marker array for all markers
+		visualization_msgs::MarkerArray process_markers ;
+
+		// tool marker at arbitrary position
+		visualization_msgs::MarkerArray tool_markers = create_tool_markers(geometry_msgs::Point(),geometry_msgs::Pose(),"");
+
+
+		// adding markers
+		int num_path_markers = process_path_results_.process_paths_.markers.size();
+		int num_tool_markers = tool_markers.markers.size();
+		process_markers.markers.insert(process_markers.markers.end(),process_path_results_.process_paths_.markers.begin(),
+				process_path_results_.process_paths_.markers.end());
+		process_markers.markers.insert(process_markers.markers.end(),process_path_results_.process_boundaries_.markers.begin(),
+						process_path_results_.process_boundaries_.markers.end());
+		process_markers.markers.insert(process_markers.markers.end(),tool_markers.markers.begin(),
+				tool_markers.markers.end());
+
+		ros::Duration loop_pause(0.2f);
+		for(int i = 0;i < process_path_results_.process_paths_.markers.size();i++)
+		{
+			visualization_msgs::Marker &path_marker = process_markers.markers[i];
+
+			for(int j =0;j < path_marker.points.size();j++)
+			{
+				if(stop_tool_animation_)
+				{
+					ROS_WARN_STREAM("tool path animation completed");
+					return;
+				}
+
+				// updating path color at current point
+				path_marker.colors[j] = green;
+
+				// updating tool markers
+				tool_markers = create_tool_markers(path_marker.points[j],path_marker.pose,path_marker.header.frame_id);
+				int start_tool_marker_index = process_markers.markers.size() - tool_markers.markers.size();
+
+				process_markers.markers.insert(process_markers.markers.begin()+start_tool_marker_index,
+						tool_markers.markers.begin(),tool_markers.markers.end());
+
+				// publish marker array
+				tool_path_markers_pub_.publish(process_markers);
+
+				loop_pause.sleep();
+			}
+		}
+
+		ROS_INFO_STREAM("tool path animation completed");
+	}
+
+	visualization_msgs::MarkerArray create_tool_markers(const geometry_msgs::Point &pos, const geometry_msgs::Pose &pose,std::string frame_id)
+	{
+		visualization_msgs::MarkerArray tool;
+		tool.markers.resize(2);
+		visualization_msgs::Marker &disk = tool.markers.at(0);
+		visualization_msgs::Marker &shaft = tool.markers.at(1);
+
+		std_msgs::ColorRGBA blue;
+		blue.r = 0.;
+		blue.g = .1;
+		blue.b = 1.;
+		blue.a = 0.7;
+
+		disk.action = visualization_msgs::Marker::ADD;
+		disk.color = blue;
+		disk.frame_locked = true;
+		disk.header.frame_id = frame_id;
+		disk.header.seq = 0;
+		disk.header.stamp = ros::Time::now();
+		disk.lifetime = ros::Duration(0.);
+		disk.pose = pose;
+		disk.ns = TOOL_NAMESPACE;
+		// disk/shaft position filled out below
+		disk.type = visualization_msgs::Marker::CYLINDER;
+		shaft = disk;
+
+		tf::Transform marker_pose;
+		tf::poseMsgToTF(pose, marker_pose);
+
+		disk.id = 0;
+		tf::Vector3 marker_pos(pos.x, pos.y, pos.z + .5*TOOL_THK);
+		marker_pos = marker_pose * marker_pos;
+		tf::pointTFToMsg(marker_pos, disk.pose.position);
+		disk.scale.x = disk.scale.y = TOOL_DIA;
+		disk.scale.z = TOOL_THK;
+
+		shaft.id = 1;
+		marker_pos = tf::Vector3(pos.x, pos.y, pos.z + TOOL_THK + 0.5*TOOL_SHAFT_LEN);
+		marker_pos = marker_pose * marker_pos;
+		tf::pointTFToMsg(marker_pos, shaft.pose.position);
+		shaft.scale.x = shaft.scale.y = TOOL_SHAFT_DIA;
+		shaft.scale.z = TOOL_SHAFT_LEN;
+
+		return tool;
+	}
+
 	bool surface_detection_server_callback(godel_msgs::SurfaceDetection::Request &req,
 			godel_msgs::SurfaceDetection::Response &res)
 	{
@@ -255,12 +488,10 @@ protected:
 			if(req.use_default_parameters)
 			{
 				robot_scan_.params_ = default_robot_scan_params__;
-				//surface_detection_.params_ = default_surf_detection_params_;
 			}
 			else
 			{
 				robot_scan_.params_ = req.robot_scan;
-				//surface_detection_.params_ = req.surface_detection;
 			}
 
 			robot_scan_.publish_scan_poses(ROBOT_SCAN_PATH_PREVIEW_TOPIC);
@@ -383,7 +614,40 @@ protected:
 
 	bool process_path_server_callback(godel_msgs::ProcessPlanning::Request &req, godel_msgs::ProcessPlanning::Response &res)
 	{
-		ROS_WARN_STREAM("service call not implemented");
+		godel_process_path_generation::VisualizeBlendingPlan process_plan;
+		process_plan.request.params = req.use_default_parameters ? default_blending_plan_params_: req.params;
+		switch(req.action)
+		{
+			case req.GENERATE_MOTION_PLAN:
+				res.succeeded = generate_process_plan(process_plan);
+				break;
+
+			case req.GENERATE_MOTION_PLAN_AND_PREVIEW:
+
+				res.succeeded = generate_process_plan(process_plan) && animate_tool_path();
+				break;
+
+			case req.PREVIEW_TOOL_PATH:
+
+				res.succeeded = animate_tool_path();
+				break;
+
+			case req.PREVIEW_MOTION_PLAN:
+
+				res.succeeded = false;
+				break;
+
+			case req.EXECUTE_MOTION_PLAN:
+
+				res.succeeded = false;
+				break;
+
+			default:
+
+				ROS_ERROR_STREAM("Unknown action code '"<<req.action<<"' request");
+				break;
+		}
+
 		res.succeeded = false;
 		return true;
 	}
@@ -419,6 +683,12 @@ protected:
 	ros::ServiceServer surf_blend_parameters_server_;
 	ros::ServiceClient visualize_process_path_client_;
 	ros::Publisher selected_surf_changed_pub_;
+	ros::Publisher point_cloud_pub_;
+	ros::Publisher tool_path_markers_pub_;
+
+	// timers
+	ros::Timer tool_animation_timer_;
+	bool stop_tool_animation_;
 
 	// robot scan instance
 	godel_surface_detection::scan::RobotScan robot_scan_;
@@ -432,15 +702,16 @@ protected:
 	// mesh importer for generating surface boundaries
 	godel_process_path::MeshImporter mesh_importer_;
 
-	// cloud publisher
-	ros::Publisher point_cloud_pub_;
 
 	// parameters
 	godel_msgs::RobotScanParameters default_robot_scan_params__;
 	godel_msgs::SurfaceDetectionParameters default_surf_detection_params_;
 	godel_msgs::BlendingPlanParameters default_blending_plan_params_;
 	godel_msgs::BlendingPlanParameters blending_plan_params_;
+
+	// resutls
 	godel_msgs::SurfaceDetection::Response latest_surface_detection_results_;
+	ProcessPathDetails process_path_results_;
 
 	// parameters
 	bool publish_region_point_cloud_;
