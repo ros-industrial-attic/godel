@@ -6,7 +6,7 @@ Panels:
       Expanded:
         - /RobotModel1/Links1
         - /RobotModel1/Links1/asus_frame1
-        - /PointCloud22
+        - /MarkerArray1
       Splitter Ratio: 0.5
     Tree Height: 186
   - Class: rviz/Selection
@@ -301,6 +301,14 @@ Visualization Manager:
       Use Fixed Frame: true
       Use rainbow: true
       Value: false
+    - Class: rviz/MarkerArray
+      Enabled: true
+      Marker Topic: /tool_path_preview
+      Name: MarkerArray
+      Namespaces:
+        {}
+      Queue Size: 100
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
