@@ -524,16 +524,26 @@ bool SurfaceDetection::find_surfaces()
 	{
 		pcl::PolygonMesh mesh;
 		visualization_msgs::Marker marker;
-		apply_fast_triangulation(*surface_clouds_[i],*segment_normals[i],mesh);
-		mesh_to_marker(mesh,marker);
 
-		// saving other properties
-		marker.header.frame_id = mesh.header.frame_id = surface_clouds_[i]->header.frame_id;
-		marker.id = i;
-		marker.color.a = params_.marker_alpha;
-		mesh_markers_.markers.push_back(marker);
-		meshes_.push_back(mesh);
+		if(apply_fast_triangulation(*surface_clouds_[i],*segment_normals[i],mesh))
+		{
+			mesh_to_marker(mesh,marker);
+
+			// saving other properties
+			marker.header.frame_id = mesh.header.frame_id = surface_clouds_[i]->header.frame_id;
+			marker.id = i;
+			marker.color.a = params_.marker_alpha;
+			mesh_markers_.markers.push_back(marker);
+			meshes_.push_back(mesh);
+
+			ROS_INFO_STREAM("Triangulation for surface "<<i<<" completed");
+		}
+		else
+		{
+			ROS_WARN_STREAM("Triangulation for surface "<<i<<" failed");
+		}
 	}
+
 	ROS_INFO_STREAM("Triangulation of surfaces completed");
 
 	return true;
