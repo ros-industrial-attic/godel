@@ -351,7 +351,7 @@ p, li { white-space: pre-wrap; }
       </rect>
      </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab_1">
       <attribute name="title">
@@ -643,6 +643,25 @@ p, li { white-space: pre-wrap; }
         </property>
         <property name="text">
          <string>Show All</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="PushButtonGeneratePaths">
+        <property name="geometry">
+         <rect>
+          <x>240</x>
+          <y>190</y>
+          <width>91</width>
+          <height>51</height>
+         </rect>
+        </property>
+        <property name="font">
+         <font>
+          <pointsize>12</pointsize>
+         </font>
+        </property>
+        <property name="text">
+         <string>Generate
+ Paths</string>
         </property>
        </widget>
       </widget>
