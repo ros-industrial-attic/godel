@@ -289,7 +289,7 @@ protected:
 			geometry_msgs::Pose boundary_pose;
 			visualization_msgs::Marker path_marker;
 			const pcl::PolygonMesh &mesh = meshes[i];
-			if(!mesh_importer_.calculateBoundaryData(mesh))
+			if(mesh_importer_.calculateBoundaryData(mesh))
 			{
 				// add boundaries to request
 				boundaries.clear();
