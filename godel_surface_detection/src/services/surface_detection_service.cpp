@@ -143,7 +143,7 @@ public:
 
 		point_cloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>(REGION_POINT_CLOUD_TOPIC,1);
 
-		tool_path_markers_pub_ = nh.advertise<visualization_msgs::MarkerArray>(TOOL_PATH_PREVIEW_TOPIC,1);
+		tool_path_markers_pub_ = nh.advertise<visualization_msgs::MarkerArray>(TOOL_PATH_PREVIEW_TOPIC,1,true);
 
 		// timers
 		tool_animation_timer_ = nh.createTimer(ros::Duration(0.1f),&SurfaceDetectionService::tool_animation_timer_callback,this,true,false);
@@ -291,6 +291,28 @@ protected:
 			const pcl::PolygonMesh &mesh = meshes[i];
 			if(mesh_importer_.calculateBoundaryData(mesh))
 			{
+				// create boundaries markers
+				godel_process_path::utils::translations::godelToVisualizationMsgs(boundary_markers,mesh_importer_.getBoundaries()
+						,yellow,.0005);
+				mesh_importer_.getPose(boundary_pose);
+
+				// setting boundary marker properties
+				for(int j =0; j < boundary_markers.markers.size();j++)
+				{
+					visualization_msgs::Marker &m = boundary_markers.markers[j];
+					m.header.frame_id = mesh.header.frame_id;
+					m.id = marker_counter;
+					m.lifetime = ros::Duration(0);
+					m.ns = BOUNDARY_NAMESPACE;
+					m.pose = boundary_pose;
+					m.points.push_back(m.points.front());	// Close polygon loop for visualization
+					m.colors.push_back(m.colors.front());
+
+					marker_counter++;
+				}
+				tool_path_markers_pub_.publish(boundary_markers);	// Pre-publish boundaries before completing offset
+				godel_process_path::utils::geometry::d
+
 				// add boundaries to request
 				boundaries.clear();
 				godel_process_path::utils::translations::godelToGeometryMsgs(boundaries,mesh_importer_.getBoundaries());
@@ -299,23 +321,6 @@ protected:
 				// calling visualization service and saving results
 				if(visualize_process_path_client_.call(process_plan))
 				{
-					// create boundaries markers
-					godel_process_path::utils::translations::godelToVisualizationMsgs(boundary_markers,mesh_importer_.getBoundaries()
-							,yellow);
-					mesh_importer_.getPose(boundary_pose);
-
-					// setting boundary marker properties
-					for(int j =0; j < boundary_markers.markers.size();j++)
-					{
-						visualization_msgs::Marker &m = boundary_markers.markers[j];
-						m.header.frame_id = meshes[i].header.frame_id;
-						m.id = marker_counter;
-						m.lifetime = ros::Duration(0);
-						m.ns = BOUNDARY_NAMESPACE;
-						m.pose = boundary_pose;
-
-						marker_counter++;
-					}
 
 					// create path marker
 					path_marker = process_plan.response.path;
@@ -387,7 +392,7 @@ protected:
 				tool_markers.markers.end());
 
 		ros::Duration loop_pause(0.2f);
-		for(int i = 0;i < process_path_results_.process_paths_.markers.size();i++)
+		for(int i = 0;i < num_path_markers;i++)
 		{
 			visualization_msgs::Marker &path_marker = process_markers.markers[i];
 
