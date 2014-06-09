@@ -62,7 +62,8 @@ class SurfaceDetectionService
 {
 public:
 	SurfaceDetectionService():
-		publish_region_point_cloud_(false)
+		publish_region_point_cloud_(false),
+	        mesh_importer_(true) /*True-turn on verbose messages*/
 	{
 
 	}
@@ -288,7 +289,7 @@ protected:
 			geometry_msgs::Pose boundary_pose;
 			visualization_msgs::Marker path_marker;
 			const pcl::PolygonMesh &mesh = meshes[i];
-			if(!mesh_importer_.calculateBoundaryData(mesh))
+			if(mesh_importer_.calculateBoundaryData(mesh))
 			{
 				// add boundaries to request
 				boundaries.clear();

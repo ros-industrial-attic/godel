@@ -69,6 +69,10 @@ bool MeshImporter::calculateBoundaryData(const pcl::PolygonMesh &input_mesh)
   Eigen::Vector4d centroid4;
   pcl::compute3DCentroid(*points, centroid4);
   computeLocalPlaneFrame(hplane, centroid4.head(3));
+  if (verbose_)
+  {
+    ROS_INFO_STREAM("Local plane calculated with normal " << hplane.coeffs().transpose() << " and origin " << centroid4.transpose());
+  }
 
 
   /* Use pcl::geometry::TriangleMesh to extract boundaries.
@@ -104,7 +108,7 @@ bool MeshImporter::calculateBoundaryData(const pcl::PolygonMesh &input_mesh)
   pcl_godel::geometry::getBoundBoundaryHalfEdges(mesh, boundary_he_indices);
 
   // For each boundary, project boundary points onto plane and add to boundaries_
-  Eigen::Affine3d plane_inverse = plane_frame_.inverse();
+  Eigen::Affine3d plane_inverse = plane_frame_.inverse();       // Pre-compute inverse
   for (std::vector<Mesh::HalfEdgeIndices>::const_iterator boundary = boundary_he_indices.begin(), b_end = boundary_he_indices.end();
        boundary != b_end; ++boundary)
   {
@@ -113,9 +117,16 @@ bool MeshImporter::calculateBoundaryData(const pcl::PolygonMesh &input_mesh)
          edge != edge_end; ++edge)
     {
       Cloud::PointType cloudpt = points->points.at(mesh_index_map.right.at(mesh.getOriginatingVertexIndex(*edge))); // pt on boundary
-      Eigen::Vector3d projected_pt = hplane.projection(Eigen::Vector3d(cloudpt.x, cloudpt.y, cloudpt.z));        // pt projected onto plane
-      Eigen::Vector3d plane_pt = plane_inverse * projected_pt;                                                   // pt in plane frame
-      ROS_ASSERT(std::abs(plane_pt(2)) < .001);
+      Eigen::Vector3d projected_pt = hplane.projection(Eigen::Vector3d(cloudpt.x, cloudpt.y, cloudpt.z));           // pt projected onto plane
+      Eigen::Vector3d plane_pt = plane_inverse * projected_pt;                                                      // pt in plane frame
+
+      // Check that plane/transform calculations are accurate by testing that transformed points lie on local plane
+      if (std::abs(plane_pt(2)) > .001)
+      {
+        ROS_ERROR_STREAM("z-value of projected/transformed point should be (near) 0 [" << plane_pt.transpose() << "]");
+        ROS_ERROR_STREAM("Transform matrix used to project points:\n" << plane_frame_.matrix());
+        return false;
+      }
       pbound.push_back(PolygonPt(plane_pt(0), plane_pt(1)));
     }
 
@@ -134,14 +145,14 @@ void MeshImporter::computeLocalPlaneFrame(const Eigen::Hyperplane<double, 3> &pl
   const Eigen::Vector3d& plane_normal = plane.coeffs().head(3);
   if (std::abs(plane_normal.dot(Vector3d::UnitX())) < 0.8)
   {
-    Eigen::Vector3d x_axis = plane.projection(origin + Eigen::Vector3d::UnitX());
+    Eigen::Vector3d x_axis = plane.projection(origin + Eigen::Vector3d::UnitX())-origin;
     plane_frame_.matrix().col(0).head(3) = x_axis.normalized();
     plane_frame_.matrix().col(2).head(3) = plane_normal.normalized();
     plane_frame_.matrix().col(1).head(3) = (plane_normal.normalized().cross(x_axis.normalized())).normalized();
   }
   else
   {
-    Eigen::Vector3d y_axis = plane.projection(origin + Eigen::Vector3d::UnitY());
+    Eigen::Vector3d y_axis = plane.projection(origin + Eigen::Vector3d::UnitY())-origin;
     plane_frame_.matrix().col(1).head(3) = y_axis.normalized();
     plane_frame_.matrix().col(2).head(3) = plane_normal.normalized();
     plane_frame_.matrix().col(0).head(3) = (y_axis.normalized().cross(plane_normal.normalized())).normalized();
@@ -168,14 +179,21 @@ bool MeshImporter::computePlaneCoefficients(Cloud::ConstPtr cloud, Eigen::Vector
 
   seg.setInputCloud (cloud);
   seg.segment (*inliers, coefficients);
-  ROS_ASSERT(coefficients.values.size() == 4);
+  if (coefficients.values.size() != 4)
+  {
+    ROS_ERROR("Expect 4 coefficients for plane, got %li", coefficients.values.size());
+    return false;
+  }
 
   // Check that points match a plane fit
-  if (static_cast<double>(inliers->indices.size())/static_cast<double>(cloud->height * cloud->width) < 0.9)
+  double fraction_inclusive = 0.9;
+  if (static_cast<double>(inliers->indices.size())/static_cast<double>(cloud->height * cloud->width) < fraction_inclusive)
   {
     ROS_WARN("Less than 90%% of points included in plane fit.");
     return false;
   }
+  ROS_INFO_COND(verbose_, "%f percent of points included in plane fit.",
+                static_cast<double>(inliers->indices.size())/static_cast<double>(cloud->height * cloud->width)*100.);
 
   // Check that normal is aligned with pointcloud data
   Eigen::Vector3f actual_normal(coefficients.values.at(0), coefficients.values.at(1), coefficients.values.at(2));

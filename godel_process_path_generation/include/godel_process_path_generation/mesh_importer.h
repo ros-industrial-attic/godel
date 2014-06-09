@@ -43,7 +43,7 @@ typedef pcl::PointCloud<pcl::PointXYZINormal> Cloud;
 class MeshImporter
 {
 public:
-  MeshImporter(): verbose_(false) {};
+  MeshImporter(bool verbose=false): verbose_(verbose) {};
   virtual ~MeshImporter() {};
 
   /**@brief Create local coordinate system and boundary data for a point cloud representing a flat surface
@@ -76,7 +76,6 @@ private:
    * @param output Coefficients
    * @return False if plane fit poor, True otherwise.
    */
-  static
   bool computePlaneCoefficients(Cloud::ConstPtr cloud, Eigen::Vector4d &output);
 
 
