@@ -706,7 +706,7 @@ bool SurfaceDetection::apply_fast_triangulation(const Cloud& in,
 	pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals(
 			new pcl::PointCloud<pcl::PointNormal>());
 	pcl::concatenateFields(in,normals,*cloud_with_normals);
-	//tree->setInputCloud(cloud_with_normals);
+	tree->setInputCloud(cloud_with_normals);
 
 	// triangulation
 	pcl::GreedyProjectionTriangulation<pcl::PointNormal> gt;
