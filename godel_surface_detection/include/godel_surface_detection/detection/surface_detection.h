@@ -61,6 +61,13 @@ namespace defaults{
 	static const double TRIANGULATION_MAX_ANGLE = 2.0f *M_PI/3.0f;
 	static const bool TRIANGULATION_NORMAL_CONSISTENCY = false;
 
+	static const bool PLANE_APROX_REFINEMENT_ENABLED = true;
+	static const int PLANE_APROX_REFINEMENT_SEG_MAX_ITERATIONS = 100;
+	static const double PLANE_APROX_REFINEMENT_SEG_DIST_THRESHOLD = 0.01f;
+	static const double PLANE_APROX_REFINEMENT_SAC_PLANE_DISTANCE = 0.01f;
+	static const std::string PLANE_APROX_REFINEMENT_KDTREE_RADIUS = "pa_kdtree_radius";
+
+
 	static const double VOXEL_LEAF_SIZE = 0.01f;
 
 	static const double OCCUPANCY_THRESHOLD = 0.1f;
@@ -104,6 +111,12 @@ namespace params
 	static const std::string TRIANGULATION_MIN_ANGLE= "tr_min_angle";
 	static const std::string TRIANGULATION_MAX_ANGLE = "tr_max_angle";
 	static const std::string TRIANGULATION_NORMAL_CONSISTENCY = "tr_normal_consistency";
+
+	static const std::string PLANE_APROX_REFINEMENT_ENABLED = "pa_enabled";
+	static const std::string PLANE_APROX_REFINEMENT_SEG_MAX_ITERATIONS = "pa_seg_max_iterations";
+	static const std::string PLANE_APROX_REFINEMENT_SEG_DIST_THRESHOLD = "pa_seg_dist_threshold";
+	static const std::string PLANE_APROX_REFINEMENT_SAC_PLANE_DISTANCE = "pa_sac_plane_distance";
+	static const std::string PLANE_APROX_REFINEMENT_KDTREE_RADIUS = "pa_kdtree_radius";
 
 	static const std::string VOXEL_LEAF_SIZE = "voxel_leaf";
 
@@ -162,8 +175,8 @@ protected:
 	bool apply_region_growing_segmentation(const Cloud& in,
 			const Normals& normals,
 			std::vector<pcl::PointIndices>& clusters,CloudRGB& colored_cloud);
-	bool apply_sac_plane_segmentation(const Cloud& in,
-			const Cloud& plane_estimate,Cloud& out);
+	bool apply_plane_approximation_refinement(const Cloud& candidates,
+			const Cloud& surface_cluster,Cloud& extended_surface_cluster);
 	bool apply_normal_estimation(const Cloud &cloud,Normals& normals);
 	bool apply_fast_triangulation(const Cloud& in,
 			const Normals& normals,
