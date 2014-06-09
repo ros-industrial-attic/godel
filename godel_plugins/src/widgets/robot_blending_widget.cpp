@@ -40,6 +40,7 @@ void RobotBlendingWidget::init()
 	// initializing ros comm interface
 	ros::NodeHandle nh("");
 	surface_detection_client_ = nh.serviceClient<godel_msgs::SurfaceDetection>(SURFACE_DETECTION_SERVICE);
+	surface_blending_parameters_client_ = nh.serviceClient<godel_msgs::SurfaceBlendingParameters>(SURFACE_BLENDING_PARAMETERS_SERVICE);
 	select_surface_client_ = nh.serviceClient<godel_msgs::SelectSurface>(SELECT_SURFACE_SERVICE);
 	process_plan_client_ = nh.serviceClient<godel_msgs::ProcessPlanning>(PROCESS_PATH_SERVICE);
 	selected_surfaces_subs_ = nh.subscribe(SELECTED_SURFACES_CHANGED_TOPIC,1,
@@ -91,8 +92,8 @@ void RobotBlendingWidget::init()
 void RobotBlendingWidget::connect_to_services()
 {
 	// call services to get parameters
-	godel_msgs::SurfaceDetection::Request req;
-	godel_msgs::SurfaceDetection::Response res;
+	godel_msgs::SurfaceBlendingParameters::Request req;
+	godel_msgs::SurfaceBlendingParameters::Response res;
 	req.action = req.GET_CURRENT_PARAMETERS;
 
 
@@ -105,22 +106,24 @@ void RobotBlendingWidget::connect_to_services()
 
 		ROS_INFO_STREAM("rviz blending panel connecting to services");
 		if(surface_detection_client_.waitForExistence(ros::Duration(2)) &&
-				select_surface_client_.waitForExistence(ros::Duration(2)))
+				select_surface_client_.waitForExistence(ros::Duration(2)) &&
+				surface_blending_parameters_client_.waitForExistence(ros::Duration(2)))
 		{
 
 			ROS_INFO_STREAM("rviz panel connected to the services '"<<surface_detection_client_.getService()<<
 					"' and '"<<select_surface_client_.getService()<<"'");
 
 			// requesting parameters
-			if(surface_detection_client_.call(req,res))
+			if(surface_blending_parameters_client_.call(req,res))
 			{
 				robot_scan_config_window_->robot_scan_parameters_ = res.robot_scan;
 				surface_detect_config_window_->surface_detection_parameters_ = res.surface_detection;
 				robot_scan_parameters_ = res.robot_scan;
 				surf_detect_parameters_ = res.surface_detection;
+				blending_plan_parameters_ = res.blending_plan;
 
+				// update gui elements for robot scan
 				robot_scan_params_changed_handler();
-
 
 				// enable gui
 				Q_EMIT connect_completed();
@@ -135,8 +138,8 @@ void RobotBlendingWidget::connect_to_services()
 		}
 		else
 		{
-			ROS_ERROR_STREAM("rviz panel could not connect to the services '"<<surface_detection_client_.getService()<<
-					"' or '"<<select_surface_client_.getService()<<"'");
+			ROS_ERROR_STREAM("rviz panel could not connect to one or more ros services:\n\t'"<<surface_detection_client_.getService()<<
+					"'\n\t'"<<select_surface_client_.getService()<<"'\n\t'"<<surface_blending_parameters_client_.getService());
 		}
 	}
 
@@ -410,7 +413,8 @@ void RobotBlendingWidget::connect_completed_handler()
 void RobotBlendingWidget::generate_process_path_handler()
 {
 	godel_msgs::ProcessPlanning process_plan;
-	process_plan.request.use_default_parameters = true;
+	process_plan.request.use_default_parameters = false;
+	process_plan.request.params = blending_plan_parameters_;
 	process_plan.request.action = process_plan.request.GENERATE_MOTION_PLAN_AND_PREVIEW;
 	process_plan_client_.call(process_plan);
 	ROS_INFO_STREAM("process plan request sent");
