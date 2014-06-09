@@ -715,7 +715,7 @@ protected:
 
 int main(int argc,char** argv)
 {
-	ros::init(argc,argv,"surface_detection_server");
+	ros::init(argc,argv,"surface_blending_service");
 	ros::AsyncSpinner spinner(4);
 	spinner.start();
 	SurfaceBlendingService service;
