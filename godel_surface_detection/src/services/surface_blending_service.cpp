@@ -474,15 +474,6 @@ protected:
 
 		switch(req.action)
 		{
-		case req.GET_CURRENT_PARAMETERS:
-			res.robot_scan = robot_scan_.params_;
-			res.surface_detection = surface_detection_.params_;
-			break;
-
-		case req.GET_DEFAULT_PARAMETERS:
-			res.robot_scan = default_robot_scan_params__;
-			res.surface_detection = default_surf_detection_params_;
-			break;
 
 		case req.PUBLISH_SCAN_PATH:
 
