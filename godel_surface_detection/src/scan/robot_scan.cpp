@@ -515,7 +515,7 @@ void RobotScan::apply_trajectory_parabolic_time_parameterization(robot_trajector
 	}
 
 
-	ROS_INFO_STREAM("Parameterized trajectory: "<<traj);
+	//ROS_INFO_STREAM("Parameterized trajectory: "<<traj);
 
 	//apply_speed_reduction(traj,0.4f);
 
