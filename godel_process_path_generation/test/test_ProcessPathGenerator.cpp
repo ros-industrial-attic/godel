@@ -37,14 +37,16 @@ TEST(ProcessPathGeneratorTest, init)
   boundary.push_back(PolygonPt(.1, 0.));
   boundary.push_back(PolygonPt(0., .1));
   ppg.verbose_ = true;
-  EXPECT_TRUE(ppg.configure(godel_process_path::PolygonBoundaryCollection(1, boundary)));
+  godel_process_path::PolygonBoundaryCollection boundaries(1, boundary);
+  std::vector<double> offsets(1,.03);   // Offset = tool radius + margin
+  EXPECT_TRUE(ppg.setPathPolygons(&boundaries, &offsets));
   EXPECT_FALSE(ppg.createProcessPath());
 
   boundary.clear();
   boundary.push_back(PolygonPt(0., 0.));
   boundary.push_back(PolygonPt(.5, 0.));
   boundary.push_back(PolygonPt(0., .5));
-  EXPECT_TRUE(ppg.configure(godel_process_path::PolygonBoundaryCollection(1, boundary)));
+  EXPECT_TRUE(ppg.setPathPolygons(&boundaries, &offsets));
   EXPECT_TRUE(ppg.createProcessPath());
 }
 
@@ -64,7 +66,9 @@ TEST(ProcessPathGeneratorTest, complete)
   boundary.push_back(PolygonPt(.25, .125));
   boundary.push_back(PolygonPt(.0, .5));
   ppg.verbose_ = true;
-  EXPECT_TRUE(ppg.configure(godel_process_path::PolygonBoundaryCollection(1, boundary)));
+  godel_process_path::PolygonBoundaryCollection boundaries(1, boundary);
+  std::vector<double> offsets(1,.03);   // Offset = tool radius + margin
+  EXPECT_TRUE(ppg.setPathPolygons(&boundaries, &offsets));
   EXPECT_TRUE(ppg.createProcessPath());
 }
 
