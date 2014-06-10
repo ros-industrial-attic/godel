@@ -493,14 +493,16 @@ bool SurfaceDetection::find_surfaces()
 		Normals::Ptr segment_normal_ptr = Normals::Ptr(new Normals());
 		Cloud::Ptr segment_cloud_ptr = surface_clouds_[i];
 		int count = segment_cloud_ptr->size();
-		if(apply_mls_surface_smoothing(*segment_cloud_ptr,*segment_cloud_ptr,*segment_normal_ptr))
+		if(params_.mls_point_density>0 &&
+				apply_mls_surface_smoothing(*segment_cloud_ptr,*segment_cloud_ptr,*segment_normal_ptr))
 		{
 			ROS_INFO_STREAM("Moving least squares smoothing for cluster "<<i<<" completed with [ star:  "
 					<<count<<", end: "<<segment_cloud_ptr->size()<<" ] points");
 		}
 		else
 		{
-			ROS_WARN_STREAM("Moving least squares smoothing failed for cluster "<<i<<", estimating normals");
+			ROS_WARN_STREAM("Moving least squares smoothing "<< (params_.mls_point_density>0 ? "failed" :"disabled" ) <<
+					" for cluster "<<i<<", estimating normals");
 			apply_normal_estimation(*segment_cloud_ptr,*segment_normal_ptr);
 		}
 
