@@ -69,6 +69,7 @@ void InteractiveSurfaceServer::mesh_to_marker(const pcl::PolygonMesh &mesh,
 	color.b = color_val_min +
 					(static_cast<double>(rand())/static_cast<double>(RAND_MAX))
 					* (color_val_max - color_val_min);
+	color.a = 1.0f;
 	marker.color = color;
 
 
@@ -99,7 +100,7 @@ void InteractiveSurfaceServer::marker_to_mesh(const visualization_msgs::Marker &
 		pcl::Vertices v;
 		for(int j = 0; j < 3; j++)
 		{
-			v.vertices.push_back(j+1);
+			v.vertices.push_back(i+j);
 
 			pcl::PointXYZ p;
 			p.x = marker.points[i+j].x;
