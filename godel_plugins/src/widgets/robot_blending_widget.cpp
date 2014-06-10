@@ -583,7 +583,7 @@ void SurfaceDetectionConfigWidget::update_parameters()
 	ui_.LineEditRgMinClusterSize->setText(QString::number(surface_detection_parameters_.rg_min_cluster_size));
 	ui_.LineEditRgMaxClusterSize->setText(QString::number(surface_detection_parameters_.rg_max_cluster_size));
 	ui_.LineEditRgNeighbors->setText(QString::number(surface_detection_parameters_.rg_neightbors));
-	ui_.LineEditRgSmoothnessThreshold->setText(QString::number(surface_detection_parameters_.rg_smoothness_threshold));
+	ui_.LineEditRgSmoothnessThreshold->setText(QString::number(RAD2DEG(surface_detection_parameters_.rg_smoothness_threshold)));
 	ui_.LineEditRgCurvatureThreshold->setText(QString::number(surface_detection_parameters_.rg_curvature_threshold));
 
 	ui_.LineEditVoxelLeaf->setText(QString::number(surface_detection_parameters_.voxel_leafsize));
@@ -603,6 +603,12 @@ void SurfaceDetectionConfigWidget::update_parameters()
 	ui_.LineEditTrMaxAngle->setText(QString::number(RAD2DEG( surface_detection_parameters_.tr_max_angle)));
 	ui_.CheckBoxTrNormalConsistency->setChecked(static_cast<bool>(surface_detection_parameters_.tr_normal_consistency));
 
+	ui_.CheckBoxPaEnabled->setChecked(static_cast<bool>(surface_detection_parameters_.pa_enabled));
+	ui_.LineEditPaSegMaxIterations->setText(QString::number(surface_detection_parameters_.pa_seg_max_iterations));
+	ui_.LineEditPaSegDistThreshold->setText(QString::number(surface_detection_parameters_.pa_seg_dist_threshold));
+	ui_.LineEditPaSACPlaneDistance->setText(QString::number(surface_detection_parameters_.pa_sac_plane_distance));
+	ui_.LineEditPaKdtreeRadius->setText(QString::number(surface_detection_parameters_.pa_kdtree_radius));
+
 }
 
 void SurfaceDetectionConfigWidget::save_parameters()
@@ -617,7 +623,7 @@ void SurfaceDetectionConfigWidget::save_parameters()
 	surface_detection_parameters_.rg_min_cluster_size = ui_.LineEditRgMinClusterSize->text().toDouble();
 	surface_detection_parameters_.rg_max_cluster_size = ui_.LineEditRgMaxClusterSize->text().toDouble();
 	surface_detection_parameters_.rg_neightbors = ui_.LineEditRgNeighbors->text().toDouble();
-	surface_detection_parameters_.rg_smoothness_threshold = ui_.LineEditRgSmoothnessThreshold->text().toDouble();
+	surface_detection_parameters_.rg_smoothness_threshold = DEG2RAD(ui_.LineEditRgSmoothnessThreshold->text().toDouble());
 	surface_detection_parameters_.rg_curvature_threshold = ui_.LineEditRgCurvatureThreshold->text().toDouble();
 
 	surface_detection_parameters_.voxel_leafsize = ui_.LineEditVoxelLeaf->text().toDouble();
@@ -635,7 +641,13 @@ void SurfaceDetectionConfigWidget::save_parameters()
 	surface_detection_parameters_.tr_max_surface_angle = DEG2RAD( ui_.LineEditTrMaxSurfaceAngle->text().toDouble());
 	surface_detection_parameters_.tr_min_angle = DEG2RAD(ui_.LineEditTrMinAngle->text().toDouble());
 	surface_detection_parameters_.tr_max_angle = DEG2RAD(ui_.LineEditTrMaxAngle->text().toDouble());
-	surface_detection_parameters_.tr_normal_consistency = ui_.CheckBoxTrNormalConsistency->isChecked();;
+	surface_detection_parameters_.tr_normal_consistency = ui_.CheckBoxTrNormalConsistency->isChecked();
+
+	surface_detection_parameters_.pa_enabled = ui_.CheckBoxPaEnabled->isChecked();
+	surface_detection_parameters_.pa_seg_max_iterations = ui_.LineEditPaSegMaxIterations->text().toInt();
+	surface_detection_parameters_.pa_seg_dist_threshold = ui_.LineEditPaSegDistThreshold->text().toDouble();
+	surface_detection_parameters_.pa_sac_plane_distance = ui_.LineEditPaSACPlaneDistance->text().toDouble();
+	surface_detection_parameters_.pa_kdtree_radius = ui_.LineEditPaKdtreeRadius->text().toDouble();
 }
 
 void SurfaceDetectionConfigWidget::accept_changes_handler()
