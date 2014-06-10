@@ -25,6 +25,7 @@
 #include <godel_process_path_generation/VisualizeBlendingPlan.h>
 #include <godel_process_path_generation/mesh_importer.h>
 #include <godel_process_path_generation/utils.h>
+#include <godel_process_path_generation/polygon_utils.h>
 #include <pcl/console/parse.h>
 
 // topics and services
@@ -181,7 +182,8 @@ protected:
 				nh.getParam("retract_spd",params.retract_spd) &&
 				nh.getParam("traverse_spd",params.traverse_spd) &&
 				nh.getParam("discretization",params.discretization) &&
-				nh.getParam("safe_traverse_height",params.safe_traverse_height);
+				nh.getParam("safe_traverse_height",params.safe_traverse_height) &&
+				nh.getParam("min_boundary_length", params.min_boundary_length);
 	}
 
 	void publish_selected_surfaces_changed()
@@ -291,8 +293,35 @@ protected:
 			const pcl::PolygonMesh &mesh = meshes[i];
 			if(mesh_importer_.calculateBoundaryData(mesh))
 			{
+				// Filter out boundaries that are too small (assumed to be machine-vision artifacts) and improperly formed
+				godel_process_path::PolygonBoundaryCollection filtered_boundaries;
+				BOOST_FOREACH(const godel_process_path::PolygonBoundary &bnd, mesh_importer_.getBoundaries())
+				{
+					double circ = godel_process_path::polygon_utils::circumference(bnd);
+					if (circ < blending_plan_params_.min_boundary_length)
+					{
+						ROS_WARN_STREAM("Ignoring boundary with length " << circ);
+					}
+					else if (!godel_process_path::polygon_utils::checkBoundary(bnd))
+					{
+						ROS_WARN_STREAM("Ignoring ill-formed boundary");
+					}
+					else
+					{
+						ROS_INFO_STREAM("Boundary has circumference " << circ);
+						filtered_boundaries.push_back(bnd);
+					}
+				}
+				BOOST_FOREACH(godel_process_path::PolygonBoundary &bnd, filtered_boundaries)
+				{
+					// Filter and reverse boundaries
+					godel_process_path::polygon_utils::filter(bnd, 0.1);
+					std::reverse(bnd.begin(), bnd.end());
+				}
+
+
 				// create boundaries markers
-				godel_process_path::utils::translations::godelToVisualizationMsgs(boundary_markers,mesh_importer_.getBoundaries()
+				godel_process_path::utils::translations::godelToVisualizationMsgs(boundary_markers,filtered_boundaries
 						,yellow,.0005);
 				mesh_importer_.getPose(boundary_pose);
 
@@ -305,17 +334,17 @@ protected:
 					m.lifetime = ros::Duration(0);
 					m.ns = BOUNDARY_NAMESPACE;
 					m.pose = boundary_pose;
-					m.points.push_back(m.points.front());	// Close polygon loop for visualization
+					m.points.push_back(m.points.front());   // Close polygon loop for visualization
 					m.colors.push_back(m.colors.front());
 
 					marker_counter++;
 				}
-				tool_path_markers_pub_.publish(boundary_markers);	// Pre-publish boundaries before completing offset
-				godel_process_path::utils::geometry::d
+				tool_path_markers_pub_.publish(boundary_markers);       // Pre-publish boundaries before completing offset
+
 
 				// add boundaries to request
 				boundaries.clear();
-				godel_process_path::utils::translations::godelToGeometryMsgs(boundaries,mesh_importer_.getBoundaries());
+				godel_process_path::utils::translations::godelToGeometryMsgs(boundaries, filtered_boundaries);
 				tf::poseTFToMsg(tf::Transform::getIdentity(),process_plan.request.surface.pose);
 
 				// calling visualization service and saving results
@@ -324,6 +353,7 @@ protected:
 
 					// create path marker
 					path_marker = process_plan.response.path;
+					path_marker.header.frame_id = mesh.header.frame_id;
 					path_marker.id = marker_counter;
 					path_marker.lifetime = ros::Duration(0);
 					path_marker.ns = PATH_NAMESPACE;
@@ -348,6 +378,7 @@ protected:
 	{
 		bool succeeded = !process_path_results_.process_paths_.markers.empty();
 		stop_tool_animation_ = true;
+		tool_animation_timer_.stop();
 		ros::Duration(0.5f).sleep();
 
 		if(succeeded)
@@ -378,7 +409,7 @@ protected:
 		visualization_msgs::MarkerArray process_markers ;
 
 		// tool marker at arbitrary position
-		visualization_msgs::MarkerArray tool_markers = create_tool_markers(geometry_msgs::Point(),geometry_msgs::Pose(),"");
+		visualization_msgs::MarkerArray tool_markers = create_tool_markers(geometry_msgs::Point(),geometry_msgs::Pose(),"world_frame");
 
 
 		// adding markers
@@ -390,11 +421,15 @@ protected:
 						process_path_results_.process_boundaries_.markers.end());
 		process_markers.markers.insert(process_markers.markers.end(),tool_markers.markers.begin(),
 				tool_markers.markers.end());
+		ROS_INFO_STREAM(process_path_results_.process_paths_.markers.size() << " path markers, " <<
+		                process_path_results_.process_boundaries_.markers.size() << " boundary markers, " <<
+		                tool_markers.markers.size() << " tool markers.");
 
-		ros::Duration loop_pause(0.2f);
+		ros::Duration loop_pause(0.02f);
 		for(int i = 0;i < num_path_markers;i++)
 		{
 			visualization_msgs::Marker &path_marker = process_markers.markers[i];
+			std::cout << path_marker.points.size() << " points in path marker.\n";
 
 			for(int j =0;j < path_marker.points.size();j++)
 			{
@@ -411,7 +446,8 @@ protected:
 				tool_markers = create_tool_markers(path_marker.points[j],path_marker.pose,path_marker.header.frame_id);
 				int start_tool_marker_index = process_markers.markers.size() - tool_markers.markers.size();
 
-				process_markers.markers.insert(process_markers.markers.begin()+start_tool_marker_index,
+				process_markers.markers.erase(boost::next(process_markers.markers.begin(), start_tool_marker_index), process_markers.markers.end());
+				process_markers.markers.insert(process_markers.markers.end(),
 						tool_markers.markers.begin(),tool_markers.markers.end());
 
 				// publish marker array
