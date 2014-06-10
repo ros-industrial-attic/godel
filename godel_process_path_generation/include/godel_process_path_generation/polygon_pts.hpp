@@ -53,8 +53,8 @@ struct PolygonPt
   inline double dist(const PolygonPt &pt) const {return std::sqrt(dist2(pt));}
   inline double norm2() const {return x*x + y*y;}
   inline double norm() const {return std::sqrt(norm2());}
-  inline double dot(const PolygonPt &pt) {return x*pt.x + y*pt.y;}
-  inline double cross(const PolygonPt &pt) {return x*pt.y - y*pt.x;}
+  inline double dot(const PolygonPt &pt) const {return x*pt.x + y*pt.y;}
+  inline double cross(const PolygonPt &pt) const {return x*pt.y - y*pt.x;}
 
   friend ostream& operator<<(ostream &out, const PolygonPt &ppt);
 };

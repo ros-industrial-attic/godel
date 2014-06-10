@@ -32,28 +32,30 @@ namespace godel_process_path
 namespace polygon_utils
 {
 
-bool PolygonSegment::intersects(const PolygonSegment &other) const
+bool PolygonSegment::intersects(const PolygonSegment &other, double tol) const
 {
-  /* Two vectors: intersection pt = p1 + u(p2-p1) = p3 + v(p3-p1)
+  /* Two vectors: intersection pt = p1 + u(p2-p1) = p3 + v(p4-p3)
+   * u(p2-p1) + v(-p4+p3) = (p3-p1) = del
+   * u = (del) X (-p4+p3) / (p2-p1)X(-p4+p3); v = (p2-p1) X (del) / (p2-p1)X(-p4+p3)
    * Cramer's Rule to solve for u,v and check if they are both in bounds of segments.
    */
-  double denom = (this->vector()).cross(other.vector());
-  if (denom < 1e-12)
+  double denom = -cross(other);
+  if (std::abs(denom) < 1e-12)
   {
     return false;  // Lines are (nearly) parallel
   }
 
   // Solve for u
   PolygonPt del = other.start - this->start;
-  double u = del.cross(other.vector()) / denom;
-  if (u < 0. || u > length())
+  double u = -del.cross(other.vector()) / denom;
+  if (u < 0.-tol || u > 1.+tol)
   { // Intersection is outside of segment 1
     return false;
   }
   else
   { // Possible intersection, must check segment 2
     double v = this->vector().cross(del) / denom;
-    if (v < 0. || v > other.length())
+    if (v < 0.-tol || v > 1.+tol)
     {
       return false;
     }
@@ -74,6 +76,53 @@ void boundaryToSegments(std::vector<PolygonSegment> &segments, const PolygonBoun
     else
     {
       segments.push_back(PolygonSegment(*pt, *boost::next(pt)));
+    }
+  }
+}
+
+void filter(PolygonBoundary &boundary, double tol)
+{
+  // Check bounds of tol. Tol is input as an angle measurement, but used internally as the sine of that angle.
+  if (tol > M_PI_2)
+  {
+    ROS_WARN("Global filter tolerance set above pi/2 (%lf), using %f", tol, M_PI_2);
+    tol = 1.;   // M_PI_2
+  }
+  else if (tol < 0.)
+  {
+    ROS_WARN("Global filter tolerance set below 0 (%lf), using 0", tol);
+    tol = 0.;
+  }
+  else
+  {
+    tol = std::sin(tol);
+  }
+
+  // Starting with 1st segment, create edges that are all colinear within tol of each other.
+  PolygonBoundary::iterator start = boundary.begin();
+  if (boost::next(start) == boundary.end())
+  {
+    return;
+  }
+  PolygonSegment start_seg(*start, *boost::next(start));
+  while (ros::ok())
+  {
+    if (boost::next(start,2) == boundary.end())
+    {
+      return;
+    }
+    PolygonSegment next_seg(*boost::next(start), *boost::next(start,2));
+    double kross = start_seg.cross(next_seg);
+    if (kross*kross/start_seg.length2()/next_seg.length2() < tol)
+    {   /* found linear segment */
+      boundary.erase(boost::next(start));
+      start_seg.end = *boost::next(start);
+    }
+    else
+    {   /* move to next segment */
+      ++start;
+      start_seg.start = *start;
+      start_seg.end = *boost::next(start);
     }
   }
 }
@@ -118,11 +167,13 @@ bool checkBoundary(const PolygonBoundary &bnd)
     {
       if (pt->dist(bnd.front()) < LENGTH_TOL)
       {
+        ROS_WARN("Invisible polygon boundary segment.");
         return false;
       }
     }
     else if (pt->dist(*boost::next(pt)) < LENGTH_TOL)
     {
+      ROS_WARN("Invisible polygon boundary segment.");
       return false;
     }
   }
@@ -139,10 +190,15 @@ bool checkBoundary(const PolygonBoundary &bnd)
 
   for (std::vector<PolygonSegment>::const_iterator seg=segments.begin(); seg!=(segments.end()-2); ++seg)
   {
-    for (std::vector<PolygonSegment>::const_iterator other_seg=seg+2; other_seg!=segments.end(); ++other_seg)
+    for (std::vector<PolygonSegment>::const_iterator other_seg=boost::next(seg,2); other_seg!=segments.end(); ++other_seg)
     {
+      if (seg==segments.begin() && other_seg==boost::prior(segments.end()))
+      {
+        continue;
+      }
       if (seg->intersects(*other_seg))
       {
+        ROS_WARN_STREAM("Self-intersecting polygon at segments " << seg-segments.begin() << " - " << other_seg-segments.begin() << " / " << segments.size());
         return false;
       }
     }
