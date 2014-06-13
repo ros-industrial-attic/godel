@@ -12,6 +12,13 @@ surface_detection:
   rg_smoothness_threshold: 0.11
   rg_curvature_threshold: 1.0
 
+  pa_enabled: true
+  pa_seg_max_iterations: 100
+  pa_seg_dist_threshold: 0.008
+  pa_sac_plane_distance: 0.004
+  pa_kdtree_radius: 0.016
+
+  tr_search_radius: 0.01
   tr_search_radius: 0.1
   tr_mu: 2.5
   tr_nearest_neighbors: 4000

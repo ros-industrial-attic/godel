@@ -107,18 +107,20 @@ bool SurfaceDetection::load_parameters(godel_msgs::SurfaceDetectionParameters &p
 	ros::NodeHandle nh(node_ns);
 
 	// bool parameters
-	bool tr_normal_consistency, use_tabletop_seg, ignore_largest_cluster;
+	bool tr_normal_consistency, use_tabletop_seg, ignore_largest_cluster, pa_enabled;
 
 	bool succeeded;
 	if(		nh.getParam(params::FRAME_ID,params.frame_id)&&
 			nh.getParam(params::K_SEARCH,params.k_search) &&
 			nh.getParam(params::STOUTLIER_MEAN,params.meanK) &&
 			nh.getParam(params::STOUTLIER_STDEV_THRESHOLD,params.stdv_threshold) &&
+
 			nh.getParam(params::REGION_GROWING_MIN_CLUSTER_SIZE,params.rg_min_cluster_size) &&
 			nh.getParam(params::REGION_GROWING_MAX_CLUSTER_SIZE,params.rg_max_cluster_size) &&
 			nh.getParam(params::REGION_GROWING_NEIGHBORS,params.rg_neightbors) &&
 			nh.getParam(params::REGION_GROWING_SMOOTHNESS_THRESHOLD,params.rg_smoothness_threshold) &&
 			nh.getParam(params::REGION_GROWING_CURVATURE_THRESHOLD,params.rg_curvature_threshold) &&
+
 			nh.getParam(params::TRIANGULATION_SEARCH_RADIUS,params.tr_search_radius) &&
 			nh.getParam(params::TRIANGULATION_MU ,params.tr_mu) &&
 			nh.getParam(params::TRIANGULATION_MAX_NEAREST_NEIGHBORS,params.tr_max_nearest_neighbors) &&
@@ -126,17 +128,27 @@ bool SurfaceDetection::load_parameters(godel_msgs::SurfaceDetectionParameters &p
 			nh.getParam(params::TRIANGULATION_MIN_ANGLE,params.tr_min_angle) &&
 			nh.getParam(params::TRIANGULATION_MAX_ANGLE,params.tr_max_angle) &&
 			nh.getParam(params::TRIANGULATION_NORMAL_CONSISTENCY,tr_normal_consistency) &&
+
+			nh.getParam(params::PLANE_APROX_REFINEMENT_SEG_MAX_ITERATIONS,params.pa_seg_max_iterations) &&
+			nh.getParam(params::PLANE_APROX_REFINEMENT_SEG_DIST_THRESHOLD,params.pa_seg_dist_threshold) &&
+			nh.getParam(params::PLANE_APROX_REFINEMENT_SAC_PLANE_DISTANCE,params.pa_sac_plane_distance) &&
+			nh.getParam(params::PLANE_APROX_REFINEMENT_KDTREE_RADIUS,params.pa_kdtree_radius) &&
+			nh.getParam(params::PLANE_APROX_REFINEMENT_ENABLED,pa_enabled) &&
+
 			nh.getParam(params::VOXEL_LEAF_SIZE,params.voxel_leafsize) &&
 			nh.getParam(params::OCCUPANCY_THRESHOLD,params.occupancy_threshold) &&
+
 			nh.getParam(params::MLS_UPSAMPLING_RADIUS,params.mls_upsampling_radius) &&
 			nh.getParam(params::MLS_POINT_DENSITY,params.mls_point_density) &&
 			nh.getParam(params::MLS_SEARCH_RADIUS,params.mls_search_radius) &&
+
 			nh.getParam(params::USE_TABLETOP_SEGMENTATION,use_tabletop_seg) &&
 			nh.getParam(params::TABLETOP_SEG_DISTANCE_THRESH,params.tabletop_seg_distance_threshold) &&
 			nh.getParam(params::MARKER_ALPHA,params.marker_alpha) &&
 			nh.getParam(params::IGNORE_LARGEST_CLUSTER,ignore_largest_cluster)
 			)
 	{
+		params.pa_enabled = pa_enabled;
 		params.tr_normal_consistency = tr_normal_consistency;
 		params.use_tabletop_seg = use_tabletop_seg;
 		params.ignore_largest_cluster = ignore_largest_cluster;
@@ -456,20 +468,20 @@ bool SurfaceDetection::find_surfaces()
 	}
 
 	//applying sac plane segmentation to reintegrate ungrouped points
-	for(int i =0;(i< surface_clouds_.size()) && ungrouped_cloud_ptr->size() >0 ; i++)
+	for(int i =0;(i< surface_clouds_.size()) && ungrouped_cloud_ptr->size() >0 && params_.pa_enabled; i++)
 	{
 
 		Cloud::Ptr segment_cloud_ptr = surface_clouds_[i];
 		int count = segment_cloud_ptr->size();
-		if(apply_sac_plane_segmentation(*ungrouped_cloud_ptr,*segment_cloud_ptr,*segment_cloud_ptr))
+		if(apply_plane_approximation_refinement(*ungrouped_cloud_ptr,*segment_cloud_ptr,*segment_cloud_ptr))
 		{
 
-			ROS_INFO_STREAM("Reintegration of ungrouped points into cluster "<<i<<" using SAC plane segmentation completed with [ star:  "
+			ROS_INFO_STREAM("Plane approximation refinement for cluster "<<i<<" completed with [ star:  "
 					<<count<<", end: "<<segment_cloud_ptr->size()<<" ] points");
 		}
 		else
 		{
-			ROS_WARN_STREAM("Reintegration of ungrouped points into cluster "<<i<<" using SAC plane segmentation yielded no matches [ star:  "
+			ROS_WARN_STREAM("Plane approximation refinement for cluster "<<i<<" yielded no matches [ star:  "
 								<<count<<", end: "<<segment_cloud_ptr->size()<<" ] points");
 		}
 	}
@@ -481,14 +493,16 @@ bool SurfaceDetection::find_surfaces()
 		Normals::Ptr segment_normal_ptr = Normals::Ptr(new Normals());
 		Cloud::Ptr segment_cloud_ptr = surface_clouds_[i];
 		int count = segment_cloud_ptr->size();
-		if(apply_mls_surface_smoothing(*segment_cloud_ptr,*segment_cloud_ptr,*segment_normal_ptr))
+		if(params_.mls_point_density>0 &&
+				apply_mls_surface_smoothing(*segment_cloud_ptr,*segment_cloud_ptr,*segment_normal_ptr))
 		{
 			ROS_INFO_STREAM("Moving least squares smoothing for cluster "<<i<<" completed with [ star:  "
 					<<count<<", end: "<<segment_cloud_ptr->size()<<" ] points");
 		}
 		else
 		{
-			ROS_WARN_STREAM("Moving least squares smoothing failed for cluster "<<i<<", estimating normals");
+			ROS_WARN_STREAM("Moving least squares smoothing "<< (params_.mls_point_density>0 ? "failed" :"disabled" ) <<
+					" for cluster "<<i<<", estimating normals");
 			apply_normal_estimation(*segment_cloud_ptr,*segment_normal_ptr);
 		}
 
@@ -610,8 +624,8 @@ bool SurfaceDetection::apply_region_growing_segmentation(const Cloud& in,
 	return clusters.size()>0;
 }
 
-bool SurfaceDetection::apply_sac_plane_segmentation(const Cloud& in,
-		const Cloud& plane_estimate,Cloud& out)
+bool SurfaceDetection::apply_plane_approximation_refinement(const Cloud& candidates,
+		const Cloud& surface_cluster,Cloud& extended_surface_cluster)
 {
 	pcl::ModelCoefficients::Ptr coeff_ptr(new pcl::ModelCoefficients());
 	pcl::PointIndices::Ptr plane_inliers_ptr(new pcl::PointIndices());
@@ -621,31 +635,31 @@ bool SurfaceDetection::apply_sac_plane_segmentation(const Cloud& in,
 	seg.setOptimizeCoefficients(true);
 	seg.setModelType(pcl::SACMODEL_PLANE);
 	seg.setMethodType(pcl::SAC_RANSAC);
-	seg.setMaxIterations(100);
-	seg.setDistanceThreshold(2*params_.voxel_leafsize);
+	seg.setMaxIterations(params_.pa_seg_max_iterations);
+	seg.setDistanceThreshold(params_.pa_seg_dist_threshold);
 
 	// finding coefficients
-	seg.setInputCloud(plane_estimate.makeShared());
+	seg.setInputCloud(surface_cluster.makeShared());
 	seg.segment(*plane_inliers_ptr,*coeff_ptr);
 
 	// using coefficients to filter out plane
-	pcl::SampleConsensusModelPlane<pcl::PointXYZ> model_plane(in.makeShared());
+	pcl::SampleConsensusModelPlane<pcl::PointXYZ> model_plane(candidates.makeShared());
 	Eigen::VectorXf model_coeff(4);
 
 	if(plane_inliers_ptr->indices.size()> 0)
 	{
 		std::vector<int> final_inliers;
 		Cloud::Ptr inlier_points_ptr = Cloud::Ptr(new Cloud());
-		model_plane.setInputCloud(in.makeShared());
+		model_plane.setInputCloud(candidates.makeShared());
 		model_coeff<< coeff_ptr->values[0],coeff_ptr->values[1],coeff_ptr->values[2],coeff_ptr->values[3];
-		model_plane.selectWithinDistance(model_coeff,0.5f*params_.voxel_leafsize,final_inliers);
-		pcl::copyPointCloud(in,final_inliers,*inlier_points_ptr);
+		model_plane.selectWithinDistance(model_coeff,params_.pa_sac_plane_distance,final_inliers);
+		pcl::copyPointCloud(candidates,final_inliers,*inlier_points_ptr);
 
 		// checking distances to main cluster
-		if(apply_kdtree_radius_search(*inlier_points_ptr,plane_estimate,4*params_.voxel_leafsize,*inlier_points_ptr))
+		if(apply_kdtree_radius_search(*inlier_points_ptr,surface_cluster,params_.pa_kdtree_radius,*inlier_points_ptr))
 		{
 			// adding to output cloud
-			out += *inlier_points_ptr;
+			extended_surface_cluster += *inlier_points_ptr;
 
 			return true;
 		}
