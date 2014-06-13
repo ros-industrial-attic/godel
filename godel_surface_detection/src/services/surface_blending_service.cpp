@@ -59,17 +59,17 @@ struct ProcessPathDetails
 	visualization_msgs::MarkerArray tool_parts_;
 };
 
-class SurfaceDetectionService
+class SurfaceBlendingService
 {
 public:
-	SurfaceDetectionService():
+	SurfaceBlendingService():
 		publish_region_point_cloud_(false),
 	        mesh_importer_(true) /*True-turn on verbose messages*/
 	{
 
 	}
 
-	~SurfaceDetectionService()
+	~SurfaceBlendingService()
 	{
 
 	}
@@ -116,7 +116,7 @@ public:
 
 		// start server
 		interactive::InteractiveSurfaceServer::SelectionCallback f =	boost::bind(
-				&SurfaceDetectionService::publish_selected_surfaces_changed,this);
+				&SurfaceBlendingService::publish_selected_surfaces_changed,this);
 		surface_server_.add_selection_callback(f);
 
 		// initializing ros interface
@@ -128,16 +128,16 @@ public:
 
 		// service servers
 		surf_blend_parameters_server_ = nh.advertiseService(SURFACE_BLENDING_PARAMETERS_SERVICE,
-				&SurfaceDetectionService::surface_blend_parameters_server_callback,this);
+				&SurfaceBlendingService::surface_blend_parameters_server_callback,this);
 
 		surface_detect_server_ = nh.advertiseService(SURFACE_DETECTION_SERVICE,
-				&SurfaceDetectionService::surface_detection_server_callback,this);
+				&SurfaceBlendingService::surface_detection_server_callback,this);
 
 		select_surface_server_ = nh.advertiseService(SELECT_SURFACE_SERVICE,
-				&SurfaceDetectionService::select_surface_server_callback,this);
+				&SurfaceBlendingService::select_surface_server_callback,this);
 
 		process_path_server_ = nh.advertiseService(PROCESS_PATH_SERVICE,
-				&SurfaceDetectionService::process_path_server_callback,this);
+				&SurfaceBlendingService::process_path_server_callback,this);
 
 		// publishers
 		selected_surf_changed_pub_ = nh.advertise<godel_msgs::SelectedSurfacesChanged>(SELECTED_SURFACES_CHANGED_TOPIC,1);
@@ -147,7 +147,7 @@ public:
 		tool_path_markers_pub_ = nh.advertise<visualization_msgs::MarkerArray>(TOOL_PATH_PREVIEW_TOPIC,1,true);
 
 		// timers
-		tool_animation_timer_ = nh.createTimer(ros::Duration(0.1f),&SurfaceDetectionService::tool_animation_timer_callback,this,true,false);
+		tool_animation_timer_ = nh.createTimer(ros::Duration(0.1f),&SurfaceBlendingService::tool_animation_timer_callback,this,true,false);
 
 		return true;
 	}
@@ -516,15 +516,6 @@ protected:
 
 		switch(req.action)
 		{
-		case req.GET_CURRENT_PARAMETERS:
-			res.robot_scan = robot_scan_.params_;
-			res.surface_detection = surface_detection_.params_;
-			break;
-
-		case req.GET_DEFAULT_PARAMETERS:
-			res.robot_scan = default_robot_scan_params__;
-			res.surface_detection = default_surf_detection_params_;
-			break;
 
 		case req.PUBLISH_SCAN_PATH:
 
@@ -766,10 +757,10 @@ protected:
 
 int main(int argc,char** argv)
 {
-	ros::init(argc,argv,"surface_detection_server");
+	ros::init(argc,argv,"surface_blending_service");
 	ros::AsyncSpinner spinner(4);
 	spinner.start();
-	SurfaceDetectionService service;
+	SurfaceBlendingService service;
 	if(service.init())
 	{
 		service.run();
