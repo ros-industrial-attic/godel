@@ -378,13 +378,15 @@ protected:
 	{
 		bool succeeded = !process_path_results_.process_paths_.markers.empty();
 		stop_tool_animation_ = true;
-		tool_animation_timer_.stop();
+//		tool_animation_timer_.stop();
+		tool_animation_timer_.setPeriod(ros::Duration(.1f));
 		ros::Duration(0.5f).sleep();
 
 		if(succeeded)
 		{
 
 			ROS_INFO_STREAM("tool path animation started");
+			tool_animation_timer_.setPeriod(ros::Duration(0.1f));
 			tool_animation_timer_.start();
 		}
 		else
@@ -429,7 +431,6 @@ protected:
 		for(int i = 0;i < num_path_markers;i++)
 		{
 			visualization_msgs::Marker &path_marker = process_markers.markers[i];
-			std::cout << path_marker.points.size() << " points in path marker.\n";
 
 			for(int j =0;j < path_marker.points.size();j++)
 			{
