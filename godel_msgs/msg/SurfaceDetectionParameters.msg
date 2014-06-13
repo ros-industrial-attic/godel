@@ -22,6 +22,13 @@ float64 tr_min_angle
 float64 tr_max_angle
 bool tr_normal_consistency
 
+# plane approximation refinement: Assumes planar surfaces in order to identify additional inlier points
+bool pa_enabled
+int32 pa_seg_max_iterations
+float64 pa_seg_dist_threshold
+float64 pa_sac_plane_distance
+float64 pa_kdtree_radius
+
 # voxel downsampling
 float64 voxel_leafsize
 
@@ -40,4 +47,4 @@ float64 tabletop_seg_distance_threshold
 
 # options
 float64 marker_alpha
-bool ignore_largest_cluster
+bool ignore_largest_cluster 
