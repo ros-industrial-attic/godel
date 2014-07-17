@@ -8,16 +8,23 @@ This package offsets polygon boundaries for use in Godel blending.
 
 Note: debian for openvoronoi is outdated, do not use.
 
-It can be built from source:
+From source:
 
-- cd ~/Downloads
-- git clone git://github.com/aewallin/openvoronoi.git
-- cd openvoronoi
-- mkdir bld
-- cd bld
-- cmake ../src
-- make
-- sudo make install
+- Install dependences
+  - cmake
+  - libqd-dev             http://crd.lbl.gov/~dhbailey/mpdist/
+  - Boost graph library
+
+- Download and build
+
+  - cd ~/Downloads
+  - git clone git://github.com/aewallin/openvoronoi.git
+  - cd openvoronoi
+  - mkdir bld
+  - cd bld
+  - cmake ../src
+  - make
+  - sudo make install
 
 After installation, patch offset_sorter.hpp
 
