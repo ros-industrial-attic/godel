@@ -10,7 +10,7 @@
 
 	<param name="$(arg camera_name)/driver/data_skip" value="4"/>
 
-	<include file="$(find openni_launch)/launch/openni.launch">
+	<include file="$(find openni2_launch)/launch/openni2.launch">
 		<arg name="publish_tf" value="$(arg publish_tf)" />
 		<arg name="camera" value="$(arg camera_name)" />
 		<arg name="rgb_frame_id" default="$(arg camera_name)_rgb_optical_frame"/>
