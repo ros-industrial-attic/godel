@@ -177,6 +177,9 @@ protected:
 			std::vector<pcl::PointIndices>& clusters,CloudRGB& colored_cloud);
 	bool apply_plane_approximation_refinement(const Cloud& candidates,
 			const Cloud& surface_cluster,Cloud& extended_surface_cluster);
+	bool apply_plane_projection_refinement(const Cloud& candidate_outliers,
+			const Cloud& surface_cluster,Cloud& projected_cluster);
+
 	bool apply_normal_estimation(const Cloud &cloud,Normals& normals);
 	bool apply_fast_triangulation(const Cloud& in,
 			const Normals& normals,
