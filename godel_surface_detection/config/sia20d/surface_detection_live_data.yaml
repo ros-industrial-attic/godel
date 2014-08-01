@@ -16,18 +16,18 @@ surface_detection:
   pa_seg_max_iterations: 100
   pa_seg_dist_threshold: 0.008
   pa_sac_plane_distance: 0.008
-  pa_kdtree_radius: 0.016
+  pa_kdtree_radius: 0.008
 
   tr_search_radius: 0.04
   tr_mu: 4
-  tr_nearest_neighbors: 400
+  tr_nearest_neighbors: 50
   tr_max_surface_angle: 1.047
-  tr_min_angle: 0.07
+  tr_min_angle: 2.00
   tr_max_angle: 2.61
-  tr_normal_consistency: true
+  tr_normal_consistency: false
 
   voxel_leaf: 0.01
-  use_tabletop_segmentation: true
+  use_tabletop_segmentation: false
   tabletop_seg_distance_thresh: 0.01
   ignore_largest_cluster: false
   occupancy_threshold: 0.5
