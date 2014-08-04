@@ -3,11 +3,20 @@ Godel
 
 Application for demonstrating surface blending with ros
 
+Godel: Austrian logician and mathematician http://en.wikipedia.org/wiki/Kurt_G%C3%B6del
+
+
+### Installation
 ==============
-##### Godel: Austrian logician and mathematician http://en.wikipedia.org/wiki/Kurt_G%C3%B6del
+
+Godel can be installed from source by cloning this repo.  Package specific dependencies/installation instructions can be found below.
+
+ * [Polygon Offset Package](godel_polygon_offset/README.md)
+ * [Process Path Generation](godel_process_path_generation/README.md) 
 
 ### Instructions
 ==============
+
 
 ##### - Run blending demo in full simulation mode (simulated robot and sensor)
 ```
