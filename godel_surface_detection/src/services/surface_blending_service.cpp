@@ -261,6 +261,36 @@ protected:
 		return succeeded;
 	}
 
+	void remove_previous_process_plan()
+	{
+		// removing boundary markers
+		visualization_msgs::MarkerArray &bds = process_path_results_.process_boundaries_;
+		visualization_msgs::MarkerArray &paths = process_path_results_.process_paths_;
+
+		for(int i = 0; i < bds.markers.size();i++)
+		{
+			visualization_msgs::Marker &m = bds.markers[i];
+			m.action = m.DELETE;
+		}
+
+		for(int i = 0; i <  paths.markers.size(); i++)
+		{
+			visualization_msgs::Marker &m = paths.markers[i];
+			m.action = m.DELETE;
+		}
+
+		// publishing markers for deletion
+		visualization_msgs::MarkerArray markers;
+		markers.markers.insert(markers.markers.end(),bds.markers.begin(),bds.markers.end());
+		markers.markers.insert(markers.markers.end(),paths.markers.begin(),paths.markers.end());
+
+		tool_path_markers_pub_.publish(markers);
+
+		bds.markers.clear();
+		paths.markers.clear();
+
+	}
+
 	bool generate_process_plan(godel_process_path_generation::VisualizeBlendingPlan &process_plan)
 	{
 		// creating color structures for the different parts for the process path
@@ -291,7 +321,8 @@ protected:
 			geometry_msgs::Pose boundary_pose;
 			visualization_msgs::Marker path_marker;
 			const pcl::PolygonMesh &mesh = meshes[i];
-			if(mesh_importer_.calculateBoundaryData(mesh))
+			//if(mesh_importer_.calculateBoundaryData(mesh))
+			if(mesh_importer_.calculateSimpleBoundary(mesh))
 			{
 				// Filter out boundaries that are too small (assumed to be machine-vision artifacts) and improperly formed
 				godel_process_path::PolygonBoundaryCollection filtered_boundaries;
@@ -653,11 +684,12 @@ protected:
 		switch(req.action)
 		{
 			case req.GENERATE_MOTION_PLAN:
+				remove_previous_process_plan();
 				res.succeeded = generate_process_plan(process_plan);
 				break;
 
 			case req.GENERATE_MOTION_PLAN_AND_PREVIEW:
-
+				remove_previous_process_plan();
 				res.succeeded = generate_process_plan(process_plan) && animate_tool_path();
 				break;
 
