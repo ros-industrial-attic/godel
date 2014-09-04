@@ -29,6 +29,8 @@
 #include <pcl/PolygonMesh.h>
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
+#include <pcl/ModelCoefficients.h>
+#include <geometry_msgs/PolygonStamped.h>
 #include <Eigen/Geometry>
 #include <eigen_conversions/eigen_msg.h>
 #include "godel_process_path_generation/polygon_pts.hpp"
@@ -38,6 +40,7 @@ namespace godel_process_path
 {
 
 typedef pcl::PointCloud<pcl::PointXYZINormal> Cloud;
+
 
 
 class MeshImporter
@@ -53,6 +56,8 @@ public:
    */
   bool calculateBoundaryData(const pcl::PolygonMesh &input_mesh);
 
+  bool calculateSimpleBoundary(const pcl::PolygonMesh &input_mesh);
+
   /**@brief Get const reference to the boundary data */
   const PolygonBoundaryCollection& getBoundaries() const
   {
@@ -67,6 +72,8 @@ public:
   bool verbose_;        /**< @brief Flag to print additional information */
 
 private:
+
+  bool applyConcaveHull(const Cloud& plane_cloud,pcl::ModelCoefficients &plane_coeffs,geometry_msgs::PolygonStamped& polygon);
 
   void computeLocalPlaneFrame(const Eigen::Hyperplane<double, 3> &plane, const Eigen::Vector3d &centroid);
 
