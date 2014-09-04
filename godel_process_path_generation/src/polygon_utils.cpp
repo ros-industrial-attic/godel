@@ -161,21 +161,24 @@ bool checkBoundary(const PolygonBoundary &bnd)
   // Check for 0-length segments
   const double LENGTH_TOL = 100.*std::numeric_limits<double>::epsilon();
   PolygonBoundary::const_iterator pt, last_pt;
+  int pt_counter = 0;
   for (pt=bnd.begin(), last_pt=boost::prior(bnd.end()); pt!=bnd.end(); ++pt)
   {
     if (pt==last_pt)
     {
       if (pt->dist(bnd.front()) < LENGTH_TOL)
       {
-        ROS_WARN("Invisible polygon boundary segment.");
+
+        ROS_WARN_STREAM("Invisible polygon boundary segment at point "<<pt_counter);
         return false;
       }
     }
     else if (pt->dist(*boost::next(pt)) < LENGTH_TOL)
     {
-      ROS_WARN("Invisible polygon boundary segment.");
+      ROS_WARN_STREAM("Invisible polygon boundary segment at point "<<pt_counter);
       return false;
     }
+    pt_counter++;
   }
 
   // Subsequent checks for intersection are pointless on a triangle
