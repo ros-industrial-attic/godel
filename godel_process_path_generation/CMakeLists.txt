@@ -12,7 +12,8 @@ find_package(catkin REQUIRED COMPONENTS
              message_generation
              genmsg
              trajectory_msgs
-						 eigen_conversions
+             eigen_conversions
+             cmake_modules
 )
 
 find_package(Boost REQUIRED COMPONENTS system)

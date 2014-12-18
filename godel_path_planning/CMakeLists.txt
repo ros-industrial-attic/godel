@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   godel_msgs
   godel_process_path_generation
   roscpp
+  cmake_modules
 )
 
 find_package(Eigen REQUIRED)
