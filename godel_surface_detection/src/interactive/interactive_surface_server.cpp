@@ -433,6 +433,7 @@ void InteractiveSurfaceServer::remove_all_surfaces()
 {
 	surface_selection_map_.clear();
 	marker_server_ptr_->clear();
+	meshes_map_.clear();
 	invoke_callbacks();
 	marker_server_ptr_->applyChanges();
 }

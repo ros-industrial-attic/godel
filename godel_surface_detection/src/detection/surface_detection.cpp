@@ -29,6 +29,7 @@
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/sample_consensus/sac_model_plane.h>
 #include <pcl/segmentation/sac_segmentation.h>
+#include <pcl/filters/project_inliers.h>
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/filters/conditional_removal.h>
 #include <pcl/kdtree/kdtree_flann.h>
@@ -473,7 +474,8 @@ bool SurfaceDetection::find_surfaces()
 
 		Cloud::Ptr segment_cloud_ptr = surface_clouds_[i];
 		int count = segment_cloud_ptr->size();
-		if(apply_plane_approximation_refinement(*ungrouped_cloud_ptr,*segment_cloud_ptr,*segment_cloud_ptr))
+		//if(apply_plane_approximation_refinement(*ungrouped_cloud_ptr,*segment_cloud_ptr,*segment_cloud_ptr))
+		if(apply_plane_projection_refinement(*ungrouped_cloud_ptr,*segment_cloud_ptr,*segment_cloud_ptr))
 		{
 
 			ROS_INFO_STREAM("Plane approximation refinement for cluster "<<i<<" completed with [ star:  "
@@ -674,6 +676,60 @@ bool SurfaceDetection::apply_plane_approximation_refinement(const Cloud& candida
 		return false;
 	}
 
+}
+
+bool SurfaceDetection::apply_plane_projection_refinement(const Cloud& candidate_outliers,
+		const Cloud& surface_cluster,Cloud& projected_cluster)
+{
+	pcl::ModelCoefficients::Ptr coeff_ptr(new pcl::ModelCoefficients());
+	pcl::PointIndices::Ptr plane_inliers_ptr(new pcl::PointIndices());
+	pcl::SACSegmentation<pcl::PointXYZ> seg;
+
+	// setting segmentation options
+	seg.setOptimizeCoefficients(true);
+	seg.setModelType(pcl::SACMODEL_PLANE);
+	seg.setMethodType(pcl::SAC_RANSAC);
+	seg.setMaxIterations(params_.pa_seg_max_iterations);
+	seg.setDistanceThreshold(params_.pa_seg_dist_threshold);
+
+	// finding coefficients
+	seg.setInputCloud(surface_cluster.makeShared());
+	seg.segment(*plane_inliers_ptr,*coeff_ptr);
+
+	// plane projection and proximity search
+	pcl::SampleConsensusModelPlane<pcl::PointXYZ> model_plane(candidate_outliers.makeShared());
+	Eigen::VectorXf model_coeff(4);
+
+	if(plane_inliers_ptr->indices.size()> 0)
+	{
+		// projecting to plane
+		pcl::ProjectInliers<pcl::PointXYZ> proj;
+		proj.setModelType (pcl::SACMODEL_PLANE);
+		proj.setInputCloud (surface_cluster.makeShared());
+		proj.setModelCoefficients(coeff_ptr);
+		proj.filter (projected_cluster);
+
+		// adding near points from outliers
+		std::vector<int> final_inliers;
+		Cloud::Ptr inlier_points_ptr = Cloud::Ptr(new Cloud());
+		model_plane.setInputCloud(candidate_outliers.makeShared());
+		model_coeff<< coeff_ptr->values[0],coeff_ptr->values[1],coeff_ptr->values[2],coeff_ptr->values[3];
+		model_plane.selectWithinDistance(model_coeff,params_.pa_sac_plane_distance,final_inliers);
+		pcl::copyPointCloud(candidate_outliers,final_inliers,*inlier_points_ptr);
+
+		// checking distances to main cluster
+		if(apply_kdtree_radius_search(*inlier_points_ptr,surface_cluster,params_.pa_kdtree_radius,*inlier_points_ptr))
+		{
+			// adding to output cloud
+			projected_cluster += *inlier_points_ptr;
+		}
+	}
+	else
+	{
+		return false;
+	}
+
+	return true;
 }
 
 bool SurfaceDetection::apply_kdtree_radius_search(const Cloud& query_points,const Cloud& search_points,double radius,

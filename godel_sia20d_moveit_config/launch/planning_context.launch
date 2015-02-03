@@ -1,3 +1,4 @@
+<?xml version="1.0" ?>
 <launch>
   <!-- By default we do not overwrite the URDF. Change the following to true to change the default behavior -->
   <arg name="load_robot_description" default="false"/>
@@ -6,7 +7,7 @@
   <arg name="robot_description" default="robot_description"/>
 
   <!-- Load universal robot description format (URDF) -->
-  <param if="$(arg load_robot_description)" name="$(arg robot_description)" textfile="$(find godel_robot_config)/urdf/sia20d_workspace.urdf"/>
+  <param if="$(arg load_robot_description)" name="$(arg robot_description)" command="$(find xacro)/xacro.py '$(find godel_robot_config)/urdf/sia20d_workspace.xacro'"/>
 
   <!-- The semantic description that corresponds to the URDF -->
   <param name="$(arg robot_description)_semantic" textfile="$(find godel_sia20d_moveit_config)/config/sia20d_workspace.srdf" />

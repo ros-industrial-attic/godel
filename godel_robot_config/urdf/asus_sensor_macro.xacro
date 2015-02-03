@@ -63,7 +63,7 @@
 		<joint name="${prefix}asus_ir_joint" type="fixed">
 			<parent link="${prefix}asus_frame"/>
 			<child link="${prefix}asus_ir_link"/>
-			<origin rpy="0 0 0" xyz="0 0 0"/>
+			<origin rpy="0 0 0" xyz="0 0.0476 0"/>
 		</joint>
 
 		<joint name="${prefix}asus_ir_optical_frame_joint" type="fixed">
@@ -75,7 +75,7 @@
 		<joint name="${prefix}asus_rgb_joint" type="fixed">
 			<parent link="${prefix}asus_ir_link"/>
 			<child link="${prefix}asus_rgb_link"/>
-			<origin rpy="0 0 0" xyz="0 -0.03 0"/>
+			<origin rpy="0 0 0" xyz="0 -0.025 0"/>
 		</joint>
 
 		<joint name="${prefix}asus_rgb_optical_frame_joint" type="fixed">

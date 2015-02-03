@@ -23,7 +23,7 @@ From source:
   - mkdir bld
   - cd bld
   - cmake ../src
-  - make
+  - make CFLAGS="-DNDEBUG"
   - sudo make install
 
 After installation, patch offset_sorter.hpp
