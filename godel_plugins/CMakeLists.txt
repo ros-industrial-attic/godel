@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 # c++11
-ADD_DEFINITIONS("-std=c++0x")
+#ADD_DEFINITIONS("-std=c++0x")
 
 find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
 

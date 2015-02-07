@@ -548,7 +548,7 @@ protected:
 		switch(req.action)
 		{
 
-		case req.PUBLISH_SCAN_PATH:
+		case godel_msgs::SurfaceDetection::Request::PUBLISH_SCAN_PATH:
 
 			if(req.use_default_parameters)
 			{
@@ -562,7 +562,7 @@ protected:
 			robot_scan_.publish_scan_poses(ROBOT_SCAN_PATH_PREVIEW_TOPIC);
 			break;
 
-		case req.SCAN_AND_FIND_ONLY:
+		case godel_msgs::SurfaceDetection::Request::SCAN_AND_FIND_ONLY:
 
 			if(req.use_default_parameters)
 			{
@@ -579,7 +579,7 @@ protected:
 			res.surfaces.markers.clear();
 			break;
 
-		case req.SCAN_FIND_AND_RETURN:
+		case godel_msgs::SurfaceDetection::Request::SCAN_FIND_AND_RETURN:
 
 			if(req.use_default_parameters)
 			{
@@ -595,7 +595,7 @@ protected:
 			res.surfaces_found =  run_robot_scan(res.surfaces);
 			break;
 
-		case req.FIND_ONLY:
+		case godel_msgs::SurfaceDetection::Request::FIND_ONLY:
 
 			if(req.use_default_parameters)
 			{
@@ -610,7 +610,7 @@ protected:
 			res.surfaces.markers.clear();
 			break;
 
-		case req.FIND_AND_RETURN:
+		case godel_msgs::SurfaceDetection::Request::FIND_AND_RETURN:
 
 			if(req.use_default_parameters)
 			{
@@ -624,7 +624,7 @@ protected:
 			res.surfaces_found =  find_surfaces(res.surfaces);
 			break;
 
-		case req.RETURN_LATEST_RESULTS:
+		case godel_msgs::SurfaceDetection::Request::RETURN_LATEST_RESULTS:
 
 			res = latest_surface_detection_results_;
 			break;
@@ -638,7 +638,7 @@ protected:
 	{
 		switch(req.action)
 		{
-		case req.SELECT:
+		case godel_msgs::SelectSurface::Request::SELECT:
 
 			for(int i = 0; req.select_surfaces.size();i++)
 			{
@@ -646,7 +646,7 @@ protected:
 			}
 			break;
 
-		case req.DESELECT:
+		case godel_msgs::SelectSurface::Request::DESELECT:
 
 			for(int i = 0; req.select_surfaces.size();i++)
 			{
@@ -654,22 +654,22 @@ protected:
 			}
 			break;
 
-		case req.SELECT_ALL:
+		case godel_msgs::SelectSurface::Request::SELECT_ALL:
 
 			surface_server_.select_all(true);
 			break;
 
-		case req.DESELECT_ALL:
+		case godel_msgs::SelectSurface::Request::DESELECT_ALL:
 
 			surface_server_.select_all(false);
 			break;
 
-		case req.HIDE_ALL:
+		case godel_msgs::SelectSurface::Request::HIDE_ALL:
 
 			surface_server_.show_all(false);
 			break;
 
-		case req.SHOW_ALL:
+		case godel_msgs::SelectSurface::Request::SHOW_ALL:
 			surface_server_.show_all(true);
 			break;
 		}
@@ -683,27 +683,27 @@ protected:
 		process_plan.request.params = req.use_default_parameters ? default_blending_plan_params_: req.params;
 		switch(req.action)
 		{
-			case req.GENERATE_MOTION_PLAN:
+			case godel_msgs::ProcessPlanning::Request::GENERATE_MOTION_PLAN:
 				remove_previous_process_plan();
 				res.succeeded = generate_process_plan(process_plan);
 				break;
 
-			case req.GENERATE_MOTION_PLAN_AND_PREVIEW:
+			case godel_msgs::ProcessPlanning::Request::GENERATE_MOTION_PLAN_AND_PREVIEW:
 				remove_previous_process_plan();
 				res.succeeded = generate_process_plan(process_plan) && animate_tool_path();
 				break;
 
-			case req.PREVIEW_TOOL_PATH:
+			case godel_msgs::ProcessPlanning::Request::PREVIEW_TOOL_PATH:
 
 				res.succeeded = animate_tool_path();
 				break;
 
-			case req.PREVIEW_MOTION_PLAN:
+			case godel_msgs::ProcessPlanning::Request::PREVIEW_MOTION_PLAN:
 
 				res.succeeded = false;
 				break;
 
-			case req.EXECUTE_MOTION_PLAN:
+			case godel_msgs::ProcessPlanning::Request::EXECUTE_MOTION_PLAN:
 
 				res.succeeded = false;
 				break;
@@ -723,14 +723,14 @@ protected:
 	{
 		switch(req.action)
 		{
-		case req.GET_CURRENT_PARAMETERS:
+		case godel_msgs::SurfaceBlendingParameters::Request::GET_CURRENT_PARAMETERS:
 
 			res.surface_detection = surface_detection_.params_;
 			res.robot_scan = robot_scan_.params_;
 			res.blending_plan = blending_plan_params_;
 			break;
 
-		case req.GET_DEFAULT_PARAMETERS:
+		case godel_msgs::SurfaceBlendingParameters::Request::GET_DEFAULT_PARAMETERS:
 
 			res.surface_detection = default_surf_detection_params_;
 			res.robot_scan = default_robot_scan_params__;
@@ -793,8 +793,10 @@ int main(int argc,char** argv)
 	ros::AsyncSpinner spinner(4);
 	spinner.start();
 	SurfaceBlendingService service;
+	ROS_INFO("INIT BLENDING SERVICE");
 	if(service.init())
 	{
+		ROS_INFO("BLENDING SERVICE INIT SUCCESSFUL!");
 		service.run();
 	}
 

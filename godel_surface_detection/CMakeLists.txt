@@ -19,7 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(PCL 1.7 REQUIRED COMPONENTS common io)
 find_package(Boost REQUIRED COMPONENTS system)
 
-ADD_DEFINITIONS("-std=c++0x")
+#ADD_DEFINITIONS("-std=c++0x")
 
 set(godel_surface_detection_INCLUDE_DIRECTORIES
 	include
