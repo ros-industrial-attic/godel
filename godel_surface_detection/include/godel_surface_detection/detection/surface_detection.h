@@ -181,9 +181,7 @@ protected:
 			const Cloud& surface_cluster,Cloud& projected_cluster);
 
 	bool apply_normal_estimation(const Cloud &cloud,Normals& normals);
-	bool apply_fast_triangulation(const Cloud& in,
-			const Normals& normals,
-			pcl::PolygonMesh& mesh);
+	
 	bool apply_kdtree_radius_search(const Cloud& query_points,const Cloud& search_points,double radius,
 			Cloud& close_points);
 
@@ -192,6 +190,13 @@ protected:
 	bool apply_mls_surface_smoothing(const Cloud& cloud_in,Cloud& cloud_out,Normals& normals);
 
 	bool apply_tabletop_segmentation(const Cloud& cloud_in,Cloud& cloud_out);
+
+	/* @brief Finds the best fit plane for the input cloud, reprojects points onto the plane,
+	 * and then calculates the concave hull and triangulates a mesh.
+	 */
+	bool apply_planar_reprojection(const Cloud& in, Cloud& out);
+	bool apply_concave_hull(const Cloud& in, pcl::PolygonMesh& mesh);
+
 
 public:
 

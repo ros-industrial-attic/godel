@@ -35,6 +35,9 @@
 #include <pcl/kdtree/kdtree_flann.h>
 #include <tf/transform_datatypes.h>
 #include <octomap_ros/conversions.h>
+#include <pcl/surface/concave_hull.h>
+#include <pcl/surface/ear_clipping.h>
+
 
 namespace godel_surface_detection { namespace detection{
 
@@ -541,7 +544,12 @@ bool SurfaceDetection::find_surfaces()
 		pcl::PolygonMesh mesh;
 		visualization_msgs::Marker marker;
 
-		if(apply_fast_triangulation(*surface_clouds_[i],*segment_normals[i],mesh))
+		if (!apply_planar_reprojection(*surface_clouds_[i], *surface_clouds_[i]))
+		{
+			continue;
+		}
+
+		if (apply_concave_hull(*surface_clouds_[i], mesh))
 		{
 			mesh_to_marker(mesh,marker);
 
@@ -764,39 +772,6 @@ bool SurfaceDetection::apply_kdtree_radius_search(const Cloud& query_points,cons
 
 }
 
-bool SurfaceDetection::apply_fast_triangulation(const Cloud& in,
-		const Normals& normals,
-		pcl::PolygonMesh& mesh)
-{
-	// search tree
-	pcl::search::KdTree<pcl::PointNormal>::Ptr tree (
-			new pcl::search::KdTree<pcl::PointNormal>);
-
-	// cloud with normals
-	pcl::PointCloud<pcl::PointNormal>::Ptr cloud_with_normals(
-			new pcl::PointCloud<pcl::PointNormal>());
-	pcl::concatenateFields(in,normals,*cloud_with_normals);
-	tree->setInputCloud(cloud_with_normals);
-
-	// triangulation
-	pcl::GreedyProjectionTriangulation<pcl::PointNormal> gt;
-	gt.setConsistentVertexOrdering(true);
-	gt.setSearchRadius(params_.tr_search_radius);
-	gt.setMu(params_.tr_mu);
-	gt.setMaximumNearestNeighbors(params_.tr_max_nearest_neighbors);
-	gt.setMaximumSurfaceAngle(params_.tr_max_surface_angle);
-	gt.setMinimumAngle(params_.tr_min_angle);
-	gt.setMaximumAngle(params_.tr_max_angle);
-	gt.setNormalConsistency(params_.tr_normal_consistency);
-
-	gt.setInputCloud(cloud_with_normals);
-	gt.setSearchMethod(tree);
-	gt.reconstruct(mesh);
-
-	return mesh.polygons.size() > 0;
-
-}
-
 bool SurfaceDetection::apply_voxel_downsampling(Cloud& cloud)
 {
 	if(params_.voxel_leafsize > 0.000001f)
@@ -870,5 +845,59 @@ bool SurfaceDetection::apply_tabletop_segmentation(const Cloud& cloud_in,Cloud& 
 	return succeeded;
 }
 
+bool SurfaceDetection::apply_planar_reprojection(const Cloud& in, Cloud& out)
+{
+	pcl::ModelCoefficients::Ptr coeff_ptr(new pcl::ModelCoefficients());
+	pcl::PointIndices::Ptr plane_inliers_ptr(new pcl::PointIndices());
+	pcl::SACSegmentation<pcl::PointXYZ> seg;
+
+	// setting segmentation options
+	seg.setOptimizeCoefficients(true);
+	seg.setModelType(pcl::SACMODEL_PLANE);
+	seg.setMethodType(pcl::SAC_RANSAC);
+	seg.setMaxIterations(1000);
+	seg.setDistanceThreshold(params_.tabletop_seg_distance_threshold);
+
+	// finding coefficients
+	seg.setInputCloud(in.makeShared());
+	seg.segment(*plane_inliers_ptr, *coeff_ptr);
+
+	if(plane_inliers_ptr->indices.size() == 0)
+	{
+		ROS_WARN_STREAM(__FUNCTION__ << ": Could not segment out plane");
+		return false;
+	}
+
+	// If successful, extract points relevant to the plane
+ 	pcl::ExtractIndices<pcl::PointXYZ> extract;
+	extract.setInputCloud (in.makeShared());
+	extract.setIndices (plane_inliers_ptr);
+	extract.setNegative (false);
+	extract.filter(out);
+
+	// projecting to plane
+	pcl::ProjectInliers<pcl::PointXYZ> proj;
+	proj.setModelType (pcl::SACMODEL_PLANE);
+	proj.setInputCloud (out.makeShared());
+	proj.setModelCoefficients(coeff_ptr);
+	proj.filter (out);
+}
+
+bool SurfaceDetection::apply_concave_hull(const Cloud& in, pcl::PolygonMesh& mesh)
+{
+	pcl::PolygonMesh::Ptr mesh_ptr (new pcl::PolygonMesh);
+	static int count = 0;
+	pcl::ConcaveHull<pcl::PointXYZ> chull;
+	chull.setInputCloud (in.makeShared());
+	chull.setAlpha (0.1);
+	chull.reconstruct (*mesh_ptr);
+
+	// Given a complex concave hull polygon, seperate it into triangles
+	pcl::EarClipping clipping;
+	clipping.setInputMesh(mesh_ptr);
+	clipping.process(mesh);
+
+	return mesh.polygons.size() > 0;
+}
 
 }} /* namespace godel_surface_detection */
