@@ -1,3 +1,5 @@
+# The cartesian points representing path to be blended
 ProcessPath path
+# TODO: extra parameters that tell descartes how to behave
 ---
 trajectory_msgs/JointTrajectory trajectory
