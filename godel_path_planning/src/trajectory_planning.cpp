@@ -1,6 +1,5 @@
 #include "godel_path_planning/trajectory_planning.h"
 
-// #include <moveit/move_group_interface/move_group.h>
 #include <moveit/robot_trajectory/robot_trajectory.h>
 #include <moveit/robot_model_loader/robot_model_loader.h>
 
@@ -39,7 +38,7 @@ namespace
             TolerancedFrame(utils::toFrame(x,y, z, rx, ry, rz, descartes_core::utils::EulerConventions::XYZ),
              ToleranceBase::zeroTolerance<PositionTolerance>(x, y, z),
              ToleranceBase::createSymmetric<OrientationTolerance>(rx, ry, 0, 0, 0, 2.0 * M_PI)),
-            0.0, 0.3));
+            0.0, 3.14));
   }
 
   // Create an axial trajectory pt from a given tf transform
@@ -129,8 +128,6 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
     return false;
   }
 
-  // moveit::planning_interface::MoveGroup group(req.group_name);
-
   // Note that there is both a descartes_core::RobotModel and a moveit RobotModel
   robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
   robot_state::RobotStatePtr kinematic_state (new robot_state::RobotState(robot_model_loader.getModel()));
@@ -152,9 +149,11 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
   }
 
   // create planning graph
-  descartes_core::SparsePlanner graph (robot_model);
+  // descartes_core::SparsePlanner graph (robot_model);
+  descartes_core::PlanningGraph graph(robot_model);
   // populate graph with points - very expensive call
-  graph.setPoints(graph_points);
+  // graph.setPoints(graph_points);
+  graph.insertGraph(&graph_points);
   // solve the graph for the shortest path
   double cost;
   std::list<descartes_core::JointTrajectoryPt> joints_sol;
@@ -163,7 +162,7 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
   // Retrieve active joint names for this planning group
   const std::vector< std::string >& joint_names = 
     robot_model_loader.getModel()->getJointModelGroup(req.group_name)->getActiveJointModelNames(); 
-  
+
   // translate the solution to the path planner
   // trajectory header: 
   trajectory.header.stamp = ros::Time::now();
@@ -171,7 +170,7 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
   // fill in joint names (order matters) - might need to check
   trajectory.joint_names = joint_names;
 
-  if (populateTrajectoryMsg(joints_sol, req.path.durations, *robot_model, trajectory))
+  if (!populateTrajectoryMsg(joints_sol, req.path.durations, *robot_model, trajectory))
   {
     ROS_ERROR("Could not populate trajectory message");
     return false;

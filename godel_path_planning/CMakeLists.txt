@@ -10,7 +10,6 @@ find_package(catkin REQUIRED COMPONENTS
   descartes_core
   descartes_moveit
   moveit_ros_move_group
-  #moveit_ros_planning_interface
   tf_conversions
 )
 
