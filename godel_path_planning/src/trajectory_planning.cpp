@@ -1,7 +1,8 @@
 #include "godel_path_planning/trajectory_planning.h"
 
-#include <moveit/move_group_interface/move_group.h>
+// #include <moveit/move_group_interface/move_group.h>
 #include <moveit/robot_trajectory/robot_trajectory.h>
+#include <moveit/robot_model_loader/robot_model_loader.h>
 
 #include "descartes_core/cart_trajectory_pt.h"
 #include "descartes_moveit/moveit_state_adapter.h"
@@ -18,10 +19,13 @@ namespace
   descartes_core::RobotModelPtr createRobotModel(const moveit::core::RobotStatePtr robot_state,
                                                  const std::string& group_name,
                                                  const std::string& tool_frame,
-                                                 const std::string& world_frame)
+                                                 const std::string& world_frame,
+                                                 const uint8_t iterations)
   {
-    boost::shared_ptr<descartes_core::RobotModel> result(new descartes_moveit::MoveitStateAdapter(*robot_state, group_name, tool_frame, world_frame, 2));
-    return result; 
+    using descartes_core::RobotModelPtr;
+    using descartes_moveit::MoveitStateAdapter;
+
+    return RobotModelPtr(new MoveitStateAdapter(*robot_state, group_name, tool_frame, world_frame, iterations)); 
   }
 
   // Create a CartTrajectoryPt that defines a point & axis with free rotation about z
@@ -55,6 +59,9 @@ namespace
     return pointAxisTrajectoryFactory(x, y, z , rx, ry, rz);
   }
 
+  // Translates a point relative to a reference pose to an absolute transformation
+  // Also flips the z axis of the orientation to point INTO the plane specified by the
+  // reference frame.
   tf::Transform createNominalTransform(const geometry_msgs::Pose& ref_pose, const geometry_msgs::Point& point)
   {
     // To plane
@@ -73,6 +80,42 @@ namespace
     return in_world;
   }
 
+  bool populateTrajectoryMsg(const std::list<descartes_core::JointTrajectoryPt>& solution,
+                             const std::vector<ros::Duration>& intervals,
+                             const descartes_core::RobotModel& robot_model,
+                             trajectory_msgs::JointTrajectory& trajectory)
+  {
+    typedef std::list<descartes_core::JointTrajectoryPt>::const_iterator JointSolutionIterator;
+    
+    // For calculating the time_from_start field of the trajectoryPoint
+    ros::Duration time_from_start;
+    size_t idx = 0;
+
+    for (JointSolutionIterator it = solution.begin(); it != solution.end(); ++it)
+    {
+      // Retrieve actual target joint angles from the polymorphic interface function
+      std::vector<std::vector<double> > joint_angles;
+      it->getJointPoses(robot_model, joint_angles);
+      const std::vector<double>& sol = joint_angles[0];
+      
+      trajectory_msgs::JointTrajectoryPoint point;
+      point.positions = sol;
+      point.velocities.resize(sol.size(), 0.0); // Fill extra fields with zeroes for now
+      point.accelerations.resize(sol.size(), 0.0);
+      point.effort.resize(sol.size(), 0.0);
+      point.time_from_start = time_from_start;
+
+      // add trajectory point to array
+      trajectory.points.push_back(point);
+
+      // increment time so far by next duration
+      time_from_start += intervals[idx++];
+    }
+
+    return true;
+  }
+
+
 } // end of anon namespace
 
 bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlanning::Request& req,
@@ -80,47 +123,60 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
 {
   using descartes_core::TrajectoryPtPtr;
 
-  moveit::planning_interface::MoveGroup group(req.group_name);
+  if (req.path.points.empty())
+  {
+    ROS_WARN("%s: recieved trajectory planning request with no points.", __FUNCTION__);
+    return false;
+  }
 
-  descartes_core::RobotModelConstPtr robot_model = createRobotModel(group.getCurrentState(),
-                                                                    req.group_name, "tool0", 
-                                                                    "world_frame");
+  // moveit::planning_interface::MoveGroup group(req.group_name);
 
-  // if (tool_points.markers.empty())
-  // {
-  //   ROS_ERROR("%s: tool_points was empty.", __FUNCTION__);
-  //   return false;
-  // }
+  // Note that there is both a descartes_core::RobotModel and a moveit RobotModel
+  robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
+  robot_state::RobotStatePtr kinematic_state (new robot_state::RobotState(robot_model_loader.getModel()));
 
-  // if (tool_points.markers[0].points.empty())
-  // {
-  //   ROS_ERROR("%s: sub-sequence %d of tool points is empty", __FUNCTION__, 0);
-  //   return false;
-  // }
+  descartes_core::RobotModelConstPtr robot_model = createRobotModel(kinematic_state, //group.getCurrentState(),
+                                                                    req.group_name, req.tool_frame, 
+                                                                    req.world_frame, req.iterations);
 
-  // std::vector<TrajectoryPtPtr> pts;
+  std::vector<TrajectoryPtPtr> graph_points;
+  graph_points.reserve(req.path.points.size());
 
-  // ROS_INFO_STREAM("N POINTS: " << pts.size());
+  // Create cartesian trajectory points out of the tool processing path
+  for (size_t i = 0; i < req.path.points.size(); ++i)
+  {
+    // compute the absolute transform of a given point given its 
+    // reference plane and relative position to that plane
+    tf::Transform point_tf = createNominalTransform(req.path.reference, req.path.points[i]);
+    graph_points.push_back(tfToAxialTrajectoryPt(point_tf));
+  }
 
-  // for (size_t i = 0; i < tool_points.markers[0].points.size(); ++i)
-  // {
-  //   tf::Transform tf_pt = createNominalTransform(tool_points.markers[0].pose, tool_points.markers[0].points[i]);
-  //   pts.push_back(createTrajectoryPoint(tf_pt));
-  // }
+  // create planning graph
+  descartes_core::SparsePlanner graph (robot_model);
+  // populate graph with points - very expensive call
+  graph.setPoints(graph_points);
+  // solve the graph for the shortest path
+  double cost;
+  std::list<descartes_core::JointTrajectoryPt> joints_sol;
+  graph.getShortestPath(cost, joints_sol);
 
-  // // descartes_core::PlanningGraph graph(robot_model);
-  // descartes_core::SparsePlanner graph(robot_model);
-  // ROS_INFO_STREAM("CREATING GRAPH");
-  // // graph.insertGraph(&pts);
-  // graph.setPoints(pts);
-  // ROS_INFO_STREAM("GRAPH_DONE");
+  // Retrieve active joint names for this planning group
+  const std::vector< std::string >& joint_names = 
+    robot_model_loader.getModel()->getJointModelGroup(req.group_name)->getActiveJointModelNames(); 
+  
+  // translate the solution to the path planner
+  // trajectory header: 
+  trajectory.header.stamp = ros::Time::now();
+  trajectory.header.frame_id = req.world_frame;
+  // fill in joint names (order matters) - might need to check
+  trajectory.joint_names = joint_names;
 
-  // double cost;
-  // std::list<descartes_core::JointTrajectoryPt> joints_sol;
-  // ROS_INFO_STREAM("SOLVE GRAPH");
-  // graph.getShortestPath(cost, joints_sol);
-  // ROS_INFO_STREAM("SOLVE GRAPH DONE");
+  if (populateTrajectoryMsg(joints_sol, req.path.durations, *robot_model, trajectory))
+  {
+    ROS_ERROR("Could not populate trajectory message");
+    return false;
+  }
 
 
-  return false;
+  return true;
 }
