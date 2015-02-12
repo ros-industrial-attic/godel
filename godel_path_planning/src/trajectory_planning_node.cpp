@@ -24,8 +24,9 @@
 
 
 #include <ros/ros.h>
-#include "godel_path_planning/descartes_bridge.h"
 #include "godel_msgs/TrajectoryPlanning.h"
+ 
+#include "godel_path_planning/trajectory_planning.h"
 
 bool trajectory_planning_callback(godel_msgs::TrajectoryPlanning::Request& req,
                                   godel_msgs::TrajectoryPlanning::Response& res)
