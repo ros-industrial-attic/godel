@@ -26,3 +26,6 @@ devel
 # Eclipse files
 .project
 .cproject
+
+# mongodb instance
+godel_sia20d_moveit_config/default_warehouse_mongo_db/
