@@ -38,7 +38,7 @@ namespace
             TolerancedFrame(utils::toFrame(x,y, z, rx, ry, rz, descartes_core::utils::EulerConventions::XYZ),
              ToleranceBase::zeroTolerance<PositionTolerance>(x, y, z),
              ToleranceBase::createSymmetric<OrientationTolerance>(rx, ry, 0, 0, 0, 2.0 * M_PI)),
-            0.0, 3.14));
+            0.0, 0.74));
   }
 
   // Create an axial trajectory pt from a given tf transform

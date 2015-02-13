@@ -30,6 +30,9 @@
 #include <godel_process_path_generation/utils.h>
 #include <godel_process_path_generation/polygon_utils.h>
 
+#include <control_msgs/FollowJointTrajectoryAction.h>
+#include <actionlib/client/simple_action_client.h>
+
 #include <pcl/console/parse.h>
 
 // topics and services
@@ -526,7 +529,7 @@ protected:
 			plan.request.group_name = "manipulator";
 			plan.request.tool_frame = "tool0";
 			plan.request.world_frame = "world_frame";
-			plan.request.iterations = 2;
+			plan.request.iterations = 4;
 			
 			const visualization_msgs::Marker& marker = process_path_results_.process_paths_.markers[i];
 
@@ -537,7 +540,7 @@ protected:
 			ROS_INFO_STREAM("Calling trajectory planner for surface process " << i);
 			if (trajectory_planner_client_.call(plan))
 			{
-				ROS_INFO_STREAM("Trajectory planner succeeded");
+				ROS_INFO_STREAM("Trajectory planner succeeded for plan " << i);
 				trajectories.push_back(plan.response.trajectory);
 			}
 			else
@@ -547,7 +550,54 @@ protected:
 		}
 
 		ROS_INFO_STREAM("Trajectory planning complete");
+
+		// DEBUG -> display the path
+		executeTrajectories(trajectories);
+
 	}
+
+	void executeTrajectories(const std::vector<trajectory_msgs::JointTrajectory>& trajectories)
+	{
+		// Setup action server for trajectory execution
+  	actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> ac("joint_trajectory_action", true);
+	  if (!ac.waitForServer(ros::Duration(2.0)))
+	  {
+	    ROS_ERROR("Could not connect to action server");
+	    return;
+	  }
+
+	  if (trajectories.empty()) return;
+
+
+	  // //goal.trajectory = trajectories[0];
+	  // for (size_t i = 0; i < trajectories[0].points.size(); ++i)
+	  // {
+	  // 	control_msgs::FollowJointTrajectoryGoal goal;
+	  // 	goal.trajectory.joint_names = trajectories[0].joint_names;
+	  // 	goal.trajectory.points.push_back(trajectories[0].points[i]);
+	  // 	goal.trajectory.points[0].time_from_start = ros::Duration(0);
+	  // 	ac.sendGoal(goal);
+    
+	  //   if (ac.waitForResult(ros::Duration(1.0)))
+	  //   {
+	  //   } else {
+	  //     ROS_WARN_STREAM("IT DID NOT WORK!");
+	  //   }
+	  // }
+
+
+	  control_msgs::FollowJointTrajectoryGoal goal;
+	  goal.trajectory = trajectories[0];
+	  ac.sendGoal(goal);
+		    
+    if (ac.waitForResult( goal.trajectory.points[goal.trajectory.points.size()-1].time_from_start))
+    {
+      ROS_INFO_STREAM("IT WORKED!");
+    } else {
+      ROS_WARN_STREAM("IT DID NOT WORK!");
+    }
+	}
+
 
 	visualization_msgs::MarkerArray create_tool_markers(const geometry_msgs::Point &pos, const geometry_msgs::Pose &pose,std::string frame_id)
 	{
