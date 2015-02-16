@@ -73,6 +73,10 @@ add_executable(surface_blending_service  src/services/surface_blending_service.c
 target_link_libraries(surface_blending_service ${PROJECT_NAME})
 add_dependencies(surface_blending_service godel_msgs_generate_messages_cpp)
 
+## trajectory test node
+add_executable(trajectory_test_node  src/services/trajectory_test_node.cpp)
+target_link_libraries(trajectory_test_node ${PROJECT_NAME})
+
 
 #############
 ## Install ##
