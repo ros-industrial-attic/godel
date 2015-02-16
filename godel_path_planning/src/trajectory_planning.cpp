@@ -14,6 +14,7 @@
 // Anonymous namespace
 namespace
 {
+  const static double TOOL_POINT_DELAY = 0.75;
   // Create a descartes RobotModel for graph planning
   descartes_core::RobotModelPtr createRobotModel(const moveit::core::RobotStatePtr robot_state,
                                                  const std::string& group_name,
@@ -38,7 +39,7 @@ namespace
             TolerancedFrame(utils::toFrame(x,y, z, rx, ry, rz, descartes_core::utils::EulerConventions::XYZ),
              ToleranceBase::zeroTolerance<PositionTolerance>(x, y, z),
              ToleranceBase::createSymmetric<OrientationTolerance>(rx, ry, 0, 0, 0, 2.0 * M_PI)),
-            0.0, 0.74));
+            0.0, 0.4));
   }
 
   // Create an axial trajectory pt from a given tf transform
@@ -82,12 +83,13 @@ namespace
   bool populateTrajectoryMsg(const std::list<descartes_core::JointTrajectoryPt>& solution,
                              const std::vector<ros::Duration>& intervals,
                              const descartes_core::RobotModel& robot_model,
-                             trajectory_msgs::JointTrajectory& trajectory)
+                             trajectory_msgs::JointTrajectory& trajectory,
+                             double time_offset = 0.0)
   {
     typedef std::list<descartes_core::JointTrajectoryPt>::const_iterator JointSolutionIterator;
     
     // For calculating the time_from_start field of the trajectoryPoint
-    ros::Duration time_from_start;
+    ros::Duration time_from_start(time_offset);
     size_t idx = 0;
 
     for (JointSolutionIterator it = solution.begin(); it != solution.end(); ++it)
@@ -108,7 +110,7 @@ namespace
       trajectory.points.push_back(point);
 
       // increment time so far by next duration
-      time_from_start += intervals[idx++];
+      time_from_start += ros::Duration(TOOL_POINT_DELAY);
     }
 
     return true;
@@ -150,9 +152,8 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
 
   // create planning graph
   // descartes_core::SparsePlanner graph (robot_model);
-  descartes_core::PlanningGraph graph(robot_model);
+  descartes_core::PlanningGraph graph(robot_model, 8); // max threads
   // populate graph with points - very expensive call
-  // graph.setPoints(graph_points);
   graph.insertGraph(&graph_points);
   // solve the graph for the shortest path
   double cost;
@@ -170,7 +171,7 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
   // fill in joint names (order matters) - might need to check
   trajectory.joint_names = joint_names;
 
-  if (!populateTrajectoryMsg(joints_sol, req.path.durations, *robot_model, trajectory))
+  if (!populateTrajectoryMsg(joints_sol, req.path.durations, *robot_model, trajectory, 2.0))
   {
     ROS_ERROR("Could not populate trajectory message");
     return false;
