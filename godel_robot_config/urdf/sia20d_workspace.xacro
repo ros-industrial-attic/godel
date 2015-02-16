@@ -34,7 +34,7 @@
 	<!-- end of sensor definitions -->
 
 	<!-- instantiating arm  -->	
-	<xacro:blending_eff_definition prefix="${arm_prefix}" eff_adjustment="0.0"/>
+	<xacro:blending_eff_definition prefix="${arm_prefix}" eff_adjustment="0.05"/>
 	<xacro:motoman_sia20d prefix="${arm_prefix}"/>
 
 	<joint name="link_t_to_eff" type="fixed">
