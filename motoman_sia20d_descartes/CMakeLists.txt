@@ -5,6 +5,7 @@ project(motoman_sia20d_descartes)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  descartes_core
   descartes_moveit
   motoman_sia20d_ikfast_manipulator
   pluginlib
