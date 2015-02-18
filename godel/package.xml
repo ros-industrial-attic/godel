@@ -8,10 +8,19 @@
 
   <license>Apache2</license>
   <buildtool_depend>catkin</buildtool_depend>
-  <run_depend>godel_plugins</run_depend>
-	<run_depend>godel_surface_detection</run_depend>
 
-	<export>
-		<metapackage/>
-	</export>
+  <run_depend>godel_sia20d_moveit_config</run_depend>
+  <run_depend>godel_robot_config</run_depend>
+  <run_depend>godel_plugins</run_depend>
+  <run_depend>godel_path_planning</run_depend>
+  <run_depend>godel_process_path_generation</run_depend>
+  <run_depend>godel_msgs</run_depend>
+  <run_depend>godel_keyence_ljv_driver</run_depend>
+  <run_depend>keyence_ljv_description</run_depend>
+  <run_depend>godel_surface_detection</run_depend>
+  <run_depend>godel_polygon_offset</run_depend>
+
+  <export>
+    <metapackage/>
+  </export>
 </package>
