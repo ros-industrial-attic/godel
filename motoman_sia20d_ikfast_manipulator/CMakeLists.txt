@@ -11,6 +11,8 @@ find_package(catkin REQUIRED COMPONENTS
 include_directories(${catkin_INCLUDE_DIRS})
 
 catkin_package(
+  INCLUDE_DIRS
+    include
   LIBRARIES
   CATKIN_DEPENDS
     moveit_core
@@ -25,7 +27,7 @@ set(IKFAST_LIBRARY_NAME motoman_sia20d_manipulator_moveit_ikfast_plugin)
 
 find_package(LAPACK REQUIRED)
 
-add_library(${IKFAST_LIBRARY_NAME} src/motoman_sia20d_manipulator_ikfast_moveit_plugin.cpp)
+add_library(${IKFAST_LIBRARY_NAME} src/plugin_init.cpp)
 target_link_libraries(${IKFAST_LIBRARY_NAME} ${catkin_LIBRARIES} ${Boost_LIBRARIES} ${LAPACK_LIBRARIES})
 
 install(TARGETS ${IKFAST_LIBRARY_NAME} LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION})

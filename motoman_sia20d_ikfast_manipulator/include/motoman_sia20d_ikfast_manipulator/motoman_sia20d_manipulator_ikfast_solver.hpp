@@ -17,8 +17,12 @@
 ///     gcc -lstdc++ ik.cpp
 /// To compile without any main function as a shared object (might need -llapack):
 ///     gcc -fPIC -lstdc++ -DIKFAST_NO_MAIN -DIKFAST_CLIBRARY -shared -Wl,-soname,libik.so -o libik.so ik.cpp
+
+#ifndef MOTOMAN_SIA20D_MANIPULATOR_IKFAST_SOLVER
+#define MOTOMAN_SIA20D_MANIPULATOR_IKFAST_SOLVER
+
 #define IKFAST_HAS_LIBRARY
-#include "ikfast.h" // found inside share/openrave-X.Y/python/ikfast.h
+#include <motoman_sia20d_ikfast_manipulator/ikfast.h> // found inside share/openrave-X.Y/python/ikfast.h
 using namespace ikfast;
 
 // check if the included ikfast version matches what this file was compiled with
@@ -4291,3 +4295,5 @@ int main(int argc, char** argv)
 }
 
 #endif
+
+#endif //MOTOMAN_SIA20D_MANIPULATOR_IKFAST_SOLVER
