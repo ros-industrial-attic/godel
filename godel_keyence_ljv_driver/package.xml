@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<package>
+  <name>godel_keyence_ljv_driver</name>
+  <version>0.1.0</version>
+  <description>Minimal ROS driver node for the Keyence LJ-V (7000) Ultra-High Speed In-Line Profilometers.</description>
+  <maintainer email="sedwards@swri.org">Shaun Edwards (Southwest Research Institute)</maintainer>
+  <license>BSD</license>
+
+  <url type="bugtracker">https://github.com/ros-industrial-consortium/godel/issues</url>
+  <url type="repository">https://github.com/ros-industrial-consortium/godel</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>pcl_ros</build_depend>
+  <build_depend>simple_message</build_depend>
+  <build_depend>dynamic_reconfigure</build_depend>
+
+  <run_depend>roscpp</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>pcl_ros</run_depend>
+  <run_depend>simple_message</run_depend>
+  <run_depend>dynamic_reconfigure</run_depend>
+</package>

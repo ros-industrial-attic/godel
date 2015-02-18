@@ -1,0 +1,27 @@
+<!--
+  Main driver launch file. Only controller_ip must be specified, all other
+  arguments have defaults.
+-->
+<launch>
+  <arg name="controller_ip"                                  doc="IP address of the Keyence LJ-V7000 controller" />
+  <arg name="controller_port" default="24691"                doc="Standard communication TCP port" />
+  <arg name="head_a_model"    default="V7080"                doc="Model of Head A connected to the controller" />
+  <arg name="cnv_inf_pts"     default="true"                 doc="Report profile points at infinite distances as +Inf (REP-117). If false, mimic LJ Navigator (set to -999.999mm)" />
+  <arg name="scale_factor"    default="1.0"                  doc="Scale all published points clouds by this factor" />
+  <arg name="sample_rate"     default="50"                   doc="Publish rate driver should try to achieve (note: sensor must be configured for at least this rate)" />
+  <arg name="frame_id"        default="sensor_optical_frame" doc="TF frame to publish all profiles in" />
+
+  <arg name="debug" default="false" />
+  <arg unless="$(arg debug)" name="launch_prefix" value="" />
+  <arg     if="$(arg debug)" name="launch_prefix" value="gdb --ex run --args" />
+
+  <node name="keyence_ljv_driver" pkg="godel_keyence_ljv_driver" type="driver_node" launch-prefix="$(arg launch_prefix)">
+    <param name="controller_ip"   type="str"    value="$(arg controller_ip)" />
+    <param name="controller_port" type="int"    value="$(arg controller_port)" />
+    <param name="head_a_model"    type="str"    value="$(arg head_a_model)" />
+    <param name="cnv_inf_pts"     type="bool"   value="$(arg cnv_inf_pts)" />
+    <param name="sample_rate"     type="double" value="$(arg sample_rate)" />
+    <param name="scale_factor"    type="double" value="$(arg scale_factor)" />
+    <param name="frame_id"        type="str"    value="$(arg frame_id)" />
+  </node>
+</launch>
