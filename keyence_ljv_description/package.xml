@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package>
+  <name>keyence_ljv_description</name>
+  <version>0.1.0</version>
+  <description>URDFs for the Keyence LJ-V (7000) Ultra-High Speed In-Line Profilometers.</description>
+  <maintainer email="sedwards@swri.org">Shaun Edwards (Southwest Research Institute)</maintainer>
+  <license>BSD</license>
+
+  <url type="bugtracker">https://github.com/ros-industrial-consortium/godel/issues</url>
+  <url type="repository">https://github.com/ros-industrial-consortium/godel</url>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>robot_state_publisher</run_depend>
+  <run_depend>joint_state_publisher</run_depend>
+  <run_depend>rviz</run_depend>
+  <run_depend>xacro</run_depend>
+
+  <export>
+    <architecture_independent />
+  </export>
+</package>

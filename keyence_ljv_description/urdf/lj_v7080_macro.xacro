@@ -1,0 +1,49 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:property name="pi" value="3.1415926535897" />
+  <xacro:property name="box_l" value="0.096" />
+  <xacro:property name="box_h" value="0.071" />
+  <xacro:property name="box_w" value="0.042" />
+
+  <xacro:property name="ref_dist_a" value="0.080" />
+
+  <xacro:macro name="keyence_lj_v7080" params="prefix">
+    <link name="${prefix}base_link">
+      <visual>
+        <origin xyz="${box_l/-2} 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="${box_l} ${box_w} ${box_h}"/>
+        </geometry>
+        <material name="keyence_black">
+          <color rgba="0.15 0.15 0.15 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="${box_l/-2} 0 0" rpy="0 0 0"/>
+        <geometry>
+          <box size="${box_l} ${box_w} ${box_h}"/>
+        </geometry>
+      </collision>
+    </link>
+
+    <link name="${prefix}sensor_aperture_frame" />
+
+    <link name="${prefix}sensor_optical_frame" />
+
+    <!-- x, y, z still REP-103 -->
+    <joint name="${prefix}base_link-sensor_aperture_frame" type="fixed">
+      <origin xyz="-0.004 -0.003 -0.035" rpy="0 ${pi} 0" />
+      <parent link="${prefix}base_link" />
+      <child link="${prefix}sensor_aperture_frame" />
+    </joint>
+
+    <!-- Keyence: x+ left, y+ back, z+ up -->
+    <joint name="${prefix}sensor_aperture_frame-sensor_optical_frame" type="fixed">
+      <origin xyz="0 0 ${ref_dist_a}" rpy="0 ${-pi} ${pi/-2}" />
+      <parent link="${prefix}sensor_aperture_frame" />
+      <child link="${prefix}sensor_optical_frame" />
+    </joint>
+
+  </xacro:macro>
+</robot>
