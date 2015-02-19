@@ -11,7 +11,6 @@
   </include>
 
   <!-- Test Node -->
-  <!--<test test-name="utest" pkg="motoman_sia20d_descartes" type="motoman_sia20d_descartes_utest" />-->
-  <node name="utest" pkg="motoman_sia20d_descartes" type="motoman_sia20d_descartes_utest"  output="screen"/>
+  <test test-name="utest" pkg="motoman_sia20d_descartes" type="motoman_sia20d_descartes_utest"  />
   
 </launch>

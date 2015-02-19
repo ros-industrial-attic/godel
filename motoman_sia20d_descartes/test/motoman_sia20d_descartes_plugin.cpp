@@ -37,7 +37,7 @@ TEST(MotomanSia20dRobotModel, initializePlugin)
 
 TEST(MotomanSia20dRobotModel, getFK)
 {
-  std::vector<double> joints(7,0);
+  std::vector<double> joints= {M_PI/4,M_PI/6,M_PI/5,M_PI/8,M_PI/6,0,M_PI/6};
   EXPECT_TRUE(robot_model_ptr->getFK(joints,tcp_pose));
 }
 
@@ -45,5 +45,7 @@ TEST(MotomanSia20dRobotModel, getAllIK)
 {
   std::vector< std::vector<double> > solutions;
   EXPECT_TRUE(robot_model_ptr->getAllIK(tcp_pose,solutions));
+  ROS_INFO_STREAM("Found "<<solutions.size()<<" ik solutions");
+
 }
 
