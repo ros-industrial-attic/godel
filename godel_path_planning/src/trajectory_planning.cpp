@@ -3,10 +3,9 @@
 #include <moveit/robot_trajectory/robot_trajectory.h>
 #include <moveit/robot_model_loader/robot_model_loader.h>
 
-#include "descartes_core/cart_trajectory_pt.h"
 #include "descartes_moveit/moveit_state_adapter.h"
-#include "descartes_core/planning_graph.h"
-#include "descartes_core/sparse_planner.h"
+#include "descartes_trajectory/cart_trajectory_pt.h"
+#include "descartes_planner/dense_planner.h"
 
 #include <tf_conversions/tf_eigen.h>
 
@@ -35,6 +34,7 @@ namespace
                                                              double angle_discretization)
   {
     using namespace descartes_core;
+    using namespace descartes_trajectory;
 
     return boost::shared_ptr<TrajectoryPt>(
       new CartTrajectoryPt(
@@ -82,13 +82,13 @@ namespace
     return in_world;
   }
 
-  bool populateTrajectoryMsg(const std::list<descartes_core::JointTrajectoryPt>& solution,
+  bool populateTrajectoryMsg(const std::vector<descartes_core::TrajectoryPtPtr>& solution,
                              const descartes_core::RobotModel& robot_model,
                              double interpoint_delay,
                              double time_offset,
                              trajectory_msgs::JointTrajectory& trajectory)
   {
-    typedef std::list<descartes_core::JointTrajectoryPt>::const_iterator JointSolutionIterator;
+    typedef std::vector<descartes_core::TrajectoryPtPtr>::const_iterator JointSolutionIterator;
     
     // For calculating the time_from_start field of the trajectoryPoint
     ros::Duration time_from_start(time_offset);
@@ -97,7 +97,7 @@ namespace
     {
       // Retrieve actual target joint angles from the polymorphic interface function
       std::vector<std::vector<double> > joint_angles;
-      it->getJointPoses(robot_model, joint_angles);
+      it->get()->getJointPoses(robot_model, joint_angles);
       const std::vector<double>& sol = joint_angles[0];
       
       trajectory_msgs::JointTrajectoryPoint point;
@@ -151,15 +151,21 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
     graph_points.push_back(tfToAxialTrajectoryPt(point_tf, req.angle_discretization));
   }
 
-  // create planning graph
-  // descartes_core::SparsePlanner graph (robot_model);
-  descartes_core::PlanningGraph graph(robot_model, 8); // max threads
-  // populate graph with points - very expensive call
-  graph.insertGraph(&graph_points);
-  // solve the graph for the shortest path
-  double cost;
-  std::list<descartes_core::JointTrajectoryPt> joints_sol;
-  graph.getShortestPath(cost, joints_sol);
+  descartes_core::PathPlannerBasePtr planner (new descartes_planner::DensePlanner);
+  planner->initialize(robot_model);
+
+  if (!planner->planPath(graph_points))
+  {
+    ROS_ERROR("%s: Failed to plan for given trajectory.", __FUNCTION__);
+    return false;
+  }
+
+  std::vector<TrajectoryPtPtr> result_path;
+  if (!planner->getPath(result_path))
+  {
+    ROS_ERROR("%s: Failed to retrieve path.", __FUNCTION__);
+    return false;
+  }
 
   // Retrieve active joint names for this planning group
   const std::vector< std::string >& joint_names = 
@@ -172,7 +178,7 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
   // fill in joint names (order matters) - might need to check
   trajectory.joint_names = joint_names;
 
-  if (!populateTrajectoryMsg(joints_sol, *robot_model, 2.0, req.interpoint_delay, trajectory))
+  if (!populateTrajectoryMsg(result_path, *robot_model, 2.0, req.interpoint_delay, trajectory))
   {
     ROS_ERROR("Could not populate trajectory message");
     return false;

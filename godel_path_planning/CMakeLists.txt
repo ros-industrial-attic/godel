@@ -9,6 +9,8 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   descartes_core
   descartes_moveit
+  descartes_planner
+  descartes_trajectory
   moveit_ros_move_group
   tf_conversions
 )
