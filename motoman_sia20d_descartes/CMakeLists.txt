@@ -42,8 +42,14 @@ target_link_libraries(${PROJECT_NAME}
                       ${catkin_LIBRARIES}
 )
 
-
-
 #############
 ## Testing ##
 #############
+if(CATKIN_ENABLE_TESTING)
+  find_package(rostest)
+  set(UTEST_SRC_FILES test/utest.cpp
+      test/motoman_sia20d_descartes_plugin.cpp)
+
+  add_rostest_gtest(${PROJECT_NAME}_utest test/launch/utest.launch test/launch/motoman_sia20d_plugin.launch ${UTEST_SRC_FILES})
+  target_link_libraries(${PROJECT_NAME}_utest ${catkin_LIBRARIES} ${Boost_LIBRARIES})
+endif()

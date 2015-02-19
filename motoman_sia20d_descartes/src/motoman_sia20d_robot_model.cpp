@@ -95,7 +95,7 @@ namespace motoman_sia20d_descartes
           {
             // One element of solution is not within limits
             obeys_limits = false;
-            ROS_DEBUG_STREAM("Not in limits! " << i << " value " << sol[i] << " has limit: " << joint_has_limits_vector_[i] 
+            ROS_DEBUG_STREAM("Not in limits! " << i << " value " << sol[i] << " has limit: " << joint_has_limits_vector_[i]
               << "  being  " << joint_min_vector_[i]  << " to " << joint_max_vector_[i]);
             break;
           }
