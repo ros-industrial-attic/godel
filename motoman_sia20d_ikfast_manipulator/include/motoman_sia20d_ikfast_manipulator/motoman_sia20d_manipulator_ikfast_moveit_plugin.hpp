@@ -58,6 +58,9 @@
 
 namespace motoman_sia20d_ikfast_manipulator {
 
+const static std::string MOTOMAN_BASE_LINK = "base_link";
+const static std::string MOTOMAN_TIP_LINK ="tool0";
+
 // Need a floating point tolerance when checking joint limits, in case the joint starts at limit
 const double LIMIT_TOLERANCE = .0000001;
 /// \brief Search modes for searchPositionIK(), see there
@@ -270,7 +273,13 @@ bool IKFastKinematicsPlugin::initialize(const std::string &robot_description,
                                         const std::string& tip_name,
                                         double search_discretization)
 {
-  setValues(robot_description, group_name, base_name, tip_name, search_discretization);
+
+  ROS_INFO_STREAM("FastIK Plugin for motoman_sia20d received base_link: '"<<
+                  base_name<< "' and tip_link: '"<<tip_name<<"'");
+  ROS_INFO_STREAM("FastIK Plugin for motoman_sia20d will use base_link: '"<<
+                  MOTOMAN_BASE_LINK<< "' and tip_link: '"<<MOTOMAN_TIP_LINK<<"'");
+
+  setValues(robot_description, group_name, MOTOMAN_BASE_LINK, MOTOMAN_TIP_LINK, search_discretization);
 
   ros::NodeHandle node_handle("~/"+group_name);
 
