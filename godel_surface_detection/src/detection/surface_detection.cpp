@@ -38,6 +38,7 @@
 #include <pcl/surface/concave_hull.h>
 #include <pcl/surface/ear_clipping.h>
 
+const static double CONCAVE_HULL_ALPHA = 0.1;
 
 namespace godel_surface_detection { namespace detection{
 
@@ -477,7 +478,7 @@ bool SurfaceDetection::find_surfaces()
 
 		Cloud::Ptr segment_cloud_ptr = surface_clouds_[i];
 		int count = segment_cloud_ptr->size();
-		//if(apply_plane_approximation_refinement(*ungrouped_cloud_ptr,*segment_cloud_ptr,*segment_cloud_ptr))
+
 		if(apply_plane_projection_refinement(*ungrouped_cloud_ptr,*segment_cloud_ptr,*segment_cloud_ptr))
 		{
 
@@ -634,57 +635,6 @@ bool SurfaceDetection::apply_region_growing_segmentation(const Cloud& in,
 	return clusters.size()>0;
 }
 
-bool SurfaceDetection::apply_plane_approximation_refinement(const Cloud& candidates,
-		const Cloud& surface_cluster,Cloud& extended_surface_cluster)
-{
-	pcl::ModelCoefficients::Ptr coeff_ptr(new pcl::ModelCoefficients());
-	pcl::PointIndices::Ptr plane_inliers_ptr(new pcl::PointIndices());
-	pcl::SACSegmentation<pcl::PointXYZ> seg;
-
-	// setting segmentation options
-	seg.setOptimizeCoefficients(true);
-	seg.setModelType(pcl::SACMODEL_PLANE);
-	seg.setMethodType(pcl::SAC_RANSAC);
-	seg.setMaxIterations(params_.pa_seg_max_iterations);
-	seg.setDistanceThreshold(params_.pa_seg_dist_threshold);
-
-	// finding coefficients
-	seg.setInputCloud(surface_cluster.makeShared());
-	seg.segment(*plane_inliers_ptr,*coeff_ptr);
-
-	// using coefficients to filter out plane
-	pcl::SampleConsensusModelPlane<pcl::PointXYZ> model_plane(candidates.makeShared());
-	Eigen::VectorXf model_coeff(4);
-
-	if(plane_inliers_ptr->indices.size()> 0)
-	{
-		std::vector<int> final_inliers;
-		Cloud::Ptr inlier_points_ptr = Cloud::Ptr(new Cloud());
-		model_plane.setInputCloud(candidates.makeShared());
-		model_coeff<< coeff_ptr->values[0],coeff_ptr->values[1],coeff_ptr->values[2],coeff_ptr->values[3];
-		model_plane.selectWithinDistance(model_coeff,params_.pa_sac_plane_distance,final_inliers);
-		pcl::copyPointCloud(candidates,final_inliers,*inlier_points_ptr);
-
-		// checking distances to main cluster
-		if(apply_kdtree_radius_search(*inlier_points_ptr,surface_cluster,params_.pa_kdtree_radius,*inlier_points_ptr))
-		{
-			// adding to output cloud
-			extended_surface_cluster += *inlier_points_ptr;
-
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-
-	}
-	else
-	{
-		return false;
-	}
-
-}
 
 bool SurfaceDetection::apply_plane_projection_refinement(const Cloud& candidate_outliers,
 		const Cloud& surface_cluster,Cloud& projected_cluster)
@@ -827,7 +777,7 @@ bool SurfaceDetection::apply_tabletop_segmentation(const Cloud& cloud_in,Cloud& 
 	seg.setOptimizeCoefficients(true);
 	seg.setModelType(pcl::SACMODEL_PLANE);
 	seg.setMethodType(pcl::SAC_RANSAC);
-	seg.setMaxIterations (1000);
+	seg.setMaxIterations (params_.pa_seg_max_iterations);
 	seg.setDistanceThreshold(params_.tabletop_seg_distance_threshold);
 	seg.setInputCloud(boost::make_shared<Cloud>(cloud_in));
 	seg.segment(*inliers_ptr,*coeff_ptr);
@@ -855,7 +805,7 @@ bool SurfaceDetection::apply_planar_reprojection(const Cloud& in, Cloud& out)
 	seg.setOptimizeCoefficients(true);
 	seg.setModelType(pcl::SACMODEL_PLANE);
 	seg.setMethodType(pcl::SAC_RANSAC);
-	seg.setMaxIterations(1000);
+	seg.setMaxIterations(params_.pa_seg_max_iterations);
 	seg.setDistanceThreshold(params_.tabletop_seg_distance_threshold);
 
 	// finding coefficients
@@ -886,10 +836,9 @@ bool SurfaceDetection::apply_planar_reprojection(const Cloud& in, Cloud& out)
 bool SurfaceDetection::apply_concave_hull(const Cloud& in, pcl::PolygonMesh& mesh)
 {
 	pcl::PolygonMesh::Ptr mesh_ptr (new pcl::PolygonMesh);
-	static int count = 0;
 	pcl::ConcaveHull<pcl::PointXYZ> chull;
 	chull.setInputCloud (in.makeShared());
-	chull.setAlpha (0.1);
+	chull.setAlpha (CONCAVE_HULL_ALPHA);
 	chull.reconstruct (*mesh_ptr);
 
 	// Given a complex concave hull polygon, seperate it into triangles

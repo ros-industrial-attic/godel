@@ -175,8 +175,6 @@ protected:
 	bool apply_region_growing_segmentation(const Cloud& in,
 			const Normals& normals,
 			std::vector<pcl::PointIndices>& clusters,CloudRGB& colored_cloud);
-	bool apply_plane_approximation_refinement(const Cloud& candidates,
-			const Cloud& surface_cluster,Cloud& extended_surface_cluster);
 	bool apply_plane_projection_refinement(const Cloud& candidate_outliers,
 			const Cloud& surface_cluster,Cloud& projected_cluster);
 
