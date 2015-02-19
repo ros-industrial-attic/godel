@@ -108,16 +108,16 @@ bool planPathToPosition(moveit::planning_interface::MoveGroup& group, const traj
 
 void insertCurrentPosition(moveit::planning_interface::MoveGroup& group, trajectory_msgs::JointTrajectory& trajectory)
 {
-      // get current joint positions
-    std::vector<double> group_variable_values;
-    group.getCurrentState()->copyJointGroupPositions(group.getCurrentState()->getRobotModel()->getJointModelGroup(group.getName()), group_variable_values);
+  // get current joint positions
+  std::vector<double> group_variable_values;
+  group.getCurrentState()->copyJointGroupPositions(group.getCurrentState()->getRobotModel()->getJointModelGroup(group.getName()), group_variable_values);
 
-    trajectory_msgs::JointTrajectoryPoint pt;
-    pt.positions = group_variable_values;
-    std::vector<double> dummy (group_variable_values.size(), 0.0);
-    pt.velocities = dummy;
-    pt.accelerations = dummy;
-    pt.effort = dummy;
-    pt.time_from_start = ros::Duration(1.0);
-    trajectory.points.insert(trajectory.points.begin(), pt);
+  trajectory_msgs::JointTrajectoryPoint pt;
+  pt.positions = group_variable_values;
+  std::vector<double> dummy (group_variable_values.size(), 0.0);
+  pt.velocities = dummy;
+  pt.accelerations = dummy;
+  pt.effort = dummy;
+  pt.time_from_start = ros::Duration(1.0);
+  trajectory.points.insert(trajectory.points.begin(), pt);
 }

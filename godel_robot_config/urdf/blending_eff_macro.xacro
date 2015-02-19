@@ -56,7 +56,7 @@
 			<joint name="${prefix}gripper_to_tcp" type="fixed">
 				<parent link="${prefix}gripper_body"/>
 				<child link="${prefix}tcp_frame"/>
-				<origin xyz="${gripper_length} 0 ${eff_adjustment}" rpy="0 1.57 0"/>
+				<origin xyz="${gripper_length} 0 ${eff_adjustment}" rpy="0 1.570796326 0"/>
 			</joint>	
 	</xacro:macro>
 </robot>

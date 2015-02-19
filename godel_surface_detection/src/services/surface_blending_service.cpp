@@ -59,6 +59,9 @@ const float TOOL_SHAFT_DIA = .006;
 const float TOOL_SHAFT_LEN = .045;
 const std::string TOOL_FRAME_ID = "process_tool";
 
+// Trajectory saving
+const static std::string TRAJECTORY_BAGFILE = "trajectory.bag";
+
 struct ProcessPathDetails
 {
 	visualization_msgs::MarkerArray process_boundaries_;
@@ -71,7 +74,7 @@ class SurfaceBlendingService
 public:
 	SurfaceBlendingService():
 		publish_region_point_cloud_(false),
-	        mesh_importer_(true) /*True-turn on verbose messages*/
+					mesh_importer_(true) /*True-turn on verbose messages*/
 	{
 
 	}
@@ -477,8 +480,8 @@ protected:
 		process_markers.markers.insert(process_markers.markers.end(),tool_markers.markers.begin(),
 				tool_markers.markers.end());
 		ROS_INFO_STREAM(process_path_results_.process_paths_.markers.size() << " path markers, " <<
-		                process_path_results_.process_boundaries_.markers.size() << " boundary markers, " <<
-		                tool_markers.markers.size() << " tool markers.");
+										process_path_results_.process_boundaries_.markers.size() << " boundary markers, " <<
+										tool_markers.markers.size() << " tool markers.");
 
 		ros::Duration loop_pause(0.02f);
 		for(int i = 0;i < num_path_markers;i++)
@@ -555,10 +558,13 @@ protected:
 		// save to file for easier testing
 		if (trajectories.size() > 0)
 		{
-			ROS_INFO_STREAM("SAVING BAG FILE!");
-		  rosbag::Bag bag;
-  		bag.open("trajectory.bag", rosbag::bagmode::Write);
-  		bag.write("trajectory", ros::Time::now(), trajectories[0]);
+			ROS_INFO_STREAM("Saving trajectories to bagfile: " << TRAJECTORY_BAGFILE);
+			rosbag::Bag bag;
+			bag.open(TRAJECTORY_BAGFILE, rosbag::bagmode::Write);
+			for (std::size_t i = 0; i < trajectories.size(); ++i)
+			{
+				bag.write("trajectory", ros::Time::now(), trajectories[i]);
+			}
 		}
 	}
 

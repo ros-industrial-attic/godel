@@ -69,12 +69,13 @@ namespace
     // To plane
     tf::Transform marker_pose;
     tf::poseMsgToTF(ref_pose, marker_pose);
+    
     // From plane to point
     tf::Transform to_point = tf::Transform::getIdentity();
     to_point.setOrigin(tf::Vector3(point.x, point.y, point.z));
     // Reverse orientation of z axis
     tf::Quaternion quat;
-    quat.setEuler(0.0, 3.14159, 0.0); // yaw, pitch roll
+    quat.setEuler(0.0, M_PI, 0.0); // yaw, pitch roll
     tf::Transform flip_z (quat);
     // Calculate transform
     tf::Transform in_world = marker_pose * to_point * flip_z;

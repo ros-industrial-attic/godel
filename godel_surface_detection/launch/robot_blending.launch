@@ -3,7 +3,7 @@
 
 	<!-- arguments -->
 	<arg name="sim_robot" default="true"/>
-	<arg name="robot_ip" unless="$(arg sim_robot)" default="192.168.32.6" />
+	<arg name="robot_ip" unless="$(arg sim_robot)" />
 	<arg name="sim_sensor" default="true"/>
 	<arg name="fake_data" default="true"/>
 
