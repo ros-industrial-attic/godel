@@ -21,7 +21,6 @@
   <build_depend>roscpp</build_depend>
   <build_depend>cmake_modules</build_depend>
   <build_depend>tf_conversions</build_depend>
-  <build_depend>moveit_ros_move_group</build_depend>
   <build_depend>descartes_planner</build_depend>
   <build_depend>descartes_moveit</build_depend>
   <build_depend>descartes_trajectory</build_depend>
@@ -29,7 +28,6 @@
   <run_depend>godel_msgs</run_depend>
   <run_depend>godel_process_path_generation</run_depend>
   <run_depend>roscpp</run_depend>
-  <run_depend>moveit_ros_move_group</run_depend>
   <run_depend>tf_conversions</run_depend>
   <run_depend>descartes_planner</run_depend>
   <run_depend>descartes_moveit</run_depend>

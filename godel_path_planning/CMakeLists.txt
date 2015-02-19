@@ -11,7 +11,6 @@ find_package(catkin REQUIRED COMPONENTS
   descartes_moveit
   descartes_planner
   descartes_trajectory
-  moveit_ros_move_group
   tf_conversions
 )
 
