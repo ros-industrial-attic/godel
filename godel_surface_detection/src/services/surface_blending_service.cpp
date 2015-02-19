@@ -30,10 +30,6 @@
 #include <godel_process_path_generation/utils.h>
 #include <godel_process_path_generation/polygon_utils.h>
 
-#include <control_msgs/FollowJointTrajectoryAction.h>
-#include <actionlib/client/simple_action_client.h>
-
-#include <moveit/move_group_interface/move_group.h>
 
 #include <pcl/console/parse.h>
 #include <rosbag/bag.h>
@@ -533,6 +529,8 @@ protected:
 			plan.request.tool_frame = "tcp_frame";
 			plan.request.world_frame = "world_frame";
 			plan.request.iterations = 2;
+			plan.request.angle_discretization = 0.3;
+			plan.request.interpoint_delay = 0.5;
 			
 			const visualization_msgs::Marker& marker = process_path_results_.process_paths_.markers[i];
 
@@ -562,10 +560,7 @@ protected:
   		bag.open("trajectory.bag", rosbag::bagmode::Write);
   		bag.write("trajectory", ros::Time::now(), trajectories[0]);
 		}
-
-}
-
-
+	}
 
 	visualization_msgs::MarkerArray create_tool_markers(const geometry_msgs::Point &pos, const geometry_msgs::Pose &pose,std::string frame_id)
 	{

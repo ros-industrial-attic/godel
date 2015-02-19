@@ -15,6 +15,7 @@
 namespace
 {
   const static double TOOL_POINT_DELAY = 0.75;
+
   // Create a descartes RobotModel for graph planning
   descartes_core::RobotModelPtr createRobotModel(const moveit::core::RobotStatePtr robot_state,
                                                  const std::string& group_name,
@@ -30,7 +31,8 @@ namespace
 
   // Create a CartTrajectoryPt that defines a point & axis with free rotation about z
   descartes_core::TrajectoryPtPtr pointAxisTrajectoryFactory(double x, double y, double z, 
-                                                             double rx, double ry, double rz)
+                                                             double rx, double ry, double rz,
+                                                             double angle_discretization)
   {
     using namespace descartes_core;
 
@@ -39,11 +41,11 @@ namespace
             TolerancedFrame(utils::toFrame(x,y, z, rx, ry, rz, descartes_core::utils::EulerConventions::XYZ),
              ToleranceBase::zeroTolerance<PositionTolerance>(x, y, z),
              ToleranceBase::createSymmetric<OrientationTolerance>(rx, ry, 0, 0, 0, 2.0 * M_PI)),
-            0.0, 0.4));
+            0.0, angle_discretization));
   }
 
   // Create an axial trajectory pt from a given tf transform
-  descartes_core::TrajectoryPtPtr tfToAxialTrajectoryPt(const tf::Transform& nominal)
+  descartes_core::TrajectoryPtPtr tfToAxialTrajectoryPt(const tf::Transform& nominal, double discretization)
   {
     Eigen::Affine3d eigen_pose;
     tf::poseTFToEigen(nominal,eigen_pose);
@@ -56,7 +58,7 @@ namespace
     double y = eigen_pose.translation()(1);
     double z = eigen_pose.translation()(2);
 
-    return pointAxisTrajectoryFactory(x, y, z , rx, ry, rz);
+    return pointAxisTrajectoryFactory(x, y, z , rx, ry, rz, discretization);
   }
 
   // Translates a point relative to a reference pose to an absolute transformation
@@ -81,16 +83,15 @@ namespace
   }
 
   bool populateTrajectoryMsg(const std::list<descartes_core::JointTrajectoryPt>& solution,
-                             const std::vector<ros::Duration>& intervals,
                              const descartes_core::RobotModel& robot_model,
-                             trajectory_msgs::JointTrajectory& trajectory,
-                             double time_offset = 0.0)
+                             double interpoint_delay,
+                             double time_offset,
+                             trajectory_msgs::JointTrajectory& trajectory)
   {
     typedef std::list<descartes_core::JointTrajectoryPt>::const_iterator JointSolutionIterator;
     
     // For calculating the time_from_start field of the trajectoryPoint
     ros::Duration time_from_start(time_offset);
-    size_t idx = 0;
 
     for (JointSolutionIterator it = solution.begin(); it != solution.end(); ++it)
     {
@@ -110,7 +111,7 @@ namespace
       trajectory.points.push_back(point);
 
       // increment time so far by next duration
-      time_from_start += ros::Duration(TOOL_POINT_DELAY);
+      time_from_start += ros::Duration(interpoint_delay);
     }
 
     return true;
@@ -147,7 +148,7 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
     // compute the absolute transform of a given point given its 
     // reference plane and relative position to that plane
     tf::Transform point_tf = createNominalTransform(req.path.reference, req.path.points[i]);
-    graph_points.push_back(tfToAxialTrajectoryPt(point_tf));
+    graph_points.push_back(tfToAxialTrajectoryPt(point_tf, req.angle_discretization));
   }
 
   // create planning graph
@@ -171,12 +172,11 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
   // fill in joint names (order matters) - might need to check
   trajectory.joint_names = joint_names;
 
-  if (!populateTrajectoryMsg(joints_sol, req.path.durations, *robot_model, trajectory, 2.0))
+  if (!populateTrajectoryMsg(joints_sol, *robot_model, 2.0, req.interpoint_delay, trajectory))
   {
     ROS_ERROR("Could not populate trajectory message");
     return false;
   }
-
 
   return true;
 }
