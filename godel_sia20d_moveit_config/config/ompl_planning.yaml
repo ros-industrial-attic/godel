@@ -34,6 +34,8 @@ manipulator:
     - TRRTkConfigDefault
     - PRMkConfigDefault
     - PRMstarkConfigDefault
+  projection_evaluator: joints(joint_s,joint_l)
+  longest_valid_segment_fraction: 0.05
 manipulator_asus:
   planner_configs:
     - SBLkConfigDefault
