@@ -1,7 +1,6 @@
 #include "godel_path_planning/trajectory_planning.h"
 
 #include <moveit/robot_trajectory/robot_trajectory.h>
-#include <moveit/robot_model_loader/robot_model_loader.h>
 
 #include "descartes_moveit/moveit_state_adapter.h"
 #include "descartes_trajectory/cart_trajectory_pt.h"
@@ -122,7 +121,8 @@ namespace
 } // end of anon namespace
 
 bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlanning::Request& req,
-                                             trajectory_msgs::JointTrajectory& trajectory)
+                                             trajectory_msgs::JointTrajectory& trajectory,
+                                             const moveit::core::RobotModelConstPtr& model)
 {
   using descartes_core::TrajectoryPtPtr;
 
@@ -133,8 +133,7 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
   }
 
   // Note that there is both a descartes_core::RobotModel and a moveit RobotModel
-  robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
-  robot_state::RobotStatePtr kinematic_state (new robot_state::RobotState(robot_model_loader.getModel()));
+  robot_state::RobotStatePtr kinematic_state (new robot_state::RobotState(model));
 
   descartes_core::RobotModelConstPtr robot_model = createRobotModel(kinematic_state, //group.getCurrentState(),
                                                                     req.group_name, req.tool_frame, 
@@ -170,7 +169,7 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
 
   // Retrieve active joint names for this planning group
   const std::vector< std::string >& joint_names = 
-    robot_model_loader.getModel()->getJointModelGroup(req.group_name)->getActiveJointModelNames(); 
+    model->getJointModelGroup(req.group_name)->getActiveJointModelNames(); 
 
   // translate the solution to the path planner
   // trajectory header: 
