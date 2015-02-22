@@ -44,7 +44,12 @@ int main(int argc, char **argv)
 
   // Load the robot model. Should not change after start up.
   robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
-  const moveit::core::RobotModelConstPtr& model = robot_model_loader.getModel(); 
+  const moveit::core::RobotModelConstPtr& model = robot_model_loader.getModel();
+  if (model.get() == NULL)
+  {
+    ROS_ERROR("Could not load robot model");
+    return -1;
+  }
 
   ros::ServiceServer trajectory_server = 
     nh.advertiseService<godel_msgs::TrajectoryPlanning::Request,
