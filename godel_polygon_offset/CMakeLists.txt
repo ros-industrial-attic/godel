@@ -7,20 +7,12 @@ find_package(catkin REQUIRED COMPONENTS
   message_generation
   cmake_modules
   godel_process_path_generation
+  godel_openvoronoi
 )
 
 find_package(Eigen REQUIRED)
 
-find_package(Boost REQUIRED COMPONENTS system python)
-
-# OpenVoronoi and dependencies
-list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR}/cmake)
-find_package(OpenVoronoi REQUIRED)
-
-# python devel libs needed because of OpenVoronoi python bindings?
-find_package(PythonLibs REQUIRED)
-list(APPEND OpenVoronoi_LIBRARIES ${PYTHON_LIBRARIES})
-list(APPEND OpenVoronoi_INCLUDE_DIRS ${PYTHON_INCLUDE_DIRS})
+find_package(Boost REQUIRED)
 
 ################################################
 ## Declare ROS messages, services and actions ##
@@ -40,9 +32,10 @@ generate_messages(DEPENDENCIES
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES godel_polygon_offset
-#  CATKIN_DEPENDS geometry_msgs roscpp
+  CATKIN_DEPENDS geometry_msgs roscpp message_runtime godel_process_path_generation godel_openvoronoi
 #  DEPENDS system_lib
 )
+
 
 ###########
 ## Build ##
@@ -50,7 +43,6 @@ catkin_package(
 
 include_directories(include
                     ${catkin_INCLUDE_DIRS}
-                    ${OpenVoronoi_INCLUDE_DIRS}
                     ${Eigen_INCLUDE_DIRS}
 )
 
@@ -60,7 +52,6 @@ add_library(godel_polygon_offset
 )
 target_link_libraries(godel_polygon_offset
                       ${catkin_LIBRARIES}
-                      ${OpenVoronoi_LIBRARIES}
                       ${Eigen_LIBRARIES}
                       ${Boost_LIBRARIES}
 )
