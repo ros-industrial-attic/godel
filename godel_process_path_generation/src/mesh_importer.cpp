@@ -327,11 +327,6 @@ bool MeshImporter::computePlaneCoefficients(Cloud::ConstPtr cloud, Eigen::Vector
     ROS_WARN("Flipping RANSAC plane normal");
     actual_normal *= -1;
   }
-  if (actual_normal.dot(expected_normal) < std::cos(seg.getEpsAngle()))
-  {
-    ROS_WARN("RANSAC plane normal out of tolerance! cosines: %f / %f", actual_normal.dot(expected_normal), std::cos(seg.getEpsAngle()));
-    return false;
-  }
 
   output(0) = actual_normal(0);
   output(1) = actual_normal(1);
