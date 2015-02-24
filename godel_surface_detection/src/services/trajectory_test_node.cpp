@@ -21,7 +21,7 @@ bool loadPlan(const std::string& name, trajectory_msgs::JointTrajectory& traject
 
   rosbag::View view(bag, rosbag::TopicQuery("trajectory"));
 
-  for (auto it = view.begin(); it != view.end(); ++it)
+  for (rosbag::View::iterator it = view.begin(); it != view.end(); ++it)
   {
     trajectory_msgs::JointTrajectoryConstPtr traj_ptr = (*it).instantiate<trajectory_msgs::JointTrajectory>();
     
