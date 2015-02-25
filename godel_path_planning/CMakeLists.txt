@@ -8,10 +8,11 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   cmake_modules
   descartes_core
-  descartes_moveit
   descartes_planner
   descartes_trajectory
   tf_conversions
+  pluginlib
+  moveit_ros_planning_interface
 )
 
 find_package(Eigen REQUIRED)
