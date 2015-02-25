@@ -18,8 +18,7 @@
 		</node>
 
 		<!-- sensor -->
-		<remap from="/asus/depth_registered/points" to="/sensor_point_cloud"/>
-		<include unless="$(arg sim_sensor)" file="$(find godel_surface_detection)/launch/sia20d_sensor_setup.launch"/>
+		<remap from="/kinect2/depth_lowres/points" to="/sensor_point_cloud"/>
 
 	</group>
 

@@ -37,6 +37,7 @@
 #include <octomap_ros/conversions.h>
 #include <pcl/surface/concave_hull.h>
 #include <pcl/surface/ear_clipping.h>
+#include <pcl/filters/passthrough.h>
 
 const static double CONCAVE_HULL_ALPHA = 0.1;
 
@@ -366,6 +367,13 @@ bool SurfaceDetection::find_surfaces()
 	Normals::Ptr normals(new Normals());
 	std::vector<pcl::PointIndices> clusters_indices;
 	std::vector<Normals::Ptr> segment_normals;
+
+	// Pass through filter the data to constrain it to our ROI
+  pcl::PassThrough<pcl::PointXYZ> pass;
+  pass.setInputCloud(process_cloud_ptr);
+  pass.setFilterFieldName("z");
+  pass.setFilterLimits(-0.1, 0.4);
+  pass.filter(*process_cloud_ptr);
 
 	ROS_INFO_STREAM("Surface detection processing a cloud containing "<<process_cloud_ptr->size()<<" points");
 	if(!params_.use_octomap )
