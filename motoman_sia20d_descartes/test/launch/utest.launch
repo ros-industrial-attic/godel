@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- Unit test launch file -->
+
+  <!-- The name of the parameter under which the URDF is loaded -->
+  <arg name="robot_description" default="robot_description"/>
+
+  <!-- Launch test node -->
+  <include file="$(find motoman_sia20d_descartes)/test/launch/motoman_sia20d_plugin.launch">
+    <arg name="robot_description" value="$(arg robot_description)"/>
+  </include>
+
+  <!-- Test Node -->
+  <test test-name="utest" pkg="motoman_sia20d_descartes" type="motoman_sia20d_descartes_utest"  />
+  
+</launch>

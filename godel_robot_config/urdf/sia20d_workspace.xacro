@@ -38,9 +38,9 @@
 	<xacro:motoman_sia20d prefix="${arm_prefix}"/>
 
 	<joint name="link_t_to_eff" type="fixed">
-		<parent link="link_t"/>
+		<parent link="tool0"/>
 		<child link="eff_frame"/>
-		<origin xyz="0 ${coupler_height} 0" rpy="0.0 0.0 0.0"/>
+		<origin xyz="0 ${coupler_height} 0" rpy="0.0 0.0 3.1416"/>
 	</joint>
 
 

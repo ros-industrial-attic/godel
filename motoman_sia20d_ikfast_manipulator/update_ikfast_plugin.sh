@@ -1,0 +1,1 @@
+rosrun moveit_ikfast create_ikfast_moveit_plugin.py motoman_sia20d manipulator motoman_sia20d_ikfast_manipulator /home/coky/ros/hydro/godel_ws/src/godel/motoman_sia20d_ikfast_manipulator/src/motoman_sia20d_manipulator_ikfast_solver.cpp

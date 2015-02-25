@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<library path="lib/libmotoman_sia20d_descartes">
+  <class name="motoman_sia20d_descartes/MotomanSia20dRobotModel" type="motoman_sia20d_descartes::MotomanSia20dRobotModel" base_class_type="descartes_core::RobotModel">
+    <description>This is a robot model adapter for of the motoman sia20d for descartes robot model.  Locks the joint e</description>
+  </class>
+</library>

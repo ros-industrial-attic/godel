@@ -10,22 +10,7 @@
     <!--CHAINS: When a chain is specified, all the links along the chain (including endpoints) are included in the group. Additionally, all the joints that are parents to included links are also included. This means that joints along the chain and the parent joint of the base link are included in the group-->
     <!--SUBGROUPS: Groups can also be formed by referencing to already defined group names-->
     <group name="manipulator">
-        <link name="base_link" />
-        <link name="link_s" />
-        <link name="link_l" />
-        <link name="link_e" />
-        <link name="link_u" />
-        <link name="link_r" />
-        <link name="link_b" />
-        <link name="link_t" />
-        <link name="tool0" />
-        <joint name="joint_s" />
-        <joint name="joint_l" />
-        <joint name="joint_e" />
-        <joint name="joint_u" />
-        <joint name="joint_r" />
-        <joint name="joint_b" />
-        <joint name="joint_t" />
+        <chain base_link="base_link" tip_link="tool0" />
     </group>
     <group name="manipulator_asus">
         <chain base_link="base_link" tip_link="asus_frame" />
