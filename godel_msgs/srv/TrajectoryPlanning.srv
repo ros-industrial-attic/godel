@@ -1,3 +1,13 @@
-#ProcessPath (not currently implemented)
+# The cartesian points representing path to be blended
+ProcessPath path
+
+#extra parameters that tell descartes how to behave
+string group_name
+string tool_frame
+string world_frame
+float64 angle_discretization
+float64 interpoint_delay
+uint8 iterations
+
 ---
 trajectory_msgs/JointTrajectory trajectory

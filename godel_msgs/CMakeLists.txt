@@ -24,6 +24,7 @@ add_message_files(
    SelectedSurfacesChanged.msg
    SurfaceBoundaries.msg
    SurfaceDetectionParameters.msg
+   ProcessPath.msg
 )
 
 ## Generate services in the 'srv' folder

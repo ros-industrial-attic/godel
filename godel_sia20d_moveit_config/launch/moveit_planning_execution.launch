@@ -30,6 +30,7 @@
     <include file="$(find motoman_sia20d_support)/launch/robot_interface_streaming_sia20d.launch" >
       <arg name="robot_ip" value="$(arg robot_ip)"/>
       <arg name="controller" value="$(arg controller)"/>
+      <arg name="version0" value="true" />
     </include>
   </group>
 

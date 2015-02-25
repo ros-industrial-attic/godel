@@ -1,6 +1,5 @@
 # Temporary files
 *~
-
 # Compiled Object files
 *.slo
 *.lo
@@ -26,3 +25,6 @@ devel
 # Eclipse files
 .project
 .cproject
+
+# mongodb instance
+*/default_warehouse_mongo_db/

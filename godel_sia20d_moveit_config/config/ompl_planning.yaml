@@ -13,6 +13,7 @@ planner_configs:
     type: geometric::RRT
   RRTConnectkConfigDefault:
     type: geometric::RRTConnect
+    range: 0.1
   RRTstarkConfigDefault:
     type: geometric::RRTstar
   TRRTkConfigDefault:

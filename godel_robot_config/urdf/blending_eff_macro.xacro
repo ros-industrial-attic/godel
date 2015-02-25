@@ -4,7 +4,7 @@
 	<xacro:include filename="$(find godel_robot_config)/urdf/asus_sensor_macro.xacro"/>
 
 	<!-- parameter list -->
-	<xacro:property name="gripper_length" value="0.0"/>
+	<xacro:property name="gripper_length" value="0.2"/>
 	<xacro:property name="gripper_width" value="0.0"/>
 	<xacro:property name="gripper_height" value="0.0"/>
 
@@ -54,9 +54,9 @@
 
 
 			<joint name="${prefix}gripper_to_tcp" type="fixed">
-				<parent link="${prefix}eff_frame"/>
+				<parent link="${prefix}gripper_body"/>
 				<child link="${prefix}tcp_frame"/>
-				<origin xyz=" 0 ${gripper_length} ${eff_adjustment}" rpy="0 0 0"/>
+				<origin xyz="${gripper_length} 0 ${eff_adjustment}" rpy="0 1.570796326 0"/>
 			</joint>	
 	</xacro:macro>
 </robot>

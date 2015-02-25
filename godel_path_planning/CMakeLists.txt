@@ -7,9 +7,17 @@ find_package(catkin REQUIRED COMPONENTS
   godel_process_path_generation
   roscpp
   cmake_modules
+  descartes_core
+  descartes_planner
+  descartes_trajectory
+  tf_conversions
+  pluginlib
+  moveit_ros_planning_interface
 )
 
 find_package(Eigen REQUIRED)
+
+ADD_DEFINITIONS("-std=c++0x") # Descartes core uses c++11 in header files
 
 catkin_package(
 #  INCLUDE_DIRS include
@@ -30,14 +38,15 @@ include_directories(include
 ##_________
 ## Nodes ##
 ## Path Planner Node
-add_executable(path_planning_node
-               src/path_planning_node.cpp
+add_executable(trajectory_planning_node
+               src/trajectory_planning_node.cpp
+               src/trajectory_planning.cpp
 )
-target_link_libraries(path_planning_node
+target_link_libraries(trajectory_planning_node
                       ${catkin_LIBRARIES}
                       ${Eigen_LIBRARIES}
 )
-add_dependencies(path_planning_node
+add_dependencies(trajectory_planning_node
                  godel_msgs_generate_messages_cpp
 )
 

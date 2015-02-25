@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<launch>
+  <arg name="bagfile"/>
+  <arg name="change_speed" default="false"/>
+  <arg name="speed" default="0.0"/>
+  <node name="trajectory_replay" pkg="godel_surface_detection" type="trajectory_test_node" output="screen">
+    <param name="bagfile_name" value="$(arg bagfile)"/>
+    <param name="change_speed" value="$(arg change_speed)"/>
+    <param name="speed" value="$(arg speed)"/>
+  </node>
+</launch>
