@@ -59,8 +59,14 @@ const float TOOL_SHAFT_DIA = .006;
 const float TOOL_SHAFT_LEN = .045;
 const std::string TOOL_FRAME_ID = "process_tool";
 
-// Trajectory saving
+// Temporary repository for constants that will be replaced
 const static std::string TRAJECTORY_BAGFILE = "trajectory.bag";
+const static std::string TRAJECTORY_GROUP_NAME = "manipulator_tcp";
+const static std::string TRAJECTORY_TOOL_FRAME
+const static std::string TRAJECTORY_WORLD_FRAME
+const static uint8_t TRAJECTORY_ITERATIONS = 2;
+const static double TRAJECTORY_ANGLE_DISC = 0.3;
+const static double TRAJECTORY_INTERPOINT_DELAY = 0.5;
 
 struct ProcessPathDetails
 {
@@ -74,7 +80,7 @@ class SurfaceBlendingService
 public:
 	SurfaceBlendingService():
 		publish_region_point_cloud_(false),
-					mesh_importer_(true) /*True-turn on verbose messages*/
+		mesh_importer_(true) /*True-turn on verbose messages*/
 	{
 
 	}
@@ -528,12 +534,12 @@ protected:
 		{
 			godel_msgs::TrajectoryPlanning plan;
 			// Set planning parameters		
-			plan.request.group_name = "manipulator_tcp";
-			plan.request.tool_frame = "tcp_frame";
-			plan.request.world_frame = "world_frame";
-			plan.request.iterations = 2;
-			plan.request.angle_discretization = 0.3;
-			plan.request.interpoint_delay = 0.5;
+			plan.request.group_name = TRAJECTORY_GROUP_NAME
+			plan.request.tool_frame = TRAJECTORY_TOOL_FRAME
+			plan.request.world_frame = TRAJECTORY_WORLD_FRAME
+			plan.request.iterations = TRAJECTORY_ITERATIONS;
+			plan.request.angle_discretization = TRAJECTORY_ANGLE_DISC;
+			plan.request.interpoint_delay = TRAJECTORY_INTERPOINT_DELAY;
 			
 			const visualization_msgs::Marker& marker = process_path_results_.process_paths_.markers[i];
 
