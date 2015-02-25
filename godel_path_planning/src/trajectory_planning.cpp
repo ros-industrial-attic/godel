@@ -28,7 +28,7 @@ namespace
                                                  const std::string& group_name,
                                                  const std::string& tool_frame,
                                                  const std::string& world_frame,
-                                                 const uint8_t iterations)
+                                                 uint8_t iterations)
   {
     using descartes_core::RobotModelPtr;
 
@@ -37,25 +37,12 @@ namespace
     return ptr;
   }
 
-  // Create a CartTrajectoryPt that defines a point & axis with free rotation about z
-  descartes_core::TrajectoryPtPtr pointAxisTrajectoryFactory(double x, double y, double z, 
-                                                             double rx, double ry, double rz,
-                                                             double angle_discretization)
+  // Create an axial trajectory pt from a given tf transform
+  descartes_core::TrajectoryPtPtr tfToAxialTrajectoryPt(const tf::Transform& nominal, double discretization)
   {
     using namespace descartes_core;
     using namespace descartes_trajectory;
 
-    return boost::shared_ptr<TrajectoryPt>(
-      new CartTrajectoryPt(
-            TolerancedFrame(utils::toFrame(x,y, z, rx, ry, rz, descartes_core::utils::EulerConventions::XYZ),
-             ToleranceBase::zeroTolerance<PositionTolerance>(x, y, z),
-             ToleranceBase::createSymmetric<OrientationTolerance>(rx, ry, 0, 0, 0, 2.0 * M_PI)),
-            0.0, angle_discretization));
-  }
-
-  // Create an axial trajectory pt from a given tf transform
-  descartes_core::TrajectoryPtPtr tfToAxialTrajectoryPt(const tf::Transform& nominal, double discretization)
-  {
     Eigen::Affine3d eigen_pose;
     tf::poseTFToEigen(nominal,eigen_pose);
     Eigen::Vector3d rpy =  eigen_pose.rotation().eulerAngles(0,1,2);
@@ -67,7 +54,13 @@ namespace
     double y = eigen_pose.translation()(1);
     double z = eigen_pose.translation()(2);
 
-    return pointAxisTrajectoryFactory(x, y, z , rx, ry, rz, discretization);
+
+    return boost::shared_ptr<TrajectoryPt>(
+      new CartTrajectoryPt(
+            TolerancedFrame(utils::toFrame(x,y, z, rx, ry, rz, descartes_core::utils::EulerConventions::XYZ),
+             ToleranceBase::zeroTolerance<PositionTolerance>(x, y, z),
+             ToleranceBase::createSymmetric<OrientationTolerance>(rx, ry, 0, 0, 0, 2.0 * M_PI)),
+            0.0, discretization));
   }
 
   // Translates a point relative to a reference pose to an absolute transformation
@@ -92,7 +85,7 @@ namespace
     return in_world;
   }
 
-  bool populateTrajectoryMsg(const std::vector<descartes_core::TrajectoryPtPtr>& solution,
+  void populateTrajectoryMsg(const std::vector<descartes_core::TrajectoryPtPtr>& solution,
                              const descartes_core::RobotModel& robot_model,
                              double interpoint_delay,
                              double time_offset,
@@ -102,13 +95,13 @@ namespace
     
     // For calculating the time_from_start field of the trajectoryPoint
     ros::Duration time_from_start(time_offset);
+    std::vector<double> dummy_seed (robot_model.getDOF(), 0.0);
 
     for (JointSolutionIterator it = solution.begin(); it != solution.end(); ++it)
     {
       // Retrieve actual target joint angles from the polymorphic interface function
-      std::vector<std::vector<double> > joint_angles;
-      it->get()->getJointPoses(robot_model, joint_angles);
-      const std::vector<double>& sol = joint_angles[0];
+      std::vector<double> sol;
+      it->get()->getNominalJointPose(dummy_seed, robot_model, sol);
       
       trajectory_msgs::JointTrajectoryPoint point;
       point.positions = sol;
@@ -124,7 +117,7 @@ namespace
       time_from_start += ros::Duration(interpoint_delay);
     }
 
-    return true;
+    return;
   }
 
 
@@ -145,7 +138,7 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
   // Note that there is both a descartes_core::RobotModel and a moveit RobotModel
   robot_state::RobotStatePtr kinematic_state (new robot_state::RobotState(model));
 
-  descartes_core::RobotModelConstPtr robot_model = createRobotModel(kinematic_state, //group.getCurrentState(),
+  descartes_core::RobotModelConstPtr robot_model = createRobotModel(kinematic_state,
                                                                     req.group_name, req.tool_frame, 
                                                                     req.world_frame, req.iterations);
 
@@ -188,11 +181,7 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
   // fill in joint names (order matters) - might need to check
   trajectory.joint_names = joint_names;
 
-  if (!populateTrajectoryMsg(result_path, *robot_model, 2.0, req.interpoint_delay, trajectory))
-  {
-    ROS_ERROR("Could not populate trajectory message");
-    return false;
-  }
+  populateTrajectoryMsg(result_path, *robot_model, 2.0, req.interpoint_delay, trajectory);
 
   return true;
 }
