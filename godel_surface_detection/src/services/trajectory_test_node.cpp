@@ -61,7 +61,7 @@ int main(int argc, char** argv)
   insertCurrentPosition(group, traj);
 
   // Execute trajectory
-  traj.points.resize(traj.points.size()-1);
+  traj.points.resize(traj.points.size()-2);
   executeTrajectory(traj);
 
   ROS_INFO_STREAM("Done with trajectory");
