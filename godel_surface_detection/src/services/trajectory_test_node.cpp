@@ -10,7 +10,20 @@
 bool planPathToPosition(moveit::planning_interface::MoveGroup& group, const trajectory_msgs::JointTrajectoryPoint& point);
 
 void executeTrajectory(const trajectory_msgs::JointTrajectory& trajectory);
+
 void insertCurrentPosition(moveit::planning_interface::MoveGroup& group, trajectory_msgs::JointTrajectory& trajectory);
+
+void rewriteSpeed(const ros::Duration& offset, const ros::Duration& rate, trajectory_msgs::JointTrajectory& trajectory)
+{
+  ros::Duration from_start = offset;
+
+  for (size_t i = 0; i < trajectory.points.size(); ++i)
+  {
+    trajectory.points[i].time_from_start = from_start;
+
+    from_start += rate;
+  }
+}
 
 bool loadPlan(const std::string& name, trajectory_msgs::JointTrajectory& trajectory)
 {
@@ -47,6 +60,12 @@ int main(int argc, char** argv)
   std::string bagfile_name;
   pnh.param<std::string>("bagfile_name", bagfile_name, "trajectory.bag");
 
+  bool change_speed;
+  double speed;
+  pnh.param<bool>("change_speed", change_speed, false);
+  pnh.param<double>("speed", speed, 0.0);
+
+
   // Load trajectory for replay
   trajectory_msgs::JointTrajectory traj;
   loadPlan(bagfile_name, traj);
@@ -60,8 +79,16 @@ int main(int argc, char** argv)
   // Insert current position into trajectory
   insertCurrentPosition(group, traj);
 
+
+  if (change_speed)
+  {
+    ROS_INFO_STREAM("CHANGING trajectory speed");
+    rewriteSpeed(ros::Duration(2.0), ros::Duration(speed), traj);
+  }
+
+
   // Execute trajectory
-  traj.points.resize(traj.points.size()-2);
+  traj.points.resize(traj.points.size()-1);
   executeTrajectory(traj);
 
   ROS_INFO_STREAM("Done with trajectory");
@@ -108,16 +135,16 @@ bool planPathToPosition(moveit::planning_interface::MoveGroup& group, const traj
 
 void insertCurrentPosition(moveit::planning_interface::MoveGroup& group, trajectory_msgs::JointTrajectory& trajectory)
 {
-  // get current joint positions
-  std::vector<double> group_variable_values;
-  group.getCurrentState()->copyJointGroupPositions(group.getCurrentState()->getRobotModel()->getJointModelGroup(group.getName()), group_variable_values);
+      // get current joint positions
+    std::vector<double> group_variable_values;
+    group.getCurrentState()->copyJointGroupPositions(group.getCurrentState()->getRobotModel()->getJointModelGroup(group.getName()), group_variable_values);
 
-  trajectory_msgs::JointTrajectoryPoint pt;
-  pt.positions = group_variable_values;
-  std::vector<double> dummy (group_variable_values.size(), 0.0);
-  pt.velocities = dummy;
-  pt.accelerations = dummy;
-  pt.effort = dummy;
-  pt.time_from_start = ros::Duration(1.0);
-  trajectory.points.insert(trajectory.points.begin(), pt);
+    trajectory_msgs::JointTrajectoryPoint pt;
+    pt.positions = group_variable_values;
+    std::vector<double> dummy (group_variable_values.size(), 0.0);
+    pt.velocities = dummy;
+    pt.accelerations = dummy;
+    pt.effort = dummy;
+    pt.time_from_start = ros::Duration(1.0);
+    trajectory.points.insert(trajectory.points.begin(), pt);
 }
