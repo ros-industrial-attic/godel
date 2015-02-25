@@ -2,18 +2,25 @@
 
 #include <moveit/robot_trajectory/robot_trajectory.h>
 
-#include "descartes_moveit/moveit_state_adapter.h"
 #include "descartes_trajectory/cart_trajectory_pt.h"
 #include "descartes_planner/dense_planner.h"
 
 #include <tf_conversions/tf_eigen.h>
 
+#include <descartes_core/robot_model.h>
+#include <pluginlib/class_loader.h>
 
 // Anonymous namespace
 namespace
 {
   const static double TOOL_POINT_DELAY = 0.75;
 
+  /* This will allow us to adapt to a different robot model by dynamically loading its
+     interface. */
+  static const std::string PLUGIN_NAME = "motoman_sia20d_descartes/MotomanSia20dRobotModel";
+  static pluginlib::ClassLoader<descartes_core::RobotModel> robot_model_loader("descartes_core",
+                                                                     "descartes_core::RobotModel");
+  
   // Create a descartes RobotModel for graph planning
   descartes_core::RobotModelPtr createRobotModel(const moveit::core::RobotStatePtr robot_state,
                                                  const std::string& group_name,
@@ -22,9 +29,10 @@ namespace
                                                  const uint8_t iterations)
   {
     using descartes_core::RobotModelPtr;
-    using descartes_moveit::MoveitStateAdapter;
 
-    return RobotModelPtr(new MoveitStateAdapter(*robot_state, group_name, tool_frame, world_frame, iterations)); 
+    RobotModelPtr ptr = robot_model_loader.createInstance(PLUGIN_NAME);
+    ptr->initialize("robot_description", group_name, world_frame, tool_frame);
+    return ptr;
   }
 
   // Create a CartTrajectoryPt that defines a point & axis with free rotation about z
