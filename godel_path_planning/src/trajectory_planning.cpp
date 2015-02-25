@@ -15,6 +15,8 @@ namespace
 {
   const static double TOOL_POINT_DELAY = 0.75;
 
+  const static std::string robot_description = "robot_description";
+
   /* This will allow us to adapt to a different robot model by dynamically loading its
      interface. */
   static const std::string PLUGIN_NAME = "motoman_sia20d_descartes/MotomanSia20dRobotModel";
@@ -31,7 +33,7 @@ namespace
     using descartes_core::RobotModelPtr;
 
     RobotModelPtr ptr = robot_model_loader.createInstance(PLUGIN_NAME);
-    ptr->initialize("robot_description", group_name, world_frame, tool_frame);
+    ptr->initialize(robot_description, group_name, world_frame, tool_frame);
     return ptr;
   }
 
