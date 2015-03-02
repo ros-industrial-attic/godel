@@ -80,7 +80,7 @@ find_package(catkin REQUIRED COMPONENTS
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-#  INCLUDE_DIRS include
+ INCLUDE_DIRS include
 #  LIBRARIES godel_scan_analysis
 #  CATKIN_DEPENDS godel_keyence_ljv_driver keyence_ljv_description roscpp
 #  DEPENDS system_lib
@@ -95,6 +95,7 @@ catkin_package(
 # include_directories(include)
 include_directories(
   ${catkin_INCLUDE_DIRS}
+  include
 )
 
 ## Declare a cpp library
@@ -103,16 +104,21 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-# add_executable(godel_scan_analysis_node src/godel_scan_analysis_node.cpp)
+add_executable(godel_scan_analysis_node src/godel_scan_analysis_node.cpp src/scan_roughness_scoring.cpp)
+add_executable(scan_test_node src/godel_scan_test_publisher.cpp)
 
 ## Add cmake target dependencies of the executable/library
 ## as an example, message headers may need to be generated before nodes
 # add_dependencies(godel_scan_analysis_node godel_scan_analysis_generate_messages_cpp)
 
 ## Specify libraries to link a library or executable target against
-# target_link_libraries(godel_scan_analysis_node
-#   ${catkin_LIBRARIES}
-# )
+target_link_libraries(godel_scan_analysis_node
+  ${catkin_LIBRARIES}
+)
+
+target_link_libraries(scan_test_node
+  ${catkin_LIBRARIES}
+)
 
 #############
 ## Install ##
