@@ -93,6 +93,17 @@ inline FloatType sumSquared(InputIt begin, InputIt end, FloatType init = FloatTy
   return init;
 }
 
+template<typename FloatType, typename InputIt>
+inline FloatType sumAbsValue(InputIt begin, InputIt end, FloatType init = FloatType())
+{
+  while (begin != end)
+  {
+    init += std::abs(begin->y);
+    ++begin;
+  }
+  return init;
+}
+
 //////////////////////////////////////////
 // Surface Roughness Scoring Algorithms //
 //////////////////////////////////////////
@@ -102,6 +113,13 @@ FloatType scoreRms(InputIt begin, InputIt end)
 {
   std::size_t n = std::distance(begin, end);
   return std::sqrt(sumSquared<FloatType>(begin, end) / n);
+}
+
+template<typename FloatType, typename InputIt>
+FloatType scoreAvgAbs(InputIt begin, InputIt end)
+{
+  std::size_t n = std::distance(begin, end);
+  return sumAbsValue<FloatType>(begin, end) / n;
 }
 
 /////////////////////////////////////////////////////
