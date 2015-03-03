@@ -22,22 +22,9 @@ namespace godel_scan_analysis
     typedef pcl::PointCloud<pcl::PointXYZRGB> ColorCloud;
     typedef pcl::PointCloud<pcl::PointXYZ> Cloud;
 
-    ScanServer()
-      : map_(new ColorCloud)
-    {
-      ros::NodeHandle nh;
-      scan_sub_ = nh.subscribe("profiles", 100, &ScanServer::scanCallback, this);
-      cloud_pub_ = nh.advertise<ColorCloud>("color_cloud", 1);
-    }
+    ScanServer(const std::string& world_frame, const std::string& scan_frame);
 
-    void scanCallback(const Cloud& cloud)
-    {
-      ROS_INFO("Processing scan");
-      scorer_.analyze(cloud, *map_);
-      map_->header.frame_id = "sensor_optical_frame";
-      cloud_pub_.publish(map_);
-      map_.reset(new ColorCloud);
-    }
+    void scanCallback(const Cloud& cloud);
 
     /**
      * Queries the underlying map for a colorized point cloud representing the current surface quality of the system
@@ -46,8 +33,13 @@ namespace godel_scan_analysis
     ColorCloud::ConstPtr getSurfaceQuality() const;
     
   private:
+    void transformScan(ColorCloud& cloud, const ros::Time& tm) const;
+    tf::StampedTransform findTransform(const ros::Time& tm) const;
+
+
     RoughnessScorer scorer_; /** Object that scores individual lines */
     ColorCloud::Ptr map_; /** Data structure that contains colorised surface quality results */
+    ColorCloud::Ptr buffer_; /** Temporarily holds scan results for post-processing and tf lookup */
     tf::TransformListener tf_listener_; // for looking up transforms between laser scan and arm position
     ros::Subscriber scan_sub_; // for listening to scans
     ros::Publisher cloud_pub_; // for outputting colored clouds of data

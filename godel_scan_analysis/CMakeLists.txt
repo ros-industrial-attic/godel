@@ -104,7 +104,7 @@ include_directories(
 # )
 
 ## Declare a cpp executable
-add_executable(godel_scan_analysis_node src/godel_scan_analysis_node.cpp src/scan_roughness_scoring.cpp)
+add_executable(godel_scan_analysis_node src/godel_scan_analysis_node.cpp src/scan_roughness_scoring.cpp src/keyence_scan_server.cpp)
 add_executable(scan_test_node src/godel_scan_test_publisher.cpp)
 
 ## Add cmake target dependencies of the executable/library
