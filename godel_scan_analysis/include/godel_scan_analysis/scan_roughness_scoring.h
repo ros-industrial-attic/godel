@@ -6,8 +6,14 @@
 
 namespace godel_scan_analysis
 {
+  // TODO: add scoring params to this struct
   struct ScoringParams {};
 
+  /**
+   * This class, once setup, scores individual laser scans
+   * with a given algorithm, colorizes them, and pushes them
+   * back out to a colorized cloud.
+   */
   class RoughnessScorer
   {
   public:

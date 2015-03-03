@@ -2,6 +2,9 @@
 
 #include <pcl_ros/transforms.h>
 
+/*
+*/
+
 godel_scan_analysis::ScanServer::ScanServer(const std::string& world_frame, 
                                             const std::string& scan_frame)
   : map_(new ColorCloud)
@@ -14,18 +17,18 @@ godel_scan_analysis::ScanServer::ScanServer(const std::string& world_frame,
   cloud_pub_ = nh.advertise<ColorCloud>("color_cloud", 1);
   map_->header.frame_id = from_frame_;
 
+  // Create publisher for the collected color cloud
   timer_ = nh.createTimer(ros::Duration(1.0), &ScanServer::publishCloud, this);
 }
 
 void godel_scan_analysis::ScanServer::scanCallback(const Cloud& cloud)
 {
-  // ROS_INFO("Processing scan");
   // Generate colored point cloud of scan data
   if (!scorer_.analyze(cloud, *buffer_)) return;
 
   // Calculate time stamp was processed
   ros::Time stamp;
-  stamp.fromNSec(cloud.header.stamp * 1e3);
+  stamp.fromNSec(cloud.header.stamp * 1000);
 
   try
   {
@@ -43,8 +46,6 @@ void godel_scan_analysis::ScanServer::scanCallback(const Cloud& cloud)
 
   // Reset buffer
   buffer_->clear();
-
-  ROS_INFO("Done processing scan");
 }
 
 void godel_scan_analysis::ScanServer::publishCloud(const ros::TimerEvent&) const
