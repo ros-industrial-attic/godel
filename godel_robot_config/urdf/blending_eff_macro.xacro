@@ -1,7 +1,10 @@
 <?xml version="1.0" ?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 	
+
 	<xacro:include filename="$(find godel_robot_config)/urdf/asus_sensor_macro.xacro"/>
+	<xacro:include filename="$(find keyence_ljv_description)/urdf/lj_v7080_macro.xacro"/>
+
 
 	<!-- parameter list -->
 	<xacro:property name="gripper_length" value="0.2"/>
@@ -35,8 +38,13 @@
 			<link name="${prefix}tcp_frame"/>
 			<link name="${prefix}asus_mount"/>
 
+			<link name="${prefix}keyence_mount"/>
+
 		<xacro:asus_sensor_definitions prefix="${prefix}" parent_link="${prefix}asus_mount" 
 				x_val="0.01479" y_val="0.006741" z_val="0.007162" roll="-3.123031" pitch="0.001618" yaw="0.02739"/>
+
+		<!-- Keyence sensor -->
+		<xacro:keyence_lj_v7080 prefix="${prefix}keyence_" />
 
 		<!-- joint definitions -->
 			<joint name="${prefix}gripper_to_palm" type="fixed">
@@ -45,18 +53,30 @@
 				<origin xyz="0 0 ${gripper_height * 0.5}" rpy="0 0 3.6651914"/>
 			</joint>
 		
-
 			<joint name="${prefix}eff_frame_to_asus_mount" type="fixed">
+
 				<parent link="${prefix}eff_frame"/>
 				<child link="${prefix}asus_mount"/>
 				<origin xyz="0 0 0.150" rpy="3.14 0 2.09"/>
 			</joint>
-
 
 			<joint name="${prefix}gripper_to_tcp" type="fixed">
 				<parent link="${prefix}gripper_body"/>
 				<child link="${prefix}tcp_frame"/>
 				<origin xyz="${gripper_length} 0 ${eff_adjustment}" rpy="0 1.570796326 0"/>
 			</joint>	
+
+			<joint name="${prefix}gripper_to_keyence_mount" type="fixed">
+				<parent link="${prefix}gripper_body" />
+				<child link="${prefix}keyence_mount"/>
+				<origin xyz="-0.15 0 ${gripper_height}" rpy="0 1.57 0" />
+			</joint>
+
+			<joint name="${prefix}keyence_mount_to_keyence" type="fixed">
+				<parent link="${prefix}keyence_mount"/>
+				<child link="${prefix}keyence_base_link"/>
+				<origin xyz="0 0 0" rpy="0 0 1.57"/>
+			</joint>
+
 	</xacro:macro>
 </robot>
