@@ -6,10 +6,23 @@
 
 #include <math.h> // isfinite
 
+/*
+  I have a variety of ideas for making this code faster if it was ever needed:
+  1) Keep scan data as an array of x and array of y for better cache coherency on windowing
+  2) The windowing could be made to operate in O(n) - touching every point only once
+  3) Pre-calculate x values (which are known)
+  4) Pre-calculate colors
+  5) Perhaps return an index map like PCL does from the filter function so
+     we don't need to make a copy of the scan
+  6) Pre-allocate or use stack space (std::array?) for storage space
+*/
+
 namespace
 {
   typedef godel_scan_analysis::RoughnessScorer::Cloud Cloud;
   typedef godel_scan_analysis::RoughnessScorer::ColorCloud ColorCloud;
+
+  const static unsigned WINDOW_SIZE = 151;
 
   // Preprocess clouds
   static rms::Scan<double> filterCloudAndBuildScan(const Cloud& in)
@@ -28,7 +41,7 @@ namespace
     return scan;
   }
 
-  static inline double constrainColor(double min, double max, double val)
+  static inline double constrainValue(double min, double max, double val)
   {
     return val > max ? max : (val < min ? min : val); 
   }
@@ -36,6 +49,7 @@ namespace
   // Takes one point and makes a colored pcl point from it
   static pcl::PointXYZRGB makeColoredPoint(const rms::Point<double>& pt, double score)
   {
+    // TODO: put these colorization values into the params struct
     static const double max_score = 0.5e-4;
     static const double min_score = 0.0;
 
@@ -43,7 +57,7 @@ namespace
     temp.x = pt.x;
     temp.y = 0.0;
     temp.z = pt.y;
-    temp.r = static_cast<uint8_t>(constrainColor(min_score, max_score, score) / (max_score-min_score) * 255);
+    temp.r = static_cast<uint8_t>(constrainValue(min_score, max_score, score) / (max_score-min_score) * 255);
     temp.g = 0;
     temp.b = 255 - temp.r;
 
@@ -83,7 +97,7 @@ bool godel_scan_analysis::RoughnessScorer::analyze(const Cloud& in, ColorCloud& 
 {
   // Preprocess
   rms::Scan<double> scan = filterCloudAndBuildScan(in);
-  if (scan.points.size() < 151) return false;
+  if (scan.points.size() < WINDOW_SIZE) return false;
 
   // Calculate relevant sums/means
   rms::LineFitSums<double> sums = rms::calculateSums<double>(scan.points.begin(), scan.points.end());
@@ -93,17 +107,14 @@ bool godel_scan_analysis::RoughnessScorer::analyze(const Cloud& in, ColorCloud& 
   rms::Scan<double> adjusted = rms::adjustWithLine(line, scan.points.begin(), scan.points.end());
 
   // Reserve space for scores
-  std:;size_t window = 151;
-  std::size_t score_size = std::distance(adjusted.points.begin() + window, adjusted.points.end());
+  std::size_t score_size = std::distance(adjusted.points.begin() + WINDOW_SIZE, adjusted.points.end());
   rms::Scores scores (score_size, 0.0);
 
   // Apply a surface roughness scoring function
-  rms::kernelOp(adjusted.points.begin(), adjusted.points.begin() + window, adjusted.points.end(), scores.begin(), rmsOp);
+  rms::kernelOp(adjusted.points.begin(), adjusted.points.begin() + WINDOW_SIZE, adjusted.points.end(), scores.begin(), rmsOp);
   
   // Generate output
   generateColorPoints(scan, scores, out);
-
-  // ROS_INFO_STREAM("Min score: " << *std::min(scores.begin(), scores.end()) << " Max: " << *std::max(scores.begin(), scores.end()));
 
   return true;
 }
