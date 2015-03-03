@@ -36,7 +36,7 @@ namespace
   // Takes one point and makes a colored pcl point from it
   static pcl::PointXYZRGB makeColoredPoint(const rms::Point<double>& pt, double score)
   {
-    static const double max_score = 0.005;
+    static const double max_score = 0.5e-4;
     static const double min_score = 0.0;
 
     pcl::PointXYZRGB temp;
@@ -67,6 +67,11 @@ namespace
     return rms::scoreRms<double>(a, b);
   }
 
+  static double absOp(scan_iter a, scan_iter b)
+  {
+    return rms::scoreAvgAbs<double>(a, b);
+  }
+
 } // end anon namespace
 
 
@@ -78,26 +83,27 @@ bool godel_scan_analysis::RoughnessScorer::analyze(const Cloud& in, ColorCloud& 
 {
   // Preprocess
   rms::Scan<double> scan = filterCloudAndBuildScan(in);
+  if (scan.points.size() < 151) return false;
 
   // Calculate relevant sums/means
   rms::LineFitSums<double> sums = rms::calculateSums<double>(scan.points.begin(), scan.points.end());
 
   // Fit line
   rms::LineCoef<double> line = rms::calculateLineCoefs(sums);
-  rms::adjustWithLineInPlace(line, scan.points.begin(), scan.points.end());
+  rms::Scan<double> adjusted = rms::adjustWithLine(line, scan.points.begin(), scan.points.end());
 
   // Reserve space for scores
   std:;size_t window = 151;
-  std::size_t score_size = std::distance(scan.points.begin() + window, scan.points.end());
+  std::size_t score_size = std::distance(adjusted.points.begin() + window, adjusted.points.end());
   rms::Scores scores (score_size, 0.0);
 
   // Apply a surface roughness scoring function
-  rms::kernelOp(scan.points.begin(), scan.points.begin() + window, scan.points.end(), scores.begin(), rmsOp);
+  rms::kernelOp(adjusted.points.begin(), adjusted.points.begin() + window, adjusted.points.end(), scores.begin(), rmsOp);
   
   // Generate output
   generateColorPoints(scan, scores, out);
 
-  ROS_INFO_STREAM("Min score: " << *std::min(scores.begin(), scores.end()) << " Max: " << *std::max(scores.begin(), scores.end()));
+  // ROS_INFO_STREAM("Min score: " << *std::min(scores.begin(), scores.end()) << " Max: " << *std::max(scores.begin(), scores.end()));
 
   return true;
 }

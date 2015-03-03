@@ -13,20 +13,30 @@ godel_scan_analysis::ScanServer::ScanServer(const std::string& world_frame,
   scan_sub_ = nh.subscribe("profiles", 100, &ScanServer::scanCallback, this);
   cloud_pub_ = nh.advertise<ColorCloud>("color_cloud", 1);
   map_->header.frame_id = from_frame_;
+
+  timer_ = nh.createTimer(ros::Duration(1.0), &ScanServer::publishCloud, this);
 }
 
 void godel_scan_analysis::ScanServer::scanCallback(const Cloud& cloud)
 {
-  ROS_INFO("Processing scan");
+  // ROS_INFO("Processing scan");
   // Generate colored point cloud of scan data
-  scorer_.analyze(cloud, *buffer_);
+  if (!scorer_.analyze(cloud, *buffer_)) return;
 
   // Calculate time stamp was processed
   ros::Time stamp;
   stamp.fromNSec(cloud.header.stamp * 1e3);
 
-  // Transform scan from optical frame to world frame
-  transformScan(*buffer_, stamp);
+  try
+  {
+    // Transform scan from optical frame to world frame
+    transformScan(*buffer_, stamp);    
+  }
+  catch(...)
+  {
+    ROS_WARN("No TF");
+    return;
+  }
 
   // Insert into results cloud
   map_->insert(map_->end(), buffer_->begin(), buffer_->end());
@@ -34,10 +44,12 @@ void godel_scan_analysis::ScanServer::scanCallback(const Cloud& cloud)
   // Reset buffer
   buffer_->clear();
 
-  // Publish results cloud
-  cloud_pub_.publish(map_);
-
   ROS_INFO("Done processing scan");
+}
+
+void godel_scan_analysis::ScanServer::publishCloud(const ros::TimerEvent&) const
+{
+  cloud_pub_.publish(map_);
 }
 
 void godel_scan_analysis::ScanServer::transformScan(ColorCloud& cloud, 
@@ -51,12 +63,8 @@ inline
 tf::StampedTransform godel_scan_analysis::ScanServer::findTransform(const ros::Time& tm) const
 {
   tf::StampedTransform transform;
+  tf_listener_.waitForTransform(from_frame_, to_frame_, tm, ros::Duration(0.25));
   tf_listener_.lookupTransform(from_frame_, to_frame_, tm, transform);
   return transform;
 }
 
-  // ROS_INFO("Processing scan");
-  //     scorer_.analyze(cloud, *map_);
-  //     map_->header.frame_id = "sensor_optical_frame";
-  //     cloud_pub_.publish(map_);
-  //     map_.reset(new ColorCloud);

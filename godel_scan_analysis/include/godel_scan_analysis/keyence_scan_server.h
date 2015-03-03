@@ -26,6 +26,7 @@ namespace godel_scan_analysis
 
     void scanCallback(const Cloud& cloud);
 
+    void publishCloud(const ros::TimerEvent&) const;
     /**
      * Queries the underlying map for a colorized point cloud representing the current surface quality of the system
      * @return Shared-Pointer to const PointCloud<PointXYZRGB>
@@ -43,6 +44,7 @@ namespace godel_scan_analysis
     tf::TransformListener tf_listener_; // for looking up transforms between laser scan and arm position
     ros::Subscriber scan_sub_; // for listening to scans
     ros::Publisher cloud_pub_; // for outputting colored clouds of data
+    ros::Timer timer_; // Publish timer
     std::string from_frame_; // typically laser_scan_frame
     std::string to_frame_; // typically world_frame
   };
