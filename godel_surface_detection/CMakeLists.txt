@@ -16,14 +16,12 @@ find_package(catkin REQUIRED COMPONENTS
 	godel_process_path_generation
 	godel_msgs
 )
-find_package(PCL 1.7 REQUIRED COMPONENTS common io)
 find_package(Boost REQUIRED COMPONENTS system)
 
 
 set(godel_surface_detection_INCLUDE_DIRECTORIES
 	include
-	${catkin_INCLUDE_DIRS}
-	${PCL_INCLUDE_DIRS})
+	${catkin_INCLUDE_DIRS})
 
 ###################################
 ## catkin specific configuration ##
@@ -32,7 +30,6 @@ catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
   CATKIN_DEPENDS pcl_msgs pcl_ros roscpp sensor_msgs interactive_markers octomap_ros tf tf_conversions godel_process_path_generation godel_msgs
-  DEPENDS PCL
 )
 
 ###########
@@ -41,15 +38,13 @@ catkin_package(
 
 ## Specify additional locations of header files
 include_directories(${godel_surface_detection_INCLUDE_DIRECTORIES})
-#link_directories(${PCL_LIBRARY_DIRS})
-#add_definitions(${PCL_DEFINITIONS})
 
 ## Declare a cpp library
 add_library(${PROJECT_NAME} 
 	src/detection/surface_detection.cpp
   src/scan/robot_scan.cpp
 	src/interactive/interactive_surface_server.cpp )
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${PCL_COMMON_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 add_dependencies(${PROJECT_NAME} godel_msgs_generate_messages_cpp)
 
 ## point cloud publisher node
