@@ -32,6 +32,7 @@
 	<run_depend>tf_conversions</run_depend>
 	<run_depend>godel_msgs</run_depend>
 	<run_depend>godel_process_path_generation</run_depend>
+	<run_depend>godel_sia20d_moveit_config</run_depend>
 
 
   <export>
