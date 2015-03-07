@@ -22,8 +22,7 @@
   <run_depend>xacro</run_depend>
   <build_depend>godel_robot_config</build_depend>
   <run_depend>godel_robot_config</run_depend>
-
+  <run_depend>motoman_sia20d_support</run_depend>
 
   <buildtool_depend>catkin</buildtool_depend>
-  
 </package>
