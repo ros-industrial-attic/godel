@@ -30,6 +30,7 @@
 #include <godel_process_path_generation/utils.h>
 #include <godel_process_path_generation/polygon_utils.h>
 
+#include <godel_surface_detection/scan/profilimeter_scan.h>
 
 #include <pcl/console/parse.h>
 #include <rosbag/bag.h>
@@ -376,6 +377,24 @@ protected:
 					std::reverse(bnd.begin(), bnd.end());
 				}
 
+				// DEBUG
+				godel_process_path::PolygonBoundaryCollection coll;
+				BOOST_FOREACH(godel_process_path::PolygonBoundary &bnd, filtered_boundaries)
+				{
+					godel_surface_detection::ProfilimeterScanParams param;
+					param.width_ = 0.02;
+					param.overlap_ = 0.0;
+
+					// Filter and reverse boundaries
+					coll.push_back(godel_surface_detection::generateProfilimeterScanPath(bnd, param));
+				}
+				visualization_msgs::MarkerArray scan_markers;
+				std_msgs::ColorRGBA blue;
+				blue.b = 1.0;
+				blue.r = 0.0;
+				blue.g = 0.0;
+				godel_process_path::utils::translations::godelToVisualizationMsgs(scan_markers, coll, yellow,.0005);
+
 
 				// create boundaries markers
 				godel_process_path::utils::translations::godelToVisualizationMsgs(boundary_markers,filtered_boundaries
@@ -397,6 +416,29 @@ protected:
 					marker_counter++;
 				}
 				tool_path_markers_pub_.publish(boundary_markers);       // Pre-publish boundaries before completing offset
+				ROS_WARN("DEBUG5");
+
+				static int scan_marker_id = 0;
+				// TODO DEBUG
+				// 				for(int j =0; j < boundary_markers.markers.size();j++)
+				for(int j =0; j < scan_markers.markers.size();j++)
+				{
+					visualization_msgs::Marker &m = scan_markers.markers[j];
+					if (m.points.empty()) continue;
+					m.header.frame_id = mesh.header.frame_id;
+					m.id = marker_counter;
+					m.lifetime = ros::Duration(0);
+					m.ns = BOUNDARY_NAMESPACE;
+					m.pose = boundary_pose;
+					// m.points.push_back(m.points.front());   // Close polygon loop for visualization
+					// m.colors.push_back(m.colors.front());
+					marker_counter++;
+				}
+				tool_path_markers_pub_.publish(scan_markers);       // Pre-publish boundaries before completing offset
+				ROS_WARN("DEBUG6");
+
+
+
 
 
 				// add boundaries to request
