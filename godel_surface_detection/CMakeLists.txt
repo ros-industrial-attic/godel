@@ -43,7 +43,8 @@ include_directories(${godel_surface_detection_INCLUDE_DIRECTORIES})
 add_library(${PROJECT_NAME} 
 	src/detection/surface_detection.cpp
   src/scan/robot_scan.cpp
-	src/interactive/interactive_surface_server.cpp )
+	src/interactive/interactive_surface_server.cpp
+  src/scan/profilimeter_scan.cpp )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 add_dependencies(${PROJECT_NAME} godel_msgs_generate_messages_cpp)
 
