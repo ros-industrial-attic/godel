@@ -1,6 +1,7 @@
 #include "godel_scan_analysis/keyence_scan_server.h"
 
 #include <pcl_ros/transforms.h>
+#include <pcl/filters/voxel_grid.h>
 
 /*
 */
@@ -13,12 +14,12 @@ godel_scan_analysis::ScanServer::ScanServer(const std::string& world_frame,
   , to_frame_(scan_frame)
 {
   ros::NodeHandle nh;
-  scan_sub_ = nh.subscribe("profiles", 100, &ScanServer::scanCallback, this);
+  scan_sub_ = nh.subscribe("profiles", 500, &ScanServer::scanCallback, this);
   cloud_pub_ = nh.advertise<ColorCloud>("color_cloud", 1);
   map_->header.frame_id = from_frame_;
 
   // Create publisher for the collected color cloud
-  timer_ = nh.createTimer(ros::Duration(1.0), &ScanServer::publishCloud, this);
+  timer_ = nh.createTimer(ros::Duration(2.0), &ScanServer::publishCloud, this);
 }
 
 void godel_scan_analysis::ScanServer::scanCallback(const Cloud& cloud)
@@ -50,7 +51,14 @@ void godel_scan_analysis::ScanServer::scanCallback(const Cloud& cloud)
 
 void godel_scan_analysis::ScanServer::publishCloud(const ros::TimerEvent&) const
 {
-  cloud_pub_.publish(map_);
+  ColorCloud::Ptr pub_cloud(new ColorCloud);
+  // Downsample first
+  pcl::VoxelGrid<pcl::PointXYZRGB> vg;
+  vg.setInputCloud(map_);
+  vg.setLeafSize(0.0005, 0.0005, 0.0005);
+  vg.filter(*pub_cloud);
+  
+  cloud_pub_.publish(pub_cloud);
 }
 
 void godel_scan_analysis::ScanServer::transformScan(ColorCloud& cloud, 
