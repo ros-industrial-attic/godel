@@ -43,6 +43,14 @@
 		<!-- Keyence sensor -->
 		<xacro:keyence_lj_v7080 prefix="${prefix}keyence_" />
 
+		<link name="${prefix}keyence_tcp_frame" />
+		<joint name="${prefix}keyence_to_keyence_tcp_frame" type="fixed">
+			<parent link="${prefix}keyence_sensor_optical_frame"/>
+			<child link="${prefix}keyence_tcp_frame"/>
+			<origin rpy="0 3.14159 0"/>
+		</joint>
+
+
 		<!-- joint definitions -->
 			<joint name="${prefix}gripper_to_palm" type="fixed">
 				<parent link="${prefix}eff_frame"/>
@@ -65,13 +73,13 @@
 			<joint name="${prefix}gripper_to_keyence_mount" type="fixed">
 				<parent link="${prefix}gripper_body" />
 				<child link="${prefix}keyence_mount"/>
-				<origin xyz="-0.15 0 ${gripper_height}" rpy="0 1.57 0" />
+				<origin xyz="-0.16 0 0.08" rpy="0 1.570796326 0" />
 			</joint>
 
 			<joint name="${prefix}keyence_mount_to_keyence" type="fixed">
 				<parent link="${prefix}keyence_mount"/>
 				<child link="${prefix}keyence_base_link"/>
-				<origin xyz="0 0 0" rpy="0 0 1.57"/>
+				<origin xyz="0 0 0" rpy="0 0 1.570796326"/>
 			</joint>
 
 	</xacro:macro>
