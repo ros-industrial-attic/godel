@@ -53,7 +53,6 @@ int main(int argc, char** argv)
   ros::AsyncSpinner spinner(1); // required for moveit
   spinner.start();
 
-  moveit::planning_interface::MoveGroup group("manipulator_tcp");
 
   ros::NodeHandle pnh ("~");
 
@@ -62,10 +61,16 @@ int main(int argc, char** argv)
 
   bool change_speed;
   double speed;
+  std::string group_name;
+  pnh.param<std::string>("group_name", group_name, "manipulator_tcp");
   pnh.param<bool>("change_speed", change_speed, false);
   pnh.param<double>("speed", speed, 0.0);
 
-
+  // Configure group
+  moveit::planning_interface::MoveGroup group(group_name);
+  group.setPlanningTime(10.0);
+  group.setPlannerId("RRTstarkConfigDefault");
+  
   // Load trajectory for replay
   trajectory_msgs::JointTrajectory traj;
   loadPlan(bagfile_name, traj);
