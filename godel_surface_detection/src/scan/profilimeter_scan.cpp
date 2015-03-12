@@ -156,11 +156,9 @@ namespace
     double s = std::sqrt(dx*dx + dy*dy);
     // steps
     size_t n = s / ds;
-    ROS_WARN("n: %lu", n);
     // unit vector
     dx /= s;
     dy /= s;
-    ROS_WARN("vec: %f %f", dx, dy);
 
     std::vector<PolygonPt> result;
     for (size_t i = 0; i < n; ++i)
@@ -234,10 +232,6 @@ godel_surface_detection::generateProfilimeterScanPath(const PolygonBoundary& bou
 
   const PolygonPt& start = *pts.begin();
   const PolygonPt& end = *pts.rbegin(); 
-
-  ROS_WARN("%f %f -> %f %f", start.x, start.y, end.x, end.y);
-
-  std::for_each(pts.begin(), pts.end(), printPt);
 
   return pts;
 }
