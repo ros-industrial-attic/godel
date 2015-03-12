@@ -3,9 +3,11 @@
   <arg name="bagfile"/>
   <arg name="change_speed" default="false"/>
   <arg name="speed" default="0.0"/>
+  <arg name="group_name" default="manipulator_tcp" />
   <node name="trajectory_replay" pkg="godel_surface_detection" type="trajectory_test_node" output="screen">
     <param name="bagfile_name" value="$(arg bagfile)"/>
     <param name="change_speed" value="$(arg change_speed)"/>
     <param name="speed" value="$(arg speed)"/>
+    <param name="group_name" value="$(arg group_name)"/>
   </node>
 </launch>

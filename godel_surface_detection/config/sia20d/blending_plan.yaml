@@ -1,5 +1,5 @@
 blending_plan:
-  tool_radius: 0.01             # (m) actual radius of blending tool
+  tool_radius: 0.025             # (m) actual radius of blending tool
   margin: 0.001                  # (m) additional distance to leave near surface boundaries
   overlap: 0.00                  # (m) overlap distance between adjacent paths
   approach_spd: 0.005            # (m/s) Speed to approach surface of part

@@ -16,6 +16,7 @@ planner_configs:
     range: 0.1
   RRTstarkConfigDefault:
     type: geometric::RRTstar
+    range: 0.1
   TRRTkConfigDefault:
     type: geometric::TRRT
   PRMkConfigDefault:
