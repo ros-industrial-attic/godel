@@ -75,7 +75,7 @@ private:
 
   bool applyConcaveHull(const Cloud& plane_cloud,pcl::ModelCoefficients &plane_coeffs,geometry_msgs::PolygonStamped& polygon);
 
-  void computeLocalPlaneFrame(const Eigen::Hyperplane<double, 3> &plane, const Eigen::Vector3d &centroid);
+  void computeLocalPlaneFrame(const Eigen::Hyperplane<double, 3> &plane, const Eigen::Vector4d &centroid, const Cloud& cloud);
 
   /**@brief Compute coefficients of a plane best fit to point cloud
    * Coefficients correspond to ax+by+cz+d=0
