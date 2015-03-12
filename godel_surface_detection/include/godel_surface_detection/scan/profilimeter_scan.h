@@ -24,6 +24,7 @@ namespace godel_surface_detection
   {
     double width_;
     double overlap_;
+    double ds_;
   };
 
   std::vector<godel_process_path::PolygonPt> 

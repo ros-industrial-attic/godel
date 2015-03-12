@@ -92,8 +92,6 @@ int main(int argc, char** argv)
   executeTrajectory(traj);
 
   ROS_INFO_STREAM("Done with trajectory");
-
-  ros::waitForShutdown();
 }
 
 void executeTrajectory(const trajectory_msgs::JointTrajectory& trajectory)

@@ -74,6 +74,7 @@ struct ProcessPathDetails
 	visualization_msgs::MarkerArray process_boundaries_;
 	visualization_msgs::MarkerArray process_paths_;
 	visualization_msgs::MarkerArray tool_parts_;
+	visualization_msgs::MarkerArray scan_paths_; // profilimeter
 };
 
 class SurfaceBlendingService
@@ -171,6 +172,9 @@ public:
 		tool_animation_timer_ = nh.createTimer(ros::Duration(0.1f),&SurfaceBlendingService::tool_animation_timer_callback,this,true,false);
 
 		trajectory_planning_timer_ = nh.createTimer(ros::Duration(0.1f), &SurfaceBlendingService::trajectory_planning_timer_callback, 
+																								this, true, false);
+
+		scan_planning_timer_ = nh.createTimer(ros::Duration(0.1f), &SurfaceBlendingService::scan_planning_timer_callback, 
 																								this, true, false);
 		return true;
 	}
@@ -329,6 +333,7 @@ protected:
 		process_path_results_.process_boundaries_.markers.clear();
 		process_path_results_.process_paths_.markers.clear();
 		process_path_results_.tool_parts_.markers.clear();
+		process_path_results_.scan_paths_.markers.clear();
 
 		// generating boundaries
 		std::vector<pcl::PolygonMesh> meshes;
@@ -382,7 +387,7 @@ protected:
 				BOOST_FOREACH(godel_process_path::PolygonBoundary &bnd, filtered_boundaries)
 				{
 					godel_surface_detection::ProfilimeterScanParams param;
-					param.width_ = 0.02;
+					param.width_ = 0.04;
 					param.overlap_ = 0.0;
 
 					// Filter and reverse boundaries
@@ -416,7 +421,6 @@ protected:
 					marker_counter++;
 				}
 				tool_path_markers_pub_.publish(boundary_markers);       // Pre-publish boundaries before completing offset
-				ROS_WARN("DEBUG5");
 
 				static int scan_marker_id = 0;
 				// TODO DEBUG
@@ -430,16 +434,9 @@ protected:
 					m.lifetime = ros::Duration(0);
 					m.ns = BOUNDARY_NAMESPACE;
 					m.pose = boundary_pose;
-					// m.points.push_back(m.points.front());   // Close polygon loop for visualization
-					// m.colors.push_back(m.colors.front());
 					marker_counter++;
 				}
-				tool_path_markers_pub_.publish(scan_markers);       // Pre-publish boundaries before completing offset
-				ROS_WARN("DEBUG6");
-
-
-
-
+				tool_path_markers_pub_.publish(scan_markers);
 
 				// add boundaries to request
 				boundaries.clear();
@@ -462,6 +459,9 @@ protected:
 					process_path_results_.process_boundaries_.markers.insert(process_path_results_.process_boundaries_.markers.end(),
 							boundary_markers.markers.begin(),boundary_markers.markers.end());
 					process_path_results_.process_paths_.markers.push_back(path_marker);
+					// save laser scan data
+					process_path_results_.scan_paths_.markers.insert(process_path_results_.scan_paths_.markers.end(),
+						scan_markers.markers.begin(), scan_markers.markers.end());
 
 					duration_results_.push_back(process_plan.response.sleep_times);
 
@@ -565,6 +565,56 @@ protected:
 		ROS_INFO_STREAM("tool path animation completed");
 	}
 
+	void scan_planning_timer_callback(const ros::TimerEvent&)
+	{
+		ROS_WARN_STREAM("Scan planning callback!");
+		std::vector<trajectory_msgs::JointTrajectory> trajectories;
+		for (size_t i = 0; i < process_path_results_.scan_paths_.markers.size(); ++i)
+		{
+			godel_msgs::TrajectoryPlanning plan;
+			// Set planning parameters		
+			plan.request.group_name = "manipulator_keyence";
+			plan.request.tool_frame = "keyence_tcp_frame";
+			plan.request.world_frame = TRAJECTORY_WORLD_FRAME;
+			plan.request.iterations = TRAJECTORY_ITERATIONS;
+			plan.request.angle_discretization = 0.2;
+			plan.request.interpoint_delay = TRAJECTORY_INTERPOINT_DELAY;
+			plan.request.free_z_rotation = false;
+			plan.request.z_angle_offset = -M_PI/2.0;
+			
+			const visualization_msgs::Marker& marker = process_path_results_.scan_paths_.markers[i];
+
+			plan.request.path.reference = marker.pose;
+			plan.request.path.points = marker.points;
+			plan.request.path.durations = duration_results_[i];
+
+			ROS_INFO_STREAM("Calling trajectory planner for scan process " << i);
+			if (trajectory_planner_client_.call(plan))
+			{
+				ROS_INFO_STREAM("Trajectory planner succeeded for scan plan " << i);
+				trajectories.push_back(plan.response.trajectory);
+			}
+			else
+			{
+				ROS_WARN_STREAM("Failed to find trajectory plan for scan plan " << i);
+			}
+		}
+
+		ROS_INFO_STREAM("Trajectory scan planning complete");
+
+		// save to file for easier testing
+		if (trajectories.size() > 0)
+		{
+			ROS_INFO_STREAM("Saving trajectories to bagfile: " << "scan_plan.bag");
+			rosbag::Bag bag;
+			bag.open("scan_plan.bag", rosbag::bagmode::Write);
+			for (std::size_t i = 0; i < trajectories.size(); ++i)
+			{
+				bag.write("trajectory", ros::Time::now(), trajectories[i]);
+			}
+		}
+	}
+
 	void trajectory_planning_timer_callback(const ros::TimerEvent&)
 	{
 		// Container representing trajectories for each selected surface
@@ -582,7 +632,9 @@ protected:
 			plan.request.iterations = TRAJECTORY_ITERATIONS;
 			plan.request.angle_discretization = TRAJECTORY_ANGLE_DISC;
 			plan.request.interpoint_delay = TRAJECTORY_INTERPOINT_DELAY;
-			
+			plan.request.free_z_rotation = true;
+			plan.request.z_angle_offset = 0.0;
+
 			const visualization_msgs::Marker& marker = process_path_results_.process_paths_.markers[i];
 
 			plan.request.path.reference = marker.pose;
@@ -614,6 +666,10 @@ protected:
 				bag.write("trajectory", ros::Time::now(), trajectories[i]);
 			}
 		}
+
+		// ROS_WARN_STREAM("Setting scan callback!");
+		scan_planning_timer_.setPeriod(ros::Duration(0.1f));
+		scan_planning_timer_.start();
 	}
 
 	visualization_msgs::MarkerArray create_tool_markers(const geometry_msgs::Point &pos, const geometry_msgs::Pose &pose,std::string frame_id)
@@ -881,6 +937,7 @@ protected:
 	ros::Timer tool_animation_timer_;
 	bool stop_tool_animation_;
 	ros::Timer trajectory_planning_timer_;
+	ros::Timer scan_planning_timer_;
 
 	// robot scan instance
 	godel_surface_detection::scan::RobotScan robot_scan_;
