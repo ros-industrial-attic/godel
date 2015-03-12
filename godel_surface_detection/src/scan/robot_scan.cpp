@@ -233,12 +233,6 @@ int RobotScan::scan(bool move_only)
 
 			}
 
-/*			geometry_msgs::PoseStamped target;
-			target.pose = trajectory_poses[i];
-			target.header.frame_id = params_.world_frame;
-			move_group_ptr_->setStartStateToCurrentState();
-			move_group_ptr_->setPoseTarget(target,params_.tcp_frame);*/
-
 			if(move_group_ptr_->execute(path_plan)/*move_group_ptr_->move()*/)
 			{
 				poses_reached++;
@@ -421,68 +415,6 @@ bool RobotScan::parse_pose_parameter(XmlRpc::XmlRpcValue pose_param,geometry_msg
 	}
 }
 
-void RobotScan::apply_simple_trajectory_filter(	moveit_msgs::RobotTrajectory& traj)
-{
-	std::vector<trajectory_msgs::JointTrajectoryPoint> &current_points = traj.joint_trajectory.points;
-	std::vector<trajectory_msgs::JointTrajectoryPoint> points;
-	double dt;
-
-	// setting first point timestamp to zero
-	current_points.front().time_from_start = ros::Duration(0);
-
-	// removing redundant joint points
-	points.push_back(current_points.front());
-	trajectory_msgs::JointTrajectoryPoint last_point = current_points.front();
-	for(unsigned int i = 1;i < current_points.size(); i++)
-	{
-		trajectory_msgs::JointTrajectoryPoint &next_point = current_points[i];
-
-		// time elapsed between p1 and p2
-		dt = (next_point.time_from_start - last_point.time_from_start).toSec();
-		if(dt<MIN_TRAJECTORY_TIME_STEP)
-		{
-			dt = MIN_TRAJECTORY_TIME_STEP;
-			next_point.time_from_start = last_point.time_from_start + ros::Duration(dt);
-		}
-
-		// computing velocity for each joint
-		int zero_vel_counter = 0;
-		next_point.velocities.resize(next_point.positions.size());
-		for(unsigned int j = 0; j < next_point.positions.size(); j++)
-		{
-			next_point.velocities[j] = (next_point.positions[j] - last_point.positions[j])/dt;
-			if(next_point.velocities[j] < MIN_JOINT_VELOCITY)
-			{
-				zero_vel_counter++;
-			}
-		}
-
-
-		if(zero_vel_counter < next_point.positions.size())
-		{
-
-			points.push_back(next_point);
-			last_point = next_point;
-		}
-	}
-
-	// filling first and last points with 0 velocities
-	points.front().velocities.assign(traj.joint_trajectory.joint_names.size(),0);
-	points.back().velocities.assign(traj.joint_trajectory.joint_names.size(),0);
-
-	// checking time stamp for last joint point
-	trajectory_msgs::JointTrajectoryPoint &p_last = points.back();
-	trajectory_msgs::JointTrajectoryPoint &p_before_last = *(points.end()-2);
-	if((p_last.time_from_start - p_before_last.time_from_start).toSec() < MIN_TRAJECTORY_TIME_STEP)
-	{
-		p_last.time_from_start = p_before_last.time_from_start + ros::Duration(MIN_TRAJECTORY_TIME_STEP);
-	}
-
-	traj.joint_trajectory.points.assign(points.begin(),points.end());
-
-	//ROS_INFO_STREAM("Filtered trajectory: "<<traj);
-}
-
 void RobotScan::apply_trajectory_parabolic_time_parameterization(robot_trajectory::RobotTrajectory& rt,
 		moveit_msgs::RobotTrajectory &traj,
 		unsigned int max_iterations,
@@ -513,60 +445,6 @@ void RobotScan::apply_trajectory_parabolic_time_parameterization(robot_trajector
 			iter++;
 		}
 	}
-
-
-	//ROS_INFO_STREAM("Parameterized trajectory: "<<traj);
-
-	//apply_speed_reduction(traj,0.4f);
-
-	//ROS_INFO_STREAM("Speed reduction trajectory: "<<traj);
-
-}
-
-void RobotScan::apply_speed_reduction(moveit_msgs::RobotTrajectory &traj,double percent_reduction)
-{
-	std::vector<trajectory_msgs::JointTrajectoryPoint> &points = traj.joint_trajectory.points;
-	std::vector<trajectory_msgs::JointTrajectoryPoint>::iterator iter = points.begin()+1;
-	double dt;
-	double new_vel;
-	bool compute_time = true;
-
-	if(points.size()<3)
-	{
-		return;
-	}
-
-
-	while(iter != points.end())
-	{
-		trajectory_msgs::JointTrajectoryPoint &p1 = *(iter-1);
-		trajectory_msgs::JointTrajectoryPoint &p2 = *iter;
-
-		compute_time = true;
-		for(int i = 0;i < p2.velocities.size(); i++)
-		{
-			p2.velocities[i] = percent_reduction * p2.velocities[i];
-
-			if(compute_time && std::abs(p2.velocities[i]) > MIN_JOINT_VELOCITY)
-			{
-
-				dt = std::abs((p2.positions[i] - p1.positions[i]) / p2.velocities[i]);
-				p2.time_from_start = p1.time_from_start + ros::Duration(dt);
-				compute_time = false;
-			}
-		}
-
-		if(compute_time) // time was not computed
-		{
-			p2.time_from_start = p1.time_from_start + ros::Duration(1);
-		}
-
-		ROS_INFO_STREAM("new time value for current point: "<<dt);
-		iter++;
-	}
-
-
-
 }
 
 } /* namespace scan */
