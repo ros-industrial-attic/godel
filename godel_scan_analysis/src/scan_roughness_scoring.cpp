@@ -22,7 +22,7 @@ namespace
   typedef godel_scan_analysis::RoughnessScorer::Cloud Cloud;
   typedef godel_scan_analysis::RoughnessScorer::ColorCloud ColorCloud;
 
-  const static unsigned WINDOW_SIZE = 151;
+  const static unsigned WINDOW_SIZE = 101;
 
   // Preprocess clouds
   static rms::Scan<double> filterCloudAndBuildScan(const Cloud& in)
