@@ -25,8 +25,6 @@
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/features/normal_3d.h>
 #include <pcl/surface/gp3.h>
-#include <octomap/octomap.h>
-#include <octomap/OcTree.h>
 #include <godel_msgs/SurfaceDetectionParameters.h>
 #include <visualization_msgs/MarkerArray.h>
 
@@ -35,13 +33,11 @@ namespace godel_surface_detection { namespace detection{
 typedef pcl::PointCloud<pcl::PointXYZ> Cloud;
 typedef pcl::PointCloud<pcl::PointXYZRGB> CloudRGB;
 typedef pcl::PointCloud<pcl::Normal> Normals;
-typedef boost::shared_ptr<octomap::OcTree> OctreePtr;
 
 namespace defaults{
 
 	//static const double ACQUISITION_TIME = 5.0f;
 	static std::string FRAME_ID = "world_frame";
-	static const bool USE_OCTOMAP = false;
 
 	static const int STATISTICAL_OUTLIER_MEAN = 50;
 	static const double STATISTICAL_OUTLIER_STDEV_THRESHOLD = 1;
@@ -170,7 +166,6 @@ public:
 
 protected:
 
-	void process_octree(Cloud &processed_cloud);
 	bool apply_statistical_filter(const Cloud& in,Cloud& out);
 	bool apply_region_growing_segmentation(const Cloud& in,
 			const Normals& normals,
@@ -213,9 +208,6 @@ protected:
 	visualization_msgs::MarkerArray mesh_markers_;
 	std::vector<pcl::PolygonMesh> meshes_;
 
-
-	// octomap
-	OctreePtr octree_;
 
 	// counter
 	int acquired_clouds_counter_;
