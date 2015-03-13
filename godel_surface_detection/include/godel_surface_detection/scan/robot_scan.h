@@ -90,27 +90,6 @@ protected:
 public:// parameters
 
 	godel_msgs::RobotScanParameters params_;
-
-/*	// robot move
-	std::string group_name_;
-	std::string world_frame_;
-	std::string tcp_frame_;
-
-	// camera scan poses (It's assumed that the camera is attached to the arm's tcp)
-	tf::Transform tcp_to_cam_pose_;
-	tf::Transform world_to_obj_pose_;
-	double cam_to_obj_zoffset_;
-	double cam_to_obj_xoffset_;
-	double cam_tilt_angle_; // rotation about relative object's y axis (radians)
-	double sweep_angle_start_;
-	double sweep_angle_end_;
-	int num_scan_points_;
-	double reachable_scan_points_ratio_;
-	std::string scan_topic_;
-	bool stop_on_planning_error_;
-
-	// scan transformation
-	std::string scan_target_frame_;*/
 };
 
 } /* namespace detection */
