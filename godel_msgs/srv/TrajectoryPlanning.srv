@@ -8,9 +8,9 @@ string tool_frame
 string world_frame
 
 # Angle
-bool free_z_rotation   
+bool is_blending_path # as opposed to raster path 
 float64 angle_discretization
-float64 z_angle_offset
+float64 z_angle_offset # for raster paths
 uint8 iterations
 
 # Timing data
