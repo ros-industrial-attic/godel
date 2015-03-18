@@ -56,19 +56,25 @@ int main(int argc, char** argv)
 
   ros::NodeHandle pnh ("~");
 
+  // Read parameters to the server
   std::string bagfile_name;
   pnh.param<std::string>("bagfile_name", bagfile_name, "trajectory.bag");
 
-  bool change_speed;
-  double speed;
   std::string group_name;
-  pnh.param<std::string>("group_name", group_name, "manipulator_tcp");
+  pnh.param<std::string>("group_name", group_name, "manipulator");
+  
+  bool change_speed;
   pnh.param<bool>("change_speed", change_speed, false);
+  
+  double speed;
   pnh.param<double>("speed", speed, 0.0);
+
+  double planning_time;
+  pnh.param<double>("planning_time", planning_time, 10.0);
 
   // Configure group
   moveit::planning_interface::MoveGroup group(group_name);
-  group.setPlanningTime(10.0);
+  group.setPlanningTime(planning_time);
   group.setPlannerId("RRTstarkConfigDefault");
   
   // Load trajectory for replay

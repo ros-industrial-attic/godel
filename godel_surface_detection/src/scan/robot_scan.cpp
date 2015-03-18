@@ -68,6 +68,7 @@ bool RobotScan::init()
 	move_group_ptr_->setEndEffectorLink(params_.tcp_frame);
 	move_group_ptr_->setPoseReferenceFrame(params_.world_frame);
 	move_group_ptr_->setPlanningTime(PLANNING_TIME);
+	move_group_ptr_->setPlannerId("RRTstarkConfigDefault");
 	tf_listener_ptr_ = TransformListenerPtr(new tf::TransformListener());
 	scan_traj_poses_.clear();
 	callback_list_.clear();
