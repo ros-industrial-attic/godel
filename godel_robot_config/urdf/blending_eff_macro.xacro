@@ -5,7 +5,7 @@
 	<xacro:include filename="$(find keyence_ljv_description)/urdf/lj_v7080_macro.xacro"/>
 
 	<!-- parameter list -->
-	<xacro:property name="gripper_length" value="0.2"/>
+	<xacro:property name="gripper_length" value="0.215"/>
 	<xacro:property name="gripper_width" value="0.0"/>
 	<xacro:property name="gripper_height" value="0.0"/>
 
@@ -38,7 +38,7 @@
 			<link name="${prefix}keyence_mount"/>
 
 		<xacro:kinect2_sensor_definitions prefix="${prefix}" parent_link="${prefix}kinect2_mount" 
-				x_val="0.01198326580241401" y_val="-0.06760537682233136" z_val="-0.02237788673513926" roll="-0.008594277487416317" pitch="0.01124423866228241" yaw="0.0007965573534632762"/>
+				x_val="0.0117323762786166" y_val="-0.05952048473715679" z_val="-0.01945423487488313" roll="-0.006854570337791797" pitch="0.01495538828904983" yaw="0.04379009729706525"/>
 
 		<!-- Keyence sensor -->
 		<xacro:keyence_lj_v7080 prefix="${prefix}keyence_" />
@@ -47,9 +47,8 @@
 		<joint name="${prefix}keyence_to_keyence_tcp_frame" type="fixed">
 			<parent link="${prefix}keyence_sensor_optical_frame"/>
 			<child link="${prefix}keyence_tcp_frame"/>
-			<origin rpy="0 3.14159 0"/>
+			<origin xyz="0.05 0 0" rpy="0 3.14159 0"/>
 		</joint>
-
 
 		<!-- joint definitions -->
 			<joint name="${prefix}gripper_to_palm" type="fixed">
