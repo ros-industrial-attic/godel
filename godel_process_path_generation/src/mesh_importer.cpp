@@ -287,30 +287,6 @@ void MeshImporter::computeLocalPlaneFrame(const Eigen::Hyperplane<double, 3> &pl
   plane_frame_.matrix().col(2).head(3) = plane_normal.normalized();
 
   plane_frame_.translation() = origin;
-  ROS_ERROR_STREAM("\n" << plane_frame_.matrix());
-
-  for (std::size_t i = 0; i < cloud.points.size(); ++i)
-  {
-    ROS_ERROR_STREAM("pt " << i << ": " << cloud.points[i].x << " " << cloud.points[i].y << " " << cloud.points[i].z);
-  }
-
-
-  // Check if z_axis (plane normal) is closely aligned with world x_axis:
-  // If not, construct transform rotation from X,Z axes. Otherwise, use Y,Z axes.
-  // if (std::abs(plane_normal.dot(Vector3d::UnitX())) < 0.8)
-  // {
-  //   Eigen::Vector3d x_axis = plane.projection(origin + Eigen::Vector3d::UnitY())-origin;
-  //   plane_frame_.matrix().col(0).head(3) = x_axis.normalized();
-  //   plane_frame_.matrix().col(2).head(3) = plane_normal.normalized();
-  //   plane_frame_.matrix().col(1).head(3) = (plane_normal.normalized().cross(x_axis.normalized())).normalized();
-  // }
-  // else
-  // {
-  //   Eigen::Vector3d y_axis = plane.projection(origin + Eigen::Vector3d::UnitY())-origin;
-  //   plane_frame_.matrix().col(1).head(3) = y_axis.normalized();
-  //   plane_frame_.matrix().col(2).head(3) = plane_normal.normalized();
-  //   plane_frame_.matrix().col(0).head(3) = (y_axis.normalized().cross(plane_normal.normalized())).normalized();
-  // }
 }
 
 bool MeshImporter::computePlaneCoefficients(Cloud::ConstPtr cloud, Eigen::Vector4d &output)
