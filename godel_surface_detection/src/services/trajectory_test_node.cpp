@@ -2,28 +2,21 @@
 
 #include <actionlib/client/simple_action_client.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
+
 #include <moveit/move_group_interface/move_group.h>
+
+#include <eigen_conversions/eigen_msg.h>
 
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 
-bool planPathToPosition(moveit::planning_interface::MoveGroup& group, const trajectory_msgs::JointTrajectoryPoint& point);
+
+bool planPathToPosition(moveit::planning_interface::MoveGroup& group,
+                        const trajectory_msgs::JointTrajectoryPoint& point);
 
 void executeTrajectory(const trajectory_msgs::JointTrajectory& trajectory);
 
 void insertCurrentPosition(moveit::planning_interface::MoveGroup& group, trajectory_msgs::JointTrajectory& trajectory);
-
-void rewriteSpeed(const ros::Duration& offset, const ros::Duration& rate, trajectory_msgs::JointTrajectory& trajectory)
-{
-  ros::Duration from_start = offset;
-
-  for (size_t i = 0; i < trajectory.points.size(); ++i)
-  {
-    trajectory.points[i].time_from_start = from_start;
-
-    from_start += rate;
-  }
-}
 
 bool loadPlan(const std::string& name, trajectory_msgs::JointTrajectory& trajectory)
 {
@@ -62,12 +55,6 @@ int main(int argc, char** argv)
 
   std::string group_name;
   pnh.param<std::string>("group_name", group_name, "manipulator");
-  
-  bool change_speed;
-  pnh.param<bool>("change_speed", change_speed, false);
-  
-  double speed;
-  pnh.param<double>("speed", speed, 0.0);
 
   double planning_time;
   pnh.param<double>("planning_time", planning_time, 10.0);
@@ -76,30 +63,27 @@ int main(int argc, char** argv)
   moveit::planning_interface::MoveGroup group(group_name);
   group.setPlanningTime(planning_time);
   group.setPlannerId("RRTstarkConfigDefault");
-  
+  group.setPoseReferenceFrame("world_frame");
+
+  const std::vector<std::string>& names = group.getJoints();
+
   // Load trajectory for replay
   trajectory_msgs::JointTrajectory traj;
   loadPlan(bagfile_name, traj);
 
   if (!planPathToPosition(group, traj.points[0]))
   {
-    ROS_WARN_STREAM("Could not solve to " << traj.points[0]);
+    ROS_WARN_STREAM("Couldn't make joint move to start pos");
     return -1;
   }
 
   // Insert current position into trajectory
   insertCurrentPosition(group, traj);
 
-
-  if (change_speed)
-  {
-    ROS_INFO_STREAM("CHANGING trajectory speed");
-    rewriteSpeed(ros::Duration(2.0), ros::Duration(speed), traj);
-  }
-
-
   // Execute trajectory
-  traj.points.resize(traj.points.size()-1);
+  // Beware: if the trajectory starts and stops at the same point, the ROS-I
+  // controllers will often just ignore your input. One solution, however bad,
+  // is to truncate a point or two from the trajectory using resize.
   executeTrajectory(traj);
 
   ROS_INFO_STREAM("Done with trajectory");
@@ -120,7 +104,8 @@ void executeTrajectory(const trajectory_msgs::JointTrajectory& trajectory)
   ROS_INFO_STREAM("Sending goal with " << trajectory.points.size() << " points");
   ac.sendGoal(goal);
 
-  if (ac.waitForResult(goal.trajectory.points[goal.trajectory.points.size()-1].time_from_start))
+  ros::Duration wait_time = goal.trajectory.points.back().time_from_start + ros::Duration(2.0);
+  if (ac.waitForResult(wait_time))
   {
     ROS_INFO_STREAM("Action server reported successful execution");
   } else {
@@ -128,10 +113,13 @@ void executeTrajectory(const trajectory_msgs::JointTrajectory& trajectory)
   }
 }
 
-bool planPathToPosition(moveit::planning_interface::MoveGroup& group, const trajectory_msgs::JointTrajectoryPoint& point)
+// Joint motion
+bool planPathToPosition(moveit::planning_interface::MoveGroup& group,
+                        const trajectory_msgs::JointTrajectoryPoint& point)
 {
-  group.setJointValueTarget(point.positions);
   moveit::planning_interface::MoveGroup::Plan my_plan;
+
+  group.setJointValueTarget(point.positions);
   bool success = group.plan(my_plan);
   if (success)
   {
