@@ -1,11 +1,9 @@
 <?xml version="1.0" ?>
 <launch>
-
-	<arg name="publish_tf" default="false" />
-
+  <remap from="/kinect2/depth_highres/points" to="/sensor_point_cloud"/>
+  
   <include file="$(find kinect2_bridge)/launch/kinect2_bridge.launch" >
     <remap from="/kinect2/depth_lowres/points" to="/sensor_point_cloud"/>
-    <arg name="publish_tf" value="$(arg publish_tf)"/>
 		<arg name="fps_limit" value="2" />
 	</include>
 

@@ -18,7 +18,7 @@
 		</node>
 
 		<!-- sensor -->
-		<remap from="/kinect2/depth_lowres/points" to="/sensor_point_cloud"/>
+		<!-- Do to the expensive nature of the Kinect2, I don't autolaunch it here -->	
 
 	</group>
 
