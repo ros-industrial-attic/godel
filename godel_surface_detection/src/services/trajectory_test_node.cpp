@@ -62,7 +62,7 @@ int main(int argc, char** argv)
   // Configure group
   moveit::planning_interface::MoveGroup group(group_name);
   group.setPlanningTime(planning_time);
-  group.setPlannerId("RRTstarkConfigDefault");
+  // group.setPlannerId("RRTstarkConfigDefault");
   group.setPoseReferenceFrame("world_frame");
 
   const std::vector<std::string>& names = group.getJoints();

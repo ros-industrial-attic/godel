@@ -585,6 +585,7 @@ protected:
 			plan.request.angle_discretization = SCAN_TRAJECTORY_ANGLE_DISC;
 			plan.request.interpoint_delay = SCAN_TRAJECTORY_INTERPOINT_DELAY;
 			plan.request.is_blending_path = false;
+			plan.request.plan_from_current_position = false;
 			
 			const visualization_msgs::Marker& marker = process_path_results_.scan_paths_.markers[i];
 
@@ -636,6 +637,7 @@ protected:
 			plan.request.angle_discretization = BLEND_TRAJECTORY_ANGLE_DISC;
 			plan.request.interpoint_delay = BLEND_TRAJECTORY_INTERPOINT_DELAY;
 			plan.request.is_blending_path = true;
+			plan.request.plan_from_current_position = true;
 
 			const visualization_msgs::Marker& marker = process_path_results_.process_paths_.markers[i];
 

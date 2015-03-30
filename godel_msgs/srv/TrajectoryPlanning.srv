@@ -7,11 +7,16 @@ string group_name
 string tool_frame
 string world_frame
 
-# Angle
-bool is_blending_path # as opposed to raster path 
+# as opposed to a profilimeter raster path
+bool is_blending_path
+
+# controls whether or not the planner will attempt to plan
+# a motion from the current position of the group
+# to the first point of the process path
+bool plan_from_current_position 
+
+# How finely to search unconstrained angles, if any
 float64 angle_discretization
-float64 z_angle_offset # for raster paths
-uint8 iterations
 
 # Timing data
 float64 interpoint_delay
