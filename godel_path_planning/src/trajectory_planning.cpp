@@ -1,8 +1,7 @@
 #include "godel_path_planning/trajectory_planning.h"
 
-#include <moveit/robot_trajectory/robot_trajectory.h>
-
 #include "descartes_trajectory/cart_trajectory_pt.h"
+#include <godel_path_planning/trajectory_interpolator.h>
 #include "descartes_planner/dense_planner.h"
 
 #include <tf_conversions/tf_eigen.h>
@@ -11,35 +10,38 @@
 #include <pluginlib/class_loader.h>
 
 #include "godel_path_planning/trajectory_multipoint.h"
+#include "godel_path_planning/trajectory_interpolator.h"
 
-// Anonymous namespace
+#include <sensor_msgs/JointState.h>
+
+#include <ros/ros.h>
+
 namespace
 {
-  const static double TOOL_POINT_DELAY = 0.75;
-
-  const static std::string robot_description = "robot_description";
+  const static std::string ROBOT_DESCRIPTION = "robot_description";
 
   /* This will allow us to adapt to a different robot model by dynamically loading its
      interface. */
   static const std::string PLUGIN_NAME = "motoman_sia20d_descartes/MotomanSia20dRobotModel";
+  
   static pluginlib::ClassLoader<descartes_core::RobotModel> robot_model_loader("descartes_core",
                                                                      "descartes_core::RobotModel");
   
   // Create a descartes RobotModel for graph planning
-  descartes_core::RobotModelPtr createRobotModel(const moveit::core::RobotStatePtr robot_state,
-                                                 const std::string& group_name,
+  descartes_core::RobotModelPtr createRobotModel(const std::string& group_name,
                                                  const std::string& tool_frame,
                                                  const std::string& world_frame)
   {
     using descartes_core::RobotModelPtr;
 
     RobotModelPtr ptr = robot_model_loader.createInstance(PLUGIN_NAME);
-    ptr->initialize(robot_description, group_name, world_frame, tool_frame);
+    ptr->initialize(ROBOT_DESCRIPTION, group_name, world_frame, tool_frame);
     return ptr;
   }
 
   descartes_core::TrajectoryPtPtr rotationalMultipoint(double x, double y, double z, double rx, double ry, double rz,
-                                                       double discretization, const descartes_core::TimingConstraint& timing)
+                                                       double discretization, const descartes_core::TimingConstraint& timing,
+                                                       double drx = 0.0, double dry = 0.0, double drz = 0.3)
   {
     using namespace descartes_core;
     using namespace descartes_trajectory;
@@ -47,7 +49,7 @@ namespace
     CartTrajectoryPt a(
               TolerancedFrame(utils::toFrame(x,y, z, rx, ry, rz, descartes_core::utils::EulerConventions::XYZ),
                ToleranceBase::zeroTolerance<PositionTolerance>(x, y, z),
-               ToleranceBase::createSymmetric<OrientationTolerance>(rx, ry, rz-(M_PI/2.0), 0, 0, 0.3)),
+               ToleranceBase::createSymmetric<OrientationTolerance>(rx, ry, rz-(M_PI/2.0), drx, dry, drz)),
               0.0, discretization, timing);
 
     
@@ -62,7 +64,6 @@ namespace
     pts.push_back(b);
 
     return descartes_core::TrajectoryPtPtr(new godel_path_planning::CartTrajectoryMultiPt(pts, timing));
-
   }
 
   // Create an axial trajectory pt from a given tf transform
@@ -82,7 +83,7 @@ namespace
     double y = eigen_pose.translation()(1);
     double z = eigen_pose.translation()(2);
 
-    static const descartes_core::TimingConstraint timing(0.0, 0.3);
+    static const descartes_core::TimingConstraint timing(0.0, 0.5);
 
     if (blend_path)
     {
@@ -102,6 +103,7 @@ namespace
   // Translates a point relative to a reference pose to an absolute transformation
   // Also flips the z axis of the orientation to point INTO the plane specified by the
   // reference frame.
+  // TODO: use Eigen instead of TF. Descartes uses Eigen, and so should we
   tf::Transform createNominalTransform(const geometry_msgs::Pose& ref_pose, const geometry_msgs::Point& point)
   {
     // To plane
@@ -121,41 +123,25 @@ namespace
     return in_world;
   }
 
-  void populateTrajectoryMsg(const std::vector<descartes_core::TrajectoryPtPtr>& solution,
-                             const descartes_core::RobotModel& robot_model,
-                             double interpoint_delay,
-                             double time_offset,
-                             trajectory_msgs::JointTrajectory& trajectory)
+  double timeParamiterize(const std::vector<double>& start,
+                          const std::vector<double>& stop)
   {
-    typedef std::vector<descartes_core::TrajectoryPtPtr>::const_iterator JointSolutionIterator;
-    
-    // For calculating the time_from_start field of the trajectoryPoint
-    ros::Duration time_from_start(time_offset);
-    std::vector<double> dummy_seed (robot_model.getDOF(), 0.0);
+    const static std::vector<double> vel {0.2, 0.2, 0.2, 0.2, 0.3, 0.3, 0.3};
 
-    for (JointSolutionIterator it = solution.begin(); it != solution.end(); ++it)
+    double max_time = 0.0;
+    for (std::size_t i = 0; i < start.size(); ++i)
     {
-      // Retrieve actual target joint angles from the polymorphic interface function
-      std::vector<double> sol;
-      it->get()->getNominalJointPose(dummy_seed, robot_model, sol);
-      
-      trajectory_msgs::JointTrajectoryPoint point;
-      point.positions = sol;
-      point.velocities.resize(sol.size(), 0.0); // Fill extra fields with zeroes for now
-      point.accelerations.resize(sol.size(), 0.0);
-      point.effort.resize(sol.size(), 0.0);
-      point.time_from_start = time_from_start;
-
-      // add trajectory point to array
-      trajectory.points.push_back(point);
-
-      // increment time so far by next duration
-      time_from_start += ros::Duration(interpoint_delay);
+      max_time = std::max(max_time, std::fabs((stop[i] - start[i]) / vel[i]));
     }
-
-    return;
+    return max_time;
   }
 
+  // Return the current joint positions from a given topic
+  std::vector<double> getCurrentPosition(const std::string& topic)
+  {
+    sensor_msgs::JointStateConstPtr state = ros::topic::waitForMessage<sensor_msgs::JointState>(topic, ros::Duration(1.0));
+    return state->position;
+  }
 
 } // end of anon namespace
 
@@ -171,14 +157,11 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
     return false;
   }
 
-  // Note that there is both a descartes_core::RobotModel and a moveit RobotModel
-  robot_state::RobotStatePtr kinematic_state (new robot_state::RobotState(model));
-
-  descartes_core::RobotModelConstPtr robot_model = createRobotModel(kinematic_state,
-                                                                    req.group_name, req.tool_frame, 
+  descartes_core::RobotModelConstPtr robot_model = createRobotModel(req.group_name, 
+                                                                    req.tool_frame, 
                                                                     req.world_frame);
 
-  std::vector<TrajectoryPtPtr> graph_points;
+  TrajectoryVec graph_points;
   graph_points.reserve(req.path.points.size());
 
   // Create cartesian trajectory points out of the tool processing path
@@ -190,34 +173,97 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
     graph_points.push_back(tfToAxialTrajectoryPt(point_tf, req.angle_discretization, req.is_blending_path));
   }
 
+  if (req.plan_from_current_position)
+  {
+    // Add segment connecting current position with start of trajectory
+    std::vector<double> init_state = getCurrentPosition("joint_states");
+    // Get FK
+    Eigen::Affine3d init_pose;
+    if (!robot_model->getFK(init_state, init_pose))
+    {
+      ROS_ERROR("Could not get FK of initial position");
+      return false;
+    }
+    // Get Pose of first point in process path
+    Eigen::Affine3d stop_pose;
+    graph_points.front()->getNominalCartPose(std::vector<double>(), *robot_model, stop_pose);
+    // Interpolate between the current pos and start of path 
+    TrajectoryVec to_process = interpolateCartesian(init_pose, stop_pose, 15.0, 0.05);
+    // replace the first trajectorypt with a fixed one
+    to_process.front() = descartes_core::TrajectoryPtPtr(new descartes_trajectory::JointTrajectoryPt(init_state));
+    // Unconstrain the transition from the cartesian motion portion to the tool trajectory
+    // which might have much tighter tolerances
+    graph_points.front()->setTiming(descartes_core::TimingConstraint(0,1000));
+    // concatenate paths
+    graph_points.insert(graph_points.begin(), to_process.begin(), to_process.end());
+  }
+
+  // Create planner
   descartes_core::PathPlannerBasePtr planner (new descartes_planner::DensePlanner);
   planner->initialize(robot_model);
 
+  // Attempt to solve the trajectory
   if (!planner->planPath(graph_points))
   {
     ROS_ERROR("%s: Failed to plan for given trajectory.", __FUNCTION__);
     return false;
   }
 
-  std::vector<TrajectoryPtPtr> result_path;
+  TrajectoryVec result_path;
   if (!planner->getPath(result_path))
   {
     ROS_ERROR("%s: Failed to retrieve path.", __FUNCTION__);
     return false;
   }
 
+  // Post process the resulting path
+  // This step looks for jumps in joint positions of more than 45 degrees
+  // and then tries to smooth them out using joint interpolated motion
+  std::vector<double> dummy;
+  TrajectoryVec traj;
+  for (auto it = result_path.begin(); it != result_path.end() - 1; ++it)
+  {
+    std::vector<double> start;
+    it->get()->getNominalJointPose(dummy, *robot_model, start);
+    std::vector<double> stop;
+    (it + 1)->get()->getNominalJointPose(dummy, *robot_model, stop);
+    if (hasJointJump(start, stop, M_PI/4))
+    {
+      ROS_WARN_STREAM("Adding joint interp for jump");
+      auto t = jointInterpolate(start, stop, 10.0, 5);
+      traj.insert(traj.end(), t.begin(), t.end() );
+    }
+    else
+    {
+      traj.push_back(*it);
+    }
+  }
+
+  // Attempt to smooth the velocity of the robot
+  for (auto it = traj.begin(); it != traj.end() - 1; ++it)
+  {
+    std::vector<double> start;
+    it->get()->getNominalJointPose(dummy, *robot_model, start);
+    std::vector<double> stop;
+    (it + 1)->get()->getNominalJointPose(dummy, *robot_model, stop);
+    double dt = timeParamiterize(start, stop);
+    descartes_core::TimingConstraint tm (0.0, dt);
+    (it + 1)->get()->setTiming(tm);
+  }
+
+  // Now translate the solution into ROS trajectory type
+  
   // Retrieve active joint names for this planning group
   const std::vector< std::string >& joint_names = 
     model->getJointModelGroup(req.group_name)->getActiveJointModelNames(); 
 
-  // translate the solution to the path planner
   // trajectory header: 
   trajectory.header.stamp = ros::Time::now();
   trajectory.header.frame_id = req.world_frame;
   // fill in joint names (order matters) - might need to check
   trajectory.joint_names = joint_names;
 
-  populateTrajectoryMsg(result_path, *robot_model, 2.0, req.interpoint_delay, trajectory);
+  populateTrajectoryMsg(traj, *robot_model, trajectory);
 
   return true;
 }
