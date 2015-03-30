@@ -122,7 +122,7 @@ bool MeshImporter::calculateSimpleBoundary(const pcl::PolygonMesh &input_mesh)
 	  // computes local frame and saves it into the 'plane_frame_' member
 	  Eigen::Vector4d centroid4;
 	  pcl::compute3DCentroid(*points, centroid4);
-	  computeLocalPlaneFrame(hplane, centroid4.head(3), *points);
+	  computeLocalPlaneFrame(hplane, centroid4, *points);
 	  if (verbose_)
 	  {
 	    ROS_INFO_STREAM("Local plane calculated with normal " << hplane.coeffs().transpose() << " and origin " << centroid4.transpose());
