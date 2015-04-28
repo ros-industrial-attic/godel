@@ -31,10 +31,25 @@ namespace simulator_service
     bool simulateTrajectoryCallback(simulator_service::SimulateTrajectory::Request& req,
                                     simulator_service::SimulateTrajectory::Response& res)
     {
+      if (req.trajectory.points.empty())
+      {
+        ROS_WARN_STREAM("Can not simulate empty trajectory");
+        return false;
+      }
+
       ROS_INFO_STREAM("Handling new simulation service request");
       control_msgs::FollowJointTrajectoryGoal goal;
-      goal.trajectory = req.trajectory;
       
+
+      // First set the simulator to the initial position of the sim
+      goal.trajectory = req.trajectory;
+      goal.trajectory.points.clear();
+      goal.trajectory.points.push_back(req.trajectory.points.front());
+      goal.trajectory.points.front().time_from_start = ros::Duration(0.0);
+      ac_.sendGoal(goal);
+      ac_.waitForResult(ros::Duration(0.5));
+      // Then send the whole trajectory
+      goal.trajectory = req.trajectory;
       ac_.sendGoal(goal);
 
       if (req.wait_for_execution && !goal.trajectory.points.empty())
