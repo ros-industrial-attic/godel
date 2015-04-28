@@ -22,7 +22,7 @@ void godel_path_planning::populateTrajectoryMsg(const TrajectoryVec& solution,
     point.accelerations.resize(sol.size(), 0.0);
     point.effort.resize(sol.size(), 0.0);
 
-    double time_step = it->get()->getTiming().upper_;
+    double time_step = it->get()->getTiming().upper;
     if (time_step == 0.0)
     {
       time_from_start += ros::Duration(DEFAULT_TIME);
