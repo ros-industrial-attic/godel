@@ -34,7 +34,7 @@ namespace motoman_sia20d_descartes
 
   }
 
-  bool MotomanSia20dRobotModel::initialize(const std::string robot_description, const std::string& group_name,
+  bool MotomanSia20dRobotModel::initialize(const std::string& robot_description, const std::string& group_name,
                                     const std::string& world_frame,const std::string& tcp_frame)
   {
     MoveitStateAdapter::initialize(robot_description,group_name,world_frame,tcp_frame);
