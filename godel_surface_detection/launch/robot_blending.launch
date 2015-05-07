@@ -6,7 +6,9 @@
 	<arg name="robot_ip" unless="$(arg sim_robot)" />
 	<arg name="sim_sensor" default="true"/>
 	<arg name="fake_data" default="true"/>
+	<arg name="preview_motion" default="true" />
 
+	<!-- Launches the primary service for the case of a simulated depth camera -->
 	<group unless="$(arg sim_sensor)">
 	
 		<!-- surface detection service -->
@@ -19,9 +21,9 @@
 
 		<!-- sensor -->
 		<!-- Do to the expensive nature of the Kinect2, I don't autolaunch it here -->	
-
 	</group>
 
+	<!-- Launches the primary service for the case of a real depth camera -->
 	<group if="$(arg sim_sensor)">
 	
 		<!-- surface detection service -->
@@ -45,16 +47,27 @@
 		</node>
 	</group>
 
-	<!-- process path -->
+	<!-- These nodes provide services necessary for the generation of blending paths -->
 	<node name="process_path_generator_node" pkg="godel_process_path_generation" type="process_path_generator_node" output="screen"/>
 	<node name="polygon_offset_node" pkg="godel_polygon_offset" type="godel_polygon_offset_node" output="screen"/>
+
+	<!-- This node provides services necessary for translating cartesian paths into joint trajectories -->
 	<node name="trajectory_planner_node" pkg="godel_path_planning" type="trajectory_planning_node" output="screen" />
 
+	<!-- This node provides interfaces to trajectory execution for simulated and real robots  -->
+	<node name="path_execution_service" pkg="godel_path_execution" type="path_execution_service_node" output="screen" />
+
+	<!-- Bring up simulated robot that can be visualized under the tf namespace 'simulation'
+			 Allows for previewing paths generated before execution. -->
+	<include if="$(arg preview_motion)" file="$(find simulator_service)/launch/simulation.launch"/>
+
+	<!-- Bring up Keyence driver and analysis services -->
+	<!-- TODO: complete -->
+	
 	<!-- rviz blending plugin -->
 	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_surface_detection)/rviz/robot_blending.rviz" output="screen" launch-prefix="nice" required="true"/>
 
-
-	<!-- moveit -->
+	<!-- Bring up the MoveIt interface to the real or simulated robot -->
 	<include file="$(find godel_sia20d_moveit_config)/launch/moveit_planning_execution.launch">
 		<arg name="rviz" value="false"/>
 		<arg name="sim" value="$(arg sim_robot)"/>
