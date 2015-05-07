@@ -7,14 +7,14 @@
 
 #include <eigen_conversions/eigen_msg.h>
 
+#include <godel_msgs/TrajectoryExecution.h>
+
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 
 
 bool planPathToPosition(moveit::planning_interface::MoveGroup& group,
                         const trajectory_msgs::JointTrajectoryPoint& point);
-
-void executeTrajectory(const trajectory_msgs::JointTrajectory& trajectory);
 
 void insertCurrentPosition(moveit::planning_interface::MoveGroup& group, trajectory_msgs::JointTrajectory& trajectory);
 
@@ -49,6 +49,10 @@ int main(int argc, char** argv)
 
   ros::NodeHandle pnh ("~");
 
+  bool simulate;
+  pnh.param<bool>("simulate", simulate, true);
+  ROS_WARN_STREAM("SIMULATE: " << int(simulate));
+
   // Read parameters to the server
   std::string bagfile_name;
   pnh.param<std::string>("bagfile_name", bagfile_name, "trajectory.bag");
@@ -65,13 +69,11 @@ int main(int argc, char** argv)
   // group.setPlannerId("RRTstarkConfigDefault");
   group.setPoseReferenceFrame("world_frame");
 
-  const std::vector<std::string>& names = group.getJoints();
-
   // Load trajectory for replay
   trajectory_msgs::JointTrajectory traj;
   loadPlan(bagfile_name, traj);
 
-  if (!planPathToPosition(group, traj.points[0]))
+  if (!simulate && !planPathToPosition(group, traj.points[0]))
   {
     ROS_WARN_STREAM("Couldn't make joint move to start pos");
     return -1;
@@ -84,33 +86,16 @@ int main(int argc, char** argv)
   // Beware: if the trajectory starts and stops at the same point, the ROS-I
   // controllers will often just ignore your input. One solution, however bad,
   // is to truncate a point or two from the trajectory using resize.
-  executeTrajectory(traj);
+  
+  godel_msgs::TrajectoryExecution srv;
+  ros::NodeHandle nh;
+  ros::ServiceClient client = nh.serviceClient<godel_msgs::TrajectoryExecution>("path_execution");
+  srv.request.trajectory = traj;
+  srv.request.wait_for_execution = true;
+  srv.request.simulate = simulate;
+  client.call(srv);
 
   ROS_INFO_STREAM("Done with trajectory");
-}
-
-void executeTrajectory(const trajectory_msgs::JointTrajectory& trajectory)
-{
-  // Setup action server for trajectory execution
-  actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> ac("joint_trajectory_action", true);
-  if (!ac.waitForServer(ros::Duration(2.0)))
-  {
-    ROS_ERROR_STREAM("Could not connect to action server");
-    return;
-  }
-
-  control_msgs::FollowJointTrajectoryGoal goal;
-  goal.trajectory = trajectory;
-  ROS_INFO_STREAM("Sending goal with " << trajectory.points.size() << " points");
-  ac.sendGoal(goal);
-
-  ros::Duration wait_time = goal.trajectory.points.back().time_from_start + ros::Duration(2.0);
-  if (ac.waitForResult(wait_time))
-  {
-    ROS_INFO_STREAM("Action server reported successful execution");
-  } else {
-    ROS_WARN_STREAM("Action server could not execute trajectory");
-  }
 }
 
 // Joint motion
