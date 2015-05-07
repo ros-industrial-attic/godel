@@ -9,7 +9,9 @@ godel_path_execution::PathExecutionService::PathExecutionService(const std::stri
                                                                  ros::NodeHandle& nh)
   : name_(name)
 {
-  // Communicates with the 
+  ROS_INFO_STREAM("Starting path execution service with name " << name << ". Using simulation service '" 
+    << sim_name << "' and actual execution service: '" << real_name << "'.");
+  
   real_client_ = nh.serviceClient<moveit_msgs::ExecuteKnownTrajectory>(real_name);
 
   sim_client_ = nh.serviceClient<simulator_service::SimulateTrajectory>(sim_name);
@@ -26,7 +28,7 @@ bool godel_path_execution::PathExecutionService::executionCallback(godel_msgs::T
   using moveit_msgs::ExecuteKnownTrajectory;
   using simulator_service::SimulateTrajectory;
 
-  ROS_INFO_STREAM("Godel Path Execution '" << name_ << "' recieved new trajectory.");
+  ROS_INFO_STREAM("PathExecutionService '" << name_ << "': recieved new trajectory (simulate ==" << (req.simulate ? "true" : "false") << ")");
 
   if (req.simulate)
   {
@@ -40,6 +42,7 @@ bool godel_path_execution::PathExecutionService::executionCallback(godel_msgs::T
       // currently no response fields in the simulate header
       return true;
     }
+    ROS_WARN_STREAM("PathExecutionService: Failed to call simulation service");
   }
   else
   {
@@ -53,6 +56,7 @@ bool godel_path_execution::PathExecutionService::executionCallback(godel_msgs::T
       res.code = srv.response.error_code.val;
       return true;
     }
+    ROS_WARN_STREAM("PathExecutionService: Failed to call hardware execution service");
   }
 
   return false;
