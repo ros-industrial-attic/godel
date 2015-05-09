@@ -27,7 +27,8 @@ struct ParamInterfaces<godel_msgs::RobotScanParameters>
 
     setter.set("num_scan_points", params.num_scan_points);
     setter.set("reachable_scan_points_ratio", params.reachable_scan_points_ratio);
-    setter.set("stop_on_planning_error", params.stop_on_planning_error);
+    bool b = params.stop_on_planning_error;
+    setter.set("stop_on_planning_error", b);
 
     setter.set("scan_topic", params.scan_topic);
     setter.set("scan_target_frame", params.scan_target_frame);
@@ -41,6 +42,15 @@ struct ParamInterfaces<godel_msgs::RobotScanParameters>
     setter.set("tcp_to_cam_pose/quat/y", params.tcp_to_cam_pose.orientation.y);
     setter.set("tcp_to_cam_pose/quat/z", params.tcp_to_cam_pose.orientation.z);
     setter.set("tcp_to_cam_pose/quat/w", params.tcp_to_cam_pose.orientation.w);
+
+    setter.set("world_to_obj_pose/trans/x", params.world_to_obj_pose.position.x);
+    setter.set("world_to_obj_pose/trans/y", params.world_to_obj_pose.position.y);
+    setter.set("world_to_obj_pose/trans/z", params.world_to_obj_pose.position.z);
+    
+    setter.set("world_to_obj_pose/quat/x", params.world_to_obj_pose.orientation.x);
+    setter.set("world_to_obj_pose/quat/y", params.world_to_obj_pose.orientation.y);
+    setter.set("world_to_obj_pose/quat/z", params.world_to_obj_pose.orientation.z);
+    setter.set("world_to_obj_pose/quat/w", params.world_to_obj_pose.orientation.w);
   }
 
   template<typename Getter>
@@ -60,7 +70,9 @@ struct ParamInterfaces<godel_msgs::RobotScanParameters>
 
     getter.get("num_scan_points", params.num_scan_points);
     getter.get("reachable_scan_points_ratio", params.reachable_scan_points_ratio);
-    getter.get("stop_on_planning_error", params.stop_on_planning_error);
+    bool b;
+    getter.get("stop_on_planning_error", b);
+    params.stop_on_planning_error = b;
 
     getter.get("scan_topic", params.scan_topic);
     getter.get("scan_target_frame", params.scan_target_frame);
@@ -74,6 +86,15 @@ struct ParamInterfaces<godel_msgs::RobotScanParameters>
     getter.get("tcp_to_cam_pose/quat/y", params.tcp_to_cam_pose.orientation.y);
     getter.get("tcp_to_cam_pose/quat/z", params.tcp_to_cam_pose.orientation.z);
     getter.get("tcp_to_cam_pose/quat/w", params.tcp_to_cam_pose.orientation.w);
+
+    getter.get("world_to_obj_pose/trans/x", params.world_to_obj_pose.position.x);
+    getter.get("world_to_obj_pose/trans/y", params.world_to_obj_pose.position.y);
+    getter.get("world_to_obj_pose/trans/z", params.world_to_obj_pose.position.z);
+    
+    getter.get("world_to_obj_pose/quat/x", params.world_to_obj_pose.orientation.x);
+    getter.get("world_to_obj_pose/quat/y", params.world_to_obj_pose.orientation.y);
+    getter.get("world_to_obj_pose/quat/z", params.world_to_obj_pose.orientation.z);
+    getter.get("world_to_obj_pose/quat/w", params.world_to_obj_pose.orientation.w);
   }
 };
 
