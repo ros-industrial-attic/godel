@@ -22,7 +22,7 @@ public:
   template<class T>
   void get(const std::string& key, T& value)
   {
-    if (!nh_.getParam(key, value))
+    if (!(nh_.getParam(key, value)))
     {
       std::ostringstream os;
       os << "Could not load param " << key << " from server";

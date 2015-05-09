@@ -13,7 +13,7 @@ std::vector<std::string> splitString(const std::string& s, char delim, const std
   std::istringstream ss(s);
   std::string token;
   std::vector<std::string> tokens;
-  tokens.push_back(prefix);
+  if (!prefix.empty()) tokens.push_back(prefix);
   while (std::getline(ss, token, delim))
   {
     if (!token.empty()) tokens.push_back(token);
