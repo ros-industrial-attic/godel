@@ -32,6 +32,10 @@
 
 #include <godel_surface_detection/scan/profilimeter_scan.h>
 
+// Load helpers for reading/writing parameters
+#include <godel_msgs/blending_params_helper.h>
+#include <param_helpers/param_set.h>
+
 #include <pcl/console/parse.h>
 #include <rosbag/bag.h>
 
@@ -60,7 +64,7 @@ const float TOOL_SHAFT_DIA = .006;
 const float TOOL_SHAFT_LEN = .045;
 const std::string TOOL_FRAME_ID = "process_tool";
 
-// Temporary constants for storing blending path planning parameters
+// Temporary constants for storing blending path `planning parameters
 // Will be replaced by loadable, savable parameters
 const static std::string BLEND_TRAJECTORY_BAGFILE = "blend_trajectory.bag";
 const static std::string BLEND_TRAJECTORY_GROUP_NAME = "manipulator_tcp";
@@ -90,8 +94,8 @@ class SurfaceBlendingService
 {
 public:
 	SurfaceBlendingService():
-		publish_region_point_cloud_(false),
-		mesh_importer_(true) /*True-turn on verbose messages*/
+		mesh_importer_(true), /*True-turn on verbose messages*/
+		publish_region_point_cloud_(false)
 	{
 
 	}
@@ -110,35 +114,25 @@ public:
 		// loading parameters
 		ph.getParam(PUBLISH_REGION_POINT_CLOUD,publish_region_point_cloud_);
 
-		// initializing surface detector
-		if(surface_detection_.load_parameters("~/surface_detection") &&
-				robot_scan_.load_parameters("~/robot_scan") &&
-				load_blending_parameters("~/blending_plan",blending_plan_params_) &&
-				surface_server_.load_parameters())
+		this->load_parameters("godel_blending_parameters.yaml", "blending_plan");
+		robot_scan_.load_parameters("godel_robot_scan_parameters.yaml", "robot_scan");
+		surface_detection_.load_parameters("godel_surface_detection_parameters.yaml", "surface_detection");
+		
+		// save default parameters
+		default_robot_scan_params__ = robot_scan_.params_;
+		default_surf_detection_params_ = surface_detection_.params_;
+		default_blending_plan_params_ = blending_plan_params_;
+
+		if(surface_detection_.init() && robot_scan_.init() && surface_server_.init())
 		{
-			// save default parameters
-			default_robot_scan_params__ = robot_scan_.params_;
-			default_surf_detection_params_ = surface_detection_.params_;
-			default_blending_plan_params_ = blending_plan_params_;
-
-
-			ROS_INFO_STREAM("Surface detection service loaded parameters successfully");
-			if(surface_detection_.init() && robot_scan_.init() && surface_server_.init())
-			{
-				// adding callbacks
-				scan::RobotScan::ScanCallback cb = boost::bind(&detection::SurfaceDetection::add_cloud,&surface_detection_,_1);
-				robot_scan_.add_scan_callback(cb);
-				ROS_INFO_STREAM("Surface detection service initialization succeeded");
-			}
-			else
-			{
-				ROS_ERROR_STREAM("Surface detection service had an initialization error");
-			}
-
+			// adding callbacks
+			scan::RobotScan::ScanCallback cb = boost::bind(&detection::SurfaceDetection::add_cloud,&surface_detection_,_1);
+			robot_scan_.add_scan_callback(cb);
+			ROS_INFO_STREAM("Surface detection service initialization succeeded");
 		}
 		else
 		{
-			ROS_ERROR_STREAM("Surface detection service failed to load parameters");
+			ROS_ERROR_STREAM("Surface detection service had an initialization error");
 		}
 
 		// start server
@@ -148,7 +142,7 @@ public:
 
 		// initializing ros interface
 		ros::NodeHandle nh;
-
+		
 		// service clients
 		visualize_process_path_client_ =
 				nh.serviceClient<godel_process_path_generation::VisualizeBlendingPlan>(VISUALIZE_BLENDING_PATH_SERVICE);
@@ -207,19 +201,10 @@ public:
 
 protected:
 
-	bool load_blending_parameters(std::string ns,godel_msgs::BlendingPlanParameters& params)
+	bool load_parameters(const std::string& filename, const std::string& ns)
 	{
-		ros::NodeHandle nh(ns);
-		return nh.getParam("tool_radius",params.tool_radius) &&
-				nh.getParam("margin",params.margin) &&
-				nh.getParam("overlap",params.overlap) &&
-				nh.getParam("approach_spd",params.approach_spd) &&
-				nh.getParam("blending_spd",params.blending_spd) &&
-				nh.getParam("retract_spd",params.retract_spd) &&
-				nh.getParam("traverse_spd",params.traverse_spd) &&
-				nh.getParam("discretization",params.discretization) &&
-				nh.getParam("safe_traverse_height",params.safe_traverse_height) &&
-				nh.getParam("min_boundary_length", params.min_boundary_length);
+		param_helpers::attemptCacheLoad(blending_plan_params_, filename, ns);
+		return true;
 	}
 
 	void publish_selected_surfaces_changed()
@@ -526,7 +511,6 @@ protected:
 
 		// adding markers
 		int num_path_markers = process_path_results_.process_paths_.markers.size();
-		int num_tool_markers = tool_markers.markers.size();
 		process_markers.markers.insert(process_markers.markers.end(),process_path_results_.process_paths_.markers.begin(),
 				process_path_results_.process_paths_.markers.end());
 		process_markers.markers.insert(process_markers.markers.end(),process_path_results_.process_boundaries_.markers.begin(),

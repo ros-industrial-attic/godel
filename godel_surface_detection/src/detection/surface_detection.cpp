@@ -38,6 +38,9 @@
 #include <pcl/surface/ear_clipping.h>
 #include <pcl/filters/passthrough.h>
 
+#include <param_helpers/param_set.h>
+#include <godel_msgs/surface_detection_params_helper.h>
+
 const static double CONCAVE_HULL_ALPHA = 0.1;
 
 namespace godel_surface_detection { namespace detection{
@@ -98,71 +101,10 @@ void SurfaceDetection::clear_results()
 	meshes_.clear();
 }
 
-bool SurfaceDetection::load_parameters(std::string node_ns)
+bool SurfaceDetection::load_parameters(const std::string& filename, const std::string& ns)
 {
-	return load_parameters(params_,node_ns);
-}
-
-bool SurfaceDetection::load_parameters(godel_msgs::SurfaceDetectionParameters &params,std::string node_ns)
-{
-	ros::NodeHandle nh(node_ns);
-
-	// bool parameters
-	bool tr_normal_consistency, use_tabletop_seg, ignore_largest_cluster, pa_enabled;
-
-	bool succeeded;
-	if(		nh.getParam(params::FRAME_ID,params.frame_id)&&
-			nh.getParam(params::K_SEARCH,params.k_search) &&
-			nh.getParam(params::STOUTLIER_MEAN,params.meanK) &&
-			nh.getParam(params::STOUTLIER_STDEV_THRESHOLD,params.stdv_threshold) &&
-
-			nh.getParam(params::REGION_GROWING_MIN_CLUSTER_SIZE,params.rg_min_cluster_size) &&
-			nh.getParam(params::REGION_GROWING_MAX_CLUSTER_SIZE,params.rg_max_cluster_size) &&
-			nh.getParam(params::REGION_GROWING_NEIGHBORS,params.rg_neightbors) &&
-			nh.getParam(params::REGION_GROWING_SMOOTHNESS_THRESHOLD,params.rg_smoothness_threshold) &&
-			nh.getParam(params::REGION_GROWING_CURVATURE_THRESHOLD,params.rg_curvature_threshold) &&
-
-			nh.getParam(params::TRIANGULATION_SEARCH_RADIUS,params.tr_search_radius) &&
-			nh.getParam(params::TRIANGULATION_MU ,params.tr_mu) &&
-			nh.getParam(params::TRIANGULATION_MAX_NEAREST_NEIGHBORS,params.tr_max_nearest_neighbors) &&
-			nh.getParam(params::TRIANGULATION_MAX_SURFACE_ANGLE,params.tr_max_surface_angle) &&
-			nh.getParam(params::TRIANGULATION_MIN_ANGLE,params.tr_min_angle) &&
-			nh.getParam(params::TRIANGULATION_MAX_ANGLE,params.tr_max_angle) &&
-			nh.getParam(params::TRIANGULATION_NORMAL_CONSISTENCY,tr_normal_consistency) &&
-
-			nh.getParam(params::PLANE_APROX_REFINEMENT_SEG_MAX_ITERATIONS,params.pa_seg_max_iterations) &&
-			nh.getParam(params::PLANE_APROX_REFINEMENT_SEG_DIST_THRESHOLD,params.pa_seg_dist_threshold) &&
-			nh.getParam(params::PLANE_APROX_REFINEMENT_SAC_PLANE_DISTANCE,params.pa_sac_plane_distance) &&
-			nh.getParam(params::PLANE_APROX_REFINEMENT_KDTREE_RADIUS,params.pa_kdtree_radius) &&
-			nh.getParam(params::PLANE_APROX_REFINEMENT_ENABLED,pa_enabled) &&
-
-			nh.getParam(params::VOXEL_LEAF_SIZE,params.voxel_leafsize) &&
-			nh.getParam(params::OCCUPANCY_THRESHOLD,params.occupancy_threshold) &&
-
-			nh.getParam(params::MLS_UPSAMPLING_RADIUS,params.mls_upsampling_radius) &&
-			nh.getParam(params::MLS_POINT_DENSITY,params.mls_point_density) &&
-			nh.getParam(params::MLS_SEARCH_RADIUS,params.mls_search_radius) &&
-
-			nh.getParam(params::USE_TABLETOP_SEGMENTATION,use_tabletop_seg) &&
-			nh.getParam(params::TABLETOP_SEG_DISTANCE_THRESH,params.tabletop_seg_distance_threshold) &&
-			nh.getParam(params::MARKER_ALPHA,params.marker_alpha) &&
-			nh.getParam(params::IGNORE_LARGEST_CLUSTER,ignore_largest_cluster)
-			)
-	{
-		params.pa_enabled = pa_enabled;
-		params.tr_normal_consistency = tr_normal_consistency;
-		params.use_tabletop_seg = use_tabletop_seg;
-		params.ignore_largest_cluster = ignore_largest_cluster;
-		succeeded = true;
-		ROS_INFO_STREAM("surface detection parameters loaded");
-	}
-	else
-	{
-		succeeded = false;
-		ROS_ERROR_STREAM("surface detection parameter(s) not found under namespace: "<<nh.getNamespace());
-	}
-
-	return succeeded;
+	param_helpers::attemptCacheLoad(params_, filename, ns);
+	return true;
 }
 
 void SurfaceDetection::mesh_to_marker(const pcl::PolygonMesh &mesh,

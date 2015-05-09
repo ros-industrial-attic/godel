@@ -44,7 +44,7 @@ add_library(${PROJECT_NAME}
   src/scan/robot_scan.cpp
 	src/interactive/interactive_surface_server.cpp
   src/scan/profilimeter_scan.cpp )
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} yaml-cpp)
 add_dependencies(${PROJECT_NAME} godel_msgs_generate_messages_cpp)
 
 ## point cloud publisher node
@@ -56,12 +56,12 @@ add_executable(point_cloud_generator_node src/nodes/point_cloud_generator_node.c
 target_link_libraries(point_cloud_generator_node ${PROJECT_NAME})
 
 ## surface detection node
-add_executable(surface_detection_node src/nodes/surface_detection_node.cpp)
-target_link_libraries(surface_detection_node ${PROJECT_NAME})
+# add_executable(surface_detection_node src/nodes/surface_detection_node.cpp)
+# target_link_libraries(surface_detection_node ${PROJECT_NAME})
 
 ## robot scan node
-add_executable(robot_scan_node  src/nodes/robot_scan_node.cpp)
-target_link_libraries(robot_scan_node ${PROJECT_NAME})
+# add_executable(robot_scan_node  src/nodes/robot_scan_node.cpp)
+# target_link_libraries(robot_scan_node ${PROJECT_NAME})
 
 ## surface detection service
 add_executable(surface_blending_service  src/services/surface_blending_service.cpp)

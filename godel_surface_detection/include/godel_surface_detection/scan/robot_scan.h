@@ -52,8 +52,9 @@ public:
 	virtual ~RobotScan();
 
 	bool init();
-	bool load_parameters(std::string ns="~");
-	static bool load_parameters(godel_msgs::RobotScanParameters &params,std::string ns="");
+	
+	bool load_parameters(const std::string& filename, const std::string& ns);
+
 	void add_scan_callback(ScanCallback cb);
 	bool generate_scan_display_trajectory(moveit_msgs::DisplayTrajectory& traj_data);
 	bool generate_scan_poses(geometry_msgs::PoseArray& poses);

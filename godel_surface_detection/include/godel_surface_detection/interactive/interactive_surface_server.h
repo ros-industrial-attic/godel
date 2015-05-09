@@ -70,7 +70,6 @@ public:
 
 
 	bool init();
-	bool load_parameters(std::string node_ns = "");
 	void run();
 	void stop();
 

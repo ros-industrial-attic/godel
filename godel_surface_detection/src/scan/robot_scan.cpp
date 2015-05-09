@@ -25,6 +25,8 @@
 #include <moveit/robot_state/conversions.h>
 #include <moveit/trajectory_processing/iterative_time_parameterization.h>
 
+#include <param_helpers/param_set.h>
+#include <godel_msgs/robot_scan_params_helper.h>
 
 namespace godel_surface_detection {
 namespace scan {
@@ -75,45 +77,10 @@ bool RobotScan::init()
 	return true;
 }
 
-bool RobotScan::load_parameters(std::string ns)
+bool RobotScan::load_parameters(const std::string& filename, const std::string& ns)
 {
-	return load_parameters(params_,ns);;
-}
-
-bool RobotScan::load_parameters(godel_msgs::RobotScanParameters &params,std::string ns)
-{
-	ros::NodeHandle nh(ns);
-
-	// pose params
-	XmlRpc::XmlRpcValue tcp_to_cam_param, world_to_obj_param;
-
-	// bool params
-	bool stop_on_planning_error;
-
-	bool succeeded = nh.getParam("group_name",params.group_name) &&
-			nh.getParam("home_position",params.home_position) &&
-			nh.getParam("world_frame",params.world_frame) &&
-			nh.getParam("tcp_frame",params.tcp_frame) &&
-			nh.getParam("tcp_to_cam_pose",tcp_to_cam_param)&&
-			nh.getParam("world_to_obj_pose",world_to_obj_param) &&
-			nh.getParam("cam_to_obj_zoffset",params.cam_to_obj_zoffset) &&
-			nh.getParam("cam_to_obj_xoffset",params.cam_to_obj_xoffset) &&
-			nh.getParam("cam_tilt_angle",params.cam_tilt_angle) &&
-			nh.getParam("sweep_angle_start",params.sweep_angle_start) &&
-			nh.getParam("sweep_angle_end",params.sweep_angle_end) &&
-			nh.getParam("scan_topic",params.scan_topic) &&
-			nh.getParam("num_scan_points",params.num_scan_points) &&
-			nh.getParam("reachable_scan_points_ratio",params.reachable_scan_points_ratio) &&
-			nh.getParam("scan_target_frame",params.scan_target_frame) &&
-			nh.getParam("stop_on_planning_error",stop_on_planning_error);
-
-	params.stop_on_planning_error = stop_on_planning_error;
-
-	// parsing poses
-	succeeded = succeeded && parse_pose_parameter(tcp_to_cam_param,params.tcp_to_cam_pose) &&
-			parse_pose_parameter(world_to_obj_param,params.world_to_obj_pose);
-
-	return succeeded;
+	param_helpers::attemptCacheLoad(params_, filename, ns);
+	return true;
 }
 
 void RobotScan::add_scan_callback(ScanCallback cb)
@@ -194,7 +161,7 @@ int RobotScan::scan(bool move_only)
 		trajectory_poses.push_back(move_group_ptr_->getCurrentPose(params_.tcp_frame).pose);
 		trajectory_poses.insert(trajectory_poses.begin()+1,scan_traj_poses_.begin(),scan_traj_poses_.end());
 
-		for(int i = 1;i < trajectory_poses.size();i++)
+		for(size_t i = 1;i < trajectory_poses.size(); i++)
 		{
 
 			// reset path plan structure
@@ -365,55 +332,6 @@ bool RobotScan::create_scan_trajectory(std::vector<geometry_msgs::Pose> &scan_po
 	}
 
 	return success;
-}
-
-bool RobotScan::parse_pose_parameter(XmlRpc::XmlRpcValue pose_param,tf::Transform &t)
-{
-	std::map<std::string,double> fields_map =
-			boost::assign::map_list_of("x",0.0d)
-			("y",0.0d)
-			("z",0.0d)
-			("rx",0.0d)
-			("ry",0.0d)
-			("rz",0.0d);
-
-	// parsing fields
-	std::map<std::string,double>::iterator i;
-	bool succeeded = true;
-	for(i= fields_map.begin();i != fields_map.end();i++)
-	{
-		if(pose_param.hasMember(i->first) && pose_param[i->first].getType() == XmlRpc::XmlRpcValue::TypeDouble)
-		{
-			fields_map[i->first] = static_cast<double>(pose_param[i->first]);
-		}
-		else
-		{
-			succeeded = false;
-			break;
-		}
-	}
-
-	tf::Vector3 pos = tf::Vector3(fields_map["x"],fields_map["y"],fields_map["z"]);
-	tf::Quaternion q;
-	q.setRPY(fields_map["rx"],fields_map["ry"],fields_map["rz"]); // fixed axis
-	t.setOrigin(pos);
-	t.setRotation(q);
-
-	return succeeded;
-}
-
-bool RobotScan::parse_pose_parameter(XmlRpc::XmlRpcValue pose_param,geometry_msgs::Pose &pose)
-{
-	tf::Transform t;
-	if(parse_pose_parameter(pose_param,t))
-	{
-		tf::poseTFToMsg(t,pose);
-		return true;
-	}
-	else
-	{
-		return false;
-	}
 }
 
 void RobotScan::apply_trajectory_parabolic_time_parameterization(robot_trajectory::RobotTrajectory& rt,

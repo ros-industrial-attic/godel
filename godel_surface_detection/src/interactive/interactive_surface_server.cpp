@@ -152,13 +152,6 @@ void InteractiveSurfaceServer::stop()
 	surface_selection_map_.clear();
 }
 
-bool InteractiveSurfaceServer::load_parameters(std::string node_ns)
-{
-	ros::NodeHandle nh(node_ns);
-	bool succeeded = true;
-	return succeeded;
-}
-
 void InteractiveSurfaceServer::set_selection_flag(std::string marker_name,bool selected)
 {
 

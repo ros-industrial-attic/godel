@@ -140,8 +140,8 @@ public:
 public:
 
 	bool init();
-	bool load_parameters(std::string node_ns = "");
-	static bool load_parameters(godel_msgs::SurfaceDetectionParameters &params,std::string node_ns = "");
+	
+	bool load_parameters(const std::string& filename, const std::string& ns);
 
 	bool find_surfaces();
 	std::string get_results_summary();
