@@ -31,7 +31,8 @@ RobotBlendingWidget::RobotBlendingWidget(std::string ns):
 }
 
 RobotBlendingWidget::~RobotBlendingWidget() {
-	// TODO Auto-generated destructor stub
+  delete robot_scan_config_window_;
+  delete surface_detect_config_window_;
 }
 
 void RobotBlendingWidget::init()
