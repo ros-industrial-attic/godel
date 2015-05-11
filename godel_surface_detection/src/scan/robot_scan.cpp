@@ -57,12 +57,8 @@ RobotScan::RobotScan()
 	params_.reachable_scan_points_ratio = 0.5f;
 	params_.num_scan_points = 20;
 	params_.stop_on_planning_error = true;
-
 }
 
-RobotScan::~RobotScan() {
-	// TODO Auto-generated destructor stub
-}
 
 bool RobotScan::init()
 {

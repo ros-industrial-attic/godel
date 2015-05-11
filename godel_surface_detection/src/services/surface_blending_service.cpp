@@ -496,7 +496,7 @@ protected:
 		return succeeded;
 	}
 
-	void tool_animation_timer_callback(const ros::TimerEvent& event)
+	void tool_animation_timer_callback(const ros::TimerEvent&)
 	{
 		stop_tool_animation_ = false;
 

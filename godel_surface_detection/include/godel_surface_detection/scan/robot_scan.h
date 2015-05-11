@@ -49,7 +49,6 @@ public:
 	typedef boost::function<void (pcl::PointCloud<pcl::PointXYZ> &cloud)> ScanCallback;
 public:
 	RobotScan();
-	virtual ~RobotScan();
 
 	bool init();
 	
@@ -64,10 +63,6 @@ public:
 	MoveGroupPtr get_move_group();
 	bool move_to_pose(geometry_msgs::Pose& target_pose);
 	int scan(bool move_only = false);
-
-
-	static bool parse_pose_parameter(XmlRpc::XmlRpcValue pose_param,tf::Transform &t);
-	static bool parse_pose_parameter(XmlRpc::XmlRpcValue pose_param,geometry_msgs::Pose &p);
 
 	static void apply_trajectory_parabolic_time_parameterization(robot_trajectory::RobotTrajectory& rt,
 			moveit_msgs::RobotTrajectory &traj,unsigned int max_iterations=200,double max_time_change_per_it=.6);
