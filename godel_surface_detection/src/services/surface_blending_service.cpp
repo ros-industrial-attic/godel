@@ -117,7 +117,6 @@ public:
 		this->load_parameters("godel_blending_parameters.yaml", "blending_plan");
 		robot_scan_.load_parameters("godel_robot_scan_parameters.yaml", "robot_scan");
 		surface_detection_.load_parameters("godel_surface_detection_parameters.yaml", "surface_detection");
-		
 		// save default parameters
 		default_robot_scan_params__ = robot_scan_.params_;
 		default_surf_detection_params_ = surface_detection_.params_;
@@ -206,6 +205,11 @@ protected:
 		param_helpers::attemptCacheLoad(blending_plan_params_, filename, ns);
 		return true;
 	}
+
+  void save_parameters(const std::string& filename, const std::string& ns)
+  {
+    param_helpers::saveToYamlFile(blending_plan_params_, filename, ns);
+  }
 
 	void publish_selected_surfaces_changed()
 	{

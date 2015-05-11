@@ -13,7 +13,7 @@
 #ifndef PROFILIMITER_SCAN_H
 #define PROFILIMITER_SCAN_H
 
-#include <vector> 
+#include <vector>
 // For PolygonBoundary and PolygonPt (our Godel-specific geometry primitives)
 #include "godel_process_path_generation/polygon_pts.hpp"
 

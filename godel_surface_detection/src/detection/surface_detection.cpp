@@ -46,8 +46,8 @@ const static double CONCAVE_HULL_ALPHA = 0.1;
 namespace godel_surface_detection { namespace detection{
 
 SurfaceDetection::SurfaceDetection():
-		acquired_clouds_counter_(0),
-		full_cloud_ptr_(new Cloud())
+		full_cloud_ptr_(new Cloud()),
+		acquired_clouds_counter_(0)
 {
 
 	params_.frame_id = defaults::FRAME_ID;
@@ -105,6 +105,11 @@ bool SurfaceDetection::load_parameters(const std::string& filename, const std::s
 {
 	param_helpers::attemptCacheLoad(params_, filename, ns);
 	return true;
+}
+
+void SurfaceDetection::save_parameters(const std::string& filename, const std::string& ns)
+{
+	param_helpers::saveToYamlFile(params_, filename, ns);
 }
 
 void SurfaceDetection::mesh_to_marker(const pcl::PolygonMesh &mesh,

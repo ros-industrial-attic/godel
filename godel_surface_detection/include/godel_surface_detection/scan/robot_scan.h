@@ -54,6 +54,7 @@ public:
 	bool init();
 	
 	bool load_parameters(const std::string& filename, const std::string& ns);
+	void save_parameters(const std::string& filename, const std::string& ns);
 
 	void add_scan_callback(ScanCallback cb);
 	bool generate_scan_display_trajectory(moveit_msgs::DisplayTrajectory& traj_data);

@@ -83,6 +83,11 @@ bool RobotScan::load_parameters(const std::string& filename, const std::string& 
 	return true;
 }
 
+void RobotScan::save_parameters(const std::string& filename, const std::string& ns)
+{
+	param_helpers::saveToYamlFile(params_, filename, ns);
+}
+
 void RobotScan::add_scan_callback(ScanCallback cb)
 {
 	callback_list_.push_back(cb);
