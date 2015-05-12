@@ -158,7 +158,7 @@ bool SurfaceBlendingService::find_surfaces(visualization_msgs::MarkerArray &surf
     // adding meshes to server
     std::vector<pcl::PolygonMesh> meshes;
     surface_detection_.get_meshes(meshes);
-    for(int i =0;i < meshes.size();i++)
+    for(std::size_t i =0;i < meshes.size();i++)
     {
       surface_server_.add_surface(meshes[i]);
     }
@@ -192,13 +192,13 @@ void SurfaceBlendingService::remove_previous_process_plan()
   visualization_msgs::MarkerArray &bds = process_path_results_.process_boundaries_;
   visualization_msgs::MarkerArray &paths = process_path_results_.process_paths_;
 
-  for(int i = 0; i < bds.markers.size();i++)
+  for(std::size_t i = 0; i < bds.markers.size();i++)
   {
     visualization_msgs::Marker &m = bds.markers[i];
     m.action = m.DELETE;
   }
 
-  for(int i = 0; i <  paths.markers.size(); i++)
+  for(std::size_t i = 0; i <  paths.markers.size(); i++)
   {
     visualization_msgs::Marker &m = paths.markers[i];
     m.action = m.DELETE;
@@ -244,7 +244,7 @@ bool SurfaceBlendingService::generate_process_plan(godel_process_path_generation
   // duration parameters for generated plans
   duration_results_.clear();
 
-  for(int i =0;i <meshes.size();i++)
+  for(std::size_t i =0;i <meshes.size();i++)
   {
     // markers for saving individual mesh results
     visualization_msgs::MarkerArray boundary_markers;
@@ -305,7 +305,7 @@ bool SurfaceBlendingService::generate_process_plan(godel_process_path_generation
       mesh_importer_.getPose(boundary_pose);
 
       // setting boundary marker properties
-      for(int j =0; j < boundary_markers.markers.size();j++)
+      for(std::size_t j =0; j < boundary_markers.markers.size();j++)
       {
         visualization_msgs::Marker &m = boundary_markers.markers[j];
         m.header.frame_id = mesh.header.frame_id;
@@ -321,7 +321,7 @@ bool SurfaceBlendingService::generate_process_plan(godel_process_path_generation
       tool_path_markers_pub_.publish(boundary_markers);       // Pre-publish boundaries before completing offset
 
       // Publish the raster paths
-      for(int j =0; j < scan_markers.markers.size();j++)
+      for(std::size_t j =0; j < scan_markers.markers.size();j++)
       {
         visualization_msgs::Marker &m = scan_markers.markers[j];
         if (m.points.empty()) continue;
@@ -430,7 +430,7 @@ void SurfaceBlendingService::tool_animation_timer_callback(const ros::TimerEvent
   {
     visualization_msgs::Marker &path_marker = process_markers.markers[i];
 
-    for(int j =0;j < path_marker.points.size();j++)
+    for(std::size_t j =0;j < path_marker.points.size();j++)
     {
       if(stop_tool_animation_)
       {
@@ -706,13 +706,13 @@ bool SurfaceBlendingService::surface_detection_server_callback(godel_msgs::Surfa
   return true;
 }
 
-bool SurfaceBlendingService::select_surface_server_callback(godel_msgs::SelectSurface::Request &req, godel_msgs::SelectSurface::Response &res)
+bool SurfaceBlendingService::select_surface_server_callback(godel_msgs::SelectSurface::Request &req, godel_msgs::SelectSurface::Response &)
 {
   switch(req.action)
   {
   case godel_msgs::SelectSurface::Request::SELECT:
 
-    for(int i = 0; req.select_surfaces.size();i++)
+    for(std::size_t i = 0; req.select_surfaces.size();i++)
     {
       surface_server_.set_selection_flag(req.select_surfaces[i],true);
     }
@@ -720,7 +720,7 @@ bool SurfaceBlendingService::select_surface_server_callback(godel_msgs::SelectSu
 
   case godel_msgs::SelectSurface::Request::DESELECT:
 
-    for(int i = 0; req.select_surfaces.size();i++)
+    for(std::size_t i = 0; req.select_surfaces.size();i++)
     {
       surface_server_.set_selection_flag(req.select_surfaces[i],false);
     }
