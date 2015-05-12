@@ -67,7 +67,7 @@ bool checkBoundary(const PolygonBoundary &bnd);
 bool checkBoundaryCollection(const PolygonBoundaryCollection &pbc);
 
 /**@brief calculate total length of boundary by summing segments */
-double circumference(const PolygonBoundary &boundary)
+inline double circumference(const PolygonBoundary &boundary)
 {
   double dist(0);      // Total distance squared
   for (PolygonBoundary::const_iterator pt=boundary.begin(); pt!=boost::prior(boundary.end()); ++pt)
@@ -97,7 +97,7 @@ void filter(PolygonBoundary &boundary, double tol);
  * @param boundaries PolygonBoundaryCollection to modify
  * @param tol allowable angle between adjacent segments to decide if edge is linear. If tol is outside [0, pi/2] it is reset to closest bound.
  */
-void filter(PolygonBoundaryCollection &boundaries, double tol)
+inline void filter(PolygonBoundaryCollection &boundaries, double tol)
 {
   // Check bounds of tol.
   if (tol > M_PI_2)
