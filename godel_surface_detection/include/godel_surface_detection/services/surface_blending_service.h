@@ -39,6 +39,8 @@
 #include <godel_msgs/blending_params_helper.h>
 #include <param_helpers/param_set.h>
 
+#include <godel_surface_detection/services/trajectory_library.h>
+
 #include <pcl/console/parse.h>
 #include <rosbag/bag.h>
 
@@ -118,13 +120,9 @@ private:
    */
   bool generate_process_plan(godel_process_path_generation::VisualizeBlendingPlan &process_plan);
 
-  void scan_planning_timer_callback(const ros::TimerEvent&);
-
-  void trajectory_planning_timer_callback(const ros::TimerEvent&);
-
   bool animate_tool_path();
 
-  void tool_animation_timer_callback(const ros::TimerEvent&);
+  void tool_animation_timer_callback();
   
   visualization_msgs::MarkerArray create_tool_markers(const geometry_msgs::Point &pos, 
                                                       const geometry_msgs::Pose &pose,
@@ -144,6 +142,9 @@ private:
   bool surface_blend_parameters_server_callback(godel_msgs::SurfaceBlendingParameters::Request &req, 
                                                 godel_msgs::SurfaceBlendingParameters::Response &res);
 
+  // Reads from the surface selection server and generates blend/scan paths for each
+  godel_surface_detection::TrajectoryLibrary generateMotionLibrary(const godel_msgs::BlendingPlanParameters& params);
+
   bool requestBlendPath(const godel_process_path::PolygonBoundaryCollection& boundaries,
                         const geometry_msgs::Pose& boundary_pose,
                         const godel_msgs::BlendingPlanParameters& params,
@@ -156,6 +157,9 @@ private:
   ProcessPathResult generateProcessPath(const std::string& name, 
                                         const pcl::PolygonMesh& mesh, 
                                         const godel_msgs::BlendingPlanParameters& params);
+
+  ProcessPlanResult generateProcessPlan(const std::string& name, 
+                                        const visualization_msgs::Marker& path);
 
   // Services offered by this class
   ros::ServiceServer surface_detect_server_;
@@ -170,10 +174,7 @@ private:
   ros::Publisher point_cloud_pub_;
   ros::Publisher tool_path_markers_pub_;
   // Timers
-  ros::Timer tool_animation_timer_;
   bool stop_tool_animation_;
-  ros::Timer trajectory_planning_timer_;
-  ros::Timer scan_planning_timer_;
 
   // robot scan instance
   godel_surface_detection::scan::RobotScan robot_scan_;
@@ -200,6 +201,8 @@ private:
 
   // msgs
   sensor_msgs::PointCloud2 region_cloud_msg_;
+
+  godel_surface_detection::TrajectoryLibrary trajectory_library_;
 };
 
 #endif // surface blending services
