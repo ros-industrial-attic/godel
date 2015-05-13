@@ -67,30 +67,28 @@ const static float TOOL_SHAFT_DIA = .006;
 const static float TOOL_SHAFT_LEN = .045;
 const static std::string TOOL_FRAME_ID = "process_tool";
 
-// Temporary constants for storing blending path `planning parameters
-// Will be replaced by loadable, savable parameters
-const static std::string BLEND_TRAJECTORY_BAGFILE = "blend_trajectory.bag";
-const static std::string BLEND_TRAJECTORY_GROUP_NAME = "manipulator_tcp";
-const static std::string BLEND_TRAJECTORY_TOOL_FRAME = "tcp_frame";
-const static std::string BLEND_TRAJECTORY_WORLD_FRAME = "world_frame";
-const static double BLEND_TRAJECTORY_ANGLE_DISC = M_PI/10.0;
-const static double BLEND_TRAJECTORY_INTERPOINT_DELAY = 0.5;
-
-// Temporary constants for storing scan path planning parameters
-// Will be replaced by loadable, savable parameters
-const static std::string SCAN_TRAJECTORY_BAGFILE = "scan_trajectory.bag";
-const static std::string SCAN_TRAJECTORY_GROUP_NAME = "manipulator_keyence";
-const static std::string SCAN_TRAJECTORY_TOOL_FRAME = "keyence_tcp_frame";
-const static std::string SCAN_TRAJECTORY_WORLD_FRAME = "world_frame";
-const static double SCAN_TRAJECTORY_ANGLE_DISC = 0.2;
-const static double SCAN_TRAJECTORY_INTERPOINT_DELAY = 0.5;
-
 struct ProcessPathDetails
 {
   visualization_msgs::MarkerArray process_boundaries_;
   visualization_msgs::MarkerArray process_paths_;
   visualization_msgs::MarkerArray tool_parts_;
   visualization_msgs::MarkerArray scan_paths_; // profilimeter
+};
+
+/**
+ * Associates a name with a visual msgs marker which contains a pose and sequence of points defining
+ * a path
+ */
+struct ProcessPathResult {
+  typedef std::pair<std::string, visualization_msgs::Marker> value_type;
+  std::vector<value_type> paths;
+};
+/**
+ * Associates a name with a joint trajectory
+ */
+struct ProcessPlanResult {
+  typedef std::pair<std::string, trajectory_msgs::JointTrajectory> value_type;
+  std::vector<value_type> plans;
 };
 
 class SurfaceBlendingService
@@ -113,16 +111,20 @@ private:
   bool find_surfaces(visualization_msgs::MarkerArray &surfaces);
 
   void remove_previous_process_plan();
-
+  
+  /**
+   * The following path generation and planning methods are defined in
+   * src/blending_service_path_generation.cpp
+   */
   bool generate_process_plan(godel_process_path_generation::VisualizeBlendingPlan &process_plan);
-
-  bool animate_tool_path();
-
-  void tool_animation_timer_callback(const ros::TimerEvent&);
 
   void scan_planning_timer_callback(const ros::TimerEvent&);
 
   void trajectory_planning_timer_callback(const ros::TimerEvent&);
+
+  bool animate_tool_path();
+
+  void tool_animation_timer_callback(const ros::TimerEvent&);
   
   visualization_msgs::MarkerArray create_tool_markers(const geometry_msgs::Point &pos, 
                                                       const geometry_msgs::Pose &pose,
@@ -141,6 +143,19 @@ private:
   
   bool surface_blend_parameters_server_callback(godel_msgs::SurfaceBlendingParameters::Request &req, 
                                                 godel_msgs::SurfaceBlendingParameters::Response &res);
+
+  bool requestBlendPath(const godel_process_path::PolygonBoundaryCollection& boundaries,
+                        const geometry_msgs::Pose& boundary_pose,
+                        const godel_msgs::BlendingPlanParameters& params,
+                        visualization_msgs::Marker& path);
+
+  bool requestScanPath(const godel_process_path::PolygonBoundaryCollection& boundaries,
+                       const geometry_msgs::Pose& boundary_pose,
+                       visualization_msgs::Marker& path);
+
+  ProcessPathResult generateProcessPath(const std::string& name, 
+                                        const pcl::PolygonMesh& mesh, 
+                                        const godel_msgs::BlendingPlanParameters& params);
 
   // Services offered by this class
   ros::ServiceServer surface_detect_server_;
