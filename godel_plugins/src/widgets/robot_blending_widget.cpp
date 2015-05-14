@@ -16,6 +16,9 @@
 
 #include <godel_plugins/widgets/robot_blending_widget.h>
 
+#include <godel_msgs/GetAvailableMotionPlans.h>
+#include <godel_msgs/SelectMotionPlan.h>
+
 const double RAD_TO_DEGREES = 180.0f/M_PI;
 const double DEGREES_TO_RAD = M_PI/180.0f;
 
@@ -44,6 +47,9 @@ void RobotBlendingWidget::init()
 	surface_blending_parameters_client_ = nh.serviceClient<godel_msgs::SurfaceBlendingParameters>(SURFACE_BLENDING_PARAMETERS_SERVICE);
 	select_surface_client_ = nh.serviceClient<godel_msgs::SelectSurface>(SELECT_SURFACE_SERVICE);
 	process_plan_client_ = nh.serviceClient<godel_msgs::ProcessPlanning>(PROCESS_PATH_SERVICE);
+  get_motion_plans_client_ = nh.serviceClient<godel_msgs::GetAvailableMotionPlans>(GET_AVAILABLE_MOTION_PLANS_SERVICE);
+  select_motion_plan_client_ = nh.serviceClient<godel_msgs::SelectMotionPlan>(SELECT_MOTION_PLAN_SERVICE);
+
 	selected_surfaces_subs_ = nh.subscribe(SELECTED_SURFACES_CHANGED_TOPIC,1,
 			&RobotBlendingWidget::selected_surface_changed_callback,this);
 
@@ -76,9 +82,14 @@ void RobotBlendingWidget::init()
 	connect(this,SIGNAL(connect_started()),this,SLOT(connect_started_handler()));
 	connect(this,SIGNAL(connect_completed()),this,SLOT(connect_completed_handler()));
 
+  connect(ui_.pushButtonExecutePath, SIGNAL(clicked()), this, SLOT(execute_motion_plan_handler()));
+  connect(ui_.pushButtonSimulatePath, SIGNAL(clicked(bool)), this, SLOT(simulate_motion_plan_handler()));
+
+  // For trajectory execution
+
+
 	// moving to first tab
 	ui_.TabWidgetCreateLib->setCurrentIndex(0);
-
 
 	// setting up timer
 	QTimer *timer = new QTimer(this);
@@ -280,7 +291,7 @@ void RobotBlendingWidget::selection_changed_handler()
 		{
 			QListWidgetItem *item = new QListWidgetItem();
 			item->setText(QString::fromStdString(*i));
-			ui_.ListWidgetSelectedSurfs->addItem(item);
+      ui_.ListWidgetSelectedSurfs->addItem(item);
 		}
 	}
 }
@@ -417,8 +428,21 @@ void RobotBlendingWidget::generate_process_path_handler()
 	process_plan.request.use_default_parameters = false;
 	process_plan.request.params = blending_plan_parameters_;
 	process_plan.request.action = process_plan.request.GENERATE_MOTION_PLAN_AND_PREVIEW;
-	process_plan_client_.call(process_plan);
-	ROS_INFO_STREAM("process plan request sent");
+  ROS_INFO_STREAM("process plan request sent");
+  if (process_plan_client_.call(process_plan))
+  {
+    std::vector<std::string> plan_names;
+    request_available_motions(plan_names);
+    ui_.ListPathResults->clear();
+    for (std::size_t i = 0; i < plan_names.size(); ++i)
+    {
+      QListWidgetItem *item = new QListWidgetItem();
+      item->setText(QString::fromStdString(plan_names[i]));
+      ui_.ListPathResults->addItem(item);
+    }
+
+    ui_.TabWidgetCreateLib->setCurrentIndex(2);
+  }
 }
 
 void RobotBlendingWidget::save_robot_scan_parameters()
@@ -429,6 +453,45 @@ void RobotBlendingWidget::save_robot_scan_parameters()
 	robot_scan_parameters_.sweep_angle_end = ui_.LineEditSweepAngleEnd->text().toDouble()*DEGREES_TO_RAD;
 	robot_scan_parameters_.scan_topic = ui_.LineEditSensorTopic->text().toStdString();
 }
+
+void RobotBlendingWidget::request_available_motions(std::vector<std::string> &plans)
+{
+  godel_msgs::GetAvailableMotionPlans srv;
+  if (get_motion_plans_client_.call(srv))
+  {
+    plans = srv.response.names;
+  }
+  else
+  {
+    ROS_ERROR_STREAM("Could not get names from 'available motions server'");
+  }
+}
+
+void RobotBlendingWidget::select_motion_plan(const std::string &name, bool simulate)
+{
+  godel_msgs::SelectMotionPlan srv;
+  srv.request.name = name;
+  srv.request.simulate = simulate;
+  select_motion_plan_client_.call(srv);
+}
+
+
+void RobotBlendingWidget::simulate_motion_plan_handler()
+{
+  if (ui_.ListPathResults->currentItem() == NULL) return;
+  std::string name = ui_.ListPathResults->currentItem()->text().toStdString();
+  ROS_INFO_STREAM("Selected " << name << " to be simulated");
+  if (!name.empty()) select_motion_plan(name, true);
+}
+
+void RobotBlendingWidget::execute_motion_plan_handler()
+{
+  if (ui_.ListPathResults->currentItem() == NULL) return;
+  std::string name = ui_.ListPathResults->currentItem()->text().toStdString();
+  ROS_INFO_STREAM("Selected " << name << " to be executed");
+  if (!name.empty()) select_motion_plan(name, false);
+}
+
 
 RobotScanConfigWidget::RobotScanConfigWidget(godel_msgs::RobotScanParameters params)
 {

@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>398</width>
-    <height>549</height>
+    <height>564</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -351,7 +351,7 @@ p, li { white-space: pre-wrap; }
       </rect>
      </property>
      <property name="currentIndex">
-      <number>1</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="tab_1">
       <attribute name="title">
@@ -615,7 +615,7 @@ p, li { white-space: pre-wrap; }
           <x>20</x>
           <y>50</y>
           <width>211</width>
-          <height>181</height>
+          <height>141</height>
          </rect>
         </property>
        </widget>
@@ -664,6 +664,53 @@ p, li { white-space: pre-wrap; }
  Paths</string>
         </property>
        </widget>
+       <widget class="QWidget" name="layoutWidget">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>196</y>
+          <width>221</width>
+          <height>41</height>
+         </rect>
+        </property>
+        <layout class="QHBoxLayout" name="horizontalLayout">
+         <item>
+          <widget class="QPushButton" name="pushButtonBlendOptions">
+           <property name="text">
+            <string>Blend Options</string>
+           </property>
+          </widget>
+         </item>
+         <item>
+          <spacer name="horizontalSpacer">
+           <property name="orientation">
+            <enum>Qt::Horizontal</enum>
+           </property>
+           <property name="sizeHint" stdset="0">
+            <size>
+             <width>40</width>
+             <height>20</height>
+            </size>
+           </property>
+          </spacer>
+         </item>
+         <item>
+          <widget class="QPushButton" name="pushButtonProfileOptions">
+           <property name="text">
+            <string>Profile Options</string>
+           </property>
+          </widget>
+         </item>
+        </layout>
+       </widget>
+       <zorder>layoutWidget</zorder>
+       <zorder>label_6</zorder>
+       <zorder>PushButtonDeselectAllSurfaces</zorder>
+       <zorder>PushButtonSelectAllSurfaces</zorder>
+       <zorder>ListWidgetSelectedSurfs</zorder>
+       <zorder>PushButtonHideAllSurfaces</zorder>
+       <zorder>PushButtonShowAllSurfaces</zorder>
+       <zorder>PushButtonGeneratePaths</zorder>
       </widget>
      </widget>
      <widget class="QWidget" name="tab_3">
@@ -682,40 +729,53 @@ p, li { white-space: pre-wrap; }
        <property name="title">
         <string>3 - Generate Paths</string>
        </property>
-       <widget class="QPushButton" name="PushButtonGenPaths">
-        <property name="geometry">
-         <rect>
-          <x>20</x>
-          <y>70</y>
-          <width>98</width>
-          <height>27</height>
-         </rect>
-        </property>
-        <property name="text">
-         <string>Generate</string>
-        </property>
-       </widget>
-       <widget class="QListView" name="ListViewPathResults">
-        <property name="geometry">
-         <rect>
-          <x>130</x>
-          <y>40</y>
-          <width>201</width>
-          <height>181</height>
-         </rect>
-        </property>
-       </widget>
        <widget class="QLabel" name="label_4">
         <property name="geometry">
          <rect>
           <x>210</x>
-          <y>20</y>
+          <y>30</y>
           <width>66</width>
           <height>17</height>
          </rect>
         </property>
         <property name="text">
          <string>Results</string>
+        </property>
+       </widget>
+       <widget class="QListWidget" name="ListPathResults">
+        <property name="geometry">
+         <rect>
+          <x>130</x>
+          <y>50</y>
+          <width>201</width>
+          <height>171</height>
+         </rect>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButtonSimulatePath">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>70</y>
+          <width>80</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Simulate</string>
+        </property>
+       </widget>
+       <widget class="QPushButton" name="pushButtonExecutePath">
+        <property name="geometry">
+         <rect>
+          <x>20</x>
+          <y>130</y>
+          <width>80</width>
+          <height>25</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Execute</string>
         </property>
        </widget>
       </widget>
