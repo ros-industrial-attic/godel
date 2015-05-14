@@ -7,7 +7,7 @@ void godel_path_planning::populateTrajectoryMsg(const TrajectoryVec& solution,
                                                 trajectory_msgs::JointTrajectory& trajectory)
 {
   typedef std::vector<descartes_core::TrajectoryPtPtr>::const_iterator JointSolutionIterator;
-  const static double DEFAULT_TIME = 1.0;
+  const static double DEFAULT_TIME = 0.25;
   
   ros::Duration time_from_start (0.0);
   for (JointSolutionIterator it = solution.begin(); it != solution.end(); ++it)
