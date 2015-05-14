@@ -39,6 +39,8 @@ add_service_files(
    TrajectoryPlanning.srv
 	 SurfaceBlendingParameters.srv
    TrajectoryExecution.srv
+   GetAvailableMotionPlans.srv
+   SelectMotionPlan.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

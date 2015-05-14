@@ -26,7 +26,9 @@
 #include <godel_msgs/SelectedSurfacesChanged.h>
 #include <godel_msgs/ProcessPlanning.h>
 #include <godel_msgs/SurfaceBlendingParameters.h>
-#include "godel_msgs/TrajectoryPlanning.h"
+#include <godel_msgs/TrajectoryPlanning.h>
+#include <godel_msgs/GetAvailableMotionPlans.h>
+#include <godel_msgs/SelectMotionPlan.h>
 
 #include <godel_process_path_generation/VisualizeBlendingPlan.h>
 #include <godel_process_path_generation/mesh_importer.h>
@@ -161,14 +163,23 @@ private:
   ProcessPlanResult generateProcessPlan(const std::string& name, 
                                         const visualization_msgs::Marker& path);
 
+  bool selectMotionPlanCallback(godel_msgs::SelectMotionPlan::Request& req,
+                                godel_msgs::SelectMotionPlan::Response& res);
+
+  bool getMotionPlansCallback(godel_msgs::GetAvailableMotionPlans::Request& req,
+                              godel_msgs::GetAvailableMotionPlans::Response& res);
+
   // Services offered by this class
   ros::ServiceServer surface_detect_server_;
   ros::ServiceServer select_surface_server_;
   ros::ServiceServer process_path_server_;
   ros::ServiceServer surf_blend_parameters_server_;
+  ros::ServiceServer get_motion_plans_server_;
+  ros::ServiceServer select_motion_plan_server_;
   // Services subscribed to by this class
   ros::ServiceClient visualize_process_path_client_;
   ros::ServiceClient trajectory_planner_client_;
+  ros::ServiceClient trajectory_execution_client_;
   // Current state publishers
   ros::Publisher selected_surf_changed_pub_;
   ros::Publisher point_cloud_pub_;

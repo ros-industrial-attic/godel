@@ -1,5 +1,7 @@
 #include <godel_surface_detection/services/surface_blending_service.h>
 
+#include <godel_msgs/TrajectoryExecution.h>
+
 SurfaceBlendingService::SurfaceBlendingService()
   : mesh_importer_(true) /*True-turn on verbose messages*/
   , publish_region_point_cloud_(false)
@@ -46,8 +48,9 @@ bool SurfaceBlendingService::init()
   visualize_process_path_client_ =
       nh.serviceClient<godel_process_path_generation::VisualizeBlendingPlan>(VISUALIZE_BLENDING_PATH_SERVICE);
 
-  // new blending trajectory planner client
   trajectory_planner_client_ = nh.serviceClient<godel_msgs::TrajectoryPlanning>(TRAJECTORY_PLANNING_SERVICE);
+
+  trajectory_execution_client_ = nh.serviceClient<godel_msgs::TrajectoryExecution>("path_execution");
 
   // service servers
   surf_blend_parameters_server_ = nh.advertiseService(SURFACE_BLENDING_PARAMETERS_SERVICE,
@@ -61,6 +64,12 @@ bool SurfaceBlendingService::init()
 
   process_path_server_ = nh.advertiseService(PROCESS_PATH_SERVICE,
       &SurfaceBlendingService::process_path_server_callback,this);
+
+  get_motion_plans_server_ = nh.advertiseService("get_available_motion_plans", 
+      &SurfaceBlendingService::getMotionPlansCallback, this);
+  
+  select_motion_plan_server_ = nh.advertiseService("select_motion_plan",
+      &SurfaceBlendingService::selectMotionPlanCallback, this);
 
   // publishers
   selected_surf_changed_pub_ = nh.advertise<godel_msgs::SelectedSurfacesChanged>(SELECTED_SURFACES_CHANGED_TOPIC,1);
@@ -531,6 +540,39 @@ bool SurfaceBlendingService::surface_blend_parameters_server_callback(godel_msgs
 
   return true;
 }
+
+bool SurfaceBlendingService::selectMotionPlanCallback(godel_msgs::SelectMotionPlan::Request& req,
+                                godel_msgs::SelectMotionPlan::Response& res)
+{
+  ROS_ERROR_STREAM("EXECUTION: " << req.name << " with sim: " << req.simulate);
+  // Check to ensure the plan exists
+  if (trajectory_library_.get().find(req.name) == trajectory_library_.get().end())
+  {
+    ROS_WARN_STREAM("Motion plan " << req.name << " does not exist. Cannot execute.");
+    res.code = godel_msgs::SelectMotionPlan::Response::ERR_NO_SUCH_NAME;
+    return true;
+  }
+  // if it exists, then make call to trajectory execution client
+  godel_msgs::TrajectoryExecution srv;
+  srv.request.trajectory = trajectory_library_.get()[req.name];
+  srv.request.wait_for_execution = false;
+  srv.request.simulate = req.simulate;
+  trajectory_execution_client_.call(srv);
+  return true;
+}
+
+bool SurfaceBlendingService::getMotionPlansCallback(godel_msgs::GetAvailableMotionPlans::Request& ,
+                              godel_msgs::GetAvailableMotionPlans::Response& res)
+{
+  typedef godel_surface_detection::TrajectoryLibrary::TrajectoryMap::const_iterator MapIter;
+  for (MapIter it = trajectory_library_.get().begin(); it != trajectory_library_.get().end(); ++it)
+  {
+    res.names.push_back(it->first);
+  }
+  return true;
+}
+
+
 
 int main(int argc,char** argv)
 {

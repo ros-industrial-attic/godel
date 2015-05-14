@@ -1,0 +1,6 @@
+string name
+bool simulate
+---
+int32 ERR_NO_SUCH_NAME=-1
+int32 NO_ERR=0 
+int32 code
