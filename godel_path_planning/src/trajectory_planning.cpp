@@ -83,7 +83,7 @@ namespace
     double y = eigen_pose.translation()(1);
     double z = eigen_pose.translation()(2);
 
-    static const descartes_core::TimingConstraint timing(0.0, 0.5);
+    static const descartes_core::TimingConstraint timing(0.0, 0.15);
 
     if (blend_path)
     {
@@ -136,6 +136,25 @@ namespace
     return max_time;
   }
 
+  void applyTimeParamiterization(std::vector<descartes_core::TrajectoryPtPtr>& traj, 
+                                 const descartes_core::RobotModel& robot_model)
+  {
+    std::vector<double> dummy;
+    // Attempt to smooth the velocity of the robot
+    for (auto it = traj.begin(); it != traj.end() - 1; ++it)
+    {
+      std::vector<double> start;
+      it->get()->getNominalJointPose(dummy, robot_model, start);
+      std::vector<double> stop;
+      (it + 1)->get()->getNominalJointPose(dummy, robot_model, stop);
+      double dt = timeParamiterize(start, stop);
+      descartes_core::TimingConstraint tm (0.0, dt);
+      (it + 1)->get()->setTiming(tm);
+    }
+  }
+
+
+
   // Return the current joint positions from a given topic
   std::vector<double> getCurrentPosition(const std::string& topic)
   {
@@ -173,6 +192,8 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
     graph_points.push_back(tfToAxialTrajectoryPt(point_tf, req.angle_discretization, req.is_blending_path));
   }
 
+  size_t nPointsInGoto = 0;
+
   if (req.plan_from_current_position)
   {
     // Add segment connecting current position with start of trajectory
@@ -190,10 +211,11 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
     // Interpolate between the current pos and start of path 
     TrajectoryVec to_process = interpolateCartesian(init_pose, stop_pose, 15.0, 0.05);
     // replace the first trajectorypt with a fixed one
+    nPointsInGoto = to_process.size();
     to_process.front() = descartes_core::TrajectoryPtPtr(new descartes_trajectory::JointTrajectoryPt(init_state));
     // Unconstrain the transition from the cartesian motion portion to the tool trajectory
     // which might have much tighter tolerances
-    graph_points.front()->setTiming(descartes_core::TimingConstraint(0,1000));
+    graph_points.front()->setTiming(descartes_core::TimingConstraint(0,0));
     // concatenate paths
     graph_points.insert(graph_points.begin(), to_process.begin(), to_process.end());
   }
@@ -230,7 +252,8 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
     if (hasJointJump(start, stop, M_PI/4))
     {
       ROS_WARN_STREAM("Adding joint interp for jump");
-      auto t = jointInterpolate(start, stop, 10.0, 5);
+      auto t = jointInterpolate(start, stop, 10.0, 10);
+      nPointsInGoto += 10;
       traj.insert(traj.end(), t.begin(), t.end() );
     }
     else
@@ -240,7 +263,7 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
   }
 
   // Attempt to smooth the velocity of the robot
-  for (auto it = traj.begin(); it != traj.end() - 1; ++it)
+  for (auto it = traj.begin(); it != traj.end() - 1 && it != traj.begin() + nPointsInGoto; ++it)
   {
     std::vector<double> start;
     it->get()->getNominalJointPose(dummy, *robot_model, start);
