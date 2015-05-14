@@ -99,6 +99,7 @@ ProcessPathResult SurfaceBlendingService::generateProcessPath(const std::string&
 {
   using godel_process_path::PolygonBoundaryCollection;
   using godel_process_path::PolygonBoundary;
+  process_path_results_.process_paths_.markers.clear();
 
   ProcessPathResult result;
 
@@ -123,6 +124,15 @@ ProcessPathResult SurfaceBlendingService::generateProcessPath(const std::string&
     blend_path_result.first = name + "_blend";
     blend_path_result.second = blend_path;
     result.paths.push_back(blend_path_result);
+
+    // Hack for visualization sake
+    static unsigned marker_counter = 0;
+    blend_path.header.frame_id = "world_frame";
+    blend_path.id = marker_counter++;
+    blend_path.lifetime = ros::Duration(0);
+    blend_path.ns = PATH_NAMESPACE;
+    blend_path.pose = boundary_pose;
+    process_path_results_.process_paths_.markers.push_back(blend_path);
   }
   else
   {
@@ -226,10 +236,6 @@ ProcessPlanResult SurfaceBlendingService::generateProcessPlan(const std::string&
   plan.first = name;
   plan.second = res.trajectory;
   result.plans.push_back(plan);
-
-  rosbag::Bag bag;
-  bag.open(name + ".bag", rosbag::bagmode::Write);
-  bag.write("trajectory", ros::Time::now(), res.trajectory);
   
   return result;
 }

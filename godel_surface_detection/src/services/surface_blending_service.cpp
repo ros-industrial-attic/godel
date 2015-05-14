@@ -228,6 +228,12 @@ bool SurfaceBlendingService::animate_tool_path()
   return succeeded;
 }
 
+static bool isBlendPath(const std::string& s)
+{
+  const static std::string prefix = "_blend";
+  return s.find(prefix, s.size()-prefix.size()) != std::string::npos;
+}
+
 void SurfaceBlendingService::tool_animation_timer_callback()
 {
   stop_tool_animation_ = false;
@@ -245,14 +251,20 @@ void SurfaceBlendingService::tool_animation_timer_callback()
   visualization_msgs::MarkerArray tool_markers = create_tool_markers(geometry_msgs::Point(),geometry_msgs::Pose(),"world_frame");
 
 
+  // Hacky thing to get it going for demo
+
   // adding markers
   int num_path_markers = process_path_results_.process_paths_.markers.size();
+  // Blending Paths
   process_markers.markers.insert(process_markers.markers.end(),process_path_results_.process_paths_.markers.begin(),
       process_path_results_.process_paths_.markers.end());
+  // Surface outlines
   process_markers.markers.insert(process_markers.markers.end(),process_path_results_.process_boundaries_.markers.begin(),
           process_path_results_.process_boundaries_.markers.end());
+  // The 'tool'
   process_markers.markers.insert(process_markers.markers.end(),tool_markers.markers.begin(),
       tool_markers.markers.end());
+
   ROS_INFO_STREAM(process_path_results_.process_paths_.markers.size() << " path markers, " <<
                   process_path_results_.process_boundaries_.markers.size() << " boundary markers, " <<
                   tool_markers.markers.size() << " tool markers.");
@@ -484,13 +496,14 @@ bool SurfaceBlendingService::process_path_server_callback(godel_msgs::ProcessPla
   switch(req.action)
   {
     case godel_msgs::ProcessPlanning::Request::GENERATE_MOTION_PLAN:
-      remove_previous_process_plan();
       trajectory_library_ = generateMotionLibrary(process_plan.request.params);
       // res.succeeded = generate_process_plan(process_plan);
       break;
 
     case godel_msgs::ProcessPlanning::Request::GENERATE_MOTION_PLAN_AND_PREVIEW:
+      remove_previous_process_plan();
       trajectory_library_ = generateMotionLibrary(process_plan.request.params);
+      animate_tool_path();
       break;
 
     case godel_msgs::ProcessPlanning::Request::PREVIEW_TOOL_PATH:
