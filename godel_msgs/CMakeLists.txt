@@ -41,6 +41,7 @@ add_service_files(
    TrajectoryExecution.srv
    GetAvailableMotionPlans.srv
    SelectMotionPlan.srv
+   LoadSaveMotionPlan.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
