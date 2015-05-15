@@ -29,6 +29,7 @@
 #include <godel_msgs/TrajectoryPlanning.h>
 #include <godel_msgs/GetAvailableMotionPlans.h>
 #include <godel_msgs/SelectMotionPlan.h>
+#include <godel_msgs/LoadSaveMotionPlan.h>
 
 #include <godel_process_path_generation/VisualizeBlendingPlan.h>
 #include <godel_process_path_generation/mesh_importer.h>
@@ -169,13 +170,19 @@ private:
   bool getMotionPlansCallback(godel_msgs::GetAvailableMotionPlans::Request& req,
                               godel_msgs::GetAvailableMotionPlans::Response& res);
 
+  bool loadSaveMotionPlanCallback(godel_msgs::LoadSaveMotionPlan::Request& req,
+                                  godel_msgs::LoadSaveMotionPlan::Response& res);
+
   // Services offered by this class
   ros::ServiceServer surface_detect_server_;
   ros::ServiceServer select_surface_server_;
   ros::ServiceServer process_path_server_;
   ros::ServiceServer surf_blend_parameters_server_;
+
   ros::ServiceServer get_motion_plans_server_;
   ros::ServiceServer select_motion_plan_server_;
+  ros::ServiceServer load_save_motion_plan_server_;
+
   // Services subscribed to by this class
   ros::ServiceClient visualize_process_path_client_;
   ros::ServiceClient trajectory_planner_client_;

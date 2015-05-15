@@ -71,6 +71,9 @@ bool SurfaceBlendingService::init()
   select_motion_plan_server_ = nh.advertiseService("select_motion_plan",
       &SurfaceBlendingService::selectMotionPlanCallback, this);
 
+  load_save_motion_plan_server_ = nh.advertiseService("load_save_motion_plan", 
+      &SurfaceBlendingService::loadSaveMotionPlanCallback, this);
+
   // publishers
   selected_surf_changed_pub_ = nh.advertise<godel_msgs::SelectedSurfacesChanged>(SELECTED_SURFACES_CHANGED_TOPIC,1);
 
@@ -585,9 +588,26 @@ bool SurfaceBlendingService::getMotionPlansCallback(godel_msgs::GetAvailableMoti
   return true;
 }
 
+bool SurfaceBlendingService::loadSaveMotionPlanCallback(godel_msgs::LoadSaveMotionPlan::Request& req,
+                                                        godel_msgs::LoadSaveMotionPlan::Response& res)
+{
+  switch (req.mode)
+  {
+    case godel_msgs::LoadSaveMotionPlan::Request::MODE_LOAD:
+    trajectory_library_.load(req.path);
+    break;
+
+    case godel_msgs::LoadSaveMotionPlan::Request::MODE_SAVE:
+    trajectory_library_.save(req.path);
+    break;
+  }
+
+  res.code = godel_msgs::LoadSaveMotionPlan::Response::SUCCESS;
+  return true;
+}
 
 
-int main(int argc,char** argv)
+int main(int argc, char** argv)
 {
   ros::init(argc,argv,"surface_blending_service");
   ros::AsyncSpinner spinner(4);
