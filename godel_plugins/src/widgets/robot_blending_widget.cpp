@@ -16,8 +16,11 @@
 
 #include <godel_plugins/widgets/robot_blending_widget.h>
 
+#include <QFileDialog>
+
 #include <godel_msgs/GetAvailableMotionPlans.h>
 #include <godel_msgs/SelectMotionPlan.h>
+#include <godel_msgs/LoadSaveMotionPlan.h>
 
 const double RAD_TO_DEGREES = 180.0f/M_PI;
 const double DEGREES_TO_RAD = M_PI/180.0f;
@@ -49,6 +52,7 @@ void RobotBlendingWidget::init()
 	process_plan_client_ = nh.serviceClient<godel_msgs::ProcessPlanning>(PROCESS_PATH_SERVICE);
   get_motion_plans_client_ = nh.serviceClient<godel_msgs::GetAvailableMotionPlans>(GET_AVAILABLE_MOTION_PLANS_SERVICE);
   select_motion_plan_client_ = nh.serviceClient<godel_msgs::SelectMotionPlan>(SELECT_MOTION_PLAN_SERVICE);
+  load_save_motion_plan_client_ = nh.serviceClient<godel_msgs::LoadSaveMotionPlan>(LOAD_SAVE_MOTION_PLAN_SERVICE);
 
 	selected_surfaces_subs_ = nh.subscribe(SELECTED_SURFACES_CHANGED_TOPIC,1,
 			&RobotBlendingWidget::selected_surface_changed_callback,this);
@@ -81,6 +85,9 @@ void RobotBlendingWidget::init()
 	connect(this,SIGNAL(surface_detection_completed()),this,SLOT(surface_detection_completed_handler()));
 	connect(this,SIGNAL(connect_started()),this,SLOT(connect_started_handler()));
 	connect(this,SIGNAL(connect_completed()),this,SLOT(connect_completed_handler()));
+
+  connect(ui_.pushButtonSavePlan, SIGNAL(clicked(bool)), this, SLOT(save_motion_plan_handler()));
+  connect(ui_.PushButtonOpenFile, SIGNAL(clicked(bool)), this, SLOT(load_motion_plan_handler()));
 
   connect(ui_.pushButtonExecutePath, SIGNAL(clicked()), this, SLOT(execute_motion_plan_handler()));
   connect(ui_.pushButtonSimulatePath, SIGNAL(clicked(bool)), this, SLOT(simulate_motion_plan_handler()));
@@ -433,15 +440,20 @@ void RobotBlendingWidget::generate_process_path_handler()
   {
     std::vector<std::string> plan_names;
     request_available_motions(plan_names);
-    ui_.ListPathResults->clear();
-    for (std::size_t i = 0; i < plan_names.size(); ++i)
-    {
-      QListWidgetItem *item = new QListWidgetItem();
-      item->setText(QString::fromStdString(plan_names[i]));
-      ui_.ListPathResults->addItem(item);
-    }
+    update_motion_plan_list(plan_names);
 
     ui_.TabWidgetCreateLib->setCurrentIndex(2);
+  }
+}
+
+void RobotBlendingWidget::update_motion_plan_list(const std::vector<std::string>& names)
+{
+  ui_.ListPathResults->clear();
+  for (std::size_t i = 0; i < names.size(); ++i)
+  {
+    QListWidgetItem *item = new QListWidgetItem();
+    item->setText(QString::fromStdString(names[i]));
+    ui_.ListPathResults->addItem(item);
   }
 }
 
@@ -492,6 +504,46 @@ void RobotBlendingWidget::execute_motion_plan_handler()
   if (!name.empty()) select_motion_plan(name, false);
 }
 
+void RobotBlendingWidget::save_motion_plan_handler()
+{
+  QString filepath = QFileDialog::getSaveFileName(this, "Save Motion Plan");
+  // No file selected, return immediately
+  ROS_WARN_STREAM("You want to save motion plan to: " << filepath.toStdString());
+  request_load_save_motions(filepath.toStdString(), false);
+}
+
+void RobotBlendingWidget::load_motion_plan_handler()
+{
+  QString filepath = QFileDialog::getOpenFileName(this, "Load Motion Plan");
+  // No file selected, so return immediately
+  ROS_WARN_STREAM("You want to load a motion plan from: " << filepath.toStdString());
+  request_load_save_motions(filepath.toStdString(), true);
+}
+
+void RobotBlendingWidget::request_load_save_motions(const std::string& path, bool isLoad)
+{
+  // Pre-condition: The path must not be an empty string
+  if (path.empty()) return;
+
+  godel_msgs::LoadSaveMotionPlan srv;
+  srv.request.path = path;
+
+  if (isLoad)
+    srv.request.mode = godel_msgs::LoadSaveMotionPlan::Request::MODE_LOAD;
+  else
+     srv.request.mode = godel_msgs::LoadSaveMotionPlan::Request::MODE_SAVE;
+
+  if (load_save_motion_plan_client_.call(srv))
+  {
+    std::vector<std::string> plans;
+    request_available_motions(plans);
+    update_motion_plan_list(plans);
+  }
+  else
+  {
+    ROS_WARN_STREAM("Blending service unable to " << (isLoad ? "load" : "save") << "plan: " << path);
+  }
+}
 
 RobotScanConfigWidget::RobotScanConfigWidget(godel_msgs::RobotScanParameters params)
 {

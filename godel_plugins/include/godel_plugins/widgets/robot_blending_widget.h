@@ -57,7 +57,7 @@ const std::string PROCESS_PATH_SERVICE="process_path";
 const std::string SELECTED_SURFACES_CHANGED_TOPIC = "selected_surfaces_changed";
 const std::string GET_AVAILABLE_MOTION_PLANS_SERVICE = "get_available_motion_plans";
 const std::string SELECT_MOTION_PLAN_SERVICE = "select_motion_plan";
-
+const std::string LOAD_SAVE_MOTION_PLAN_SERVICE = "load_save_motion_plan";
 
 class PoseWidget: public QWidget
 {
@@ -189,7 +189,8 @@ protected:
 	void selected_surface_changed_callback(godel_msgs::SelectedSurfacesChangedConstPtr msg);
         void select_motion_plan(const std::string& name, bool simulate);
         void request_available_motions(std::vector<std::string>& plans);
-
+        void request_load_save_motions(const std::string& path, bool isLoad);
+        void update_motion_plan_list(const std::vector<std::string>& names);
 
 protected Q_SLOTS:
 
@@ -218,6 +219,9 @@ protected Q_SLOTS:
         void simulate_motion_plan_handler();
         void execute_motion_plan_handler();
 
+        void save_motion_plan_handler();
+        void load_motion_plan_handler();
+
 protected:
 	Ui::RobotBlendingWidget ui_;
 	RobotScanConfigWidget *robot_scan_config_window_;
@@ -229,6 +233,7 @@ protected:
 	ros::ServiceClient surface_blending_parameters_client_;
         ros::ServiceClient get_motion_plans_client_;
         ros::ServiceClient select_motion_plan_client_;
+        ros::ServiceClient load_save_motion_plan_client_;
 	ros::Subscriber selected_surfaces_subs_;
 
 	std::string param_ns_;
