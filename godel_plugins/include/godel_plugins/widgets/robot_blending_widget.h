@@ -23,18 +23,17 @@
 #include <godel_msgs/SurfaceBlendingParameters.h>
 #include <godel_msgs/BlendingPlanParameters.h>
 #include <godel_msgs/ProcessPlanning.h>
-#include <tf/transform_datatypes.h>
+
 #include <ros/ros.h>
-#include <geometry_msgs/Pose.h>
 
 #include <ui_robot_blending_plugin.h>
-#include <ui_robot_scan_configuration.h>
-#include <ui_pose_widget.h>
-#include <ui_surface_detection_configuration.h>
+
 #include <QWidget>
 #include <QTimer>
 #include <QtConcurrentRun>
-#include <QMainWindow>
+
+#include <godel_plugins/widgets/surface_detection_configuration.h>
+#include <godel_plugins/widgets/robot_scan_configuration.h>
 
 // macros
 #ifndef DEG2RAD
@@ -59,90 +58,6 @@ const std::string GET_AVAILABLE_MOTION_PLANS_SERVICE = "get_available_motion_pla
 const std::string SELECT_MOTION_PLAN_SERVICE = "select_motion_plan";
 const std::string LOAD_SAVE_MOTION_PLAN_SERVICE = "load_save_motion_plan";
 
-class PoseWidget: public QWidget
-{
-Q_OBJECT
-public:
-	PoseWidget(QWidget *parent = NULL);
-
-	void set_values(const geometry_msgs::Pose& p);
-	void set_values(const tf::Transform &t);
-	tf::Transform get_values();
-
-protected:
-
-	Ui::PoseWidget ui_;
-};
-
-class RobotScanConfigWidget: public QMainWindow
-{
-
-private:
-
-Q_OBJECT
-public:
-
-	RobotScanConfigWidget(godel_msgs::RobotScanParameters params);
-	void show();
-
-Q_SIGNALS:
-	void parameters_changed();
-
-protected:
-
-	void init();
-	void update_parameters();
-	void save_parameters();
-
-protected Q_SLOTS:
-
-	void accept_changes_handler();
-	void cancel_changes_handler();
-
-public:
-
-	godel_msgs::RobotScanParameters robot_scan_parameters_;
-
-protected:
-
-	Ui::RobotScanConfigWindow ui_;
-	PoseWidget *world_to_obj_pose_widget_;
-	PoseWidget *tcp_to_cam_pose_widget_;
-};
-
-class SurfaceDetectionConfigWidget: public QMainWindow
-{
-
-private:
-
-Q_OBJECT
-public:
-
-	SurfaceDetectionConfigWidget(godel_msgs::SurfaceDetectionParameters params);
-	void show();
-
-Q_SIGNALS:
-	void parameters_changed();
-
-protected:
-
-	void init();
-	void update_parameters();
-	void save_parameters();
-
-protected Q_SLOTS:
-
-	void accept_changes_handler();
-	void cancel_changes_handler();
-
-public:
-
-	godel_msgs::SurfaceDetectionParameters surface_detection_parameters_;
-
-protected:
-
-	Ui::SurfaceDetectionConfigWindow ui_;
-};
 
 class RobotBlendingWidget:  public QWidget
 {
@@ -225,7 +140,8 @@ protected Q_SLOTS:
 protected:
 	Ui::RobotBlendingWidget ui_;
 	RobotScanConfigWidget *robot_scan_config_window_;
-	SurfaceDetectionConfigWidget *surface_detect_config_window_;
+        SurfaceDetectionConfigWidget *surface_detect_config_window_;
+
 
 	ros::ServiceClient surface_detection_client_;
 	ros::ServiceClient select_surface_client_;

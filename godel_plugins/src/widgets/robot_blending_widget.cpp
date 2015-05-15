@@ -135,8 +135,8 @@ void RobotBlendingWidget::connect_to_services()
 			// requesting parameters
 			if(surface_blending_parameters_client_.call(req,res))
 			{
-				robot_scan_config_window_->robot_scan_parameters_ = res.robot_scan;
-				surface_detect_config_window_->surface_detection_parameters_ = res.surface_detection;
+        robot_scan_config_window_->params() = res.robot_scan;
+        surface_detect_config_window_->params() = res.surface_detection;
 				robot_scan_parameters_ = res.robot_scan;
 				surf_detect_parameters_ = res.surface_detection;
 				blending_plan_parameters_ = res.blending_plan;
@@ -232,7 +232,7 @@ void RobotBlendingWidget::show_all_handler()
 
 void RobotBlendingWidget::robot_scan_params_changed_handler()
 {
-	robot_scan_parameters_ = robot_scan_config_window_->robot_scan_parameters_;
+  robot_scan_parameters_ = robot_scan_config_window_->params();
 
 	// updating entries in gui
 	ui_.LineEditSensorTopic->setText(QString::fromStdString(robot_scan_parameters_.scan_topic));
@@ -252,7 +252,7 @@ void RobotBlendingWidget::robot_scan_params_changed_handler()
 
 void RobotBlendingWidget::surface_detect_params_changed_handler()
 {
-	surf_detect_parameters_ = surface_detect_config_window_->surface_detection_parameters_;
+  surf_detect_parameters_ = surface_detect_config_window_->params();
 }
 
 void RobotBlendingWidget::preview_path_handler()
@@ -271,13 +271,13 @@ void RobotBlendingWidget::preview_path_handler()
 void RobotBlendingWidget::scan_options_click_handler()
 {
 	save_robot_scan_parameters();
-	robot_scan_config_window_->robot_scan_parameters_ = robot_scan_parameters_;
+  robot_scan_config_window_->params() = robot_scan_parameters_;
 	robot_scan_config_window_->show();
 }
 
 void RobotBlendingWidget::surface_options_click_handler()
 {
-	surface_detect_config_window_->surface_detection_parameters_ = surf_detect_parameters_;
+  surface_detect_config_window_->params() = surf_detect_parameters_;
 	surface_detect_config_window_->show();
 }
 
@@ -544,244 +544,6 @@ void RobotBlendingWidget::request_load_save_motions(const std::string& path, boo
     ROS_WARN_STREAM("Blending service unable to " << (isLoad ? "load" : "save") << "plan: " << path);
   }
 }
-
-RobotScanConfigWidget::RobotScanConfigWidget(godel_msgs::RobotScanParameters params)
-{
-	robot_scan_parameters_ = params;
-	init();
-	update_parameters();
-}
-
-void RobotScanConfigWidget::show()
-{
-	update_parameters();
-	QMainWindow::show();
-}
-
-void RobotScanConfigWidget::init()
-{
-
-	ui_.setupUi(this);
-	world_to_obj_pose_widget_ = new PoseWidget(ui_.PoseWidgetWorldToObj);
-	tcp_to_cam_pose_widget_ = new PoseWidget(ui_.PoseWidgetTcpToCam);
-
-	// setting signals and slots
-	connect(ui_.PushButtonAccept,SIGNAL(clicked()),this,SLOT(accept_changes_handler()));
-	connect(ui_.PushButtonCancel,SIGNAL(clicked()),this,SLOT(cancel_changes_handler()));
-}
-
-void RobotScanConfigWidget::accept_changes_handler()
-{
-	save_parameters();
-	Q_EMIT parameters_changed();
-	hide();
-}
-
-void RobotScanConfigWidget::cancel_changes_handler()
-{
-	hide();
-}
-
-void RobotScanConfigWidget::update_parameters()
-{
-	ui_.SpinBoxNumScans->setValue(robot_scan_parameters_.num_scan_points);
-	ui_.LineEditCamTilt->setText(QString::number(RAD2DEG(robot_scan_parameters_.cam_tilt_angle)));
-	ui_.LineEditCameraXoffset->setText(QString::number(robot_scan_parameters_.cam_to_obj_xoffset));
-	ui_.LineEditCameraZoffset->setText(QString::number(robot_scan_parameters_.cam_to_obj_zoffset));
-	ui_.LineEditSweepAngleStart->setText(QString::number(RAD2DEG(robot_scan_parameters_.sweep_angle_start)));
-	ui_.LineEditSweepAngleEnd->setText(QString::number(RAD2DEG(robot_scan_parameters_.sweep_angle_end)));
-	ui_.LineEditReachablePointRatio->setText(QString::number(robot_scan_parameters_.reachable_scan_points_ratio));
-	ui_.LineEditScanTopic->setText(QString::fromStdString(robot_scan_parameters_.scan_topic));
-	ui_.LineEditScanTargetFrame->setText(QString::fromStdString(robot_scan_parameters_.scan_target_frame));
-	ui_.LineEditWorldFrame->setText(QString::fromStdString(robot_scan_parameters_.world_frame));
-	ui_.LineEditTcpFrame->setText(QString::fromStdString(robot_scan_parameters_.tcp_frame));
-	ui_.LineEditGroupName->setText(QString::fromStdString(robot_scan_parameters_.group_name));
-	ui_.CheckBoxStopOnPlanningError->setChecked(robot_scan_parameters_.stop_on_planning_error);
-
-	world_to_obj_pose_widget_->set_values(robot_scan_parameters_.world_to_obj_pose);
-	tcp_to_cam_pose_widget_->set_values(robot_scan_parameters_.tcp_to_cam_pose);
-
-}
-
-void RobotScanConfigWidget::save_parameters()
-{
-	robot_scan_parameters_.num_scan_points = ui_.SpinBoxNumScans->value();
-	robot_scan_parameters_.cam_tilt_angle= DEG2RAD(ui_.LineEditCamTilt->text().toDouble());
-	robot_scan_parameters_.cam_to_obj_xoffset= ui_.LineEditCameraXoffset->text().toDouble();
-	robot_scan_parameters_.cam_to_obj_zoffset= ui_.LineEditCameraZoffset->text().toDouble();
-	robot_scan_parameters_.sweep_angle_start= DEG2RAD(ui_.LineEditSweepAngleStart->text().toDouble());
-	robot_scan_parameters_.sweep_angle_end= DEG2RAD(ui_.LineEditSweepAngleEnd->text().toDouble());
-	robot_scan_parameters_.reachable_scan_points_ratio = ui_.LineEditReachablePointRatio->text().toDouble();
-	robot_scan_parameters_.scan_topic= ui_.LineEditScanTopic->text().toStdString();
-	robot_scan_parameters_.scan_target_frame= ui_.LineEditScanTargetFrame->text().toStdString();
-	robot_scan_parameters_.world_frame= ui_.LineEditWorldFrame->text().toStdString();
-	robot_scan_parameters_.tcp_frame= ui_.LineEditTcpFrame->text().toStdString();
-	robot_scan_parameters_.group_name= ui_.LineEditGroupName->text().toStdString();
-	robot_scan_parameters_.stop_on_planning_error= ui_.CheckBoxStopOnPlanningError->isChecked();
-
-	tf::poseTFToMsg(world_to_obj_pose_widget_->get_values(),robot_scan_parameters_.world_to_obj_pose);
-	tf::poseTFToMsg(tcp_to_cam_pose_widget_->get_values(),robot_scan_parameters_.tcp_to_cam_pose);
-
-}
-
-PoseWidget::PoseWidget(QWidget *parent):
-		QWidget(parent)
-{
-	ui_.setupUi(this);
-	set_values(tf::Transform::getIdentity());
-}
-
-void PoseWidget::set_values(const geometry_msgs::Pose& p)
-{
-	tf::Transform t;
-	tf::poseMsgToTF(p,t);
-	set_values(t);
-}
-
-void PoseWidget::set_values(const tf::Transform& t)
-{
-	tf::Vector3 p = t.getOrigin();
-	tfScalar rx,ry,rz;
-	t.getBasis().getRPY(rx,ry,rz,1);
-	ui_.LineEditX->setText(QString::number(p.x()));
-	ui_.LineEditY->setText(QString::number(p.y()));
-	ui_.LineEditZ->setText(QString::number(p.z()));
-	ui_.LineEditRx->setText(QString::number(RAD2DEG(rx)));
-	ui_.LineEditRy->setText(QString::number(RAD2DEG(ry)));
-	ui_.LineEditRz->setText(QString::number(RAD2DEG(rz)));
-}
-
-tf::Transform PoseWidget::get_values()
-{
-	double x,y,z,rx,ry,rz;
-	x = ui_.LineEditX->text().toDouble();
-	y = ui_.LineEditY->text().toDouble();
-	z = ui_.LineEditZ->text().toDouble();
-	rx = DEG2RAD(ui_.LineEditRx->text().toDouble());
-	ry = DEG2RAD(ui_.LineEditRy->text().toDouble());
-	rz = DEG2RAD(ui_.LineEditRz->text().toDouble());
-
-	// create transform
-	tf::Vector3 p(x,y,z);
-	tf::Quaternion q;
-	q.setRPY(rx,ry,rz);
-
-	return tf::Transform(q,p);
-}
-
-SurfaceDetectionConfigWidget::SurfaceDetectionConfigWidget(godel_msgs::SurfaceDetectionParameters params)
-{
-	surface_detection_parameters_ = params;
-	init();
-	update_parameters();
-}
-
-void SurfaceDetectionConfigWidget::show()
-{
-	update_parameters();
-	QMainWindow::show();
-}
-
-void SurfaceDetectionConfigWidget::init()
-{
-	ui_.setupUi(this);
-
-	// setting signals and slots
-	connect(ui_.PushButtonAccept,SIGNAL(clicked()),this,SLOT(accept_changes_handler()));
-	connect(ui_.PushButtonCancel,SIGNAL(clicked()),this,SLOT(cancel_changes_handler()));
-}
-
-void SurfaceDetectionConfigWidget::update_parameters()
-{
-	ui_.LineEditFrameId->setText(QString::fromStdString(surface_detection_parameters_.frame_id));
-	ui_.LineEditKSearch->setText(QString::number(surface_detection_parameters_.k_search));
-	ui_.LineEditMarkerAlpha->setText(QString::number(surface_detection_parameters_.marker_alpha));
-
-	ui_.LineEditStOutMean->setText(QString::number(surface_detection_parameters_.meanK));
-	ui_.LineEditStOutThreshold->setText(QString::number(surface_detection_parameters_.stdv_threshold));
-
-	ui_.LineEditRgMinClusterSize->setText(QString::number(surface_detection_parameters_.rg_min_cluster_size));
-	ui_.LineEditRgMaxClusterSize->setText(QString::number(surface_detection_parameters_.rg_max_cluster_size));
-	ui_.LineEditRgNeighbors->setText(QString::number(surface_detection_parameters_.rg_neightbors));
-	ui_.LineEditRgSmoothnessThreshold->setText(QString::number(RAD2DEG(surface_detection_parameters_.rg_smoothness_threshold)));
-	ui_.LineEditRgCurvatureThreshold->setText(QString::number(surface_detection_parameters_.rg_curvature_threshold));
-
-	ui_.LineEditVoxelLeaf->setText(QString::number(surface_detection_parameters_.voxel_leafsize));
-	ui_.LineEditTabletopSegmentationDist->setText(QString::number(surface_detection_parameters_.tabletop_seg_distance_threshold));
-	ui_.CheckBoxUseTabletopSegmentation->setChecked(static_cast<bool>(surface_detection_parameters_.use_tabletop_seg));
-	ui_.CheckBoxIgnoreLargestCluster->setChecked(static_cast<bool>(surface_detection_parameters_.ignore_largest_cluster));
-
-	ui_.LineEditMlsPointDensity->setText(QString::number(surface_detection_parameters_.mls_point_density));
-	ui_.LineEditMlsUpsamplingRadius->setText(QString::number(surface_detection_parameters_.mls_upsampling_radius));
-	ui_.LineEditMlsSearchRadius->setText(QString::number(surface_detection_parameters_.mls_search_radius));
-
-	ui_.LineEditTrSearchRadius->setText(QString::number(surface_detection_parameters_.tr_search_radius));
-	ui_.LineEditTrMu->setText(QString::number(surface_detection_parameters_.tr_mu));
-	ui_.LineEditTrNearestNeighbors->setText(QString::number(surface_detection_parameters_.tr_max_nearest_neighbors));
-	ui_.LineEditTrMaxSurfaceAngle->setText(QString::number(RAD2DEG( surface_detection_parameters_.tr_max_surface_angle)));
-	ui_.LineEditTrMinAngle->setText(QString::number(RAD2DEG( surface_detection_parameters_.tr_min_angle)));
-	ui_.LineEditTrMaxAngle->setText(QString::number(RAD2DEG( surface_detection_parameters_.tr_max_angle)));
-	ui_.CheckBoxTrNormalConsistency->setChecked(static_cast<bool>(surface_detection_parameters_.tr_normal_consistency));
-
-	ui_.CheckBoxPaEnabled->setChecked(static_cast<bool>(surface_detection_parameters_.pa_enabled));
-	ui_.LineEditPaSegMaxIterations->setText(QString::number(surface_detection_parameters_.pa_seg_max_iterations));
-	ui_.LineEditPaSegDistThreshold->setText(QString::number(surface_detection_parameters_.pa_seg_dist_threshold));
-	ui_.LineEditPaSACPlaneDistance->setText(QString::number(surface_detection_parameters_.pa_sac_plane_distance));
-	ui_.LineEditPaKdtreeRadius->setText(QString::number(surface_detection_parameters_.pa_kdtree_radius));
-
-}
-
-void SurfaceDetectionConfigWidget::save_parameters()
-{
-	surface_detection_parameters_.frame_id = ui_.LineEditFrameId->text().toStdString();
-	surface_detection_parameters_.k_search = ui_.LineEditKSearch->text().toDouble();
-	surface_detection_parameters_.marker_alpha = ui_.LineEditMarkerAlpha->text().toDouble();
-
-	surface_detection_parameters_.meanK = ui_.LineEditStOutMean->text().toDouble();
-	surface_detection_parameters_.stdv_threshold = ui_.LineEditStOutThreshold->text().toDouble();
-
-	surface_detection_parameters_.rg_min_cluster_size = ui_.LineEditRgMinClusterSize->text().toDouble();
-	surface_detection_parameters_.rg_max_cluster_size = ui_.LineEditRgMaxClusterSize->text().toDouble();
-	surface_detection_parameters_.rg_neightbors = ui_.LineEditRgNeighbors->text().toDouble();
-	surface_detection_parameters_.rg_smoothness_threshold = DEG2RAD(ui_.LineEditRgSmoothnessThreshold->text().toDouble());
-	surface_detection_parameters_.rg_curvature_threshold = ui_.LineEditRgCurvatureThreshold->text().toDouble();
-
-	surface_detection_parameters_.voxel_leafsize = ui_.LineEditVoxelLeaf->text().toDouble();
-	surface_detection_parameters_.tabletop_seg_distance_threshold = ui_.LineEditTabletopSegmentationDist->text().toDouble();
-	surface_detection_parameters_.use_tabletop_seg = ui_.CheckBoxUseTabletopSegmentation->isChecked();
-	surface_detection_parameters_.ignore_largest_cluster = ui_.CheckBoxIgnoreLargestCluster->isChecked();
-
-	surface_detection_parameters_.mls_point_density = ui_.LineEditMlsPointDensity->text().toDouble();
-	surface_detection_parameters_.mls_upsampling_radius = ui_.LineEditMlsUpsamplingRadius->text().toDouble();
-	surface_detection_parameters_.mls_search_radius = ui_.LineEditMlsSearchRadius->text().toDouble();
-
-	surface_detection_parameters_.tr_search_radius = ui_.LineEditTrSearchRadius->text().toDouble();
-	surface_detection_parameters_.tr_mu = ui_.LineEditTrMu->text().toDouble();
-	surface_detection_parameters_.tr_max_nearest_neighbors = ui_.LineEditTrNearestNeighbors->text().toDouble();
-	surface_detection_parameters_.tr_max_surface_angle = DEG2RAD( ui_.LineEditTrMaxSurfaceAngle->text().toDouble());
-	surface_detection_parameters_.tr_min_angle = DEG2RAD(ui_.LineEditTrMinAngle->text().toDouble());
-	surface_detection_parameters_.tr_max_angle = DEG2RAD(ui_.LineEditTrMaxAngle->text().toDouble());
-	surface_detection_parameters_.tr_normal_consistency = ui_.CheckBoxTrNormalConsistency->isChecked();
-
-	surface_detection_parameters_.pa_enabled = ui_.CheckBoxPaEnabled->isChecked();
-	surface_detection_parameters_.pa_seg_max_iterations = ui_.LineEditPaSegMaxIterations->text().toInt();
-	surface_detection_parameters_.pa_seg_dist_threshold = ui_.LineEditPaSegDistThreshold->text().toDouble();
-	surface_detection_parameters_.pa_sac_plane_distance = ui_.LineEditPaSACPlaneDistance->text().toDouble();
-	surface_detection_parameters_.pa_kdtree_radius = ui_.LineEditPaKdtreeRadius->text().toDouble();
-}
-
-void SurfaceDetectionConfigWidget::accept_changes_handler()
-{
-	save_parameters();
-	Q_EMIT parameters_changed();
-	hide();
-}
-
-void SurfaceDetectionConfigWidget::cancel_changes_handler()
-{
-	hide();
-}
-
 
 } /* namespace widgets */
 
