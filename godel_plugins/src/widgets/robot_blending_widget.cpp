@@ -92,6 +92,10 @@ void RobotBlendingWidget::init()
   connect(ui_.pushButtonExecutePath, SIGNAL(clicked()), this, SLOT(execute_motion_plan_handler()));
   connect(ui_.pushButtonSimulatePath, SIGNAL(clicked(bool)), this, SLOT(simulate_motion_plan_handler()));
 
+  connect(robot_scan_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
+  connect(surface_detect_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
+
+
   // For trajectory execution
 
 
@@ -138,7 +142,7 @@ void RobotBlendingWidget::connect_to_services()
         robot_scan_config_window_->params() = res.robot_scan;
         surface_detect_config_window_->params() = res.surface_detection;
 				robot_scan_parameters_ = res.robot_scan;
-				surf_detect_parameters_ = res.surface_detection;
+        surf_detect_parameters_ = res.surface_detection;
 				blending_plan_parameters_ = res.blending_plan;
 
 				// update gui elements for robot scan
@@ -542,6 +546,22 @@ void RobotBlendingWidget::request_load_save_motions(const std::string& path, boo
   else
   {
     ROS_WARN_STREAM("Blending service unable to " << (isLoad ? "load" : "save") << "plan: " << path);
+  }
+}
+
+void RobotBlendingWidget::request_save_parameters()
+{
+  ROS_WARN_STREAM("REQUESTING SAVE!");
+  godel_msgs::SurfaceBlendingParameters::Request req;
+  req.action = godel_msgs::SurfaceBlendingParameters::Request::SAVE_PARAMETERS;
+  req.surface_detection = surface_detect_config_window_->params();
+  req.blending_plan = blending_plan_parameters_;
+  req.robot_scan = robot_scan_config_window_->params();
+
+  godel_msgs::SurfaceBlendingParameters::Response res;
+  if (!surface_blending_parameters_client_.call(req, res))
+  {
+    ROS_WARN_STREAM("Could not complete service call to save your parameters!");
   }
 }
 

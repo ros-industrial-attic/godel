@@ -552,6 +552,20 @@ bool SurfaceBlendingService::surface_blend_parameters_server_callback(godel_msgs
     res.robot_scan = default_robot_scan_params__;
     res.blending_plan = default_blending_plan_params_;
     break;
+
+  // Update the current parameters in this service
+  case godel_msgs::SurfaceBlendingParameters::Request::SET_PARAMETERS:
+  case godel_msgs::SurfaceBlendingParameters::Request::SAVE_PARAMETERS:
+    surface_detection_.params_ = req.surface_detection;
+    robot_scan_.params_ = req.robot_scan;
+    blending_plan_params_ = req.blending_plan;
+    if (req.action == godel_msgs::SurfaceBlendingParameters::Request::SAVE_PARAMETERS)
+    {
+      this->save_parameters("godel_blending_parameters.yaml", "blending_plan");
+      robot_scan_.save_parameters("godel_robot_scan_parameters.yaml", "robot_scan");
+      surface_detection_.save_parameters("godel_surface_detection_parameters.yaml", "surface_detection");
+    }
+    break;
   }
 
   return true;

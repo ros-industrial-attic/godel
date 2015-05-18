@@ -5,7 +5,7 @@
 	<xacro:include filename="$(find keyence_ljv_description)/urdf/lj_v7080_macro.xacro"/>
 
 	<!-- parameter list -->
-	<xacro:property name="gripper_length" value="0.215"/>
+	<xacro:property name="gripper_length" value="0.218"/>
 	<xacro:property name="gripper_width" value="0.0"/>
 	<xacro:property name="gripper_height" value="0.0"/>
 
@@ -38,7 +38,7 @@
 			<link name="${prefix}keyence_mount"/>
 
 		<xacro:kinect2_sensor_definitions prefix="${prefix}" parent_link="${prefix}kinect2_mount" 
-				x_val="0.0117323762786166" y_val="-0.05952048473715679" z_val="-0.01945423487488313" roll="-0.006854570337791797" pitch="0.01495538828904983" yaw="0.04379009729706525"/>
+				x_val="0.01468947476802748" y_val="-0.06367377711162475" z_val="-0.01960868079016488" roll="-0.008749106789621127" pitch="-0.03236299096413636" yaw="0.01705034660528017"/>
 
 		<!-- Keyence sensor -->
 		<xacro:keyence_lj_v7080 prefix="${prefix}keyence_" />

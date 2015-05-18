@@ -1,7 +1,16 @@
 int32 GET_CURRENT_PARAMETERS=0
 int32 GET_DEFAULT_PARAMETERS=1
+int32 SET_PARAMETERS=2
+int32 SAVE_PARAMETERS=3
+
 int32 action
+
+godel_msgs/RobotScanParameters robot_scan
+godel_msgs/SurfaceDetectionParameters surface_detection
+godel_msgs/BlendingPlanParameters blending_plan
+
 ---
+
 bool succeeded
 godel_msgs/RobotScanParameters robot_scan
 godel_msgs/SurfaceDetectionParameters surface_detection

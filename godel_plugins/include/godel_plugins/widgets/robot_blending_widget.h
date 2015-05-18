@@ -130,6 +130,7 @@ protected Q_SLOTS:
 	void connect_started_handler();
 	void connect_completed_handler();
 	void generate_process_path_handler();
+        void request_save_parameters();
 
         void simulate_motion_plan_handler();
         void execute_motion_plan_handler();
