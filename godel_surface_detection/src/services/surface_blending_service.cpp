@@ -574,7 +574,7 @@ bool SurfaceBlendingService::surface_blend_parameters_server_callback(godel_msgs
 bool SurfaceBlendingService::selectMotionPlanCallback(godel_msgs::SelectMotionPlan::Request& req,
                                 godel_msgs::SelectMotionPlan::Response& res)
 {
-  ROS_ERROR_STREAM("EXECUTION: " << req.name << " with sim: " << req.simulate);
+  ROS_ERROR_STREAM("EXECUTION: " << req.name << " with sim: " << (req.simulate ? "true" : "false"));
   // Check to ensure the plan exists
   if (trajectory_library_.get().find(req.name) == trajectory_library_.get().end())
   {
@@ -584,7 +584,7 @@ bool SurfaceBlendingService::selectMotionPlanCallback(godel_msgs::SelectMotionPl
   }
   // if it exists, then make call to trajectory execution client
   godel_msgs::TrajectoryExecution srv;
-  srv.request.trajectory = trajectory_library_.get()[req.name];
+  srv.request.trajectory = trajectory_library_.get()[req.name].trajectory;
   srv.request.wait_for_execution = false;
   srv.request.simulate = req.simulate;
   trajectory_execution_client_.call(srv);

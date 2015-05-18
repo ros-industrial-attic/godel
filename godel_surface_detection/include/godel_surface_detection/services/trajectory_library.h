@@ -4,7 +4,7 @@
 #include <string>
 #include <map>
 
-#include <trajectory_msgs/JointTrajectory.h>
+#include <godel_msgs/ProcessPlan.h>
 
 namespace godel_surface_detection
 {
@@ -12,7 +12,7 @@ namespace godel_surface_detection
 class TrajectoryLibrary
 {
 public:
-  typedef std::map<std::string, trajectory_msgs::JointTrajectory> TrajectoryMap;
+  typedef std::map<std::string, godel_msgs::ProcessPlan> TrajectoryMap;
   enum Mode {Read, Write};
 
   void load(const std::string& filename);

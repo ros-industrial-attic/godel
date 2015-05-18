@@ -30,6 +30,7 @@
 #include <godel_msgs/GetAvailableMotionPlans.h>
 #include <godel_msgs/SelectMotionPlan.h>
 #include <godel_msgs/LoadSaveMotionPlan.h>
+#include <godel_msgs/ProcessPlan.h>
 
 #include <godel_process_path_generation/VisualizeBlendingPlan.h>
 #include <godel_process_path_generation/mesh_importer.h>
@@ -92,7 +93,7 @@ struct ProcessPathResult {
  * Associates a name with a joint trajectory
  */
 struct ProcessPlanResult {
-  typedef std::pair<std::string, trajectory_msgs::JointTrajectory> value_type;
+  typedef std::pair<std::string, godel_msgs::ProcessPlan> value_type;
   std::vector<value_type> plans;
 };
 

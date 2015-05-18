@@ -234,7 +234,10 @@ ProcessPlanResult SurfaceBlendingService::generateProcessPlan(const std::string&
 
   ProcessPlanResult::value_type plan;
   plan.first = name;
-  plan.second = res.trajectory;
+  plan.second.trajectory = res.trajectory;
+  if (isBlendingPath(name)) plan.second.type = godel_msgs::ProcessPlan::BLEND_TYPE;
+  else plan.second.type = godel_msgs::ProcessPlan::SCAN_TYPE;
+  
   result.plans.push_back(plan);
   
   return result;

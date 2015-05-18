@@ -23,7 +23,7 @@ void godel_surface_detection::TrajectoryLibrary::load(const std::string& filenam
 
   for(rosbag::View::iterator it = view.begin(); it != view.end(); ++it)
   {
-    trajectory_msgs::JointTrajectoryPtr ptr = it->instantiate<trajectory_msgs::JointTrajectory>();
+    godel_msgs::ProcessPlanPtr ptr = it->instantiate<godel_msgs::ProcessPlan>();
     if (!ptr)
     {
       // message failed to load
