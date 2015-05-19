@@ -31,6 +31,7 @@
 #include <godel_msgs/SelectMotionPlan.h>
 #include <godel_msgs/LoadSaveMotionPlan.h>
 #include <godel_msgs/ProcessPlan.h>
+#include <godel_msgs/RenameSurface.h>
 
 #include <godel_process_path_generation/VisualizeBlendingPlan.h>
 #include <godel_process_path_generation/mesh_importer.h>
@@ -60,6 +61,7 @@ const static std::string SELECTED_SURFACES_CHANGED_TOPIC = "selected_surfaces_ch
 const static std::string ROBOT_SCAN_PATH_PREVIEW_TOPIC = "robot_scan_path_preview";
 const static std::string PUBLISH_REGION_POINT_CLOUD = "publish_region_point_cloud";
 const static std::string REGION_POINT_CLOUD_TOPIC="region_colored_cloud";
+const static std::string RENAME_SURFACE_SERVICE = "rename_surface";
 
 //  marker namespaces
 const static std::string BOUNDARY_NAMESPACE = "process_boundary";
@@ -174,6 +176,9 @@ private:
   bool loadSaveMotionPlanCallback(godel_msgs::LoadSaveMotionPlan::Request& req,
                                   godel_msgs::LoadSaveMotionPlan::Response& res);
 
+  bool renameSurfaceCallback(godel_msgs::RenameSurface::Request& req,
+                             godel_msgs::RenameSurface::Response& res);
+
   // Services offered by this class
   ros::ServiceServer surface_detect_server_;
   ros::ServiceServer select_surface_server_;
@@ -183,6 +188,7 @@ private:
   ros::ServiceServer get_motion_plans_server_;
   ros::ServiceServer select_motion_plan_server_;
   ros::ServiceServer load_save_motion_plan_server_;
+  ros::ServiceServer rename_suface_server_;
 
   // Services subscribed to by this class
   ros::ServiceClient visualize_process_path_client_;

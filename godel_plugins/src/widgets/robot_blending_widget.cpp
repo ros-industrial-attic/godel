@@ -17,10 +17,12 @@
 #include <godel_plugins/widgets/robot_blending_widget.h>
 
 #include <QFileDialog>
+#include <QInputDialog>
 
 #include <godel_msgs/GetAvailableMotionPlans.h>
 #include <godel_msgs/SelectMotionPlan.h>
 #include <godel_msgs/LoadSaveMotionPlan.h>
+#include <godel_msgs/RenameSurface.h>
 
 const double RAD_TO_DEGREES = 180.0f/M_PI;
 const double DEGREES_TO_RAD = M_PI/180.0f;
@@ -53,6 +55,7 @@ void RobotBlendingWidget::init()
   get_motion_plans_client_ = nh.serviceClient<godel_msgs::GetAvailableMotionPlans>(GET_AVAILABLE_MOTION_PLANS_SERVICE);
   select_motion_plan_client_ = nh.serviceClient<godel_msgs::SelectMotionPlan>(SELECT_MOTION_PLAN_SERVICE);
   load_save_motion_plan_client_ = nh.serviceClient<godel_msgs::LoadSaveMotionPlan>(LOAD_SAVE_MOTION_PLAN_SERVICE);
+  rename_surface_client_ = nh.serviceClient<godel_msgs::RenameSurface>(RENAME_SURFACE_SERVICE);
 
 	selected_surfaces_subs_ = nh.subscribe(SELECTED_SURFACES_CHANGED_TOPIC,1,
 			&RobotBlendingWidget::selected_surface_changed_callback,this);
@@ -100,8 +103,8 @@ void RobotBlendingWidget::init()
   connect(robot_scan_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
   connect(surface_detect_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
   connect(robot_blend_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
-
-
+  connect(ui_.ListWidgetSelectedSurfs, SIGNAL(itemDoubleClicked(QListWidgetItem*)),
+          this, SLOT(handle_surface_rename(QListWidgetItem*)));
   // For trajectory execution
 
 
@@ -574,6 +577,31 @@ void RobotBlendingWidget::request_save_parameters()
   if (!surface_blending_parameters_client_.call(req, res))
   {
     ROS_WARN_STREAM("Could not complete service call to save your parameters!");
+  }
+}
+
+void RobotBlendingWidget::handle_surface_rename(QListWidgetItem *item)
+{
+  if (!item) return;
+
+  QString old_text = item->text();
+  // spawn window to prompt a rename
+  QString new_text = QInputDialog::getText(this, "Surface Rename", "Enter a new surface name: ");
+
+  if (!new_text.isEmpty())
+  {
+    godel_msgs::RenameSurfaceResponse res;
+    godel_msgs::RenameSurfaceRequest req;
+    req.old_name = old_text.toStdString();
+    req.new_name = new_text.toStdString();
+    if (rename_surface_client_.call(req, res))
+    {
+      item->setText(new_text);
+    }
+    else
+    {
+      ROS_WARN_STREAM("Failed to update the name of surface " << old_text.toStdString());
+    }
   }
 }
 

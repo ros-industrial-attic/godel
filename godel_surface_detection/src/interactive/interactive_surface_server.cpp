@@ -539,6 +539,30 @@ void InteractiveSurfaceServer::create_polygon_marker(
 	}
 }
 
+bool InteractiveSurfaceServer::rename_surface(const std::string& old_name, 
+																							const std::string& new_name)
+{
+	std::map<std::string, bool>::iterator select_iter = surface_selection_map_.find(old_name);
+	std::map<std::string, pcl::PolygonMesh>::iterator mesh_iter = meshes_map_.find(old_name);
+	if (select_iter != surface_selection_map_.end() &&
+			mesh_iter != meshes_map_.end())
+	{
+		// The surface exists
+		bool cache_is_selected = select_iter->second;
+		pcl::PolygonMesh cache_mesh = mesh_iter->second;
+		// Insert new item
+		surface_selection_map_[new_name] = cache_is_selected;
+		meshes_map_[new_name] = cache_mesh;
+		// Remove old item
+		meshes_map_.erase(mesh_iter);
+		surface_selection_map_.erase(select_iter);
+	}
+	else
+	{
+		return false;
+	}
+}
+
 
 
 } /* namespace interactive */

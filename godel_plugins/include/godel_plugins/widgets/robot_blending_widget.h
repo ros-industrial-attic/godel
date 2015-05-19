@@ -58,6 +58,7 @@ const std::string SELECTED_SURFACES_CHANGED_TOPIC = "selected_surfaces_changed";
 const std::string GET_AVAILABLE_MOTION_PLANS_SERVICE = "get_available_motion_plans";
 const std::string SELECT_MOTION_PLAN_SERVICE = "select_motion_plan";
 const std::string LOAD_SAVE_MOTION_PLAN_SERVICE = "load_save_motion_plan";
+const std::string RENAME_SURFACE_SERVICE = "rename_surface";
 
 
 class RobotBlendingWidget:  public QWidget
@@ -142,6 +143,8 @@ protected Q_SLOTS:
         void save_motion_plan_handler();
         void load_motion_plan_handler();
 
+        void handle_surface_rename(QListWidgetItem* item);
+
 protected:
 	Ui::RobotBlendingWidget ui_;
 	RobotScanConfigWidget *robot_scan_config_window_;
@@ -156,6 +159,7 @@ protected:
         ros::ServiceClient get_motion_plans_client_;
         ros::ServiceClient select_motion_plan_client_;
         ros::ServiceClient load_save_motion_plan_client_;
+        ros::ServiceClient rename_surface_client_;
 	ros::Subscriber selected_surfaces_subs_;
 
 	std::string param_ns_;

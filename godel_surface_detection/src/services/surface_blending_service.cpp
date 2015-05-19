@@ -74,6 +74,9 @@ bool SurfaceBlendingService::init()
   load_save_motion_plan_server_ = nh.advertiseService("load_save_motion_plan", 
       &SurfaceBlendingService::loadSaveMotionPlanCallback, this);
 
+  rename_suface_server_ = nh.advertiseService(RENAME_SURFACE_SERVICE,
+      &SurfaceBlendingService::renameSurfaceCallback, this);
+
   // publishers
   selected_surf_changed_pub_ = nh.advertise<godel_msgs::SelectedSurfacesChanged>(SELECTED_SURFACES_CHANGED_TOPIC,1);
 
@@ -620,6 +623,21 @@ bool SurfaceBlendingService::loadSaveMotionPlanCallback(godel_msgs::LoadSaveMoti
   return true;
 }
 
+
+bool SurfaceBlendingService::renameSurfaceCallback(godel_msgs::RenameSurface::Request& req,
+                                                   godel_msgs::RenameSurface::Response& res)
+{
+  if (surface_server_.rename_surface(req.old_name, req.new_name))
+  {
+    ROS_INFO_STREAM("Surface re-name successful");
+    return true;
+  }
+  else
+  {
+    ROS_WARN_STREAM("Surface rename failed");
+    return false;
+  }
+}
 
 int main(int argc, char** argv)
 {
