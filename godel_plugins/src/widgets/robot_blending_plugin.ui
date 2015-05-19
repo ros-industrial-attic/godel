@@ -112,7 +112,7 @@
         </rect>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <widget class="QWidget" name="tab_1">
         <attribute name="title">
@@ -430,13 +430,13 @@
            <rect>
             <x>10</x>
             <y>196</y>
-            <width>221</width>
+            <width>252</width>
             <height>41</height>
            </rect>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout">
            <item>
-            <widget class="QPushButton" name="pushButtonBlendOptions">
+            <widget class="QPushButton" name="PushButtonBlendOptions">
              <property name="text">
               <string>Blend Options</string>
              </property>
@@ -513,7 +513,7 @@
            </rect>
           </property>
          </widget>
-         <widget class="QWidget" name="">
+         <widget class="QWidget" name="layoutWidget">
           <property name="geometry">
            <rect>
             <x>10</x>

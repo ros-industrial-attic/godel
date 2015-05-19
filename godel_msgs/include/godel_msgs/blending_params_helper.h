@@ -23,6 +23,8 @@ struct ParamInterfaces<godel_msgs::BlendingPlanParameters>
     setter.set("discretization", params.discretization);
     setter.set("safe_traverse_height", params.safe_traverse_height);
     setter.set("min_boundary_length", params.min_boundary_length);
+    setter.set("tool_force", params.tool_force);
+    setter.set("spindle_speed", params.spindle_speed);
   }
 
   template<typename Getter>
@@ -38,6 +40,8 @@ struct ParamInterfaces<godel_msgs::BlendingPlanParameters>
     getter.get("discretization", params.discretization);
     getter.get("safe_traverse_height", params.safe_traverse_height);
     getter.get("min_boundary_length", params.min_boundary_length);
+    getter.get("tool_force", params.tool_force);
+    getter.get("spindle_speed", params.spindle_speed);
   }
 };
 

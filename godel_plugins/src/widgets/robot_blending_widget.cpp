@@ -64,11 +64,16 @@ void RobotBlendingWidget::init()
 	robot_scan_config_window_= new RobotScanConfigWidget(robot_scan_parameters_);
 	surface_detect_config_window_ = new SurfaceDetectionConfigWidget(surf_detect_parameters_);
 
+    robot_blend_config_window_= new BlendingPlanConfigWidget(blending_plan_parameters_);
+
 
 	// setting signals and slots
 	connect(robot_scan_config_window_,SIGNAL(parameters_changed()),this,SLOT(robot_scan_params_changed_handler()));
 	connect(surface_detect_config_window_,SIGNAL(parameters_changed()),this,SLOT(surface_detect_params_changed_handler()));
 	connect(ui_.PushButtonMoreOptions,SIGNAL(clicked()),this,SLOT(scan_options_click_handler()));
+
+    connect(ui_.PushButtonBlendOptions,SIGNAL(clicked()),this,SLOT(blend_options_click_handler()));
+
 	connect(ui_.PushButtonSurfaceOptions,SIGNAL(clicked()),this,SLOT(surface_options_click_handler()));
 	connect(ui_.PushButtonScan,SIGNAL(clicked()),this,SLOT(scan_button_handler()));
 	connect(ui_.PushButtonFindSurface,SIGNAL(clicked()),this,SLOT(find_surface_button_handler()));
@@ -94,6 +99,7 @@ void RobotBlendingWidget::init()
 
   connect(robot_scan_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
   connect(surface_detect_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
+  connect(robot_blend_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
 
 
   // For trajectory execution
@@ -144,6 +150,7 @@ void RobotBlendingWidget::connect_to_services()
 				robot_scan_parameters_ = res.robot_scan;
         surf_detect_parameters_ = res.surface_detection;
 				blending_plan_parameters_ = res.blending_plan;
+                robot_blend_config_window_->params() = res.blending_plan;
 
 				// update gui elements for robot scan
 				robot_scan_params_changed_handler();
@@ -277,6 +284,11 @@ void RobotBlendingWidget::scan_options_click_handler()
 	save_robot_scan_parameters();
   robot_scan_config_window_->params() = robot_scan_parameters_;
 	robot_scan_config_window_->show();
+}
+
+void RobotBlendingWidget::blend_options_click_handler()
+{
+    robot_blend_config_window_->show();
 }
 
 void RobotBlendingWidget::surface_options_click_handler()
@@ -555,7 +567,7 @@ void RobotBlendingWidget::request_save_parameters()
   godel_msgs::SurfaceBlendingParameters::Request req;
   req.action = godel_msgs::SurfaceBlendingParameters::Request::SAVE_PARAMETERS;
   req.surface_detection = surface_detect_config_window_->params();
-  req.blending_plan = blending_plan_parameters_;
+  req.blending_plan = robot_blend_config_window_->params();
   req.robot_scan = robot_scan_config_window_->params();
 
   godel_msgs::SurfaceBlendingParameters::Response res;
