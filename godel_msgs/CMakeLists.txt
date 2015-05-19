@@ -43,6 +43,7 @@ add_service_files(
    GetAvailableMotionPlans.srv
    SelectMotionPlan.srv
    LoadSaveMotionPlan.srv
+   RenameSurface.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
