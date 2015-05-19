@@ -9,5 +9,5 @@ blending_plan:
   discretization: 0.0025         # (m) How densely to space adjacent Cartesian points
   safe_traverse_height: 0.05     # (m) height above surface to rise during rapid traversal moves
   min_boundary_length: .03       # (m) Boundaries below threshold are ignored during process path creation
-  tool_force: 0.0
-  spindle_speed: 0.0
+  tool_force: 0.0                # (kg)
+  spindle_speed: 0.0             # (rad/s)

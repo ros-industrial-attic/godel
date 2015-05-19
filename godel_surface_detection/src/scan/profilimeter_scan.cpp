@@ -210,16 +210,16 @@ void printPt(const PolygonPt& pt)
 }
 
 std::vector<PolygonPt> 
-godel_surface_detection::generateProfilimeterScanPath(const PolygonBoundary& boundary, 
-                                                      const ProfilimeterScanParams& params)
+godel_surface_detection::generateProfilimeterScanPath(const PolygonBoundary& boundary,
+                                                      const godel_msgs::ScanPlanParameters &params)
 {
-  static const double DS = 0.005;
+  static const double DS = 0.01;
 
   // Step 1 -> compute (oriented?) bounding box
   RotatedRect bbox = simpleBoundingBox(boundary);
   
   // Step 2 -> slice bounding box into strips
-  std::vector<RotatedRect> slices = sliceBoundingBox(bbox, params.width_, params.overlap_);
+  std::vector<RotatedRect> slices = sliceBoundingBox(bbox, params.scan_width, params.overlap);
   
   // Step 3 -> generate set of dense points along center of each strip
   std::vector<std::vector<PolygonPt> > slice_points;
@@ -228,10 +228,7 @@ godel_surface_detection::generateProfilimeterScanPath(const PolygonBoundary& bou
     slice_points.push_back(interpolateAlongAxis(slices[i], DS));
 
   // Step 4 -> connect slices together
-  std::vector<PolygonPt> pts = stitchAndFlatten(slice_points, DS);
-
-  const PolygonPt& start = *pts.begin();
-  const PolygonPt& end = *pts.rbegin(); 
+  std::vector<PolygonPt> pts = stitchAndFlatten(slice_points, DS); 
 
   return pts;
 }

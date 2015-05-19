@@ -32,6 +32,7 @@
 #include <godel_msgs/LoadSaveMotionPlan.h>
 #include <godel_msgs/ProcessPlan.h>
 #include <godel_msgs/RenameSurface.h>
+#include <godel_msgs/ScanPlanParameters.h>
 
 #include <godel_process_path_generation/VisualizeBlendingPlan.h>
 #include <godel_process_path_generation/mesh_importer.h>
@@ -40,40 +41,10 @@
 
 #include <godel_surface_detection/scan/profilimeter_scan.h>
 
-// Load helpers for reading/writing parameters
-#include <godel_msgs/blending_params_helper.h>
-#include <param_helpers/param_set.h>
-
 #include <godel_surface_detection/services/trajectory_library.h>
 
 #include <pcl/console/parse.h>
 #include <rosbag/bag.h>
-
-// topics and services
-const static std::string TRAJECTORY_PLANNING_SERVICE = "trajectory_planner";
-const static std::string SURFACE_DETECTION_SERVICE = "surface_detection";
-const static std::string SURFACE_BLENDING_PARAMETERS_SERVICE = "surface_blending_parameters";
-const static std::string SELECT_SURFACE_SERVICE = "select_surface";
-const static std::string PROCESS_PATH_SERVICE="process_path";
-const static std::string VISUALIZE_BLENDING_PATH_SERVICE = "visualize_path_generator";
-const static std::string TOOL_PATH_PREVIEW_TOPIC = "tool_path_preview";
-const static std::string SELECTED_SURFACES_CHANGED_TOPIC = "selected_surfaces_changed";
-const static std::string ROBOT_SCAN_PATH_PREVIEW_TOPIC = "robot_scan_path_preview";
-const static std::string PUBLISH_REGION_POINT_CLOUD = "publish_region_point_cloud";
-const static std::string REGION_POINT_CLOUD_TOPIC="region_colored_cloud";
-const static std::string RENAME_SURFACE_SERVICE = "rename_surface";
-
-//  marker namespaces
-const static std::string BOUNDARY_NAMESPACE = "process_boundary";
-const static std::string PATH_NAMESPACE = "process_path";
-const static std::string TOOL_NAMESPACE = "process_tool";
-
-//  tool visual properties
-const static float TOOL_DIA = .050;
-const static float TOOL_THK = .005;
-const static float TOOL_SHAFT_DIA = .006;
-const static float TOOL_SHAFT_LEN = .045;
-const static std::string TOOL_FRAME_ID = "process_tool";
 
 struct ProcessPathDetails
 {
@@ -108,9 +79,13 @@ public:
   void run();
 
 private:
-  bool load_parameters(const std::string& filename, const std::string& ns);
+  bool load_blend_parameters(const std::string& filename, const std::string& ns);
 
-  void save_parameters(const std::string& filename, const std::string& ns);
+  void save_blend_parameters(const std::string& filename, const std::string& ns);
+
+  bool load_scan_parameters(const std::string& filename, const std::string& ns);
+
+  void save_scan_parameters(const std::string& filename, const std::string& ns);
 
   void publish_selected_surfaces_changed();
 
@@ -149,7 +124,7 @@ private:
                                                 godel_msgs::SurfaceBlendingParameters::Response &res);
 
   // Reads from the surface selection server and generates blend/scan paths for each
-  godel_surface_detection::TrajectoryLibrary generateMotionLibrary(const godel_msgs::BlendingPlanParameters& params);
+  godel_surface_detection::TrajectoryLibrary generateMotionLibrary(const godel_msgs::BlendingPlanParameters& blend_params, const godel_msgs::ScanPlanParameters &scan_params);
 
   bool requestBlendPath(const godel_process_path::PolygonBoundaryCollection& boundaries,
                         const geometry_msgs::Pose& boundary_pose,
@@ -157,12 +132,12 @@ private:
                         visualization_msgs::Marker& path);
 
   bool requestScanPath(const godel_process_path::PolygonBoundaryCollection& boundaries,
-                       const geometry_msgs::Pose& boundary_pose,
+                       const geometry_msgs::Pose& boundary_pose, const godel_msgs::ScanPlanParameters &params,
                        visualization_msgs::Marker& path);
 
-  ProcessPathResult generateProcessPath(const std::string& name, 
-                                        const pcl::PolygonMesh& mesh, 
-                                        const godel_msgs::BlendingPlanParameters& params);
+  ProcessPathResult generateProcessPath(const std::string& name,
+                                        const pcl::PolygonMesh& mesh,
+                                        const godel_msgs::BlendingPlanParameters& params, const godel_msgs::ScanPlanParameters &scan_params);
 
   ProcessPlanResult generateProcessPlan(const std::string& name, 
                                         const visualization_msgs::Marker& path);
@@ -214,6 +189,8 @@ private:
   godel_msgs::RobotScanParameters default_robot_scan_params__;
   godel_msgs::SurfaceDetectionParameters default_surf_detection_params_;
   godel_msgs::BlendingPlanParameters default_blending_plan_params_;
+  godel_msgs::ScanPlanParameters default_scan_params_;
+  godel_msgs::ScanPlanParameters scan_plan_params_;
   godel_msgs::BlendingPlanParameters blending_plan_params_;
 
   // results

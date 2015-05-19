@@ -16,20 +16,13 @@
 #include <vector>
 // For PolygonBoundary and PolygonPt (our Godel-specific geometry primitives)
 #include "godel_process_path_generation/polygon_pts.hpp"
+#include <godel_msgs/ScanPlanParameters.h>
 
 namespace godel_surface_detection
 {
-
-  struct ProfilimeterScanParams
-  {
-    double width_;
-    double overlap_;
-    double ds_;
-  };
-
   std::vector<godel_process_path::PolygonPt> 
   generateProfilimeterScanPath(const godel_process_path::PolygonBoundary& boundary, 
-                              const ProfilimeterScanParams& params);
+                              const godel_msgs::ScanPlanParameters& params);
 
 } // end namespace godel_surface_detection
 

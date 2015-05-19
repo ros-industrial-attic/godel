@@ -1,6 +1,57 @@
 #include <godel_surface_detection/services/surface_blending_service.h>
 
 #include <godel_msgs/TrajectoryExecution.h>
+// Load helpers for reading/writing parameters
+#include <godel_msgs/blending_params_helper.h>
+//#include <godel_msgs/scan_params_helper.h>
+#include <param_helpers/param_set.h>
+
+
+// topics and services
+const static std::string TRAJECTORY_PLANNING_SERVICE = "trajectory_planner";
+const static std::string SURFACE_DETECTION_SERVICE = "surface_detection";
+const static std::string SURFACE_BLENDING_PARAMETERS_SERVICE = "surface_blending_parameters";
+const static std::string SELECT_SURFACE_SERVICE = "select_surface";
+const static std::string PROCESS_PATH_SERVICE="process_path";
+const static std::string VISUALIZE_BLENDING_PATH_SERVICE = "visualize_path_generator";
+const static std::string RENAME_SURFACE_SERVICE = "rename_surface";
+const static std::string PATH_EXECUTION_SERVICE = "path_execution";
+const static std::string GET_MOTION_PLANS_SERVICE = "get_available_motion_plans";
+const static std::string SELECT_MOTION_PLAN_SERVICE = "select_motion_plan";
+const static std::string LOAD_SAVE_MOTION_PLAN_SERVICE = "load_save_motion_plan";
+
+
+const static std::string TOOL_PATH_PREVIEW_TOPIC = "tool_path_preview";
+const static std::string SELECTED_SURFACES_CHANGED_TOPIC = "selected_surfaces_changed";
+const static std::string ROBOT_SCAN_PATH_PREVIEW_TOPIC = "robot_scan_path_preview";
+const static std::string PUBLISH_REGION_POINT_CLOUD = "publish_region_point_cloud";
+const static std::string REGION_POINT_CLOUD_TOPIC="region_colored_cloud";
+
+//  marker namespaces
+const static std::string BOUNDARY_NAMESPACE = "process_boundary";
+const static std::string PATH_NAMESPACE = "process_path";
+const static std::string TOOL_NAMESPACE = "process_tool";
+
+//  tool visual properties
+const static float TOOL_DIA = .050;
+const static float TOOL_THK = .005;
+const static float TOOL_SHAFT_DIA = .006;
+const static float TOOL_SHAFT_LEN = .045;
+const static std::string TOOL_FRAME_ID = "process_tool";
+
+// Default filepaths and namespaces for caching stored parameters
+const static std::string BLEND_PARAMS_FILE = "godel_blending_parameters.yaml";
+const static std::string BLEND_PARAMS_NS = "blending_plan";
+
+const static std::string SCAN_PARAMS_FILE = "godel_scan_parameters.yaml";
+const static std::string SCAN_PARAMS_NS = "keyence_scan";
+
+const static std::string ROBOT_SCAN_PARAMS_FILE = "godel_robot_scan_parameters.yaml";
+const static std::string ROBOT_SCAN_PARAMS_NS = "robot_scan";
+
+const static std::string SURFACE_DETECTION_PARAMS_FILE = "godel_surface_detection_parameters.yaml";
+const static std::string SURFACE_DETECTION_PARAMS_NS = "surface_detection";
+
 
 SurfaceBlendingService::SurfaceBlendingService()
   : mesh_importer_(true) /*True-turn on verbose messages*/
@@ -16,9 +67,10 @@ bool SurfaceBlendingService::init()
   // loading parameters
   ph.getParam(PUBLISH_REGION_POINT_CLOUD,publish_region_point_cloud_);
 
-  this->load_parameters("godel_blending_parameters.yaml", "blending_plan");
-  robot_scan_.load_parameters("godel_robot_scan_parameters.yaml", "robot_scan");
-  surface_detection_.load_parameters("godel_surface_detection_parameters.yaml", "surface_detection");
+  this->load_blend_parameters(BLEND_PARAMS_FILE, BLEND_PARAMS_NS);
+  this->load_scan_parameters(SCAN_PARAMS_FILE, SCAN_PARAMS_NS);
+  robot_scan_.load_parameters(ROBOT_SCAN_PARAMS_FILE, ROBOT_SCAN_PARAMS_NS);
+  surface_detection_.load_parameters(SURFACE_DETECTION_PARAMS_FILE, SURFACE_DETECTION_PARAMS_NS);
   // save default parameters
   default_robot_scan_params__ = robot_scan_.params_;
   default_surf_detection_params_ = surface_detection_.params_;
@@ -50,7 +102,7 @@ bool SurfaceBlendingService::init()
 
   trajectory_planner_client_ = nh.serviceClient<godel_msgs::TrajectoryPlanning>(TRAJECTORY_PLANNING_SERVICE);
 
-  trajectory_execution_client_ = nh.serviceClient<godel_msgs::TrajectoryExecution>("path_execution");
+  trajectory_execution_client_ = nh.serviceClient<godel_msgs::TrajectoryExecution>(PATH_EXECUTION_SERVICE);
 
   // service servers
   surf_blend_parameters_server_ = nh.advertiseService(SURFACE_BLENDING_PARAMETERS_SERVICE,
@@ -65,13 +117,13 @@ bool SurfaceBlendingService::init()
   process_path_server_ = nh.advertiseService(PROCESS_PATH_SERVICE,
       &SurfaceBlendingService::process_path_server_callback,this);
 
-  get_motion_plans_server_ = nh.advertiseService("get_available_motion_plans", 
+  get_motion_plans_server_ = nh.advertiseService(GET_MOTION_PLANS_SERVICE,
       &SurfaceBlendingService::getMotionPlansCallback, this);
   
-  select_motion_plan_server_ = nh.advertiseService("select_motion_plan",
+  select_motion_plan_server_ = nh.advertiseService(SELECT_MOTION_PLAN_SERVICE,
       &SurfaceBlendingService::selectMotionPlanCallback, this);
 
-  load_save_motion_plan_server_ = nh.advertiseService("load_save_motion_plan", 
+  load_save_motion_plan_server_ = nh.advertiseService(LOAD_SAVE_MOTION_PLAN_SERVICE,
       &SurfaceBlendingService::loadSaveMotionPlanCallback, this);
 
   rename_suface_server_ = nh.advertiseService(RENAME_SURFACE_SERVICE,
@@ -105,16 +157,28 @@ void SurfaceBlendingService::run()
 }
 
 
-
-bool SurfaceBlendingService::load_parameters(const std::string& filename, const std::string& ns)
+// Blending Parameters
+bool SurfaceBlendingService::load_blend_parameters(const std::string& filename, const std::string& ns)
 {
   param_helpers::attemptCacheLoad(blending_plan_params_, filename, ns);
   return true;
 }
 
-void SurfaceBlendingService::save_parameters(const std::string& filename, const std::string& ns)
+void SurfaceBlendingService::save_blend_parameters(const std::string& filename, const std::string& ns)
 {
   param_helpers::saveToYamlFile(blending_plan_params_, filename, ns);
+}
+
+// Profilimeter parameters
+bool SurfaceBlendingService::load_scan_parameters(const std::string& filename, const std::string& ns)
+{
+  param_helpers::attemptCacheLoad(scan_plan_params_, filename, ns);
+  return true;
+}
+
+void SurfaceBlendingService::save_scan_parameters(const std::string& filename, const std::string& ns)
+{
+  param_helpers::saveToYamlFile(scan_plan_params_, filename, ns);
 }
 
 void SurfaceBlendingService::publish_selected_surfaces_changed()
@@ -502,13 +566,13 @@ bool SurfaceBlendingService::process_path_server_callback(godel_msgs::ProcessPla
   switch(req.action)
   {
     case godel_msgs::ProcessPlanning::Request::GENERATE_MOTION_PLAN:
-      trajectory_library_ = generateMotionLibrary(process_plan.request.params);
+      trajectory_library_ = generateMotionLibrary(process_plan.request.params, scan_plan_params_);
       // res.succeeded = generate_process_plan(process_plan);
       break;
 
     case godel_msgs::ProcessPlanning::Request::GENERATE_MOTION_PLAN_AND_PREVIEW:
       remove_previous_process_plan();
-      trajectory_library_ = generateMotionLibrary(process_plan.request.params);
+      trajectory_library_ = generateMotionLibrary(process_plan.request.params, scan_plan_params_);
       animate_tool_path();
       break;
 
@@ -564,9 +628,10 @@ bool SurfaceBlendingService::surface_blend_parameters_server_callback(godel_msgs
     blending_plan_params_ = req.blending_plan;
     if (req.action == godel_msgs::SurfaceBlendingParameters::Request::SAVE_PARAMETERS)
     {
-      this->save_parameters("godel_blending_parameters.yaml", "blending_plan");
-      robot_scan_.save_parameters("godel_robot_scan_parameters.yaml", "robot_scan");
-      surface_detection_.save_parameters("godel_surface_detection_parameters.yaml", "surface_detection");
+      this->save_blend_parameters(BLEND_PARAMS_FILE, BLEND_PARAMS_NS);
+      this->save_scan_parameters(SCAN_PARAMS_FILE, SCAN_PARAMS_NS);
+      robot_scan_.save_parameters(ROBOT_SCAN_PARAMS_FILE, ROBOT_SCAN_PARAMS_NS);
+      surface_detection_.save_parameters(SURFACE_DETECTION_PARAMS_FILE, SURFACE_DETECTION_PARAMS_NS);
     }
     break;
   }
