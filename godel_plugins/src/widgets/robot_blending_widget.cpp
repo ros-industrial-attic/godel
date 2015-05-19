@@ -41,6 +41,8 @@ RobotBlendingWidget::RobotBlendingWidget(std::string ns):
 RobotBlendingWidget::~RobotBlendingWidget() {
   delete robot_scan_config_window_;
   delete surface_detect_config_window_;
+  delete robot_blend_config_window_;
+  delete scan_plan_config_window_;
 }
 
 void RobotBlendingWidget::init()
@@ -68,7 +70,7 @@ void RobotBlendingWidget::init()
 	surface_detect_config_window_ = new SurfaceDetectionConfigWidget(surf_detect_parameters_);
 
     robot_blend_config_window_= new BlendingPlanConfigWidget(blending_plan_parameters_);
-
+    scan_plan_config_window_=new ScanPlanConfigWidget(scan_plan_parameters_);
 
 	// setting signals and slots
 	connect(robot_scan_config_window_,SIGNAL(parameters_changed()),this,SLOT(robot_scan_params_changed_handler()));
@@ -76,6 +78,7 @@ void RobotBlendingWidget::init()
 	connect(ui_.PushButtonMoreOptions,SIGNAL(clicked()),this,SLOT(scan_options_click_handler()));
 
     connect(ui_.PushButtonBlendOptions,SIGNAL(clicked()),this,SLOT(blend_options_click_handler()));
+    connect(ui_.pushButtonProfileOptions,SIGNAL(clicked()),this,SLOT(scan_plan_options_click_handler()));
 
 	connect(ui_.PushButtonSurfaceOptions,SIGNAL(clicked()),this,SLOT(surface_options_click_handler()));
 	connect(ui_.PushButtonScan,SIGNAL(clicked()),this,SLOT(scan_button_handler()));
@@ -105,6 +108,8 @@ void RobotBlendingWidget::init()
   connect(robot_blend_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
   connect(ui_.ListWidgetSelectedSurfs, SIGNAL(itemDoubleClicked(QListWidgetItem*)),
           this, SLOT(handle_surface_rename(QListWidgetItem*)));
+  connect(scan_plan_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
+
   // For trajectory execution
 
 
@@ -154,6 +159,7 @@ void RobotBlendingWidget::connect_to_services()
         surf_detect_parameters_ = res.surface_detection;
 				blending_plan_parameters_ = res.blending_plan;
                 robot_blend_config_window_->params() = res.blending_plan;
+                scan_plan_config_window_->params() = res.scan_plan;
 
 				// update gui elements for robot scan
 				robot_scan_params_changed_handler();
@@ -292,6 +298,11 @@ void RobotBlendingWidget::scan_options_click_handler()
 void RobotBlendingWidget::blend_options_click_handler()
 {
     robot_blend_config_window_->show();
+}
+
+void RobotBlendingWidget::scan_plan_options_click_handler()
+{
+    scan_plan_config_window_->show();
 }
 
 void RobotBlendingWidget::surface_options_click_handler()
