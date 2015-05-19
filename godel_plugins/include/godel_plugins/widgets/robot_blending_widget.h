@@ -22,6 +22,7 @@
 #include <godel_msgs/SelectedSurfacesChanged.h>
 #include <godel_msgs/SurfaceBlendingParameters.h>
 #include <godel_msgs/BlendingPlanParameters.h>
+#include <godel_msgs/ScanPlanParameters.h>
 #include <godel_msgs/ProcessPlanning.h>
 
 #include <ros/ros.h>
@@ -35,6 +36,7 @@
 #include <godel_plugins/widgets/surface_detection_configuration.h>
 #include <godel_plugins/widgets/robot_scan_configuration.h>
 #include <godel_plugins/widgets/blend_tool_param_window.h>
+#include <godel_plugins/widgets/scan_tool_configuration_window.h>
 
 // macros
 #ifndef DEG2RAD
@@ -125,6 +127,7 @@ protected Q_SLOTS:
 	void scan_options_click_handler();
 
     void blend_options_click_handler();
+    void scan_plan_options_click_handler();
 
 	void surface_options_click_handler();
 	void robot_scan_params_changed_handler();
@@ -150,6 +153,7 @@ protected:
 	RobotScanConfigWidget *robot_scan_config_window_;
     BlendingPlanConfigWidget *robot_blend_config_window_;
     SurfaceDetectionConfigWidget *surface_detect_config_window_;
+    ScanPlanConfigWidget *scan_plan_config_window_;
 
 
 	ros::ServiceClient surface_detection_client_;
@@ -166,6 +170,7 @@ protected:
 	godel_msgs::RobotScanParameters robot_scan_parameters_;
 	godel_msgs::SurfaceDetectionParameters surf_detect_parameters_;
 	godel_msgs::BlendingPlanParameters blending_plan_parameters_;
+    godel_msgs::ScanPlanParameters scan_plan_parameters_;
 	godel_msgs::SurfaceDetection::Response latest_result_;
 	godel_msgs::SurfaceDetection::Request latest_request_;
 	godel_msgs::SelectedSurfacesChanged selected_surfaces_msg_;

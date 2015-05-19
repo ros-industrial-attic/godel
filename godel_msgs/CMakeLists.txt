@@ -27,6 +27,7 @@ add_message_files(
    SurfaceDetectionParameters.msg
    ProcessPath.msg
    ProcessPlan.msg
+   ScanPlanParameters.msg
 )
 
 ## Generate services in the 'srv' folder

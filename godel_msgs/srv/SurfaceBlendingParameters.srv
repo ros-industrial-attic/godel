@@ -8,6 +8,7 @@ int32 action
 godel_msgs/RobotScanParameters robot_scan
 godel_msgs/SurfaceDetectionParameters surface_detection
 godel_msgs/BlendingPlanParameters blending_plan
+godel_msgs/ScanPlanParameters scan_plan
 
 ---
 
@@ -15,3 +16,4 @@ bool succeeded
 godel_msgs/RobotScanParameters robot_scan
 godel_msgs/SurfaceDetectionParameters surface_detection
 godel_msgs/BlendingPlanParameters blending_plan
+godel_msgs/ScanPlanParameters scan_plan
