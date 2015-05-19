@@ -3,7 +3,7 @@
 #include <godel_msgs/TrajectoryExecution.h>
 // Load helpers for reading/writing parameters
 #include <godel_msgs/blending_params_helper.h>
-//#include <godel_msgs/scan_params_helper.h>
+#include <godel_msgs/scan_params_helper.h>
 #include <param_helpers/param_set.h>
 
 
@@ -27,10 +27,6 @@ const static std::string ROBOT_SCAN_PATH_PREVIEW_TOPIC = "robot_scan_path_previe
 const static std::string PUBLISH_REGION_POINT_CLOUD = "publish_region_point_cloud";
 const static std::string REGION_POINT_CLOUD_TOPIC="region_colored_cloud";
 
-//  marker namespaces
-const static std::string BOUNDARY_NAMESPACE = "process_boundary";
-const static std::string PATH_NAMESPACE = "process_path";
-const static std::string TOOL_NAMESPACE = "process_tool";
 
 //  tool visual properties
 const static float TOOL_DIA = .050;
@@ -44,7 +40,7 @@ const static std::string BLEND_PARAMS_FILE = "godel_blending_parameters.yaml";
 const static std::string BLEND_PARAMS_NS = "blending_plan";
 
 const static std::string SCAN_PARAMS_FILE = "godel_scan_parameters.yaml";
-const static std::string SCAN_PARAMS_NS = "keyence_scan";
+const static std::string SCAN_PARAMS_NS = "scan_plan";
 
 const static std::string ROBOT_SCAN_PARAMS_FILE = "godel_robot_scan_parameters.yaml";
 const static std::string ROBOT_SCAN_PARAMS_NS = "robot_scan";
@@ -611,6 +607,7 @@ bool SurfaceBlendingService::surface_blend_parameters_server_callback(godel_msgs
     res.surface_detection = surface_detection_.params_;
     res.robot_scan = robot_scan_.params_;
     res.blending_plan = blending_plan_params_;
+    res.scan_plan = scan_plan_params_;
     break;
 
   case godel_msgs::SurfaceBlendingParameters::Request::GET_DEFAULT_PARAMETERS:
@@ -618,6 +615,7 @@ bool SurfaceBlendingService::surface_blend_parameters_server_callback(godel_msgs
     res.surface_detection = default_surf_detection_params_;
     res.robot_scan = default_robot_scan_params__;
     res.blending_plan = default_blending_plan_params_;
+    res.scan_plan = default_scan_params_;
     break;
 
   // Update the current parameters in this service
@@ -626,6 +624,8 @@ bool SurfaceBlendingService::surface_blend_parameters_server_callback(godel_msgs
     surface_detection_.params_ = req.surface_detection;
     robot_scan_.params_ = req.robot_scan;
     blending_plan_params_ = req.blending_plan;
+    scan_plan_params_ = req.scan_plan;
+    ROS_ERROR_STREAM(scan_plan_params_);
     if (req.action == godel_msgs::SurfaceBlendingParameters::Request::SAVE_PARAMETERS)
     {
       this->save_blend_parameters(BLEND_PARAMS_FILE, BLEND_PARAMS_NS);

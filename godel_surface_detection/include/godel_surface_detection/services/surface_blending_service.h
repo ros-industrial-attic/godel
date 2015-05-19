@@ -46,6 +46,11 @@
 #include <pcl/console/parse.h>
 #include <rosbag/bag.h>
 
+//  marker namespaces
+const static std::string BOUNDARY_NAMESPACE = "process_boundary";
+const static std::string PATH_NAMESPACE = "process_path";
+const static std::string TOOL_NAMESPACE = "process_tool";
+
 struct ProcessPathDetails
 {
   visualization_msgs::MarkerArray process_boundaries_;

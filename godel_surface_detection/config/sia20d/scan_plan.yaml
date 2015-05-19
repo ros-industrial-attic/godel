@@ -1,7 +1,7 @@
 scan_plan:
   scan_width: 0.01
   traverse_spd: 0.0025
-  approach_spd: 0.0125
+  approach_distance: 0.15
   overlap: 0.001
   margin: 0
   quality_metric: "rms"
