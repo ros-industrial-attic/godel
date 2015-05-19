@@ -34,6 +34,7 @@
 
 #include <godel_plugins/widgets/surface_detection_configuration.h>
 #include <godel_plugins/widgets/robot_scan_configuration.h>
+#include <godel_plugins/widgets/blend_tool_param_window.h>
 
 // macros
 #ifndef DEG2RAD
@@ -121,6 +122,9 @@ protected Q_SLOTS:
 	void hide_all_handler();
 	void show_all_handler();
 	void scan_options_click_handler();
+
+    void blend_options_click_handler();
+
 	void surface_options_click_handler();
 	void robot_scan_params_changed_handler();
 	void surface_detect_params_changed_handler();
@@ -141,7 +145,8 @@ protected Q_SLOTS:
 protected:
 	Ui::RobotBlendingWidget ui_;
 	RobotScanConfigWidget *robot_scan_config_window_;
-        SurfaceDetectionConfigWidget *surface_detect_config_window_;
+    BlendingPlanConfigWidget *robot_blend_config_window_;
+    SurfaceDetectionConfigWidget *surface_detect_config_window_;
 
 
 	ros::ServiceClient surface_detection_client_;

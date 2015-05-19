@@ -1,25 +1,31 @@
 #ifndef BLEND_TOOL_PARAM_WINDOW_H
 #define BLEND_TOOL_PARAM_WINDOW_H
 
-#include <QWidget>
+#include <godel_plugins/widgets/parameter_window_base.h>
+#include <ui_blend_tool_param_window.h>
+#include <godel_msgs/BlendingPlanParameters.h>
 
-namespace Ui {
-class BlendToolParamWindow;
-}
 
-class BlendToolParamWindow : public QWidget
+namespace godel_plugins
+{
+
+class BlendingPlanConfigWidget : public ParameterWindowBase
 {
   Q_OBJECT
-
 public:
-  explicit BlendToolParamWindow(QWidget *parent = 0);
-  ~BlendToolParamWindow();
+  BlendingPlanConfigWidget(godel_msgs::BlendingPlanParameters params);
 
-private slots:
-  void on_save_request();
+  godel_msgs::BlendingPlanParameters& params() { return params_; }
 
-private:
-  Ui::BlendToolParamWindow *ui;
+protected:
+  virtual void update_gui_fields();
+
+  virtual void update_internal_values();
+
+  godel_msgs::BlendingPlanParameters params_;
+  Ui::BlendToolParamWindow ui_;
 };
+
+}
 
 #endif // BLEND_TOOL_PARAM_WINDOW_H
