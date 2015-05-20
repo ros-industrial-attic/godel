@@ -1,0 +1,87 @@
+<?xml version="1.0"?>
+<launch>
+
+	<!-- arguments -->
+	<arg name="sim_robot" default="true"/>
+	<arg name="robot_ip" unless="$(arg sim_robot)" />
+	<arg name="sim_sensor" default="true"/>
+	<arg name="fake_data" default="true"/>
+	<arg name="preview_motion" default="true" />
+
+	<!-- Launches the primary service for the case of a simulated depth camera -->
+	<group unless="$(arg sim_sensor)">
+	
+		<!-- surface detection service -->
+		<node name="surface_blending_service" pkg="godel_surface_detection" type="surface_blending_service" output="screen">
+			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/robot_scan.yaml"/>
+			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/surface_detection_live_data.yaml"/>
+			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/blending_plan.yaml"/>
+			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/surface_detection.yaml"/>
+			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/scan_plan.yaml"/>
+
+			<param name="publish_region_point_cloud" value="True"/>
+		</node>
+
+		<!-- sensor -->
+		<!-- Do to the expensive nature of the Kinect2, I don't autolaunch it here -->	
+	</group>
+
+	<!-- Launches the primary service for the case of a real depth camera -->
+	<group if="$(arg sim_sensor)">
+	
+		<!-- surface detection service -->
+		<node name="surface_blending_service" pkg="godel_surface_detection" type="surface_blending_service" output="screen">
+			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/robot_scan.yaml"/>
+      <rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/blending_plan.yaml"/>
+      <rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/surface_detection.yaml"/>
+      <rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/scan_plan.yaml"/>
+      <param name="publish_region_point_cloud" value="True"/>
+			<rosparam if="$(arg fake_data)"  command="load" file="$(find godel_surface_detection)/config/sia20d/surface_detection_fake_data.yaml"/>
+			<rosparam unless="$(arg fake_data)"  command="load" file="$(find godel_surface_detection)/config/sia20d/surface_detection_recorded_data.yaml"/>
+		</node>
+
+		<!-- simulated sensor data -->
+		<node unless="$(arg fake_data)" name="point_cloud_publisher_node" pkg="godel_surface_detection" type="point_cloud_publisher_node"
+			args="-f data/milk_cartoon_all_small_clorox.pcd -r 0.5 -i world_frame" output="log">
+			<rosparam param="cloud_transform">{rx: 0.96, ry: 0.0, rz: -1.57, x: 0.28, y: 0.0, z: 0.48}</rosparam>
+		</node>
+
+		<remap if="$(arg fake_data)" from="generated_cloud" to="sensor_point_cloud"/>
+		<node if="$(arg fake_data)" pkg="godel_surface_detection" type="point_cloud_generator_node" name="point_cloud_generator_node" output="screen">
+			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/point_cloud_descriptions.yaml"/>
+		</node>
+	</group>
+
+	<!-- These nodes provide services necessary for the generation of blending paths -->
+	<node name="process_path_generator_node" pkg="godel_process_path_generation" type="process_path_generator_node" output="screen"/>
+	<node name="polygon_offset_node" pkg="godel_polygon_offset" type="godel_polygon_offset_node" output="screen"/>
+
+	<!-- This node provides services necessary for translating cartesian paths into joint trajectories -->
+	<node name="trajectory_planner_node" pkg="godel_path_planning" type="trajectory_planning_node" output="screen">
+		<param name="ik_plugin" value="motoman_sia20d_descartes/MotomanSia20dRobotModel"/>
+		<!-- <param name="ik_plugin" value="descartes_moveit/MoveitStateAdapter"/> -->
+	</node>
+
+	<!-- This node provides interfaces to trajectory execution for simulated and real robots  -->
+	<node name="path_execution_service" pkg="godel_path_execution" type="path_execution_service_node" output="screen" />
+
+	<!-- Bring up simulated robot that can be visualized under the tf namespace 'simulation'
+			 Allows for previewing paths generated before execution. -->
+	<include if="$(arg preview_motion)" file="$(find simulator_service)/launch/simulation.launch"/>
+
+	<!-- Bring up Keyence driver and analysis services -->
+	<!-- TODO: complete -->
+	
+	<!-- rviz blending plugin -->
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_surface_detection)/rviz/robot_blending.rviz" output="screen" launch-prefix="nice" required="true"/>
+
+	<!-- Bring up the MoveIt interface to the real or simulated robot -->
+	<include file="$(find godel_sia20d_moveit_config)/launch/moveit_planning_execution.launch">
+		<arg name="rviz" value="false"/>
+		<arg name="sim" value="$(arg sim_robot)"/>
+		<arg name="robot_ip" value="$(arg robot_ip)" unless="$(arg sim_robot)"/>
+		<arg name="controller" value="fs100" unless="$(arg sim_robot)"/>
+	</include>
+
+
+</launch>
