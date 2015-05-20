@@ -13,11 +13,11 @@
 	
 		<!-- surface detection service -->
 		<node name="surface_blending_service" pkg="godel_surface_detection" type="surface_blending_service" output="screen">
-			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/robot_scan.yaml"/>
-			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/surface_detection_live_data.yaml"/>
-			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/blending_plan.yaml"/>
-			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/surface_detection.yaml"/>
-			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/scan_plan.yaml"/>
+			<rosparam command="load" file="$(find godel_surface_detection)/config/irb6640/robot_scan.yaml"/>
+			<rosparam command="load" file="$(find godel_surface_detection)/config/irb6640/surface_detection_live_data.yaml"/>
+			<rosparam command="load" file="$(find godel_surface_detection)/config/irb6640/blending_plan.yaml"/>
+			<rosparam command="load" file="$(find godel_surface_detection)/config/irb6640/surface_detection.yaml"/>
+			<rosparam command="load" file="$(find godel_surface_detection)/config/irb6640/scan_plan.yaml"/>
 
 			<param name="publish_region_point_cloud" value="True"/>
 		</node>
@@ -31,10 +31,10 @@
 	
 		<!-- surface detection service -->
 		<node name="surface_blending_service" pkg="godel_surface_detection" type="surface_blending_service" output="screen">
-			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/robot_scan.yaml"/>
-      <rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/blending_plan.yaml"/>
-      <rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/surface_detection.yaml"/>
-      <rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/scan_plan.yaml"/>
+			<rosparam command="load" file="$(find godel_surface_detection)/config/irb6640/robot_scan.yaml"/>
+      <rosparam command="load" file="$(find godel_surface_detection)/config/irb6640/blending_plan.yaml"/>
+      <rosparam command="load" file="$(find godel_surface_detection)/config/irb6640/surface_detection.yaml"/>
+      <rosparam command="load" file="$(find godel_surface_detection)/config/irb6640/scan_plan.yaml"/>
       <param name="publish_region_point_cloud" value="True"/>
 			<rosparam if="$(arg fake_data)"  command="load" file="$(find godel_surface_detection)/config/sia20d/surface_detection_fake_data.yaml"/>
 			<rosparam unless="$(arg fake_data)"  command="load" file="$(find godel_surface_detection)/config/sia20d/surface_detection_recorded_data.yaml"/>
@@ -48,7 +48,7 @@
 
 		<remap if="$(arg fake_data)" from="generated_cloud" to="sensor_point_cloud"/>
 		<node if="$(arg fake_data)" pkg="godel_surface_detection" type="point_cloud_generator_node" name="point_cloud_generator_node" output="screen">
-			<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/point_cloud_descriptions.yaml"/>
+			<rosparam command="load" file="$(find godel_surface_detection)/config/irb6640/point_cloud_descriptions.yaml"/>
 		</node>
 	</group>
 
@@ -58,7 +58,7 @@
 
 	<!-- This node provides services necessary for translating cartesian paths into joint trajectories -->
 	<node name="trajectory_planner_node" pkg="godel_path_planning" type="trajectory_planning_node" output="screen">
-		<param name="ik_plugin" value="descartes_moveit/MoveitStateAdapter"/>
+		<param name="ik_plugin" value="abb_irb6640_descartes/AbbIrb6640RobotModel"/>
 	</node>
 
 	<!-- This node provides interfaces to trajectory execution for simulated and real robots  -->
