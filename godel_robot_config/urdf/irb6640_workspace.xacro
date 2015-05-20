@@ -1,14 +1,14 @@
 <?xml version="1.0" ?>
-<robot name="sia20d_workspace" xmlns:xacro="http://ros.org/wiki/xacro">
-	<xacro:include filename="$(find motoman_sia20d_support)/urdf/sia20d_macro.xacro"/>
-	<xacro:include filename="$(find godel_robot_config)/urdf/workspace_components_swri.xacro"/>
+<robot name="irb6640_workspace" xmlns:xacro="http://ros.org/wiki/xacro">
+	<xacro:include filename="$(find abb_irb6600_support)/urdf/irb6640_macro.xacro"/>
+	<xacro:include filename="$(find godel_robot_config)/urdf/workspace_components.xacro"/>
 	<xacro:include filename="$(find godel_robot_config)/urdf/blending_eff_macro.xacro"/>
 	
 
 	<!-- property list -->
 	<xacro:property name="workcell_height" value="1"/>
 	<xacro:property name="coupler_height" value="0.0"/> <!--"0.087"-->
-    <xacro:property name="attached_object_length" value="0.10"/>
+  <xacro:property name="attached_object_length" value="0.10"/>
 	<xacro:property name="attached_object_width" value="0.10"/>
 	<xacro:property name="attached_object_height" value="0.025"/>
 	<xacro:property name="arm_prefix" value=""/>
@@ -16,7 +16,7 @@
 	<xacro:property name="no_go_height" value="0.1"/>
 
 	<!-- instantiating workcell definitions -->
-	<xacro:workcell_swri_zone1_components/>
+	<xacro:workcell_zone1_components/>
 	<!-- end of workcell definitions -->
 
 	<link name="roof1">
@@ -25,7 +25,7 @@
 				<box size="1.40 2.220 0.04"/>
 			</geometry>
 		</collision>	
-	</link>-
+	</link>
 
 	<link name="no_go_zone">
 		<collision>
@@ -37,7 +37,7 @@
 
 	<!-- instantiating arm  -->	
 	<xacro:blending_eff_definition prefix="${arm_prefix}" eff_adjustment="0.0575"/>
-	<xacro:motoman_sia20d prefix="${arm_prefix}"/>
+	<xacro:abb_irb6640 prefix="${arm_prefix}"/>
 
 	<joint name="link_t_to_eff" type="fixed">
 		<parent link="tool0"/>
