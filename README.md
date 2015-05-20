@@ -43,3 +43,6 @@ Godel: Austrian logician and mathematician http://en.wikipedia.org/wiki/Kurt_G%C
   roslaunch godel_surface_detection robot_blending.launch sim_sensor:=false 
   sim_robot:=false robot_ip:=[robot ip]
   ```
+
+### External Software Modifications
+- ROS-I ABB: Modify the ```abb_driver``` package's ```robot_interface.launch``` to add an extra parameter to the ```industrial_robot_client``` node: ```<param name= "constraints/goal_threshold" value="0.01"/>```
