@@ -32,15 +32,17 @@
 
 bool trajectory_planning_callback(godel_msgs::TrajectoryPlanning::Request& req,
                                   godel_msgs::TrajectoryPlanning::Response& res,
-                                  const moveit::core::RobotModelConstPtr& model)
+                                  const moveit::core::RobotModelConstPtr& model,
+                                  const std::string& ik_plugin)
 {
-  return godel_path_planning::generateTrajectory(req, res.trajectory, model);
+  return godel_path_planning::generateTrajectory(req, res.trajectory, model, ik_plugin);
 }
 
 int main(int argc, char **argv)
 {
   ros::init(argc, argv, "godel_trajectory_planner");
   ros::NodeHandle nh;
+  ros::NodeHandle pnh ("~");
 
   // Load the robot model. Should not change after start up.
   robot_model_loader::RobotModelLoader robot_model_loader("robot_description");
@@ -51,10 +53,16 @@ int main(int argc, char **argv)
     return -1;
   }
 
+  std::string ik_plugin;
+  if (!pnh.getParam("ik_plugin", ik_plugin))
+  {
+    throw std::runtime_error("The trajectory planner requires an 'ik_plugin' parameter");
+  }
+
   ros::ServiceServer trajectory_server = 
     nh.advertiseService<godel_msgs::TrajectoryPlanning::Request,
                         godel_msgs::TrajectoryPlanning::Response>
-                        ("trajectory_planner", boost::bind(trajectory_planning_callback, _1, _2, boost::cref(model)));
+                        ("trajectory_planner", boost::bind(trajectory_planning_callback, _1, _2, boost::cref(model), boost::cref(ik_plugin)));
 
   ROS_INFO("%s ready to service requests.", trajectory_server.getService().c_str());
 

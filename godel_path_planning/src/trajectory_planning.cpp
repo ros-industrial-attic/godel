@@ -19,22 +19,19 @@
 namespace
 {
   const static std::string ROBOT_DESCRIPTION = "robot_description";
-
-  /* This will allow us to adapt to a different robot model by dynamically loading its
-     interface. */
-  static const std::string PLUGIN_NAME = "motoman_sia20d_descartes/MotomanSia20dRobotModel";
-  
+    
   static pluginlib::ClassLoader<descartes_core::RobotModel> robot_model_loader("descartes_core",
                                                                      "descartes_core::RobotModel");
   
   // Create a descartes RobotModel for graph planning
   descartes_core::RobotModelPtr createRobotModel(const std::string& group_name,
                                                  const std::string& tool_frame,
-                                                 const std::string& world_frame)
+                                                 const std::string& world_frame,
+                                                 const std::string& ik_plugin)
   {
     using descartes_core::RobotModelPtr;
 
-    RobotModelPtr ptr = robot_model_loader.createInstance(PLUGIN_NAME);
+    RobotModelPtr ptr = robot_model_loader.createInstance(ik_plugin);
     ptr->initialize(ROBOT_DESCRIPTION, group_name, world_frame, tool_frame);
     return ptr;
   }
@@ -166,7 +163,8 @@ namespace
 
 bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlanning::Request& req,
                                              trajectory_msgs::JointTrajectory& trajectory,
-                                             const moveit::core::RobotModelConstPtr& model)
+                                             const moveit::core::RobotModelConstPtr& model,
+                                             const std::string& ik_plugin)
 {
   using descartes_core::TrajectoryPtPtr;
 
@@ -178,7 +176,8 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
 
   descartes_core::RobotModelConstPtr robot_model = createRobotModel(req.group_name, 
                                                                     req.tool_frame, 
-                                                                    req.world_frame);
+                                                                    req.world_frame,
+                                                                    ik_plugin);
 
   TrajectoryVec graph_points;
   graph_points.reserve(req.path.points.size());
