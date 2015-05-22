@@ -463,7 +463,7 @@ void RobotBlendingWidget::generate_process_path_handler()
 {
 	godel_msgs::ProcessPlanning process_plan;
 	process_plan.request.use_default_parameters = false;
-	process_plan.request.params = blending_plan_parameters_;
+  process_plan.request.params = robot_blend_config_window_->params();
 	process_plan.request.action = process_plan.request.GENERATE_MOTION_PLAN_AND_PREVIEW;
 	ROS_INFO_STREAM("process plan request sent");
 	if (process_plan_client_.call(process_plan))
