@@ -30,7 +30,6 @@
     <disable_collisions link1="base_link" link2="link_cylinder" reason="Never" />
     <disable_collisions link1="base_link" link2="link_piston" reason="Never" />
     <disable_collisions link1="base_link" link2="no_go_zone" reason="Adjacent" />
-    <disable_collisions link1="base_link" link2="roof1" reason="Adjacent" />
     <disable_collisions link1="base_link" link2="table_base1" reason="Adjacent" />
     <disable_collisions link1="gripper_body" link2="keyence_base_link" reason="Adjacent" />
     <disable_collisions link1="gripper_body" link2="kinect2_frame" reason="Adjacent" />
@@ -60,14 +59,12 @@
     <disable_collisions link1="link_1" link2="link_cylinder" reason="Adjacent" />
     <disable_collisions link1="link_1" link2="link_piston" reason="Default" />
     <disable_collisions link1="link_1" link2="no_go_zone" reason="Never" />
-    <disable_collisions link1="link_1" link2="roof1" reason="Never" />
     <disable_collisions link1="link_1" link2="table_base1" reason="Never" />
     <disable_collisions link1="link_2" link2="link_3" reason="Adjacent" />
     <disable_collisions link1="link_2" link2="link_5" reason="Never" />
     <disable_collisions link1="link_2" link2="link_6" reason="Never" />
     <disable_collisions link1="link_2" link2="link_piston" reason="Default" />
     <disable_collisions link1="link_2" link2="no_go_zone" reason="Never" />
-    <disable_collisions link1="link_2" link2="roof1" reason="Default" />
     <disable_collisions link1="link_2" link2="table_base1" reason="Never" />
     <disable_collisions link1="link_3" link2="link_4" reason="Adjacent" />
     <disable_collisions link1="link_3" link2="link_5" reason="Never" />
@@ -86,12 +83,8 @@
     <disable_collisions link1="link_6" link2="link_piston" reason="Never" />
     <disable_collisions link1="link_cylinder" link2="link_piston" reason="Adjacent" />
     <disable_collisions link1="link_cylinder" link2="no_go_zone" reason="Never" />
-    <disable_collisions link1="link_cylinder" link2="roof1" reason="Never" />
     <disable_collisions link1="link_cylinder" link2="table_base1" reason="Never" />
     <disable_collisions link1="link_piston" link2="no_go_zone" reason="Never" />
-    <disable_collisions link1="link_piston" link2="roof1" reason="Never" />
     <disable_collisions link1="link_piston" link2="table_base1" reason="Never" />
-    <disable_collisions link1="no_go_zone" link2="roof1" reason="Adjacent" />
     <disable_collisions link1="no_go_zone" link2="table_base1" reason="Adjacent" />
-    <disable_collisions link1="roof1" link2="table_base1" reason="Adjacent" />
 </robot>
