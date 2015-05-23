@@ -3,41 +3,23 @@
   <xacro:include filename="$(find abb_irb2400_support)/urdf/irb2400_macro.xacro"/>
   <xacro:include filename="$(find godel_robot_config)/urdf/workspace_components.xacro"/>
   <xacro:include filename="$(find godel_robot_config)/urdf/blending_eff_macro.xacro"/>
-
+  
   <!-- property list -->
   <xacro:property name="workcell_height" value="1"/>
   <xacro:property name="coupler_height" value="0.0"/> <!--"0.087"-->
-  <xacro:property name="attached_object_length" value="0.10"/>
-  <xacro:property name="attached_object_width" value="0.10"/>
-  <xacro:property name="attached_object_height" value="0.025"/>
   <xacro:property name="arm_prefix" value=""/>
     
   <xacro:property name="no_go_height" value="0.1"/>
 
   <!-- instantiating workcell definitions -->
   <xacro:workcell_zone1_components/>
-  <!-- end of workcell definitions -->
-
-<!--   <link name="roof1">
-    <collision>
-      <geometry>
-        <box size="1.40 2.220 0.04"/>
-      </geometry>
-    </collision>  
-  </link> -->
-
-  <link name="no_go_zone">
-    <collision>
-      <geometry>
-        <box size="0.8 2.220 ${no_go_height}"/>
-      </geometry>
-    </collision>  
-  </link>
 
   <!-- instantiating arm  --> 
-  <xacro:blending_eff_definition prefix="${arm_prefix}" eff_adjustment="0.0575"/>
   <xacro:abb_irb2400 prefix="${arm_prefix}"/>
+  <!-- instantiating end effector  -->
+  <xacro:blending_eff_definition prefix="${arm_prefix}" eff_adjustment="0.0575"/>
 
+  <!-- Attach the end effector to the end of the robot arm (tool0) -->
   <joint name="link_t_to_eff" type="fixed">
     <parent link="tool0"/>
     <child link="eff_frame"/>
@@ -51,18 +33,21 @@
     <origin xyz="0.241 0 0" rpy="0 0 0"/>
   </joint>
 
-<!--   <joint name="world_to_roof1" type="fixed">
-    <parent link="world_frame"/>
-    <child link="roof1"/>
-    <origin xyz="0.65 0 1.32" rpy="0 0 0"/>
-  </joint> -->
+  <!-- As a work-around for the lack of collision detection with move-it joint
+     moves with the work objects, we use a no-go-zone to prevent the robot
+     from getting too close to the table. Descartes is still unawares, though -->
+  <link name="no_go_zone">
+    <collision>
+      <geometry>
+        <box size="0.8 2.220 ${no_go_height}"/>
+      </geometry>
+    </collision>  
+  </link>
 
   <joint name="world_to_no_go" type="fixed">
     <parent link="world_frame" />
     <child link="no_go_zone" />
     <origin xyz="1.0 0 ${no_go_height/2.0} " />
   </joint>
-    
-  <!-- end of arm-workcell joint definitions -->  
-
+  
 </robot>
