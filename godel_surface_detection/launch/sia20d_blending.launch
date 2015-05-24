@@ -73,7 +73,7 @@
 	<!-- TODO: complete -->
 	
 	<!-- rviz blending plugin -->
-	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_surface_detection)/rviz/robot_blending.rviz" output="screen" launch-prefix="nice" required="true"/>
+	<node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_surface_detection)/rviz/sia20d_blending.rviz" output="screen" launch-prefix="nice" required="true"/>
 
 	<!-- Bring up the MoveIt interface to the real or simulated robot -->
 	<include file="$(find godel_sia20d_moveit_config)/launch/moveit_planning_execution.launch">
