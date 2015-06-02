@@ -580,7 +580,6 @@ protected:
 			plan.request.angle_discretization = 0.2;
 			plan.request.interpoint_delay = TRAJECTORY_INTERPOINT_DELAY;
 			plan.request.free_z_rotation = false;
-			plan.request.z_angle_offset = -M_PI/2.0;
 			
 			const visualization_msgs::Marker& marker = process_path_results_.scan_paths_.markers[i];
 
@@ -633,7 +632,6 @@ protected:
 			plan.request.angle_discretization = TRAJECTORY_ANGLE_DISC;
 			plan.request.interpoint_delay = TRAJECTORY_INTERPOINT_DELAY;
 			plan.request.free_z_rotation = true;
-			plan.request.z_angle_offset = 0.0;
 
 			const visualization_msgs::Marker& marker = process_path_results_.process_paths_.markers[i];
 

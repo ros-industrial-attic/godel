@@ -10,7 +10,6 @@ string world_frame
 # Angle
 bool free_z_rotation   
 float64 angle_discretization
-float64 z_angle_offset
 uint8 iterations
 
 # Timing data
