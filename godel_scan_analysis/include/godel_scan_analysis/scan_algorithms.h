@@ -17,18 +17,18 @@ template<typename FloatType, typename InputIt>
 LineFitSums<FloatType> calculateSums(InputIt begin, InputIt end)
 {
   LineFitSums<FloatType> sums;
-  sums.x_ = 0.0;
-  sums.y_ = 0.0;
-  sums.x2_ = 0.0;
-  sums.xy_ = 0.0;
-  sums.n_ = std::distance(begin, end);
+  sums.x = 0.0;
+  sums.y = 0.0;
+  sums.x2 = 0.0;
+  sums.xy = 0.0;
+  sums.n = std::distance(begin, end);
 
   while (begin != end)
   {
-    sums.x_ += begin->x;
-    sums.y_ += begin->y;
-    sums.x2_ += ((begin->x) * (begin->x));
-    sums.xy_ += ((begin->x) * (begin->y));
+    sums.x += begin->x;
+    sums.y += begin->y;
+    sums.x2 += ((begin->x) * (begin->x));
+    sums.xy += ((begin->x) * (begin->y));
 
     ++begin;
   }
@@ -39,10 +39,10 @@ LineFitSums<FloatType> calculateSums(InputIt begin, InputIt end)
 template<typename FloatType>
 LineCoef<FloatType> calculateLineCoefs(const LineFitSums<FloatType>& sums)
 {  
-  FloatType x_mean = sums.x_ / sums.n_;
-  FloatType y_mean = sums.y_ / sums.n_;
+  FloatType x_mean = sums.x / sums.n;
+  FloatType y_mean = sums.y / sums.n;
 
-  FloatType slope = (sums.xy_ - sums.x_ * y_mean) / (sums.x2_ - sums.x_ * x_mean);
+  FloatType slope = (sums.xy - sums.x * y_mean) / (sums.x2 - sums.x * x_mean);
   FloatType intercept = y_mean - slope * x_mean;
 
   return LineCoef<FloatType>(slope, intercept); 

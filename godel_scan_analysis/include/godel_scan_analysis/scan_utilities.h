@@ -15,28 +15,28 @@ struct Point
 template<typename FloatType>
 struct LineCoef
 {
-  FloatType slope_;
-  FloatType intercept_;
+  FloatType slope;
+  FloatType intercept;
 
-  LineCoef(double slope, double intercept)
-    : slope_(slope)
-    , intercept_(intercept)
+  LineCoef(FloatType slope, FloatType intercept)
+    : slope(slope)
+    , intercept(intercept)
   {}
 
   FloatType operator()(const FloatType x) const
   { 
-    return slope_ * x + intercept_;
+    return slope * x + intercept;
   }
 };
 
 template<typename FloatType>
 struct LineFitSums
 {
-  FloatType x_;
-  FloatType y_;
-  FloatType x2_; // sum of x*x
-  FloatType xy_; // sum of x*y
-  std::size_t n_;
+  FloatType x;
+  FloatType y;
+  FloatType x2; // sum of x*x
+  FloatType xy; // sum of x*y
+  std::size_t n;
 };
 
 template<typename FloatType>

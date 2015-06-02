@@ -22,9 +22,9 @@ namespace godel_surface_detection
 
   struct ProfilimeterScanParams
   {
-    double width_;
-    double overlap_;
-    double ds_;
+    double width;
+    double overlap;
+    double ds;
   };
 
   std::vector<godel_process_path::PolygonPt> 

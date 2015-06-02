@@ -387,8 +387,8 @@ protected:
 				BOOST_FOREACH(godel_process_path::PolygonBoundary &bnd, filtered_boundaries)
 				{
 					godel_surface_detection::ProfilimeterScanParams param;
-					param.width_ = 0.04;
-					param.overlap_ = 0.0;
+					param.width = 0.04;
+					param.overlap = 0.0;
 
 					// Filter and reverse boundaries
 					coll.push_back(godel_surface_detection::generateProfilimeterScanPath(bnd, param));

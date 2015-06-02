@@ -111,7 +111,7 @@ namespace
   {
     std::vector<PolygonPt> pts;
     double dx, dy; // 
-    float x, y;
+    double x, y;
     int n;
     if (rect.w > rect.h)
     {
@@ -215,11 +215,21 @@ godel_surface_detection::generateProfilimeterScanPath(const PolygonBoundary& bou
 {
   static const double DS = 0.005;
 
+  // Step 0 -> verify that the parameters make sense
+  if (params.overlap >= params.width)
+  {
+    ROS_WARN("Scan Path Generator: Overlap size must be less than width.");
+  }
+  if (params.width == 0.0)
+  {
+    ROS_WARN("Scan Path Generator: Scan width must be greater than zero.");
+  }
+
   // Step 1 -> compute (oriented?) bounding box
   RotatedRect bbox = simpleBoundingBox(boundary);
   
   // Step 2 -> slice bounding box into strips
-  std::vector<RotatedRect> slices = sliceBoundingBox(bbox, params.width_, params.overlap_);
+  std::vector<RotatedRect> slices = sliceBoundingBox(bbox, params.width, params.overlap);
   
   // Step 3 -> generate set of dense points along center of each strip
   std::vector<std::vector<PolygonPt> > slice_points;
@@ -229,9 +239,6 @@ godel_surface_detection::generateProfilimeterScanPath(const PolygonBoundary& bou
 
   // Step 4 -> connect slices together
   std::vector<PolygonPt> pts = stitchAndFlatten(slice_points, DS);
-
-  const PolygonPt& start = *pts.begin();
-  const PolygonPt& end = *pts.rbegin(); 
 
   return pts;
 }

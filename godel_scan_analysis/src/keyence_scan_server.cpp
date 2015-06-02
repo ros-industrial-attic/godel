@@ -3,8 +3,8 @@
 #include <pcl_ros/transforms.h>
 #include <pcl/filters/voxel_grid.h>
 
-/*
-*/
+const static double VOXEL_LEAFSIZE = 0.0005;
+const static double MAX_TF_LOOKUP_TIME = 0.25;
 
 godel_scan_analysis::ScanServer::ScanServer(const std::string& world_frame, 
                                             const std::string& scan_frame)
@@ -55,7 +55,7 @@ void godel_scan_analysis::ScanServer::publishCloud(const ros::TimerEvent&) const
   // Downsample first
   pcl::VoxelGrid<pcl::PointXYZRGB> vg;
   vg.setInputCloud(map_);
-  vg.setLeafSize(0.0005, 0.0005, 0.0005);
+  vg.setLeafSize(VOXEL_LEAFSIZE, VOXEL_LEAFSIZE, VOXEL_LEAFSIZE);
   vg.filter(*pub_cloud);
   
   cloud_pub_.publish(pub_cloud);
@@ -72,7 +72,7 @@ inline
 tf::StampedTransform godel_scan_analysis::ScanServer::findTransform(const ros::Time& tm) const
 {
   tf::StampedTransform transform;
-  tf_listener_.waitForTransform(from_frame_, to_frame_, tm, ros::Duration(0.25));
+  tf_listener_.waitForTransform(from_frame_, to_frame_, tm, ros::Duration(MAX_TF_LOOKUP_TIME));
   tf_listener_.lookupTransform(from_frame_, to_frame_, tm, transform);
   return transform;
 }
