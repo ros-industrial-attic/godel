@@ -36,33 +36,6 @@ namespace
     return ptr;
   }
 
-  descartes_core::TrajectoryPtPtr rotationalMultipoint(double x, double y, double z, double rx, double ry, double rz,
-                                                       double discretization, const descartes_core::TimingConstraint& timing,
-                                                       double drx = 0.0, double dry = 0.0, double drz = 0.3)
-  {
-    using namespace descartes_core;
-    using namespace descartes_trajectory;
-
-    CartTrajectoryPt a(
-              TolerancedFrame(utils::toFrame(x,y, z, rx, ry, rz, descartes_core::utils::EulerConventions::XYZ),
-               ToleranceBase::zeroTolerance<PositionTolerance>(x, y, z),
-               ToleranceBase::createSymmetric<OrientationTolerance>(rx, ry, rz-(M_PI/2.0), drx, dry, drz)),
-              0.0, discretization, timing);
-
-    
-    CartTrajectoryPt b(
-              TolerancedFrame(utils::toFrame(x,y, z, rx, ry, rz, descartes_core::utils::EulerConventions::XYZ),
-               ToleranceBase::zeroTolerance<PositionTolerance>(x, y, z),
-               ToleranceBase::createSymmetric<OrientationTolerance>(rx, ry, rz+(M_PI/2.0), 0, 0, 0.3)),
-              0.0, discretization, timing);
-
-    std::vector<CartTrajectoryPt> pts;
-    pts.push_back(a); 
-    pts.push_back(b);
-
-    return descartes_core::TrajectoryPtPtr(new godel_path_planning::CartTrajectoryMultiPt(pts, timing));
-  }
-
   // Create an axial trajectory pt from a given tf transform
   descartes_core::TrajectoryPtPtr tfToAxialTrajectoryPt(const tf::Transform& nominal, double discretization, bool blend_path)
   {
@@ -93,7 +66,12 @@ namespace
     } 
     else
     {
-      return rotationalMultipoint(x, y, z, rx, ry, rz, discretization, timing);
+      return boost::shared_ptr<TrajectoryPt>(
+        new CartTrajectoryPt(
+              TolerancedFrame(utils::toFrame(x,y, z, rx, ry, rz, descartes_core::utils::EulerConventions::XYZ),
+               ToleranceBase::zeroTolerance<PositionTolerance>(x, y, z),
+               ToleranceBase::createSymmetric<OrientationTolerance>(rx, ry, rz, 0, 0, M_PI)),
+              0.0, M_PI, timing));
     }
   }
 
@@ -149,8 +127,6 @@ namespace
       (it + 1)->get()->setTiming(tm);
     }
   }
-
-
 
   // Return the current joint positions from a given topic
   std::vector<double> getCurrentPosition(const std::string& topic)
