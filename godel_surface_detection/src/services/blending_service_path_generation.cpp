@@ -210,7 +210,7 @@ static godel_msgs::TrajectoryPlanningRequest getScanTrajectoryRequest()
   request.angle_discretization = SCAN_TRAJECTORY_ANGLE_DISC;
   request.interpoint_delay = SCAN_TRAJECTORY_INTERPOINT_DELAY;
   request.is_blending_path = false;
-  request.plan_from_current_position = false;
+  request.plan_from_current_position = true;
   return request;
 }
 

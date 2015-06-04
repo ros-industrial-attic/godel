@@ -9,7 +9,6 @@
 #include <descartes_core/robot_model.h>
 #include <pluginlib/class_loader.h>
 
-#include "godel_path_planning/trajectory_multipoint.h"
 #include "godel_path_planning/trajectory_interpolator.h"
 
 #include <sensor_msgs/JointState.h>
