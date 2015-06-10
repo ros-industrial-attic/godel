@@ -1,6 +1,7 @@
 #include "godel_path_planning/trajectory_planning.h"
 
 #include "descartes_trajectory/cart_trajectory_pt.h"
+#include "descartes_trajectory/axial_symmetric_pt.h"
 #include <godel_path_planning/trajectory_interpolator.h>
 #include "descartes_planner/dense_planner.h"
 
@@ -56,12 +57,7 @@ namespace
 
     if (blend_path)
     {
-      return boost::shared_ptr<TrajectoryPt>(
-        new CartTrajectoryPt(
-              TolerancedFrame(utils::toFrame(x,y, z, rx, ry, rz, descartes_core::utils::EulerConventions::XYZ),
-               ToleranceBase::zeroTolerance<PositionTolerance>(x, y, z),
-               ToleranceBase::createSymmetric<OrientationTolerance>(rx, ry, 0, 0, 0, 2*M_PI)),
-              0.0, discretization, timing));
+      return boost::shared_ptr<descartes_trajectory::AxialSymmetricPt>(new AxialSymmetricPt(eigen_pose, discretization, AxialSymmetricPt::Z_AXIS, timing));
     } 
     else
     {

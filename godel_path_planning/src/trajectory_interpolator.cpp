@@ -14,7 +14,7 @@ godel_path_planning::interpolateCartesian(const Eigen::Affine3d& start,
   // Step size
   Eigen::Vector3d step = delta / steps;
   // Time delta
-  descartes_core::TimingConstraint timing (0, 0);//total_time/steps);
+  descartes_core::TimingConstraint timing (0, 1.0);//total_time/steps);
   // Orientation interpolation
   Eigen::Quaterniond start_q (start.rotation());
   Eigen::Quaterniond stop_q (stop.rotation());
