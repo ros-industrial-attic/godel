@@ -45,7 +45,8 @@ add_service_files(
    SelectMotionPlan.srv
    LoadSaveMotionPlan.srv
    RenameSurface.srv
-   ProcessExecution.srv
+   BlendProcessExecution.srv
+   KeyenceProcessExecution.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
