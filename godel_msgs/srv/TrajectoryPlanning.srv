@@ -19,7 +19,7 @@ bool plan_from_current_position
 float64 angle_discretization
 
 # Timing data
-float64 interpoint_delay
+float64 tcp_speed
 
 
 ---

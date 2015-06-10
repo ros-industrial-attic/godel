@@ -7,7 +7,7 @@ const static std::string BLEND_TRAJECTORY_GROUP_NAME = "manipulator_tcp";
 const static std::string BLEND_TRAJECTORY_TOOL_FRAME = "tcp_frame";
 const static std::string BLEND_TRAJECTORY_WORLD_FRAME = "world_frame";
 const static double BLEND_TRAJECTORY_ANGLE_DISC = M_PI/10.0;
-const static double BLEND_TRAJECTORY_INTERPOINT_DELAY = 0.5;
+// const static double BLEND_TRAJECTORY_INTERPOINT_DELAY = 0.5;
 
 // Temporary constants for storing scan path planning parameters
 // Will be replaced by loadable, savable parameters
@@ -16,7 +16,7 @@ const static std::string SCAN_TRAJECTORY_GROUP_NAME = "manipulator_keyence";
 const static std::string SCAN_TRAJECTORY_TOOL_FRAME = "keyence_tcp_frame";
 const static std::string SCAN_TRAJECTORY_WORLD_FRAME = "world_frame";
 const static double SCAN_TRAJECTORY_ANGLE_DISC = 0.2;
-const static double SCAN_TRAJECTORY_INTERPOINT_DELAY = 0.5;
+// const static double SCAN_TRAJECTORY_INTERPOINT_DELAY = 0.5;
 
 /**
  * Prototype ProcessPlan refactoring - make it compatible with trajectory library and GUI
@@ -171,7 +171,7 @@ godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotio
     ProcessPathResult paths = generateProcessPath(names[i], meshes[i], blend_params, scan_params);
     for (std::size_t j = 0; j < paths.paths.size(); ++j)
     {
-      ProcessPlanResult plan = generateProcessPlan(paths.paths[j].first, paths.paths[j].second);
+      ProcessPlanResult plan = generateProcessPlan(paths.paths[j].first, paths.paths[j].second, blend_params, scan_params);
       for (std::size_t k = 0; k < plan.plans.size(); ++k)
       {
         lib.get()[plan.plans[k].first] = plan.plans[k].second;
@@ -195,7 +195,7 @@ static godel_msgs::TrajectoryPlanningRequest getBlendTrajectoryRequest()
   request.tool_frame = BLEND_TRAJECTORY_TOOL_FRAME;
   request.world_frame = BLEND_TRAJECTORY_WORLD_FRAME;
   request.angle_discretization = BLEND_TRAJECTORY_ANGLE_DISC;
-  request.interpoint_delay = BLEND_TRAJECTORY_INTERPOINT_DELAY;
+  // request.interpoint_delay = BLEND_TRAJECTORY_INTERPOINT_DELAY;
   request.is_blending_path = true;
   request.plan_from_current_position = true;
   return request;
@@ -208,20 +208,24 @@ static godel_msgs::TrajectoryPlanningRequest getScanTrajectoryRequest()
   request.tool_frame = SCAN_TRAJECTORY_TOOL_FRAME;
   request.world_frame = SCAN_TRAJECTORY_WORLD_FRAME;
   request.angle_discretization = SCAN_TRAJECTORY_ANGLE_DISC;
-  request.interpoint_delay = SCAN_TRAJECTORY_INTERPOINT_DELAY;
+  // request.interpoint_delay = SCAN_TRAJECTORY_INTERPOINT_DELAY;
   request.is_blending_path = false;
   request.plan_from_current_position = true;
   return request;
 }
 
 ProcessPlanResult SurfaceBlendingService::generateProcessPlan(const std::string& name, 
-                                                              const visualization_msgs::Marker& path)
+                                                              const visualization_msgs::Marker& path,
+                                                              const godel_msgs::BlendingPlanParameters& params, 
+                                                              const godel_msgs::ScanPlanParameters &scan_params)
 {
   ProcessPlanResult result;
 
-  godel_msgs::TrajectoryPlanningRequest req = isBlendingPath(name) ? getBlendTrajectoryRequest() : getScanTrajectoryRequest();
+  bool is_blending = isBlendingPath(name);
+  godel_msgs::TrajectoryPlanningRequest req = is_blending ? getBlendTrajectoryRequest() : getScanTrajectoryRequest();
   req.path.reference = path.pose;
   req.path.points = path.points;
+  req.tcp_speed = is_blending ? params.traverse_spd : scan_params.traverse_spd;
     
   ROS_INFO_STREAM("Calling trajectory planner for process: " << name);
   godel_msgs::TrajectoryPlanningResponse res;

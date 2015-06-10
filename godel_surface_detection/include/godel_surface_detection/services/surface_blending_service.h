@@ -145,7 +145,9 @@ private:
                                         const godel_msgs::BlendingPlanParameters& params, const godel_msgs::ScanPlanParameters &scan_params);
 
   ProcessPlanResult generateProcessPlan(const std::string& name, 
-                                        const visualization_msgs::Marker& path);
+                                        const visualization_msgs::Marker& path,
+                                        const godel_msgs::BlendingPlanParameters& params, 
+                                        const godel_msgs::ScanPlanParameters &scan_params);
 
   bool selectMotionPlanCallback(godel_msgs::SelectMotionPlan::Request& req,
                                 godel_msgs::SelectMotionPlan::Response& res);

@@ -37,7 +37,7 @@ namespace
   }
 
   // Create an axial trajectory pt from a given tf transform
-  descartes_core::TrajectoryPtPtr tfToAxialTrajectoryPt(const tf::Transform& nominal, double discretization, bool blend_path)
+  descartes_core::TrajectoryPtPtr tfToAxialTrajectoryPt(const tf::Transform& nominal, double discretization, bool blend_path, double dt)
   {
     using namespace descartes_core;
     using namespace descartes_trajectory;
@@ -53,7 +53,8 @@ namespace
     double y = eigen_pose.translation()(1);
     double z = eigen_pose.translation()(2);
 
-    static const descartes_core::TimingConstraint timing(0.0, 0.15);
+    // static const descartes_core::TimingConstraint timing(0.0, 0.15);
+    descartes_core::TimingConstraint timing(0.0, dt);
 
     if (blend_path)
     {
@@ -159,7 +160,7 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
     // compute the absolute transform of a given point given its 
     // reference plane and relative position to that plane
     tf::Transform point_tf = createNominalTransform(req.path.reference, req.path.points[i]);
-    graph_points.push_back(tfToAxialTrajectoryPt(point_tf, req.angle_discretization, req.is_blending_path));
+    graph_points.push_back(tfToAxialTrajectoryPt(point_tf, req.angle_discretization, req.is_blending_path, req.tcp_speed));
   }
 
   size_t nPointsInGoto = 0;
@@ -183,9 +184,13 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
     // replace the first trajectorypt with a fixed one
     nPointsInGoto = to_process.size();
     to_process.front() = descartes_core::TrajectoryPtPtr(new descartes_trajectory::JointTrajectoryPt(init_state));
+    if (to_process.size() > 1)
+    {
+      to_process[1]->setTiming(descartes_core::TimingConstraint());
+    }
     // Unconstrain the transition from the cartesian motion portion to the tool trajectory
     // which might have much tighter tolerances
-    graph_points.front()->setTiming(descartes_core::TimingConstraint(0,0));
+    graph_points.front()->setTiming(descartes_core::TimingConstraint(0, 0.5));
     // concatenate paths
     graph_points.insert(graph_points.begin(), to_process.begin(), to_process.end());
   }

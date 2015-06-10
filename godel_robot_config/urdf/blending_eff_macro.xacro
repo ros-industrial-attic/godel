@@ -5,7 +5,7 @@
 	<xacro:include filename="$(find keyence_ljv_description)/urdf/lj_v7080_macro.xacro"/>
 
 	<!-- parameter list -->
-	<xacro:property name="gripper_length" value="0.218"/>
+	<xacro:property name="gripper_length" value="0.195"/>
 	<xacro:property name="gripper_width" value="0.0"/>
 	<xacro:property name="gripper_height" value="0.0"/>
 
