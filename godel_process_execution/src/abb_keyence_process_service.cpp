@@ -15,13 +15,13 @@ godel_process_execution::ProcessExecutionService::ProcessExecutionService(const 
   sim_client_ = nh.serviceClient<simulator_service::SimulateTrajectory>(sim_name);
 
   server_ = nh.advertiseService<ProcessExecutionService,
-                                godel_msgs::ProcessExecution::Request,
-                                godel_msgs::ProcessExecution::Response>
+                                godel_msgs::KeyenceProcessExecution::Request,
+                                godel_msgs::KeyenceProcessExecution::Response>
             (name, &godel_process_execution::ProcessExecutionService::executionCallback, this);
 }
 
-bool godel_process_execution::ProcessExecutionService::executionCallback(godel_msgs::ProcessExecution::Request& req,
-                                                                         godel_msgs::ProcessExecution::Response& res)
+bool godel_process_execution::ProcessExecutionService::executionCallback(godel_msgs::KeyenceProcessExecution::Request& req,
+                                                                         godel_msgs::KeyenceProcessExecution::Response& res)
 {
   using moveit_msgs::ExecuteKnownTrajectory;
   using simulator_service::SimulateTrajectory;

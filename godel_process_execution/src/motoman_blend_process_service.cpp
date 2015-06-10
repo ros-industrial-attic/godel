@@ -15,13 +15,13 @@ godel_process_execution::ProcessExecutionService::ProcessExecutionService(const 
   sim_client_ = nh.serviceClient<simulator_service::SimulateTrajectory>(sim_name);
 
   server_ = nh.advertiseService<ProcessExecutionService,
-                                godel_msgs::ProcessExecution::Request,
-                                godel_msgs::ProcessExecution::Response>
+                                godel_msgs::BlendProcessExecution::Request,
+                                godel_msgs::BlendProcessExecution::Response>
             (name, &godel_process_execution::ProcessExecutionService::executionCallback, this);
 }
 
-bool godel_process_execution::ProcessExecutionService::executionCallback(godel_msgs::ProcessExecution::Request& req,
-                                                                         godel_msgs::ProcessExecution::Response& res)
+bool godel_process_execution::ProcessExecutionService::executionCallback(godel_msgs::BlendProcessExecution::Request& req,
+                                                                         godel_msgs::BlendProcessExecution::Response& res)
 {
   using moveit_msgs::ExecuteKnownTrajectory;
   using simulator_service::SimulateTrajectory;
@@ -63,7 +63,35 @@ bool godel_process_execution::ProcessExecutionService::executionCallback(godel_m
   }
   else
   {
-    //ABB Rapid Emmiter
+    ExecuteKnownTrajectory srv_approach;
+    srv_approach.request.wait_for_execution = req.wait_for_execution;
+    srv_approach.request.trajectory.joint_trajectory = req.trajectory_approach;
+
+    ExecuteKnownTrajectory srv_process;
+    srv_process.request.wait_for_execution = req.wait_for_execution;
+    srv_process.request.trajectory.joint_trajectory = req.trajectory_process;
+
+    ExecuteKnownTrajectory srv_depart;
+    srv_depart.request.wait_for_execution = req.wait_for_execution;
+    srv_depart.request.trajectory.joint_trajectory = req.trajectory_depart;
+
+    if (!real_client_.call(srv_approach))
+    {
+      res.code = srv_approach.response.error_code.val;
+      return false;
+    }
+    if (!real_client_.call(srv_process))
+    {
+      res.code = srv_process.response.error_code.val;
+      return false;
+    }
+    if (!real_client_.call(srv_depart))
+    {
+      res.code = srv_depart.response.error_code.val;
+      return false;
+    }
+    return true;
+    ROS_WARN_STREAM("PathExecutionService: Failed to call hardware execution service");
   }
 
 

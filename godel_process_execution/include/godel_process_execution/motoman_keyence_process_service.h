@@ -2,7 +2,7 @@
 #define PATH_EXECUTION_SERVICE_H
 
 #include <ros/ros.h>
-#include <godel_msgs/ProcessExecution.h>
+#include <godel_msgs/KeyenceProcessExecution.h>
 
 namespace godel_process_execution
 {
@@ -18,8 +18,8 @@ public:
    * MoveIt node. The idea though is that abstracting 'execution' will give us more flexibility
    * later to implement our own process parameters related to execution.
    */
-  bool executionCallback(godel_msgs::ProcessExecution::Request& req,
-                         godel_msgs::ProcessExecution::Response& res);
+  bool executionCallback(godel_msgs::KeyenceProcessExecution::Request& req,
+                         godel_msgs::KeyenceProcessExecution::Response& res);
 private:
   ros::ServiceServer server_;
   ros::ServiceClient real_client_;
