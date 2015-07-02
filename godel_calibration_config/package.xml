@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<package>
+  <name>godel_calibration_config</name>
+  <version>0.1.0</version>
+  <description>Contains scripts for running ROS-I calibration routines
+  with godel.</description>
+
+  <maintainer email="jonathan.meyer@swri.org">Jon Meyer</maintainer>
+
+  <license>Apache 2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <run_depend>motoman_sia20d_support</run_depend>
+  <run_depend>industrial_extrinsic_cal</run_depend>
+
+
+</package>

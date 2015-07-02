@@ -41,6 +41,8 @@ include_directories(include
 add_executable(trajectory_planning_node
                src/trajectory_planning_node.cpp
                src/trajectory_planning.cpp
+               src/trajectory_interpolator.cpp
+               src/trajectory_utils.cpp
 )
 target_link_libraries(trajectory_planning_node
                       ${catkin_LIBRARIES}

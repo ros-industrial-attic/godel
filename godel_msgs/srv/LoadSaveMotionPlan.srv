@@ -1,0 +1,13 @@
+# This service commands the blending service to load or save a motion plan from the file system
+int32 MODE_LOAD=0
+int32 MODE_SAVE=1
+
+int32 mode
+
+string path
+---
+int32 SUCCESS=0
+int32 NO_SUCH_FILE=1
+int32 ERROR_LOADING=2
+
+int32 code

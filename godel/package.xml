@@ -19,6 +19,7 @@
   <run_depend>keyence_ljv_description</run_depend>
   <run_depend>godel_surface_detection</run_depend>
   <run_depend>godel_polygon_offset</run_depend>
+  <run_depend>godel_scan_analysis</run_depend>
 
   <export>
     <metapackage/>

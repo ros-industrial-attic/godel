@@ -16,6 +16,14 @@
 
 #include <godel_plugins/widgets/robot_blending_widget.h>
 
+#include <QFileDialog>
+#include <QInputDialog>
+
+#include <godel_msgs/GetAvailableMotionPlans.h>
+#include <godel_msgs/SelectMotionPlan.h>
+#include <godel_msgs/LoadSaveMotionPlan.h>
+#include <godel_msgs/RenameSurface.h>
+
 const double RAD_TO_DEGREES = 180.0f/M_PI;
 const double DEGREES_TO_RAD = M_PI/180.0f;
 
@@ -31,7 +39,10 @@ RobotBlendingWidget::RobotBlendingWidget(std::string ns):
 }
 
 RobotBlendingWidget::~RobotBlendingWidget() {
-	// TODO Auto-generated destructor stub
+	delete robot_scan_config_window_;
+	delete surface_detect_config_window_;
+	delete robot_blend_config_window_;
+	delete scan_plan_config_window_;
 }
 
 void RobotBlendingWidget::init()
@@ -43,6 +54,11 @@ void RobotBlendingWidget::init()
 	surface_blending_parameters_client_ = nh.serviceClient<godel_msgs::SurfaceBlendingParameters>(SURFACE_BLENDING_PARAMETERS_SERVICE);
 	select_surface_client_ = nh.serviceClient<godel_msgs::SelectSurface>(SELECT_SURFACE_SERVICE);
 	process_plan_client_ = nh.serviceClient<godel_msgs::ProcessPlanning>(PROCESS_PATH_SERVICE);
+	get_motion_plans_client_ = nh.serviceClient<godel_msgs::GetAvailableMotionPlans>(GET_AVAILABLE_MOTION_PLANS_SERVICE);
+	select_motion_plan_client_ = nh.serviceClient<godel_msgs::SelectMotionPlan>(SELECT_MOTION_PLAN_SERVICE);
+	load_save_motion_plan_client_ = nh.serviceClient<godel_msgs::LoadSaveMotionPlan>(LOAD_SAVE_MOTION_PLAN_SERVICE);
+	rename_surface_client_ = nh.serviceClient<godel_msgs::RenameSurface>(RENAME_SURFACE_SERVICE);
+
 	selected_surfaces_subs_ = nh.subscribe(SELECTED_SURFACES_CHANGED_TOPIC,1,
 			&RobotBlendingWidget::selected_surface_changed_callback,this);
 
@@ -53,11 +69,17 @@ void RobotBlendingWidget::init()
 	robot_scan_config_window_= new RobotScanConfigWidget(robot_scan_parameters_);
 	surface_detect_config_window_ = new SurfaceDetectionConfigWidget(surf_detect_parameters_);
 
+		robot_blend_config_window_= new BlendingPlanConfigWidget(blending_plan_parameters_);
+		scan_plan_config_window_=new ScanPlanConfigWidget(scan_plan_parameters_);
 
 	// setting signals and slots
 	connect(robot_scan_config_window_,SIGNAL(parameters_changed()),this,SLOT(robot_scan_params_changed_handler()));
 	connect(surface_detect_config_window_,SIGNAL(parameters_changed()),this,SLOT(surface_detect_params_changed_handler()));
 	connect(ui_.PushButtonMoreOptions,SIGNAL(clicked()),this,SLOT(scan_options_click_handler()));
+
+		connect(ui_.PushButtonBlendOptions,SIGNAL(clicked()),this,SLOT(blend_options_click_handler()));
+		connect(ui_.pushButtonProfileOptions,SIGNAL(clicked()),this,SLOT(scan_plan_options_click_handler()));
+
 	connect(ui_.PushButtonSurfaceOptions,SIGNAL(clicked()),this,SLOT(surface_options_click_handler()));
 	connect(ui_.PushButtonScan,SIGNAL(clicked()),this,SLOT(scan_button_handler()));
 	connect(ui_.PushButtonFindSurface,SIGNAL(clicked()),this,SLOT(find_surface_button_handler()));
@@ -75,9 +97,24 @@ void RobotBlendingWidget::init()
 	connect(this,SIGNAL(connect_started()),this,SLOT(connect_started_handler()));
 	connect(this,SIGNAL(connect_completed()),this,SLOT(connect_completed_handler()));
 
+	connect(ui_.pushButtonSavePlan, SIGNAL(clicked(bool)), this, SLOT(save_motion_plan_handler()));
+	connect(ui_.PushButtonOpenFile, SIGNAL(clicked(bool)), this, SLOT(load_motion_plan_handler()));
+
+	connect(ui_.pushButtonExecutePath, SIGNAL(clicked()), this, SLOT(execute_motion_plan_handler()));
+	connect(ui_.pushButtonSimulatePath, SIGNAL(clicked(bool)), this, SLOT(simulate_motion_plan_handler()));
+
+	connect(robot_scan_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
+	connect(surface_detect_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
+	connect(robot_blend_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
+	connect(ui_.ListWidgetSelectedSurfs, SIGNAL(itemDoubleClicked(QListWidgetItem*)),
+					this, SLOT(handle_surface_rename(QListWidgetItem*)));
+	connect(scan_plan_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
+
+	// For trajectory execution
+
+
 	// moving to first tab
 	ui_.TabWidgetCreateLib->setCurrentIndex(0);
-
 
 	// setting up timer
 	QTimer *timer = new QTimer(this);
@@ -116,11 +153,13 @@ void RobotBlendingWidget::connect_to_services()
 			// requesting parameters
 			if(surface_blending_parameters_client_.call(req,res))
 			{
-				robot_scan_config_window_->robot_scan_parameters_ = res.robot_scan;
-				surface_detect_config_window_->surface_detection_parameters_ = res.surface_detection;
+				robot_scan_config_window_->params() = res.robot_scan;
+				surface_detect_config_window_->params() = res.surface_detection;
 				robot_scan_parameters_ = res.robot_scan;
 				surf_detect_parameters_ = res.surface_detection;
 				blending_plan_parameters_ = res.blending_plan;
+				robot_blend_config_window_->params() = res.blending_plan;
+				scan_plan_config_window_->params() = res.scan_plan;
 
 				// update gui elements for robot scan
 				robot_scan_params_changed_handler();
@@ -213,7 +252,7 @@ void RobotBlendingWidget::show_all_handler()
 
 void RobotBlendingWidget::robot_scan_params_changed_handler()
 {
-	robot_scan_parameters_ = robot_scan_config_window_->robot_scan_parameters_;
+	robot_scan_parameters_ = robot_scan_config_window_->params();
 
 	// updating entries in gui
 	ui_.LineEditSensorTopic->setText(QString::fromStdString(robot_scan_parameters_.scan_topic));
@@ -233,7 +272,7 @@ void RobotBlendingWidget::robot_scan_params_changed_handler()
 
 void RobotBlendingWidget::surface_detect_params_changed_handler()
 {
-	surf_detect_parameters_ = surface_detect_config_window_->surface_detection_parameters_;
+	surf_detect_parameters_ = surface_detect_config_window_->params();
 }
 
 void RobotBlendingWidget::preview_path_handler()
@@ -252,13 +291,23 @@ void RobotBlendingWidget::preview_path_handler()
 void RobotBlendingWidget::scan_options_click_handler()
 {
 	save_robot_scan_parameters();
-	robot_scan_config_window_->robot_scan_parameters_ = robot_scan_parameters_;
+	robot_scan_config_window_->params() = robot_scan_parameters_;
 	robot_scan_config_window_->show();
+}
+
+void RobotBlendingWidget::blend_options_click_handler()
+{
+		robot_blend_config_window_->show();
+}
+
+void RobotBlendingWidget::scan_plan_options_click_handler()
+{
+		scan_plan_config_window_->show();
 }
 
 void RobotBlendingWidget::surface_options_click_handler()
 {
-	surface_detect_config_window_->surface_detection_parameters_ = surf_detect_parameters_;
+	surface_detect_config_window_->params() = surf_detect_parameters_;
 	surface_detect_config_window_->show();
 }
 
@@ -414,10 +463,28 @@ void RobotBlendingWidget::generate_process_path_handler()
 {
 	godel_msgs::ProcessPlanning process_plan;
 	process_plan.request.use_default_parameters = false;
-	process_plan.request.params = blending_plan_parameters_;
+  process_plan.request.params = robot_blend_config_window_->params();
 	process_plan.request.action = process_plan.request.GENERATE_MOTION_PLAN_AND_PREVIEW;
-	process_plan_client_.call(process_plan);
 	ROS_INFO_STREAM("process plan request sent");
+	if (process_plan_client_.call(process_plan))
+	{
+		std::vector<std::string> plan_names;
+		request_available_motions(plan_names);
+		update_motion_plan_list(plan_names);
+
+		ui_.TabWidgetCreateLib->setCurrentIndex(2);
+	}
+}
+
+void RobotBlendingWidget::update_motion_plan_list(const std::vector<std::string>& names)
+{
+	ui_.ListPathResults->clear();
+	for (std::size_t i = 0; i < names.size(); ++i)
+	{
+		QListWidgetItem *item = new QListWidgetItem();
+		item->setText(QString::fromStdString(names[i]));
+		ui_.ListPathResults->addItem(item);
+	}
 }
 
 void RobotBlendingWidget::save_robot_scan_parameters()
@@ -429,243 +496,126 @@ void RobotBlendingWidget::save_robot_scan_parameters()
 	robot_scan_parameters_.scan_topic = ui_.LineEditSensorTopic->text().toStdString();
 }
 
-RobotScanConfigWidget::RobotScanConfigWidget(godel_msgs::RobotScanParameters params)
+void RobotBlendingWidget::request_available_motions(std::vector<std::string> &plans)
 {
-	robot_scan_parameters_ = params;
-	init();
-	update_parameters();
+	godel_msgs::GetAvailableMotionPlans srv;
+	if (get_motion_plans_client_.call(srv))
+	{
+		plans = srv.response.names;
+	}
+	else
+	{
+		ROS_ERROR_STREAM("Could not get names from 'available motions server'");
+	}
 }
 
-void RobotScanConfigWidget::show()
+void RobotBlendingWidget::select_motion_plan(const std::string &name, bool simulate)
 {
-	update_parameters();
-	QMainWindow::show();
+	godel_msgs::SelectMotionPlan srv;
+	srv.request.name = name;
+	srv.request.simulate = simulate;
+	select_motion_plan_client_.call(srv);
 }
 
-void RobotScanConfigWidget::init()
+
+void RobotBlendingWidget::simulate_motion_plan_handler()
 {
-
-	ui_.setupUi(this);
-	world_to_obj_pose_widget_ = new PoseWidget(ui_.PoseWidgetWorldToObj);
-	tcp_to_cam_pose_widget_ = new PoseWidget(ui_.PoseWidgetTcpToCam);
-
-	// setting signals and slots
-	connect(ui_.PushButtonAccept,SIGNAL(clicked()),this,SLOT(accept_changes_handler()));
-	connect(ui_.PushButtonCancel,SIGNAL(clicked()),this,SLOT(cancel_changes_handler()));
+	if (ui_.ListPathResults->currentItem() == NULL) return;
+	std::string name = ui_.ListPathResults->currentItem()->text().toStdString();
+	ROS_INFO_STREAM("Selected " << name << " to be simulated");
+	if (!name.empty()) select_motion_plan(name, true);
 }
 
-void RobotScanConfigWidget::accept_changes_handler()
+void RobotBlendingWidget::execute_motion_plan_handler()
 {
-	save_parameters();
-	Q_EMIT parameters_changed();
-	hide();
+	if (ui_.ListPathResults->currentItem() == NULL) return;
+	std::string name = ui_.ListPathResults->currentItem()->text().toStdString();
+	ROS_INFO_STREAM("Selected " << name << " to be executed");
+	if (!name.empty()) select_motion_plan(name, false);
 }
 
-void RobotScanConfigWidget::cancel_changes_handler()
+void RobotBlendingWidget::save_motion_plan_handler()
 {
-	hide();
+	QString filepath = QFileDialog::getSaveFileName(this, "Save Motion Plan");
+	// No file selected, return immediately
+	ROS_WARN_STREAM("You want to save motion plan to: " << filepath.toStdString());
+	request_load_save_motions(filepath.toStdString(), false);
 }
 
-void RobotScanConfigWidget::update_parameters()
+void RobotBlendingWidget::load_motion_plan_handler()
 {
-	ui_.SpinBoxNumScans->setValue(robot_scan_parameters_.num_scan_points);
-	ui_.LineEditCamTilt->setText(QString::number(RAD2DEG(robot_scan_parameters_.cam_tilt_angle)));
-	ui_.LineEditCameraXoffset->setText(QString::number(robot_scan_parameters_.cam_to_obj_xoffset));
-	ui_.LineEditCameraZoffset->setText(QString::number(robot_scan_parameters_.cam_to_obj_zoffset));
-	ui_.LineEditSweepAngleStart->setText(QString::number(RAD2DEG(robot_scan_parameters_.sweep_angle_start)));
-	ui_.LineEditSweepAngleEnd->setText(QString::number(RAD2DEG(robot_scan_parameters_.sweep_angle_end)));
-	ui_.LineEditReachablePointRatio->setText(QString::number(robot_scan_parameters_.reachable_scan_points_ratio));
-	ui_.LineEditScanTopic->setText(QString::fromStdString(robot_scan_parameters_.scan_topic));
-	ui_.LineEditScanTargetFrame->setText(QString::fromStdString(robot_scan_parameters_.scan_target_frame));
-	ui_.LineEditWorldFrame->setText(QString::fromStdString(robot_scan_parameters_.world_frame));
-	ui_.LineEditTcpFrame->setText(QString::fromStdString(robot_scan_parameters_.tcp_frame));
-	ui_.LineEditGroupName->setText(QString::fromStdString(robot_scan_parameters_.group_name));
-	ui_.CheckBoxStopOnPlanningError->setChecked(robot_scan_parameters_.stop_on_planning_error);
-
-	world_to_obj_pose_widget_->set_values(robot_scan_parameters_.world_to_obj_pose);
-	tcp_to_cam_pose_widget_->set_values(robot_scan_parameters_.tcp_to_cam_pose);
-
+	QString filepath = QFileDialog::getOpenFileName(this, "Load Motion Plan");
+	// No file selected, so return immediately
+	ROS_WARN_STREAM("You want to load a motion plan from: " << filepath.toStdString());
+	request_load_save_motions(filepath.toStdString(), true);
 }
 
-void RobotScanConfigWidget::save_parameters()
+void RobotBlendingWidget::request_load_save_motions(const std::string& path, bool isLoad)
 {
-	robot_scan_parameters_.num_scan_points = ui_.SpinBoxNumScans->value();
-	robot_scan_parameters_.cam_tilt_angle= DEG2RAD(ui_.LineEditCamTilt->text().toDouble());
-	robot_scan_parameters_.cam_to_obj_xoffset= ui_.LineEditCameraXoffset->text().toDouble();
-	robot_scan_parameters_.cam_to_obj_zoffset= ui_.LineEditCameraZoffset->text().toDouble();
-	robot_scan_parameters_.sweep_angle_start= DEG2RAD(ui_.LineEditSweepAngleStart->text().toDouble());
-	robot_scan_parameters_.sweep_angle_end= DEG2RAD(ui_.LineEditSweepAngleEnd->text().toDouble());
-	robot_scan_parameters_.reachable_scan_points_ratio = ui_.LineEditReachablePointRatio->text().toDouble();
-	robot_scan_parameters_.scan_topic= ui_.LineEditScanTopic->text().toStdString();
-	robot_scan_parameters_.scan_target_frame= ui_.LineEditScanTargetFrame->text().toStdString();
-	robot_scan_parameters_.world_frame= ui_.LineEditWorldFrame->text().toStdString();
-	robot_scan_parameters_.tcp_frame= ui_.LineEditTcpFrame->text().toStdString();
-	robot_scan_parameters_.group_name= ui_.LineEditGroupName->text().toStdString();
-	robot_scan_parameters_.stop_on_planning_error= ui_.CheckBoxStopOnPlanningError->isChecked();
+	// Pre-condition: The path must not be an empty string
+	if (path.empty()) return;
 
-	tf::poseTFToMsg(world_to_obj_pose_widget_->get_values(),robot_scan_parameters_.world_to_obj_pose);
-	tf::poseTFToMsg(tcp_to_cam_pose_widget_->get_values(),robot_scan_parameters_.tcp_to_cam_pose);
+	godel_msgs::LoadSaveMotionPlan srv;
+	srv.request.path = path;
 
+	if (isLoad)
+		srv.request.mode = godel_msgs::LoadSaveMotionPlan::Request::MODE_LOAD;
+	else
+		 srv.request.mode = godel_msgs::LoadSaveMotionPlan::Request::MODE_SAVE;
+
+	if (load_save_motion_plan_client_.call(srv))
+	{
+		std::vector<std::string> plans;
+		request_available_motions(plans);
+		update_motion_plan_list(plans);
+	}
+	else
+	{
+		ROS_WARN_STREAM("Blending service unable to " << (isLoad ? "load" : "save") << "plan: " << path);
+	}
 }
 
-PoseWidget::PoseWidget(QWidget *parent):
-		QWidget(parent)
+void RobotBlendingWidget::request_save_parameters()
 {
-	ui_.setupUi(this);
-	set_values(tf::Transform::getIdentity());
+	ROS_WARN_STREAM("REQUESTING SAVE!");
+	godel_msgs::SurfaceBlendingParameters::Request req;
+	req.action = godel_msgs::SurfaceBlendingParameters::Request::SAVE_PARAMETERS;
+	req.surface_detection = surface_detect_config_window_->params();
+	req.blending_plan = robot_blend_config_window_->params();
+	req.robot_scan = robot_scan_config_window_->params();
+	req.scan_plan = scan_plan_config_window_->params();
+
+	godel_msgs::SurfaceBlendingParameters::Response res;
+	if (!surface_blending_parameters_client_.call(req, res))
+	{
+		ROS_WARN_STREAM("Could not complete service call to save your parameters!");
+	}
 }
 
-void PoseWidget::set_values(const geometry_msgs::Pose& p)
+void RobotBlendingWidget::handle_surface_rename(QListWidgetItem *item)
 {
-	tf::Transform t;
-	tf::poseMsgToTF(p,t);
-	set_values(t);
+	if (!item) return;
+
+	QString old_text = item->text();
+	// spawn window to prompt a rename
+	QString new_text = QInputDialog::getText(this, "Surface Rename", "Enter a new surface name: ");
+
+	if (!new_text.isEmpty())
+	{
+		godel_msgs::RenameSurfaceResponse res;
+		godel_msgs::RenameSurfaceRequest req;
+		req.old_name = old_text.toStdString();
+		req.new_name = new_text.toStdString();
+		if (rename_surface_client_.call(req, res))
+		{
+			item->setText(new_text);
+		}
+		else
+		{
+			ROS_WARN_STREAM("Failed to update the name of surface " << old_text.toStdString());
+		}
+	}
 }
-
-void PoseWidget::set_values(const tf::Transform& t)
-{
-	tf::Vector3 p = t.getOrigin();
-	tfScalar rx,ry,rz;
-	t.getBasis().getRPY(rx,ry,rz,1);
-	ui_.LineEditX->setText(QString::number(p.x()));
-	ui_.LineEditY->setText(QString::number(p.y()));
-	ui_.LineEditZ->setText(QString::number(p.z()));
-	ui_.LineEditRx->setText(QString::number(RAD2DEG(rx)));
-	ui_.LineEditRy->setText(QString::number(RAD2DEG(ry)));
-	ui_.LineEditRz->setText(QString::number(RAD2DEG(rz)));
-}
-
-tf::Transform PoseWidget::get_values()
-{
-	double x,y,z,rx,ry,rz;
-	x = ui_.LineEditX->text().toDouble();
-	y = ui_.LineEditY->text().toDouble();
-	z = ui_.LineEditZ->text().toDouble();
-	rx = DEG2RAD(ui_.LineEditRx->text().toDouble());
-	ry = DEG2RAD(ui_.LineEditRy->text().toDouble());
-	rz = DEG2RAD(ui_.LineEditRz->text().toDouble());
-
-	// create transform
-	tf::Vector3 p(x,y,z);
-	tf::Quaternion q;
-	q.setRPY(rx,ry,rz);
-
-	return tf::Transform(q,p);
-}
-
-SurfaceDetectionConfigWidget::SurfaceDetectionConfigWidget(godel_msgs::SurfaceDetectionParameters params)
-{
-	surface_detection_parameters_ = params;
-	init();
-	update_parameters();
-}
-
-void SurfaceDetectionConfigWidget::show()
-{
-	update_parameters();
-	QMainWindow::show();
-}
-
-void SurfaceDetectionConfigWidget::init()
-{
-	ui_.setupUi(this);
-
-	// setting signals and slots
-	connect(ui_.PushButtonAccept,SIGNAL(clicked()),this,SLOT(accept_changes_handler()));
-	connect(ui_.PushButtonCancel,SIGNAL(clicked()),this,SLOT(cancel_changes_handler()));
-}
-
-void SurfaceDetectionConfigWidget::update_parameters()
-{
-	ui_.LineEditFrameId->setText(QString::fromStdString(surface_detection_parameters_.frame_id));
-	ui_.LineEditKSearch->setText(QString::number(surface_detection_parameters_.k_search));
-	ui_.LineEditMarkerAlpha->setText(QString::number(surface_detection_parameters_.marker_alpha));
-
-	ui_.LineEditStOutMean->setText(QString::number(surface_detection_parameters_.meanK));
-	ui_.LineEditStOutThreshold->setText(QString::number(surface_detection_parameters_.stdv_threshold));
-
-	ui_.LineEditRgMinClusterSize->setText(QString::number(surface_detection_parameters_.rg_min_cluster_size));
-	ui_.LineEditRgMaxClusterSize->setText(QString::number(surface_detection_parameters_.rg_max_cluster_size));
-	ui_.LineEditRgNeighbors->setText(QString::number(surface_detection_parameters_.rg_neightbors));
-	ui_.LineEditRgSmoothnessThreshold->setText(QString::number(RAD2DEG(surface_detection_parameters_.rg_smoothness_threshold)));
-	ui_.LineEditRgCurvatureThreshold->setText(QString::number(surface_detection_parameters_.rg_curvature_threshold));
-
-	ui_.LineEditVoxelLeaf->setText(QString::number(surface_detection_parameters_.voxel_leafsize));
-	ui_.LineEditTabletopSegmentationDist->setText(QString::number(surface_detection_parameters_.tabletop_seg_distance_threshold));
-	ui_.CheckBoxUseTabletopSegmentation->setChecked(static_cast<bool>(surface_detection_parameters_.use_tabletop_seg));
-	ui_.CheckBoxIgnoreLargestCluster->setChecked(static_cast<bool>(surface_detection_parameters_.ignore_largest_cluster));
-
-	ui_.LineEditMlsPointDensity->setText(QString::number(surface_detection_parameters_.mls_point_density));
-	ui_.LineEditMlsUpsamplingRadius->setText(QString::number(surface_detection_parameters_.mls_upsampling_radius));
-	ui_.LineEditMlsSearchRadius->setText(QString::number(surface_detection_parameters_.mls_search_radius));
-
-	ui_.LineEditTrSearchRadius->setText(QString::number(surface_detection_parameters_.tr_search_radius));
-	ui_.LineEditTrMu->setText(QString::number(surface_detection_parameters_.tr_mu));
-	ui_.LineEditTrNearestNeighbors->setText(QString::number(surface_detection_parameters_.tr_max_nearest_neighbors));
-	ui_.LineEditTrMaxSurfaceAngle->setText(QString::number(RAD2DEG( surface_detection_parameters_.tr_max_surface_angle)));
-	ui_.LineEditTrMinAngle->setText(QString::number(RAD2DEG( surface_detection_parameters_.tr_min_angle)));
-	ui_.LineEditTrMaxAngle->setText(QString::number(RAD2DEG( surface_detection_parameters_.tr_max_angle)));
-	ui_.CheckBoxTrNormalConsistency->setChecked(static_cast<bool>(surface_detection_parameters_.tr_normal_consistency));
-
-	ui_.CheckBoxPaEnabled->setChecked(static_cast<bool>(surface_detection_parameters_.pa_enabled));
-	ui_.LineEditPaSegMaxIterations->setText(QString::number(surface_detection_parameters_.pa_seg_max_iterations));
-	ui_.LineEditPaSegDistThreshold->setText(QString::number(surface_detection_parameters_.pa_seg_dist_threshold));
-	ui_.LineEditPaSACPlaneDistance->setText(QString::number(surface_detection_parameters_.pa_sac_plane_distance));
-	ui_.LineEditPaKdtreeRadius->setText(QString::number(surface_detection_parameters_.pa_kdtree_radius));
-
-}
-
-void SurfaceDetectionConfigWidget::save_parameters()
-{
-	surface_detection_parameters_.frame_id = ui_.LineEditFrameId->text().toStdString();
-	surface_detection_parameters_.k_search = ui_.LineEditKSearch->text().toDouble();
-	surface_detection_parameters_.marker_alpha = ui_.LineEditMarkerAlpha->text().toDouble();
-
-	surface_detection_parameters_.meanK = ui_.LineEditStOutMean->text().toDouble();
-	surface_detection_parameters_.stdv_threshold = ui_.LineEditStOutThreshold->text().toDouble();
-
-	surface_detection_parameters_.rg_min_cluster_size = ui_.LineEditRgMinClusterSize->text().toDouble();
-	surface_detection_parameters_.rg_max_cluster_size = ui_.LineEditRgMaxClusterSize->text().toDouble();
-	surface_detection_parameters_.rg_neightbors = ui_.LineEditRgNeighbors->text().toDouble();
-	surface_detection_parameters_.rg_smoothness_threshold = DEG2RAD(ui_.LineEditRgSmoothnessThreshold->text().toDouble());
-	surface_detection_parameters_.rg_curvature_threshold = ui_.LineEditRgCurvatureThreshold->text().toDouble();
-
-	surface_detection_parameters_.voxel_leafsize = ui_.LineEditVoxelLeaf->text().toDouble();
-	surface_detection_parameters_.tabletop_seg_distance_threshold = ui_.LineEditTabletopSegmentationDist->text().toDouble();
-	surface_detection_parameters_.use_tabletop_seg = ui_.CheckBoxUseTabletopSegmentation->isChecked();
-	surface_detection_parameters_.ignore_largest_cluster = ui_.CheckBoxIgnoreLargestCluster->isChecked();
-
-	surface_detection_parameters_.mls_point_density = ui_.LineEditMlsPointDensity->text().toDouble();
-	surface_detection_parameters_.mls_upsampling_radius = ui_.LineEditMlsUpsamplingRadius->text().toDouble();
-	surface_detection_parameters_.mls_search_radius = ui_.LineEditMlsSearchRadius->text().toDouble();
-
-	surface_detection_parameters_.tr_search_radius = ui_.LineEditTrSearchRadius->text().toDouble();
-	surface_detection_parameters_.tr_mu = ui_.LineEditTrMu->text().toDouble();
-	surface_detection_parameters_.tr_max_nearest_neighbors = ui_.LineEditTrNearestNeighbors->text().toDouble();
-	surface_detection_parameters_.tr_max_surface_angle = DEG2RAD( ui_.LineEditTrMaxSurfaceAngle->text().toDouble());
-	surface_detection_parameters_.tr_min_angle = DEG2RAD(ui_.LineEditTrMinAngle->text().toDouble());
-	surface_detection_parameters_.tr_max_angle = DEG2RAD(ui_.LineEditTrMaxAngle->text().toDouble());
-	surface_detection_parameters_.tr_normal_consistency = ui_.CheckBoxTrNormalConsistency->isChecked();
-
-	surface_detection_parameters_.pa_enabled = ui_.CheckBoxPaEnabled->isChecked();
-	surface_detection_parameters_.pa_seg_max_iterations = ui_.LineEditPaSegMaxIterations->text().toInt();
-	surface_detection_parameters_.pa_seg_dist_threshold = ui_.LineEditPaSegDistThreshold->text().toDouble();
-	surface_detection_parameters_.pa_sac_plane_distance = ui_.LineEditPaSACPlaneDistance->text().toDouble();
-	surface_detection_parameters_.pa_kdtree_radius = ui_.LineEditPaKdtreeRadius->text().toDouble();
-}
-
-void SurfaceDetectionConfigWidget::accept_changes_handler()
-{
-	save_parameters();
-	Q_EMIT parameters_changed();
-	hide();
-}
-
-void SurfaceDetectionConfigWidget::cancel_changes_handler()
-{
-	hide();
-}
-
 
 } /* namespace widgets */
 

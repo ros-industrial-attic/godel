@@ -2,28 +2,21 @@
 
 #include <actionlib/client/simple_action_client.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
+
 #include <moveit/move_group_interface/move_group.h>
+
+#include <eigen_conversions/eigen_msg.h>
+
+#include <godel_msgs/TrajectoryExecution.h>
 
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 
-bool planPathToPosition(moveit::planning_interface::MoveGroup& group, const trajectory_msgs::JointTrajectoryPoint& point);
 
-void executeTrajectory(const trajectory_msgs::JointTrajectory& trajectory);
+bool planPathToPosition(moveit::planning_interface::MoveGroup& group,
+                        const trajectory_msgs::JointTrajectoryPoint& point);
 
 void insertCurrentPosition(moveit::planning_interface::MoveGroup& group, trajectory_msgs::JointTrajectory& trajectory);
-
-void rewriteSpeed(const ros::Duration& offset, const ros::Duration& rate, trajectory_msgs::JointTrajectory& trajectory)
-{
-  ros::Duration from_start = offset;
-
-  for (size_t i = 0; i < trajectory.points.size(); ++i)
-  {
-    trajectory.points[i].time_from_start = from_start;
-
-    from_start += rate;
-  }
-}
 
 bool loadPlan(const std::string& name, trajectory_msgs::JointTrajectory& trajectory)
 {
@@ -53,76 +46,65 @@ int main(int argc, char** argv)
   ros::AsyncSpinner spinner(1); // required for moveit
   spinner.start();
 
-  moveit::planning_interface::MoveGroup group("manipulator_tcp");
 
   ros::NodeHandle pnh ("~");
 
+  bool simulate;
+  pnh.param<bool>("simulate", simulate, true);
+  ROS_WARN_STREAM("SIMULATE: " << int(simulate));
+
+  // Read parameters to the server
   std::string bagfile_name;
   pnh.param<std::string>("bagfile_name", bagfile_name, "trajectory.bag");
 
-  bool change_speed;
-  double speed;
-  pnh.param<bool>("change_speed", change_speed, false);
-  pnh.param<double>("speed", speed, 0.0);
+  std::string group_name;
+  pnh.param<std::string>("group_name", group_name, "manipulator");
 
+  double planning_time;
+  pnh.param<double>("planning_time", planning_time, 10.0);
+
+  // Configure group
+  moveit::planning_interface::MoveGroup group(group_name);
+  group.setPlanningTime(planning_time);
+  // group.setPlannerId("RRTstarkConfigDefault");
+  group.setPoseReferenceFrame("world_frame");
 
   // Load trajectory for replay
   trajectory_msgs::JointTrajectory traj;
   loadPlan(bagfile_name, traj);
 
-  if (!planPathToPosition(group, traj.points[0]))
+  if (!simulate && !planPathToPosition(group, traj.points[0]))
   {
-    ROS_WARN_STREAM("Could not solve to " << traj.points[0]);
+    ROS_WARN_STREAM("Couldn't make joint move to start pos");
     return -1;
   }
 
   // Insert current position into trajectory
   insertCurrentPosition(group, traj);
 
-
-  if (change_speed)
-  {
-    ROS_INFO_STREAM("CHANGING trajectory speed");
-    rewriteSpeed(ros::Duration(2.0), ros::Duration(speed), traj);
-  }
-
-
   // Execute trajectory
-  traj.points.resize(traj.points.size()-1);
-  executeTrajectory(traj);
+  // Beware: if the trajectory starts and stops at the same point, the ROS-I
+  // controllers will often just ignore your input. One solution, however bad,
+  // is to truncate a point or two from the trajectory using resize.
+  
+  godel_msgs::TrajectoryExecution srv;
+  ros::NodeHandle nh;
+  ros::ServiceClient client = nh.serviceClient<godel_msgs::TrajectoryExecution>("path_execution");
+  srv.request.trajectory = traj;
+  srv.request.wait_for_execution = true;
+  srv.request.simulate = simulate;
+  client.call(srv);
 
   ROS_INFO_STREAM("Done with trajectory");
-
-  ros::waitForShutdown();
 }
 
-void executeTrajectory(const trajectory_msgs::JointTrajectory& trajectory)
+// Joint motion
+bool planPathToPosition(moveit::planning_interface::MoveGroup& group,
+                        const trajectory_msgs::JointTrajectoryPoint& point)
 {
-  // Setup action server for trajectory execution
-  actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> ac("joint_trajectory_action", true);
-  if (!ac.waitForServer(ros::Duration(2.0)))
-  {
-    ROS_ERROR_STREAM("Could not connect to action server");
-    return;
-  }
-
-  control_msgs::FollowJointTrajectoryGoal goal;
-  goal.trajectory = trajectory;
-  ROS_INFO_STREAM("Sending goal with " << trajectory.points.size() << " points");
-  ac.sendGoal(goal);
-
-  if (ac.waitForResult(goal.trajectory.points[goal.trajectory.points.size()-1].time_from_start))
-  {
-    ROS_INFO_STREAM("Action server reported successful execution");
-  } else {
-    ROS_WARN_STREAM("Action server could not execute trajectory");
-  }
-}
-
-bool planPathToPosition(moveit::planning_interface::MoveGroup& group, const trajectory_msgs::JointTrajectoryPoint& point)
-{
-  group.setJointValueTarget(point.positions);
   moveit::planning_interface::MoveGroup::Plan my_plan;
+
+  group.setJointValueTarget(point.positions);
   bool success = group.plan(my_plan);
   if (success)
   {

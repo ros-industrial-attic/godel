@@ -18,18 +18,30 @@ include(${QT_USE_FILE})
 set(godel_plugins_SRCS
 	src/rqt_plugins/robot_blending_plugin.cpp
 	src/rviz_panels/robot_blending_panel.cpp
-	src/widgets/robot_blending_widget.cpp)
+        src/widgets/robot_blending_widget.cpp
+        src/widgets/blend_tool_param_window.cpp
+        src/widgets/parameter_window_base.cpp
+        src/widgets/surface_detection_configuration.cpp
+        src/widgets/robot_scan_configuration.cpp
+	src/widgets/scan_tool_configuration_window.cpp)
 
 set(godel_plugins_HDRS
 	include/godel_plugins/rqt_plugins/robot_blending_plugin.h
 	include/godel_plugins/rviz_panels/robot_blending_panel.h
-	include/godel_plugins/widgets/robot_blending_widget.h)
+        include/godel_plugins/widgets/robot_blending_widget.h
+        include/godel_plugins/widgets/blend_tool_param_window.h
+        include/godel_plugins/widgets/parameter_window_base.h
+        include/godel_plugins/widgets/surface_detection_configuration.h
+        include/godel_plugins/widgets/robot_scan_configuration.h
+	include/godel_plugins/widgets/scan_tool_configuration_window.h)
 
 set(godel_plugins_UIS
 	src/widgets/robot_blending_plugin.ui 
 	src/widgets/robot_scan_configuration.ui
 	src/widgets/pose_widget.ui
-	src/widgets/surface_detection_configuration.ui)
+        src/widgets/surface_detection_configuration.ui
+        src/widgets/blend_tool_param_window.ui
+	src/widgets/scan_tool_configuration_window.ui)
 
 set(godel_plugins_INCLUDE_DIRECTORIES
 	include

@@ -25,6 +25,8 @@
 #include <moveit/robot_state/conversions.h>
 #include <moveit/trajectory_processing/iterative_time_parameterization.h>
 
+#include <param_helpers/param_set.h>
+#include <godel_msgs/robot_scan_params_helper.h>
 
 namespace godel_surface_detection {
 namespace scan {
@@ -55,12 +57,8 @@ RobotScan::RobotScan()
 	params_.reachable_scan_points_ratio = 0.5f;
 	params_.num_scan_points = 20;
 	params_.stop_on_planning_error = true;
-
 }
 
-RobotScan::~RobotScan() {
-	// TODO Auto-generated destructor stub
-}
 
 bool RobotScan::init()
 {
@@ -68,51 +66,22 @@ bool RobotScan::init()
 	move_group_ptr_->setEndEffectorLink(params_.tcp_frame);
 	move_group_ptr_->setPoseReferenceFrame(params_.world_frame);
 	move_group_ptr_->setPlanningTime(PLANNING_TIME);
+	move_group_ptr_->setPlannerId("RRTstarkConfigDefault");
 	tf_listener_ptr_ = TransformListenerPtr(new tf::TransformListener());
 	scan_traj_poses_.clear();
 	callback_list_.clear();
 	return true;
 }
 
-bool RobotScan::load_parameters(std::string ns)
+bool RobotScan::load_parameters(const std::string& filename, const std::string& ns)
 {
-	return load_parameters(params_,ns);;
+	param_helpers::attemptCacheLoad(params_, filename, ns);
+	return true;
 }
 
-bool RobotScan::load_parameters(godel_msgs::RobotScanParameters &params,std::string ns)
+void RobotScan::save_parameters(const std::string& filename, const std::string& ns)
 {
-	ros::NodeHandle nh(ns);
-
-	// pose params
-	XmlRpc::XmlRpcValue tcp_to_cam_param, world_to_obj_param;
-
-	// bool params
-	bool stop_on_planning_error;
-
-	bool succeeded = nh.getParam("group_name",params.group_name) &&
-			nh.getParam("home_position",params.home_position) &&
-			nh.getParam("world_frame",params.world_frame) &&
-			nh.getParam("tcp_frame",params.tcp_frame) &&
-			nh.getParam("tcp_to_cam_pose",tcp_to_cam_param)&&
-			nh.getParam("world_to_obj_pose",world_to_obj_param) &&
-			nh.getParam("cam_to_obj_zoffset",params.cam_to_obj_zoffset) &&
-			nh.getParam("cam_to_obj_xoffset",params.cam_to_obj_xoffset) &&
-			nh.getParam("cam_tilt_angle",params.cam_tilt_angle) &&
-			nh.getParam("sweep_angle_start",params.sweep_angle_start) &&
-			nh.getParam("sweep_angle_end",params.sweep_angle_end) &&
-			nh.getParam("scan_topic",params.scan_topic) &&
-			nh.getParam("num_scan_points",params.num_scan_points) &&
-			nh.getParam("reachable_scan_points_ratio",params.reachable_scan_points_ratio) &&
-			nh.getParam("scan_target_frame",params.scan_target_frame) &&
-			nh.getParam("stop_on_planning_error",stop_on_planning_error);
-
-	params.stop_on_planning_error = stop_on_planning_error;
-
-	// parsing poses
-	succeeded = succeeded && parse_pose_parameter(tcp_to_cam_param,params.tcp_to_cam_pose) &&
-			parse_pose_parameter(world_to_obj_param,params.world_to_obj_pose);
-
-	return succeeded;
+	param_helpers::saveToYamlFile(params_, filename, ns);
 }
 
 void RobotScan::add_scan_callback(ScanCallback cb)
@@ -176,7 +145,7 @@ int RobotScan::scan(bool move_only)
 	// cartesian path generation
 	//double alpha_incr = (params_.sweep_angle_end - params_.sweep_angle_start)/(params_.num_scan_points -1);
 	double eef_step = EEF_STEP;//1*alpha_incr*params_.cam_to_obj_xoffset;
-	double jump_threshold = M_PI;
+	double jump_threshold = 0.0;
 	moveit::planning_interface::MoveGroup::Plan path_plan;
 	geometry_msgs::PoseArray cartesian_poses;
 	path_plan.planning_time_ = PLANNING_TIME;
@@ -193,7 +162,7 @@ int RobotScan::scan(bool move_only)
 		trajectory_poses.push_back(move_group_ptr_->getCurrentPose(params_.tcp_frame).pose);
 		trajectory_poses.insert(trajectory_poses.begin()+1,scan_traj_poses_.begin(),scan_traj_poses_.end());
 
-		for(int i = 1;i < trajectory_poses.size();i++)
+		for(size_t i = 1;i < trajectory_poses.size(); i++)
 		{
 
 			// reset path plan structure
@@ -232,12 +201,6 @@ int RobotScan::scan(bool move_only)
 				}
 
 			}
-
-/*			geometry_msgs::PoseStamped target;
-			target.pose = trajectory_poses[i];
-			target.header.frame_id = params_.world_frame;
-			move_group_ptr_->setStartStateToCurrentState();
-			move_group_ptr_->setPoseTarget(target,params_.tcp_frame);*/
 
 			if(move_group_ptr_->execute(path_plan)/*move_group_ptr_->move()*/)
 			{
@@ -372,117 +335,6 @@ bool RobotScan::create_scan_trajectory(std::vector<geometry_msgs::Pose> &scan_po
 	return success;
 }
 
-bool RobotScan::parse_pose_parameter(XmlRpc::XmlRpcValue pose_param,tf::Transform &t)
-{
-	std::map<std::string,double> fields_map =
-			boost::assign::map_list_of("x",0.0d)
-			("y",0.0d)
-			("z",0.0d)
-			("rx",0.0d)
-			("ry",0.0d)
-			("rz",0.0d);
-
-	// parsing fields
-	std::map<std::string,double>::iterator i;
-	bool succeeded = true;
-	for(i= fields_map.begin();i != fields_map.end();i++)
-	{
-		if(pose_param.hasMember(i->first) && pose_param[i->first].getType() == XmlRpc::XmlRpcValue::TypeDouble)
-		{
-			fields_map[i->first] = static_cast<double>(pose_param[i->first]);
-		}
-		else
-		{
-			succeeded = false;
-			break;
-		}
-	}
-
-	tf::Vector3 pos = tf::Vector3(fields_map["x"],fields_map["y"],fields_map["z"]);
-	tf::Quaternion q;
-	q.setRPY(fields_map["rx"],fields_map["ry"],fields_map["rz"]); // fixed axis
-	t.setOrigin(pos);
-	t.setRotation(q);
-
-	return succeeded;
-}
-
-bool RobotScan::parse_pose_parameter(XmlRpc::XmlRpcValue pose_param,geometry_msgs::Pose &pose)
-{
-	tf::Transform t;
-	if(parse_pose_parameter(pose_param,t))
-	{
-		tf::poseTFToMsg(t,pose);
-		return true;
-	}
-	else
-	{
-		return false;
-	}
-}
-
-void RobotScan::apply_simple_trajectory_filter(	moveit_msgs::RobotTrajectory& traj)
-{
-	std::vector<trajectory_msgs::JointTrajectoryPoint> &current_points = traj.joint_trajectory.points;
-	std::vector<trajectory_msgs::JointTrajectoryPoint> points;
-	double dt;
-
-	// setting first point timestamp to zero
-	current_points.front().time_from_start = ros::Duration(0);
-
-	// removing redundant joint points
-	points.push_back(current_points.front());
-	trajectory_msgs::JointTrajectoryPoint last_point = current_points.front();
-	for(unsigned int i = 1;i < current_points.size(); i++)
-	{
-		trajectory_msgs::JointTrajectoryPoint &next_point = current_points[i];
-
-		// time elapsed between p1 and p2
-		dt = (next_point.time_from_start - last_point.time_from_start).toSec();
-		if(dt<MIN_TRAJECTORY_TIME_STEP)
-		{
-			dt = MIN_TRAJECTORY_TIME_STEP;
-			next_point.time_from_start = last_point.time_from_start + ros::Duration(dt);
-		}
-
-		// computing velocity for each joint
-		int zero_vel_counter = 0;
-		next_point.velocities.resize(next_point.positions.size());
-		for(unsigned int j = 0; j < next_point.positions.size(); j++)
-		{
-			next_point.velocities[j] = (next_point.positions[j] - last_point.positions[j])/dt;
-			if(next_point.velocities[j] < MIN_JOINT_VELOCITY)
-			{
-				zero_vel_counter++;
-			}
-		}
-
-
-		if(zero_vel_counter < next_point.positions.size())
-		{
-
-			points.push_back(next_point);
-			last_point = next_point;
-		}
-	}
-
-	// filling first and last points with 0 velocities
-	points.front().velocities.assign(traj.joint_trajectory.joint_names.size(),0);
-	points.back().velocities.assign(traj.joint_trajectory.joint_names.size(),0);
-
-	// checking time stamp for last joint point
-	trajectory_msgs::JointTrajectoryPoint &p_last = points.back();
-	trajectory_msgs::JointTrajectoryPoint &p_before_last = *(points.end()-2);
-	if((p_last.time_from_start - p_before_last.time_from_start).toSec() < MIN_TRAJECTORY_TIME_STEP)
-	{
-		p_last.time_from_start = p_before_last.time_from_start + ros::Duration(MIN_TRAJECTORY_TIME_STEP);
-	}
-
-	traj.joint_trajectory.points.assign(points.begin(),points.end());
-
-	//ROS_INFO_STREAM("Filtered trajectory: "<<traj);
-}
-
 void RobotScan::apply_trajectory_parabolic_time_parameterization(robot_trajectory::RobotTrajectory& rt,
 		moveit_msgs::RobotTrajectory &traj,
 		unsigned int max_iterations,
@@ -513,60 +365,6 @@ void RobotScan::apply_trajectory_parabolic_time_parameterization(robot_trajector
 			iter++;
 		}
 	}
-
-
-	//ROS_INFO_STREAM("Parameterized trajectory: "<<traj);
-
-	//apply_speed_reduction(traj,0.4f);
-
-	//ROS_INFO_STREAM("Speed reduction trajectory: "<<traj);
-
-}
-
-void RobotScan::apply_speed_reduction(moveit_msgs::RobotTrajectory &traj,double percent_reduction)
-{
-	std::vector<trajectory_msgs::JointTrajectoryPoint> &points = traj.joint_trajectory.points;
-	std::vector<trajectory_msgs::JointTrajectoryPoint>::iterator iter = points.begin()+1;
-	double dt;
-	double new_vel;
-	bool compute_time = true;
-
-	if(points.size()<3)
-	{
-		return;
-	}
-
-
-	while(iter != points.end())
-	{
-		trajectory_msgs::JointTrajectoryPoint &p1 = *(iter-1);
-		trajectory_msgs::JointTrajectoryPoint &p2 = *iter;
-
-		compute_time = true;
-		for(int i = 0;i < p2.velocities.size(); i++)
-		{
-			p2.velocities[i] = percent_reduction * p2.velocities[i];
-
-			if(compute_time && std::abs(p2.velocities[i]) > MIN_JOINT_VELOCITY)
-			{
-
-				dt = std::abs((p2.positions[i] - p1.positions[i]) / p2.velocities[i]);
-				p2.time_from_start = p1.time_from_start + ros::Duration(dt);
-				compute_time = false;
-			}
-		}
-
-		if(compute_time) // time was not computed
-		{
-			p2.time_from_start = p1.time_from_start + ros::Duration(1);
-		}
-
-		ROS_INFO_STREAM("new time value for current point: "<<dt);
-		iter++;
-	}
-
-
-
 }
 
 } /* namespace scan */

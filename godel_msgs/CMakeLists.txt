@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
              sensor_msgs
              visualization_msgs
              trajectory_msgs
+             param_helpers
 )
 
 
@@ -25,6 +26,8 @@ add_message_files(
    SurfaceBoundaries.msg
    SurfaceDetectionParameters.msg
    ProcessPath.msg
+   ProcessPlan.msg
+   ScanPlanParameters.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -37,6 +40,13 @@ add_service_files(
    SurfaceDetection.srv
    TrajectoryPlanning.srv
 	 SurfaceBlendingParameters.srv
+   TrajectoryExecution.srv
+   GetAvailableMotionPlans.srv
+   SelectMotionPlan.srv
+   LoadSaveMotionPlan.srv
+   RenameSurface.srv
+   BlendProcessExecution.srv
+   KeyenceProcessExecution.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
@@ -52,7 +62,8 @@ generate_messages(DEPENDENCIES geometry_msgs sensor_msgs visualization_msgs traj
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  CATKIN_DEPENDS message_runtime geometry_msgs sensor_msgs genmsg
+  INCLUDE_DIRS include
+  CATKIN_DEPENDS message_runtime geometry_msgs sensor_msgs genmsg param_helpers
 )
 
 

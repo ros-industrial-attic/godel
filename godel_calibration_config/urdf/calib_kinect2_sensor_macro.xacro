@@ -1,0 +1,96 @@
+<?xml version="1.0" ?>
+<robot name="kinect2_sensor" xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- Defines 6 DOF joint between arm and camera to be adjusted during calibration -->
+  <xacro:include filename="$(find godel_calibration_config)/urdf/calib_transform_macro.xacro"/>
+
+  <!-- Geometrical Properties of Camera -->
+  <xacro:property name="asus_length" value="0.250"/>
+  <xacro:property name="asus_width" value="0.065"/>
+  <xacro:property name="asus_height" value="0.040"/>
+
+  <xacro:macro name="calib_kinect2_sensor_definitions" params="prefix parent_link">
+
+    <material name="${prefix}dark_silver">
+      <color rgba="0.1 0.1 0.1 1"/>
+    </material>
+
+    <!-- sensor main components -->
+    <link name="${prefix}kinect2_link"/>
+    <!-- end of sensor main components -->
+
+    <!-- sensor links -->
+    <link name="${prefix}kinect2_frame">
+      <visual>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <geometry>
+          <box size="${asus_width} ${asus_length} ${asus_height}"/>
+        </geometry>
+        <material name="${prefix}dark_silver"/>
+      </visual>
+      <!-- <collision>
+        <origin rpy="0 0 0" xyz="0 0 0"/>
+        <geometry>
+          <box size="${asus_width} ${asus_length} ${asus_height}"/>
+        </geometry>
+      </collision> -->
+    </link>
+
+    <link name="${prefix}kinect2_ir_frame">
+    </link>
+
+    <link name="${prefix}kinect2_rgb_frame">
+    </link>
+
+    <!-- Used to point the camera in the right direction when macro scanning -->
+    <link name="${prefix}kinect2_move_frame" />
+
+    <link name="${prefix}kinect2_ir_optical_frame"/>
+    <link name="${prefix}kinect2_rgb_optical_frame"/>
+    <!-- end of sensor links -->
+
+    <!-- sensor joints -->
+    <joint name="${prefix}kinect2_frame_joint" type="fixed">
+      <parent link="${prefix}kinect2_link"/>
+      <child link="${prefix}kinect2_frame"/>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+    </joint>
+
+    <joint name="${prefix}kinect2_move_frame_joint" type="fixed">
+      <parent link="${prefix}kinect2_link"/>
+      <child link="${prefix}kinect2_move_frame"/>
+      <origin rpy="3.14159 0 0" xyz="0 0 0"/>
+    </joint>
+    
+
+    <joint name="${prefix}kinect2_ir_joint" type="fixed">
+      <parent link="${prefix}kinect2_frame"/>
+      <child link="${prefix}kinect2_ir_frame"/>
+      <origin rpy="0 0 0" xyz="0 0.0476 0"/>
+    </joint>
+
+    <joint name="${prefix}kinect2_ir_optical_frame_joint" type="fixed">
+      <parent link="${prefix}kinect2_ir_frame"/>
+      <child link="${prefix}kinect2_ir_optical_frame"/>
+      <origin rpy="1.57 0 1.57" xyz="0 0 0"/>
+    </joint>
+
+    <joint name="${prefix}kinect2_rgb_joint" type="fixed">
+      <parent link="${prefix}kinect2_ir_frame"/>
+      <child link="${prefix}kinect2_rgb_frame"/>
+      <origin rpy="0 0 0" xyz="0 0.035 0"/>
+    </joint>
+
+    <joint name="${prefix}kinect2_rgb_optical_frame_joint" type="fixed">
+      <parent link="${prefix}kinect2_rgb_frame"/>
+      <child link="${prefix}kinect2_rgb_optical_frame"/>
+      <origin rpy="1.57 0 1.57" xyz="0 0 0"/>
+    </joint>  
+    <!-- end of sensor joints --> 
+
+
+    <!-- world joints -->
+    <xacro:calibration_definitions child_link="${prefix}kinect2_link" parent_link="${parent_link}" />
+    <!-- end of world joints -->
+
+  </xacro:macro>
+</robot>
