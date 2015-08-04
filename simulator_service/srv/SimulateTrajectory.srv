@@ -1,0 +1,4 @@
+trajectory_msgs/JointTrajectory trajectory
+bool wait_for_execution
+---
+# Empty
