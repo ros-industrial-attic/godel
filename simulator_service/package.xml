@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package>
+  <name>simulator_service</name>
+  <version>0.1.0</version>
+  <description>The simulator_service package</description>
+  <maintainer email="jonathan.meyer@swri.org">Jonathan Meyer</maintainer>
+
+  <license>Apache2</license>
+
+  <build_depend>message_generation</build_depend>
+  <run_depend>message_runtime</run_depend>
+  
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>industrial_robot_simulator</build_depend>
+  <build_depend>trajectory_msgs</build_depend>
+  <build_depend>control_msgs</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>actionlib</build_depend>
+
+  <run_depend>industrial_robot_simulator</run_depend>
+  <run_depend>trajecetory_msgs</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>actionlib</run_depend>
+</package>
