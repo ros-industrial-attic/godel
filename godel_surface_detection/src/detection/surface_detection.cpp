@@ -831,6 +831,7 @@ bool SurfaceDetection::apply_planar_reprojection(const Cloud& in, Cloud& out)
 	proj.setInputCloud (out.makeShared());
 	proj.setModelCoefficients(coeff_ptr);
 	proj.filter (out);
+	return true;
 }
 
 bool SurfaceDetection::apply_concave_hull(const Cloud& in, pcl::PolygonMesh& mesh)
