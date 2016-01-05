@@ -41,3 +41,19 @@ add_dependencies(simulator_service_node simulator_service_generate_messages_cpp)
 target_link_libraries(simulator_service_node
   ${catkin_LIBRARIES}
 )
+
+#############
+## Install ##
+#############
+
+## Mark executables and/or libraries for installation
+install(TARGETS simulator_service_node
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
+
+## Mark other files for installation (e.g. launch and bag files, etc.)
+install( DIRECTORY launch
+  DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
