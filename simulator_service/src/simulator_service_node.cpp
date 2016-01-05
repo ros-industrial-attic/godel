@@ -8,6 +8,7 @@
 // Constants
 const static double ACTION_SERVER_WAIT_TIME = 5.0;
 const static double DEFAULT_SCALE_FACTOR = 0.2;
+const static double GOAL_COMPLETION_BUFFER = 0.5; // extra time waited past the end of the trajectory
 
 // Utility Functions
 static void scaleDurations(trajectory_msgs::JointTrajectory& traj, double scale)
@@ -50,12 +51,13 @@ namespace simulator_service
       // If empty trajectory, return true right away
       if (req.trajectory.points.empty())
       {
+        ROS_WARN("Trajectory simulator recieved empty trajectory");
         return true;
       }
 
       ROS_INFO_STREAM("Handling new simulation service request");
 
-      // Copy the input header files
+      // Copy the input header info
       control_msgs::FollowJointTrajectoryGoal goal;
       goal.trajectory.header = req.trajectory.header;
       goal.trajectory.joint_names = req.trajectory.joint_names;
@@ -76,9 +78,12 @@ namespace simulator_service
       // function returning bool, there isn't really a notion of failure here.
       if (req.wait_for_execution)
       {
-        ros::Duration wait_time = goal.trajectory.points.back().time_from_start;
+        ros::Duration wait_time = goal.trajectory.points.back().time_from_start + ros::Duration(GOAL_COMPLETION_BUFFER);
         ROS_DEBUG_STREAM("Waiting for " << wait_time.toSec() << " seconds");
-        ac_.waitForResult(wait_time);
+        if (!ac_.waitForResult(wait_time))
+        {
+          ROS_WARN("Robot Simulator did not successfully complete trajectory");
+        }
       }
 
       return true;
