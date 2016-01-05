@@ -3,12 +3,12 @@ project(godel_msgs)
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
-             message_generation
              genmsg
              geometry_msgs
+             message_generation
              sensor_msgs
-             visualization_msgs
              trajectory_msgs
+             visualization_msgs
 )
 
 
@@ -18,29 +18,45 @@ find_package(catkin REQUIRED COMPONENTS
 
 ## Generate messages in the 'msg' folder
 add_message_files(
-   FILES
-   BlendingPlanParameters.msg
-   RobotScanParameters.msg
-   SelectedSurfacesChanged.msg
-   SurfaceBoundaries.msg
-   SurfaceDetectionParameters.msg
-   ProcessPath.msg
+  FILES
+  BlendingPlanParameters.msg
+  RobotScanParameters.msg
+  SelectedSurfacesChanged.msg
+  SurfaceBoundaries.msg
+  SurfaceDetectionParameters.msg
+  ProcessPath.msg
+  ProcessPlan.msg
+  ScanPlanParameters.msg
 )
 
 ## Generate services in the 'srv' folder
 add_service_files(
-   FILES
-   BlendingPlan.srv
-   OffsetBoundary.srv
-   ProcessPlanning.srv
-   SelectSurface.srv
-   SurfaceDetection.srv
-   TrajectoryPlanning.srv
-	 SurfaceBlendingParameters.srv
+  FILES
+  BlendingPlan.srv
+  OffsetBoundary.srv
+  ProcessPlanning.srv
+  SelectSurface.srv
+  SurfaceDetection.srv
+  TrajectoryPlanning.srv
+  SurfaceBlendingParameters.srv
+  TrajectoryExecution.srv
+  GetAvailableMotionPlans.srv
+  SelectMotionPlan.srv
+  LoadSaveMotionPlan.srv
+  RenameSurface.srv
+  BlendProcessExecution.srv
+  KeyenceProcessExecution.srv
+  BlendProcessPlanning.srv
+  KeyenceProcessPlanning.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(DEPENDENCIES geometry_msgs sensor_msgs visualization_msgs trajectory_msgs)
+generate_messages(DEPENDENCIES 
+  geometry_msgs
+  sensor_msgs
+  visualization_msgs
+  trajectory_msgs
+)
 
 ###################################
 ## catkin specific configuration ##
@@ -52,7 +68,11 @@ generate_messages(DEPENDENCIES geometry_msgs sensor_msgs visualization_msgs traj
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  CATKIN_DEPENDS message_runtime geometry_msgs sensor_msgs genmsg
+  CATKIN_DEPENDS
+  message_runtime
+  geometry_msgs
+  sensor_msgs
+  genmsg
 )
 
 

@@ -1,13 +1,36 @@
-# The cartesian points representing path to be blended
+# Trajectory Planning Service
+# This service makes a request to the centralized path planner
+# to calculate a robot joint trajectory that achieves the
+# plan set out in 'path'.
+
+# The cartesian points representing path to be processed
 ProcessPath path
 
-#extra parameters that tell descartes how to behave
+# MoveIt group name associated with this plan (see the associated SRDF)
 string group_name
+
+# Frames of reference for planning
 string tool_frame
 string world_frame
+
+# Process type; True for blending path; False for line scanner pass
+# Dictates the constraints put on the tool.
+bool is_blending_path
+
+# If true, the planner will attempt to create a joint motion from the 
+# 'current' robot joint state to the first point in the process path.
+bool plan_from_current_position 
+
+# How finely to search unconstrained angles, if any
 float64 angle_discretization
-float64 interpoint_delay
-uint8 iterations
+
+# Timing data
+float64 tcp_speed   # Linear tool speed (m/s)
 
 ---
-trajectory_msgs/JointTrajectory trajectory
+
+# Resulting trajectory components
+trajectory_msgs/JointTrajectory trajectory_approach
+trajectory_msgs/JointTrajectory trajectory_process
+trajectory_msgs/JointTrajectory trajectory_depart
+
