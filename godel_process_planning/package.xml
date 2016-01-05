@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<package>
+  <name>godel_process_planning</name>
+  <version>0.1.0</version>
+  <description>
+    The process planning package handles joint trajectory planning for (at the
+    moment) two distinct processes: blending and laser line scanning. This package replaces the earlier 'godel_path_planning'.
+  </description>
+
+  <maintainer email="jmeyer@swri.org">Jonathan Meyer</maintainer>
+  <author email="jmeyer@swri.org">Jonathan Meyer</author>
+  
+  <license>Apache 2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>descartes_core</build_depend>
+  <build_depend>descartes_moveit</build_depend>
+  <build_depend>descartes_planner</build_depend>
+  <build_depend>descartes_trajectory</build_depend>
+  <build_depend>godel_msgs</build_depend>
+  <build_depend>moveit_ros_planning_interface</build_depend>
+  <build_depend>roscpp</build_depend>
+
+  <run_depend>descartes_core</run_depend>
+  <run_depend>descartes_moveit</run_depend>
+  <run_depend>descartes_planner</run_depend>
+  <run_depend>descartes_trajectory</run_depend>
+  <run_depend>godel_msgs</run_depend>
+  <run_depend>moveit_ros_planning_interface</run_depend>
+  <run_depend>roscpp</run_depend>
+
+</package>
