@@ -1,0 +1,9 @@
+# Blend process parameters
+godel_msgs/ScanPlanParameters params
+
+# The actual path the tool will follow
+godel_msgs/ProcessPath path
+
+---
+
+godel_msgs/ProcessPlan plan

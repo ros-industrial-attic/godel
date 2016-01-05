@@ -1,8 +1,29 @@
-int32 GET_CURRENT_PARAMETERS=0
-int32 GET_DEFAULT_PARAMETERS=1
-int32 action
+# Surface Blending Parameter Getter/Setter
+# This service is used to update/query the internal state of the
+# 'surface_blending_service'. This is means by which GUI components
+# may visualize and mutate the state of various system parameters.
+
+# Action Enumeration
+int32 GET_CURRENT_PARAMETERS=0    # Get the base parameter state
+int32 GET_DEFAULT_PARAMETERS=1    # Get the parameters loaded at start-up
+int32 SET_PARAMETERS=2            # Set the state of the system
+int32 SAVE_PARAMETERS=3           # Both sets the state and caches the new state to disk
+
+int32 action                      # Action to undertake (see Action Enumeration)
+
+# In the case that action is a GET method, then these fields may be left blank
+godel_msgs/RobotScanParameters robot_scan                 # Parameters associated with macro-scans
+godel_msgs/SurfaceDetectionParameters surface_detection   # Surface detection/extraction parameters
+godel_msgs/BlendingPlanParameters blending_plan           # Blending parameters
+godel_msgs/ScanPlanParameters scan_plan                   # Surface-scanning and QA parameters
+
 ---
+# The success of the GET/SET method. GET should always succeed. SET may fail if parameters
+# are out of bounds or a save location is not writable.
 bool succeeded
+
+# If action in request was a SET method, then these fields are not populated.
 godel_msgs/RobotScanParameters robot_scan
 godel_msgs/SurfaceDetectionParameters surface_detection
 godel_msgs/BlendingPlanParameters blending_plan
+godel_msgs/ScanPlanParameters scan_plan

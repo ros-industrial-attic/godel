@@ -1,0 +1,16 @@
+# Joint trajectory
+trajectory_msgs/JointTrajectory trajectory_approach
+trajectory_msgs/JointTrajectory trajectory_process
+trajectory_msgs/JointTrajectory trajectory_depart
+
+# wait for execution to finish before returning
+bool wait_for_execution
+
+# Use the simulated robot or the actual robot
+bool simulate
+
+# Process parameters
+godel_msgs/BlendingPlanParameters params
+
+---
+# Empty
