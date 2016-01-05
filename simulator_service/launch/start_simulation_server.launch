@@ -9,6 +9,10 @@
 
   <arg name="namespace" default="simulation"/>
   <arg name="world_frame" default="world_frame"/>
+  <arg name="service_name" default="simulate_trajectory"/>
+  <arg name="action_name" default="follow_joint_trajectory"/>
+  <!-- The default scale factor is multiplied by trajectory durations to get the final timing -->
+  <arg name="scale_factor" default="0.2"/>
   
   <group ns="$(arg namespace)">
 
@@ -28,7 +32,12 @@
     <!-- Launches a robot simulator with associated action server -->
     <include file="$(find industrial_robot_simulator)/launch/robot_interface_simulator.launch"/>
 
-    <node pkg="simulator_service" type="simulator_service_node" name="simulator_service" output="screen"/>
+    <!-- Launches service interface to the simulator -->
+    <node pkg="simulator_service" type="simulator_service_node" name="simulator_service" output="screen">
+      <param name="service_name" value="$(arg service_name)"/>
+      <param name="action_name" value="$(arg action_name)"/>
+      <param name="scale_factor" value="$(arg scale_factor)"/>
+    </node>
 
   </group>
 
