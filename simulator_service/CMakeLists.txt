@@ -2,11 +2,10 @@ cmake_minimum_required(VERSION 2.8.3)
 project(simulator_service)
 
 find_package(catkin REQUIRED COMPONENTS
-  industrial_robot_simulator
+  actionlib
+  control_msgs
   roscpp
   trajectory_msgs
-  control_msgs
-  actionlib
 )
 
 add_service_files(
@@ -16,11 +15,15 @@ add_service_files(
 
 generate_messages(
   DEPENDENCIES
-  trajectory_msgs control_msgs
+  control_msgs
+  trajectory_msgs 
 )
 
 catkin_package(
- CATKIN_DEPENDS industrial_robot_simulator roscpp
+  CATKIN_DEPENDS 
+  control_msgs
+  roscpp
+  trajectory_msgs 
 )
 
 ###########
