@@ -1,9 +1,10 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(simulator_service)
+project(industrial_robot_simulator_service)
 
 find_package(catkin REQUIRED COMPONENTS
   actionlib
   control_msgs
+  message_generation
   roscpp
   trajectory_msgs
 )
@@ -22,6 +23,7 @@ generate_messages(
 catkin_package(
   CATKIN_DEPENDS 
   control_msgs
+  message_runtime
   roscpp
   trajectory_msgs 
 )
@@ -36,7 +38,7 @@ include_directories(
 
 add_executable(simulator_service_node src/simulator_service_node.cpp)
 
-add_dependencies(simulator_service_node simulator_service_generate_messages_cpp)
+add_dependencies(simulator_service_node industrial_robot_simulator_service_generate_messages_cpp)
 
 target_link_libraries(simulator_service_node
   ${catkin_LIBRARIES}
@@ -46,14 +48,12 @@ target_link_libraries(simulator_service_node
 ## Install ##
 #############
 
-## Mark executables and/or libraries for installation
 install(TARGETS simulator_service_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-## Mark other files for installation (e.g. launch and bag files, etc.)
 install( DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

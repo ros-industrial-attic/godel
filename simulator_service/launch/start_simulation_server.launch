@@ -33,7 +33,7 @@
     <include file="$(find industrial_robot_simulator)/launch/robot_interface_simulator.launch"/>
 
     <!-- Launches service interface to the simulator -->
-    <node pkg="simulator_service" type="simulator_service_node" name="simulator_service" output="screen">
+    <node pkg="industrial_robot_simulator_service" type="simulator_service_node" name="simulator_service" output="screen">
       <param name="service_name" value="$(arg service_name)"/>
       <param name="action_name" value="$(arg action_name)"/>
       <param name="scale_factor" value="$(arg scale_factor)"/>
