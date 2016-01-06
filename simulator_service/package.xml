@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>simulator_service</name>
+  <name>industrial_robot_simulator_service</name>
   <version>0.1.0</version>
   <description>
     This package adds a 'simulated' robot in its own TF namespace. Backed by ROS-I's
