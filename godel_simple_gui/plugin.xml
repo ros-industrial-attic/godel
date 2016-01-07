@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+
+<library path="lib/libgodel_simple_gui">
+  <class name="godel_simple_gui/BlendingPanel"
+         type="godel_simple_gui::BlendingPanel"
+         base_class_type="rviz::Panel">
+    <description>
+      A panel widget that can be used in an rviz instance for surface blending path generation
+    </description>
+  </class>
+</library>
