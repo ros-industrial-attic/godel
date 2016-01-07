@@ -43,3 +43,14 @@ Godel: Austrian logician and mathematician http://en.wikipedia.org/wiki/Kurt_G%C
   roslaunch godel_surface_detection robot_blending.launch sim_sensor:=false 
   sim_robot:=false robot_ip:=[robot ip]
   ```
+
+### Execution
+After successfully generating a motion plan with Godel, a `trajectory.bag` file will written to disk inside the `ROS_HOME` directory, which defaults to `/home/<user>/.ros/`. 
+
+To execute this file, open a new file, source the godel workspace, and run the following:
+```
+roslaunch godel_surface_detection trajectory_test.launch bagfile:=trajectory.bag change_speed:=true speed:=0.1
+```
+
+Replace the '0.1' value with whatever linear tool speed you desire.
+
