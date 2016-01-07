@@ -1,0 +1,20 @@
+<?xml version="1.0"?>
+<package>
+  <name>godel_scan_analysis</name>
+  <version>0.0.0</version>
+  <description>Generates colorized point clouds from individual profilimeter
+  laser scans. </description>
+
+  <maintainer email="jonathan.meyer@swri.org">Jon Meyer</maintainer>
+
+  <license>Apache 2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>godel_keyence_ljv_driver</build_depend>
+  <build_depend>keyence_ljv_description</build_depend>
+  <build_depend>roscpp</build_depend>
+  <run_depend>godel_keyence_ljv_driver</run_depend>
+  <run_depend>keyence_ljv_description</run_depend>
+  <run_depend>roscpp</run_depend>
+
+</package>
