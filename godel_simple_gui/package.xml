@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<package>
+  <name>godel_simple_gui</name>
+  <version>0.1.0</version>
+  <description>The godel_simple_gui package presents an alternative front end for the Godel project that is focused on providing an easy to use, ATM-like interface for operating the system end to end.</description>
+
+  <maintainer email="jmeyer@swri.org">Jonathan Meyer</maintainer>
+  <author email="jmeyer@swri.org">Jonathan Meyer</author>
+
+  <license>Apache 2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>godel_msgs</build_depend>
+  <build_depend>roscpp</build_depend>
+  <build_depend>rviz</build_depend>
+
+  <run_depend>godel_msgs</run_depend>
+  <run_depend>roscpp</run_depend>
+  <run_depend>rviz</run_depend>
+
+  <export>
+   <rviz plugin="${prefix}/plugin.xml"/>
+  </export>
+</package>
