@@ -9,6 +9,7 @@ find_package(catkin REQUIRED COMPONENTS
              sensor_msgs
              visualization_msgs
              trajectory_msgs
+             param_helpers
 )
 
 
@@ -52,7 +53,8 @@ generate_messages(DEPENDENCIES geometry_msgs sensor_msgs visualization_msgs traj
 ## CATKIN_DEPENDS: catkin_packages dependent projects also need
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
-  CATKIN_DEPENDS message_runtime geometry_msgs sensor_msgs genmsg
+  INCLUDE_DIRS include
+  CATKIN_DEPENDS message_runtime geometry_msgs sensor_msgs genmsg param_helpers
 )
 
 
