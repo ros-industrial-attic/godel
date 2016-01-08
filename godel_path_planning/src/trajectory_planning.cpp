@@ -10,10 +10,13 @@
 #include <descartes_core/robot_model.h>
 #include <pluginlib/class_loader.h>
 
+#include "godel_path_planning/trajectory_multipoint.h"
+
 // Anonymous namespace
 namespace
 {
   const static double TOOL_POINT_DELAY = 0.75;
+  const static double SCAN_Z_ORIENTATION_OFFSET = M_PI_2;
 
   const static std::string robot_description = "robot_description";
 
@@ -37,8 +40,34 @@ namespace
     return ptr;
   }
 
+  descartes_core::TrajectoryPtPtr rotationalMultipoint(double x, double y, double z, double rx, double ry, double rz, double plus_minus,
+                                                       double discretization, const descartes_core::TimingConstraint& timing)
+  {
+    using namespace descartes_core;
+    using namespace descartes_trajectory;
+
+    CartTrajectoryPt a(
+              TolerancedFrame(utils::toFrame(x,y, z, rx, ry, rz, descartes_core::utils::EulerConventions::XYZ),
+               ToleranceBase::zeroTolerance<PositionTolerance>(x, y, z),
+               ToleranceBase::createSymmetric<OrientationTolerance>(rx, ry, rz-plus_minus, 0, 0, 0.3)),
+              0.0, discretization, timing);
+
+    
+    CartTrajectoryPt b(
+              TolerancedFrame(utils::toFrame(x,y, z, rx, ry, rz, descartes_core::utils::EulerConventions::XYZ),
+               ToleranceBase::zeroTolerance<PositionTolerance>(x, y, z),
+               ToleranceBase::createSymmetric<OrientationTolerance>(rx, ry, rz+plus_minus, 0, 0, 0.3)),
+              0.0, discretization, timing);
+
+    std::vector<CartTrajectoryPt> pts;
+    pts.push_back(a); pts.push_back(b);
+
+    return descartes_core::TrajectoryPtPtr(new godel_path_planning::CartTrajectoryMultiPt(pts, timing));
+
+  }
+
   // Create an axial trajectory pt from a given tf transform
-  descartes_core::TrajectoryPtPtr tfToAxialTrajectoryPt(const tf::Transform& nominal, double discretization)
+  descartes_core::TrajectoryPtPtr tfToAxialTrajectoryPt(const tf::Transform& nominal, double discretization, bool free_z)
   {
     using namespace descartes_core;
     using namespace descartes_trajectory;
@@ -54,13 +83,21 @@ namespace
     double y = eigen_pose.translation()(1);
     double z = eigen_pose.translation()(2);
 
+    static const descartes_core::TimingConstraint timing(0.0, 0.3);
 
-    return boost::shared_ptr<TrajectoryPt>(
-      new CartTrajectoryPt(
-            TolerancedFrame(utils::toFrame(x,y, z, rx, ry, rz, descartes_core::utils::EulerConventions::XYZ),
-             ToleranceBase::zeroTolerance<PositionTolerance>(x, y, z),
-             ToleranceBase::createSymmetric<OrientationTolerance>(rx, ry, 0, 0, 0, 2.0 * M_PI)),
-            0.0, discretization));
+    if (free_z)
+    {
+      return boost::shared_ptr<TrajectoryPt>(
+        new CartTrajectoryPt(
+              TolerancedFrame(utils::toFrame(x,y, z, rx, ry, rz, descartes_core::utils::EulerConventions::XYZ),
+               ToleranceBase::zeroTolerance<PositionTolerance>(x, y, z),
+               ToleranceBase::createSymmetric<OrientationTolerance>(rx, ry, 0, 0, 0, 2*M_PI)),
+              0.0, discretization, timing));
+    } 
+    else
+    {
+      return rotationalMultipoint(x,y,z,rx,ry,rz,SCAN_Z_ORIENTATION_OFFSET,discretization,timing);
+    }
   }
 
   // Translates a point relative to a reference pose to an absolute transformation
@@ -151,7 +188,7 @@ bool godel_path_planning::generateTrajectory(const godel_msgs::TrajectoryPlannin
     // compute the absolute transform of a given point given its 
     // reference plane and relative position to that plane
     tf::Transform point_tf = createNominalTransform(req.path.reference, req.path.points[i]);
-    graph_points.push_back(tfToAxialTrajectoryPt(point_tf, req.angle_discretization));
+    graph_points.push_back(tfToAxialTrajectoryPt(point_tf, req.angle_discretization, req.free_z_rotation));
   }
 
   descartes_core::PathPlannerBasePtr planner (new descartes_planner::DensePlanner);

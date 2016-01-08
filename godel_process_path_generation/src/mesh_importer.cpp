@@ -122,7 +122,7 @@ bool MeshImporter::calculateSimpleBoundary(const pcl::PolygonMesh &input_mesh)
 	  // computes local frame and saves it into the 'plane_frame_' member
 	  Eigen::Vector4d centroid4;
 	  pcl::compute3DCentroid(*points, centroid4);
-	  computeLocalPlaneFrame(hplane, centroid4.head(3));
+	  computeLocalPlaneFrame(hplane, centroid4.head(3), *points);
 	  if (verbose_)
 	  {
 	    ROS_INFO_STREAM("Local plane calculated with normal " << hplane.coeffs().transpose() << " and origin " << centroid4.transpose());
@@ -193,7 +193,7 @@ bool MeshImporter::calculateBoundaryData(const pcl::PolygonMesh &input_mesh)
 
   Eigen::Vector4d centroid4;
   pcl::compute3DCentroid(*points, centroid4);
-  computeLocalPlaneFrame(hplane, centroid4.head(3));
+  computeLocalPlaneFrame(hplane, centroid4, *points);
   if (verbose_)
   {
     ROS_INFO_STREAM("Local plane calculated with normal " << hplane.coeffs().transpose() << " and origin " << centroid4.transpose());
@@ -261,27 +261,29 @@ bool MeshImporter::calculateBoundaryData(const pcl::PolygonMesh &input_mesh)
   return true;
 }
 
-void MeshImporter::computeLocalPlaneFrame(const Eigen::Hyperplane<double, 3> &plane, const Vector3d &centroid)
+void MeshImporter::computeLocalPlaneFrame(const Eigen::Hyperplane<double, 3> &plane, const Vector4d &centroid, const Cloud& cloud)
 {
-  Eigen::Vector3d origin = plane.projection(centroid);       // Project centroid onto plane
+  Eigen::Vector3d origin = plane.projection(centroid.head<3>());       // Project centroid onto plane
+  const Eigen::Vector3d& plane_normal = plane.coeffs().head<3>();
 
-  // Check if z_axis (plane normal) is closely aligned with world x_axis:
-  // If not, construct transform rotation from X,Z axes. Otherwise, use Y,Z axes.
-  const Eigen::Vector3d& plane_normal = plane.coeffs().head(3);
-  if (std::abs(plane_normal.dot(Vector3d::UnitX())) < 0.8)
-  {
-    Eigen::Vector3d x_axis = plane.projection(origin + Eigen::Vector3d::UnitX())-origin;
-    plane_frame_.matrix().col(0).head(3) = x_axis.normalized();
-    plane_frame_.matrix().col(2).head(3) = plane_normal.normalized();
-    plane_frame_.matrix().col(1).head(3) = (plane_normal.normalized().cross(x_axis.normalized())).normalized();
-  }
-  else
-  {
-    Eigen::Vector3d y_axis = plane.projection(origin + Eigen::Vector3d::UnitY())-origin;
-    plane_frame_.matrix().col(1).head(3) = y_axis.normalized();
-    plane_frame_.matrix().col(2).head(3) = plane_normal.normalized();
-    plane_frame_.matrix().col(0).head(3) = (y_axis.normalized().cross(plane_normal.normalized())).normalized();
-  }
+  // Compute major axis of the part
+  Eigen::Matrix3d covar_matrix;
+  pcl::computeCovarianceMatrixNormalized (cloud, centroid, covar_matrix);
+  // Find eigenvectors
+  Eigen::Matrix3d evecs;  // eigenvectors
+  Eigen::Vector3d evals; // eigenvalues
+  pcl::eigen33 (covar_matrix, evecs, evals);
+  // Y-axis can be estimated from the 2nd eigenvector
+  Eigen::Vector3d y_axis (evecs.col(1).normalized());
+  // Z-axis computed in plane segmentation step
+  Eigen::Vector3d z_axis (plane_normal.normalized());
+  // Cross product to obtain X axis
+  Eigen::Vector3d x_axis = y_axis.cross(z_axis);
+
+  plane_frame_.matrix().col(0).head<3>() = x_axis;
+  plane_frame_.matrix().col(1).head<3>() = y_axis;
+  plane_frame_.matrix().col(2).head<3>() = z_axis;
+
   plane_frame_.translation() = origin;
 }
 
