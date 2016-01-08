@@ -1,0 +1,5 @@
+# Absolute file path to the RAPID file that will be uploaded to the Robot
+string file_path
+
+---
+# EMPTY - future improvements might inform of failure to establish connection
