@@ -1,0 +1,15 @@
+<launch>
+
+  <arg name="world_frame" />
+  <arg name="scan_frame" />
+  <arg name="voxel_leaf_size" default="0.005"/> <!-- 5mm -->
+  <arg name="voxel_publish_period" default="2.0"/> <!--seconds -->
+
+  <node pkg="godel_scan_analysis" type="godel_scan_analysis_node" name="godel_scan_analysis">
+    <param name="world_frame" value="$(arg world_frame)"/>
+    <param name="scan_frame" value="$(arg scan_frame)"/>
+    <param name="voxel_leaf_size" type="double" value="$(arg voxel_leaf_size)"/>
+    <param name="voxel_publish_period" type="double" value="$(arg voxel_publish_period)"/>
+  </node>
+
+</launch>

@@ -4,26 +4,22 @@
 #include <pcl/filters/voxel_grid.h>
 
 // Constants
-const static double VOXEL_GRID_LEAF_SIZE = 0.005; // 5 mm
-
-const static double VOXEL_GRID_PUBLISH_PERIOD = 2.0; // seconds
-
 const static double TF_WAIT_TIMEOUT = 0.25; // seconds
 
-godel_scan_analysis::ScanServer::ScanServer(const std::string& world_frame, 
-                                            const std::string& scan_frame)
+const static std::string COLOR_CLOUD_TOPIC = "color_cloud";
+
+godel_scan_analysis::ScanServer::ScanServer(const ScanServerConfig& config)
   : map_(new ColorCloud)
   , buffer_(new ColorCloud)
-  , from_frame_(world_frame)
-  , to_frame_(scan_frame)
+  , config_(config)
 {
   ros::NodeHandle nh;
   scan_sub_ = nh.subscribe("profiles", 500, &ScanServer::scanCallback, this);
-  cloud_pub_ = nh.advertise<ColorCloud>("color_cloud", 1);
+  cloud_pub_ = nh.advertise<ColorCloud>(COLOR_CLOUD_TOPIC, 1);
   map_->header.frame_id = from_frame_;
 
   // Create publisher for the collected color cloud
-  timer_ = nh.createTimer(ros::Duration(VOXEL_GRID_PUBLISH_PERIOD), &ScanServer::publishCloud, this);
+  timer_ = nh.createTimer(ros::Duration(config.voxel_grid_publish_period), &ScanServer::publishCloud, this);
 }
 
 void godel_scan_analysis::ScanServer::scanCallback(const Cloud& cloud)
@@ -57,7 +53,7 @@ void godel_scan_analysis::ScanServer::publishCloud(const ros::TimerEvent&) const
   // Downsample first
   pcl::VoxelGrid<pcl::PointXYZRGB> vg;
   vg.setInputCloud(map_);
-  vg.setLeafSize(VOXEL_GRID_LEAF_SIZE, VOXEL_GRID_LEAF_SIZE, VOXEL_GRID_LEAF_SIZE);
+  vg.setLeafSize(config_.voxel_grid_leaf_size, config_.voxel_grid_leaf_size, config_.voxel_grid_leaf_size);
   vg.filter(*pub_cloud);
   
   cloud_pub_.publish(pub_cloud);
@@ -74,8 +70,8 @@ inline
 tf::StampedTransform godel_scan_analysis::ScanServer::findTransform(const ros::Time& tm) const
 {
   tf::StampedTransform transform;
-  tf_listener_.waitForTransform(from_frame_, to_frame_, tm, ros::Duration(TF_WAIT_TIMEOUT));
-  tf_listener_.lookupTransform(from_frame_, to_frame_, tm, transform);
+  tf_listener_.waitForTransform(config_.from_frame, config_.to_frame, tm, ros::Duration(TF_WAIT_TIMEOUT));
+  tf_listener_.lookupTransform(config._from_frame, config.to_frame, tm, transform);
   return transform;
 }
 

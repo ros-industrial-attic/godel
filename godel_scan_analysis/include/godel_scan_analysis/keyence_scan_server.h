@@ -14,6 +14,18 @@
 namespace godel_scan_analysis
 {
   /**
+   * @brief Structure for the configuration parameters associated with
+   *        the ScanServer
+   */
+  struct ScanServerConfig
+  {
+    std::string world_frame;
+    std::string scan_frame;
+    double voxel_grid_leaf_size;
+    double voxel_grid_publish_period;
+  };
+
+  /**
    * Defines the ROS interface for a surface-quality-map 
    */
   class ScanServer
@@ -22,7 +34,7 @@ namespace godel_scan_analysis
     typedef pcl::PointCloud<pcl::PointXYZRGB> ColorCloud;
     typedef pcl::PointCloud<pcl::PointXYZ> Cloud;
 
-    ScanServer(const std::string& world_frame, const std::string& scan_frame);
+    ScanServer(const ScanServerConfig& config);
 
     /**
      * Analyzes the passed-in cloud and adds the scored points to the internal map
@@ -54,6 +66,7 @@ namespace godel_scan_analysis
     ros::Timer timer_; // Publish timer for color cloud
     std::string from_frame_; // typically laser_scan_frame
     std::string to_frame_; // typically world_frame
+    ScanServerConfig config_;
   };
 
 } // end namespace godel_scan_analysis
