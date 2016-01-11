@@ -19,13 +19,13 @@
 
 const static double DEFAULT_MAX_SCORE = 0.00003;  // RMS value about a point that is considered out of spec
 const static double DEFAULT_MIN_SCORE = 0.0;      // Min RMS value; Used for coloring together with above
+const static unsigned WINDOW_SIZE = 30;           // The # of points in a window; equivalent to 0.05 mm * WINDOW_SIZE for Keyence
 
 namespace
 {
   typedef godel_scan_analysis::RoughnessScorer::Cloud Cloud;
   typedef godel_scan_analysis::RoughnessScorer::ColorCloud ColorCloud;
 
-  const static unsigned WINDOW_SIZE = 30;
 
   // Preprocess clouds
   static rms::Scan<double> filterCloudAndBuildScan(const Cloud& in)
