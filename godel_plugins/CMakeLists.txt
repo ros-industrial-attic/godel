@@ -3,11 +3,11 @@ project(godel_plugins)
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
+  godel_msgs
   roscpp
   rqt_gui
   rqt_gui_cpp
-	rviz
-	godel_msgs
+  rviz
 )
 
 find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
@@ -16,29 +16,52 @@ include(${QT_USE_FILE})
 #add_definitions(-DQT_NO_KEYWORDS)
 
 set(godel_plugins_SRCS
-	src/rqt_plugins/robot_blending_plugin.cpp
-	src/rviz_panels/robot_blending_panel.cpp
-	src/widgets/robot_blending_widget.cpp)
+  src/rqt_plugins/robot_blending_plugin.cpp
+  src/rviz_panels/robot_blending_panel.cpp
+  src/widgets/robot_blending_widget.cpp
+  src/widgets/blend_tool_param_window.cpp
+  src/widgets/parameter_window_base.cpp
+  src/widgets/surface_detection_configuration.cpp
+  src/widgets/robot_scan_configuration.cpp
+  src/widgets/scan_tool_configuration_window.cpp
+)
 
 set(godel_plugins_HDRS
-	include/godel_plugins/rqt_plugins/robot_blending_plugin.h
-	include/godel_plugins/rviz_panels/robot_blending_panel.h
-	include/godel_plugins/widgets/robot_blending_widget.h)
+  include/godel_plugins/rqt_plugins/robot_blending_plugin.h
+  include/godel_plugins/rviz_panels/robot_blending_panel.h
+  include/godel_plugins/widgets/robot_blending_widget.h
+  include/godel_plugins/widgets/blend_tool_param_window.h
+  include/godel_plugins/widgets/parameter_window_base.h
+  include/godel_plugins/widgets/surface_detection_configuration.h
+  include/godel_plugins/widgets/robot_scan_configuration.h
+  include/godel_plugins/widgets/scan_tool_configuration_window.h
+)
 
 set(godel_plugins_UIS
-	src/widgets/robot_blending_plugin.ui 
-	src/widgets/robot_scan_configuration.ui
-	src/widgets/pose_widget.ui
-	src/widgets/surface_detection_configuration.ui)
+  src/widgets/robot_blending_plugin.ui 
+  src/widgets/robot_scan_configuration.ui
+  src/widgets/pose_widget.ui
+  src/widgets/surface_detection_configuration.ui
+  src/widgets/blend_tool_param_window.ui
+  src/widgets/scan_tool_configuration_window.ui
+)
 
 set(godel_plugins_INCLUDE_DIRECTORIES
-	include
-	${CMAKE_CURRENT_BINARY_DIR})
+  include
+  ${CMAKE_CURRENT_BINARY_DIR}
+)
 
 catkin_package(
-  INCLUDE_DIRS ${godel_plugins_INCLUDE_DIRECTORIES}
-  LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS roscpp rqt_gui rqt_gui_cpp rviz
+  INCLUDE_DIRS 
+    ${godel_plugins_INCLUDE_DIRECTORIES}
+  LIBRARIES 
+    ${PROJECT_NAME}
+  CATKIN_DEPENDS 
+    godel_msgs
+    roscpp
+    rqt_gui 
+    rqt_gui_cpp
+    rviz
 )
 
 ###########
@@ -50,27 +73,23 @@ qt4_wrap_ui(godel_plugins_UIS_H ${godel_plugins_UIS})
 include_directories(${godel_plugins_INCLUDE_DIRECTORIES} ${catkin_INCLUDE_DIRS})
 
 ## Declare a cpp library
- add_library(${PROJECT_NAME}
-	${godel_plugins_UIS_H}
-	${godel_plugins_MOCS}
-	${godel_plugins_SRCS})
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${QT_LIBRARIES} ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY})
+add_library(${PROJECT_NAME}
+  ${godel_plugins_UIS_H}
+  ${godel_plugins_MOCS}
+  ${godel_plugins_SRCS}
+)
+
+target_link_libraries(${PROJECT_NAME} 
+  ${catkin_LIBRARIES} 
+  ${QT_LIBRARIES} 
+  ${QT_QTCORE_LIBRARY} 
+  ${QT_QTGUI_LIBRARY}
+)
+
 add_dependencies(${PROJECT_NAME} godel_msgs_generate_messages_cpp)
 
 find_package(class_loader)
 class_loader_hide_library_symbols(${PROJECT_NAME})
-
-## Declare a cpp executable
-# add_executable(godel_plugins_node src/godel_plugins_node.cpp)
-
-## Add cmake target dependencies of the executable/library
-## as an example, message headers may need to be generated before nodes
-# add_dependencies(godel_plugins_node godel_plugins_generate_messages_cpp)
-
-## Specify libraries to link a library or executable target against
-# target_link_libraries(godel_plugins_node
-#   ${catkin_LIBRARIES}
-# )
 
 #############
 ## Install ##
