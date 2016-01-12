@@ -17,14 +17,23 @@ const static double DEFAULT_JOINT_TOPIC_WAIT_TIME = 5.0; //seconds
 const static double DEFAULT_TRAJECTORY_BUFFER_TIME = 5.0;  //seconds
 const static std::string JOINT_TOPIC_NAME = "/joint_states";
 
+const static std::string THIS_SERVICE_NAME = "blend_process_execution";
+const static std::string EXECUTION_SERVICE_NAME = "execute_program";
+const static std::string SIMULATION_SERVICE_NAME = "simulate_path";
+
 static inline bool compare(const std::vector<double>& a, const std::vector<double>& b, double eps = 0.01)
 {
-  if (a.size() != b.size()) {
-    ROS_WARN("Joint configs not the same size");
+  if (a.size() != b.size()) 
+  {
+    ROS_ERROR_STREAM("Can't compare joint vectors of unequal length (" << a.size() << " vs " << b.size() << ")");
     return false;
   }
+  
   double diff = 0.0;
-  for (std::size_t i = 0; i < a.size(); ++i) diff += std::abs(a[i] - b[i]);
+  for (std::size_t i = 0; i < a.size(); ++i)
+  {
+    diff += std::abs(a[i] - b[i]);
+  }
 
   return diff < eps;
 } 
@@ -54,7 +63,10 @@ static bool waitForExecution(const std::vector<double>& end_goal, const ros::Dur
   return false;
 }
 
-static double toDegrees(double rads) { return rads * 180.0 / M_PI; }
+static double toDegrees(double rads) 
+{ 
+  return rads * 180.0 / M_PI; 
+}
 
 static std::vector<double> toDegrees(const std::vector<double>& rads)
 {
@@ -124,28 +136,24 @@ static bool writeRapidFile(const std::string& path,
   return true;
 }
 
-godel_process_execution::AbbBlendProcessExecutionService::AbbBlendProcessExecutionService(const std::string& name, 
-                                                                                          const std::string& sim_name,
-                                                                                          const std::string& real_name,
-                                                                                          ros::NodeHandle& nh)
-  : name_(name)
+godel_process_execution::AbbBlendProcessService::AbbBlendProcessService(ros::NodeHandle& nh)
 {
   // Load Robot Specific Parameters
   nh.param<bool>("J23_coupled", j23_coupled_, false);
 
   // Create client services
-  sim_client_ = nh.serviceClient<simulator_service::SimulateTrajectory>(sim_name);
+  sim_client_ = nh.serviceClient<simulator_service::SimulateTrajectory>(SIMULATION_SERVICE_NAME);
 
-  real_client_ = nh.serviceClient<abb_file_suite::ExecuteProgram>(real_name); // "execute_program"
+  real_client_ = nh.serviceClient<abb_file_suite::ExecuteProgram>(EXECUTION_SERVICE_NAME);
 
   // Advertise the primary blending service
-  server_ = nh.advertiseService<AbbBlendProcessExecutionService,
+  server_ = nh.advertiseService<AbbBlendProcessService,
                                 godel_msgs::BlendProcessExecution::Request,
                                 godel_msgs::BlendProcessExecution::Response>
-            (name, &godel_process_execution::AbbBlendProcessExecutionService::executionCallback, this);
+            (THIS_SERVICE_NAME, &godel_process_execution::AbbBlendProcessService::executionCallback, this);
 }
 
-bool godel_process_execution::AbbBlendProcessExecutionService::executionCallback(godel_msgs::BlendProcessExecution::Request& req,
+bool godel_process_execution::AbbBlendProcessService::executionCallback(godel_msgs::BlendProcessExecution::Request& req,
                                                                                  godel_msgs::BlendProcessExecution::Response& res)
 {
   if (req.simulate)
@@ -158,7 +166,7 @@ bool godel_process_execution::AbbBlendProcessExecutionService::executionCallback
   }
 }
 
-bool godel_process_execution::AbbBlendProcessExecutionService::executeProcess(godel_msgs::BlendProcessExecution::Request req)
+bool godel_process_execution::AbbBlendProcessService::executeProcess(godel_msgs::BlendProcessExecution::Request req)
 {
   trajectory_msgs::JointTrajectory aggregate_traj;
   aggregate_traj = req.trajectory_approach;
@@ -182,7 +190,7 @@ bool godel_process_execution::AbbBlendProcessExecutionService::executeProcess(go
 
   if (!writeRapidFile("/tmp/blend.mod", pts, start_index, stop_index, params))
   {
-    ROS_WARN("Unable to generate RAPID motion file; Cannot execute process.");
+    ROS_ERROR("Unable to generate RAPID motion file; Cannot execute process.");
     return false;
   }
 
@@ -193,7 +201,7 @@ bool godel_process_execution::AbbBlendProcessExecutionService::executeProcess(go
 
   if (!real_client_.call(srv))
   {
-    ROS_WARN("Unable to upload blending process RAPID module to controller via FTP.");
+    ROS_ERROR("Unable to upload blending process RAPID module to controller via FTP.");
     return false;
   }
 
@@ -208,7 +216,7 @@ bool godel_process_execution::AbbBlendProcessExecutionService::executeProcess(go
                           aggregate_traj.points.back().time_from_start + ros::Duration(DEFAULT_TRAJECTORY_BUFFER_TIME)); // timeout
 }
 
-bool godel_process_execution::AbbBlendProcessExecutionService::simulateProcess(godel_msgs::BlendProcessExecution::Request req)
+bool godel_process_execution::AbbBlendProcessService::simulateProcess(godel_msgs::BlendProcessExecution::Request req)
 {
   // The simulation server doesn't support any I/O visualizations, so we aggregate the
   // trajectory components and send them all at once
@@ -225,7 +233,7 @@ bool godel_process_execution::AbbBlendProcessExecutionService::simulateProcess(g
   // Call simulation service
   if (!sim_client_.call(srv))
   {
-    ROS_WARN("Simulation client unavailable or unable to simulate trajectory.");
+    ROS_ERROR("Simulation client unavailable or unable to simulate trajectory.");
     return false;
   }
   else

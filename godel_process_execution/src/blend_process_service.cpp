@@ -8,24 +8,24 @@
 
 #include <ros/topic.h>
 
-godel_process_execution::BlendProcessExecutionService::BlendProcessExecutionService(const std::string& name,
-                                                                          const std::string& sim_name,
-                                                                          const std::string& real_name,
-                                                                          ros::NodeHandle& nh)
-  : name_(name)
+const static std::string EXECUTION_SERVICE_NAME = "execute_path";
+const static std::string SIMULATION_SERVICE_NAME = "simulate_path";
+const static std::string THIS_SERVICE_NAME = "blend_process_execution";
+
+godel_process_execution::BlendProcessService::BlendProcessService(ros::NodeHandle& nh)
 {
   // Simulation Server
-  sim_client_ = nh.serviceClient<simulator_service::SimulateTrajectory>(sim_name);
+  sim_client_ = nh.serviceClient<simulator_service::SimulateTrajectory>(SIMULATION_SERVICE_NAME);
   // Trajectory Execution Service
-  real_client_ = nh.serviceClient<godel_msgs::TrajectoryExecution>(real_name);
+  real_client_ = nh.serviceClient<godel_msgs::TrajectoryExecution>(EXECUTION_SERVICE_NAME);
   // The generic process execution service
-  server_ = nh.advertiseService<BlendProcessExecutionService,
+  server_ = nh.advertiseService<BlendProcessService,
                                 godel_msgs::BlendProcessExecution::Request,
                                 godel_msgs::BlendProcessExecution::Response>
-            (name, &godel_process_execution::BlendProcessExecutionService::executionCallback, this);
+            (THIS_SERVICE_NAME, &godel_process_execution::BlendProcessService::executionCallback, this);
 }
 
-bool godel_process_execution::BlendProcessExecutionService::executionCallback(godel_msgs::BlendProcessExecution::Request& req,
+bool godel_process_execution::BlendProcessService::executionCallback(godel_msgs::BlendProcessExecution::Request& req,
                                                                          godel_msgs::BlendProcessExecution::Response& res)
 {
   using simulator_service::SimulateTrajectory;
@@ -43,13 +43,13 @@ bool godel_process_execution::BlendProcessExecutionService::executionCallback(go
     }
     else
     {
-      boost::thread(&godel_process_execution::BlendProcessExecutionService::executeProcess, this, req);
+      boost::thread(&godel_process_execution::BlendProcessService::executeProcess, this, req);
       return true;
     }
   }
 }
 
-bool godel_process_execution::BlendProcessExecutionService::executeProcess(godel_msgs::BlendProcessExecution::Request req)
+bool godel_process_execution::BlendProcessService::executeProcess(godel_msgs::BlendProcessExecution::Request req)
 {
   godel_msgs::TrajectoryExecution srv_approach;
   srv_approach.request.wait_for_execution = true;
@@ -65,26 +65,26 @@ bool godel_process_execution::BlendProcessExecutionService::executeProcess(godel
 
   if (!real_client_.call(srv_approach))
   {
-    ROS_WARN("Execution client unavailable or unable to execute approach trajectory.");
+    ROS_ERROR("Execution client unavailable or unable to execute approach trajectory.");
     return false;
   }
 
   if (!real_client_.call(srv_process))
   {
-    ROS_WARN("Execution client unavailable or unable to execute process trajectory.");
+    ROS_ERROR("Execution client unavailable or unable to execute process trajectory.");
     return false;
   }
 
   if (!real_client_.call(srv_depart))
   {
-    ROS_WARN("Execution client unavailable or unable to execute departure trajectory.");
+    ROS_ERROR("Execution client unavailable or unable to execute departure trajectory.");
     return false;
   }
 
   return true;
 }
 
-bool godel_process_execution::BlendProcessExecutionService::simulateProcess(godel_msgs::BlendProcessExecution::Request req)
+bool godel_process_execution::BlendProcessService::simulateProcess(godel_msgs::BlendProcessExecution::Request req)
 {
   // The simulation server doesn't support any I/O visualizations, so we aggregate the
   // trajectory components and send them all at once
@@ -101,7 +101,7 @@ bool godel_process_execution::BlendProcessExecutionService::simulateProcess(gode
   // Call simulation service
   if (!sim_client_.call(srv))
   {
-    ROS_WARN("Simulation client unavailable or unable to simulate trajectory.");
+    ROS_ERROR("Simulation client unavailable or unable to simulate trajectory.");
     return false;
   }
   else

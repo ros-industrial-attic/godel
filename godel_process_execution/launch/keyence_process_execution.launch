@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+
+<!-- Has several service interfaces: -->
+<!-- 1. simulation server: "simulate_path" -->
+<!-- 2. execution server: "execute_path" -->
+<!-- 3. change Keyence program: "change_program" -->
+<!-- 4. THIS process server: "scan_process_execution" -->
+<launch>
+  <node pkg="godel_process_execution" type="keyence_process_service_node" name="scan_process_execution"/>
+</launch>

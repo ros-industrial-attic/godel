@@ -17,28 +17,28 @@ const static int KEYENCE_PROGRAM_LASER_ON = 4;
 const static int KEYENCE_PROGRAM_LASER_OFF = 0;
 
 const static std::string KEYENCE_PROGRAM_SERVICE_NAME = "change_program";
+const static std::string EXECUTION_SERVICE_NAME = "execute_path";
+const static std::string SIMULATION_SERVICE_NAME = "simulate_path";
+const static std::string SERVICE_SERVER_NAME = "scan_process_execution";
 
-godel_process_execution::KeyenceProcessExecutionService::KeyenceProcessExecutionService(const std::string& name, 
-                                                                          const std::string& sim_name,
-                                                                          const std::string& real_name,
-                                                                          ros::NodeHandle& nh)
-  : name_(name)
+
+godel_process_execution::KeyenceProcessService::KeyenceProcessService(ros::NodeHandle& nh)
 {
   // Connect to motion servers and I/O server
-  sim_client_ = nh.serviceClient<simulator_service::SimulateTrajectory>(sim_name);
+  sim_client_ = nh.serviceClient<simulator_service::SimulateTrajectory>(SIMULATION_SERVICE_NAME);
 
-  real_client_ = nh.serviceClient<godel_msgs::TrajectoryExecution>(real_name);
+  real_client_ = nh.serviceClient<godel_msgs::TrajectoryExecution>(EXECUTION_SERVICE_NAME);
 
   keyence_client_ = nh.serviceClient<keyence_driver::ChangeProgram>(KEYENCE_PROGRAM_SERVICE_NAME);
 
   // Create this process execution server
-  server_ = nh.advertiseService<KeyenceProcessExecutionService,
+  server_ = nh.advertiseService<KeyenceProcessService,
                                 godel_msgs::KeyenceProcessExecution::Request,
                                 godel_msgs::KeyenceProcessExecution::Response>
-            (name, &godel_process_execution::KeyenceProcessExecutionService::executionCallback, this);
+            (SERVICE_SERVER_NAME, &godel_process_execution::KeyenceProcessService::executionCallback, this);
 }
 
-bool godel_process_execution::KeyenceProcessExecutionService::executionCallback(godel_msgs::KeyenceProcessExecution::Request& req,
+bool godel_process_execution::KeyenceProcessService::executionCallback(godel_msgs::KeyenceProcessExecution::Request& req,
                                                                                 godel_msgs::KeyenceProcessExecution::Response& res)
 {
   using moveit_msgs::ExecuteKnownTrajectory;
@@ -56,18 +56,18 @@ bool godel_process_execution::KeyenceProcessExecutionService::executionCallback(
     }
     else
     {
-      boost::thread(&godel_process_execution::KeyenceProcessExecutionService::executeProcess, this, req);
+      boost::thread(&godel_process_execution::KeyenceProcessService::executeProcess, this, req);
       return true;
     }
   }
 }
 
-bool godel_process_execution::KeyenceProcessExecutionService::executeProcess(godel_msgs::KeyenceProcessExecution::Request& req)
+bool godel_process_execution::KeyenceProcessService::executeProcess(godel_msgs::KeyenceProcessExecution::Request& req)
 {
   // Check for keyence existence
   if (!keyence_client_.exists())
   {
-    ROS_WARN_STREAM("Keyence ROS server is not available on service " << keyence_client_.getService());
+    ROS_ERROR_STREAM("Keyence ROS server is not available on service " << keyence_client_.getService());
     return false;
   }
 
@@ -85,7 +85,7 @@ bool godel_process_execution::KeyenceProcessExecutionService::executeProcess(god
 
   if (!real_client_.call(srv_approach))
   {
-    ROS_WARN("Execution client unavailable or unable to execute approach trajectory.");
+    ROS_ERROR("Execution client unavailable or unable to execute approach trajectory.");
     return false;
   }
 
@@ -94,13 +94,13 @@ bool godel_process_execution::KeyenceProcessExecutionService::executeProcess(god
 
   if (!keyence_client_.call(keyence_srv))
   {
-    ROS_WARN_STREAM("Unable to activate keyence (program " << KEYENCE_PROGRAM_LASER_ON << ").");
+    ROS_ERROR_STREAM("Unable to activate keyence (program " << KEYENCE_PROGRAM_LASER_ON << ").");
      return false;
   }
 
   if (!real_client_.call(srv_process))
   {
-    ROS_WARN("Execution client unavailable or unable to execute process trajectory.");
+    ROS_ERROR("Execution client unavailable or unable to execute process trajectory.");
     return false;
   }
 
@@ -108,20 +108,20 @@ bool godel_process_execution::KeyenceProcessExecutionService::executeProcess(god
   keyence_srv.request.program_no = KEYENCE_PROGRAM_LASER_OFF;
   if (!keyence_client_.call(keyence_srv))
   {
-    ROS_WARN_STREAM("Unable to de-activate keyence (program " << KEYENCE_PROGRAM_LASER_OFF << ").");
+    ROS_ERROR_STREAM("Unable to de-activate keyence (program " << KEYENCE_PROGRAM_LASER_OFF << ").");
     return false;
   }
 
   if (!real_client_.call(srv_depart))
   {
-    ROS_WARN("Execution client unavailable or unable to execute departure trajectory.");
+    ROS_ERROR("Execution client unavailable or unable to execute departure trajectory.");
     return false;
   }
 
   return true;
 }
 
-bool godel_process_execution::KeyenceProcessExecutionService::simulateProcess(godel_msgs::KeyenceProcessExecution::Request& req)
+bool godel_process_execution::KeyenceProcessService::simulateProcess(godel_msgs::KeyenceProcessExecution::Request& req)
 {
   // The simulation server doesn't support any I/O visualizations, so we aggregate the
   // trajectory components and send them all at once
@@ -138,7 +138,7 @@ bool godel_process_execution::KeyenceProcessExecutionService::simulateProcess(go
   // Call simulation service
   if (!sim_client_.call(srv))
   {
-    ROS_WARN("Simulation client unavailable or unable to simulate trajectory.");
+    ROS_ERROR("Simulation client unavailable or unable to simulate trajectory.");
     return false;
   }
   else

@@ -7,11 +7,10 @@
 namespace godel_process_execution
 {
 
-class BlendProcessExecutionService
+class BlendProcessService
 {
 public:
-  BlendProcessExecutionService(const std::string& name, const std::string& sim_name,
-                       const std::string& real_name, ros::NodeHandle& nh);
+  BlendProcessService(ros::NodeHandle& nh);
 
   bool executionCallback(godel_msgs::BlendProcessExecution::Request& req,
                          godel_msgs::BlendProcessExecution::Response& res);
@@ -24,7 +23,6 @@ private:
   ros::ServiceServer server_;
   ros::ServiceClient real_client_;
   ros::ServiceClient sim_client_;
-  std::string name_;
 };
 
 }
