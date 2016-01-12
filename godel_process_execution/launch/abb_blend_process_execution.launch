@@ -1,0 +1,10 @@
+<?xml version="1.0" ?>
+
+<!-- Has several service interfaces: -->
+<!-- 1. simulation server: "simulate_path" -->
+<!-- 2. RAPID execution server: "execute_program" -->
+<!-- 3. THIS process server: "blend_process_execution" -->
+
+<launch>
+  <node pkg="godel_process_execution" type="abb_blend_process_service_node" name="abb_blend_process_execution"/>
+</launch>

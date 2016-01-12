@@ -7,11 +7,10 @@
 namespace godel_process_execution
 {
 
-class KeyenceProcessExecutionService
+class KeyenceProcessService
 {
 public:
-  KeyenceProcessExecutionService(const std::string& name, const std::string& sim_name, 
-                       const std::string& real_name, ros::NodeHandle& nh);
+  KeyenceProcessService(ros::NodeHandle& nh);
 
   /**
    * Currently forwards the godel_msgs::TrajectoryExecution on to the corresponding
@@ -29,7 +28,6 @@ private:
   ros::ServiceClient real_client_;
   ros::ServiceClient sim_client_;
   ros::ServiceClient keyence_client_;
-  std::string name_;
 };
 
 }

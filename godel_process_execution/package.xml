@@ -2,7 +2,11 @@
 <package>
   <name>godel_process_execution</name>
   <version>0.1.0</version>
-  <description>This </description>
+  <description>
+    This package is responsible for the execution of process plans generated
+    by packages like godel_process_planning. It handles motion and IO for the
+    tool, and is specialized for different robot vendors.
+  </description>
 
   <maintainer email="jmeyer@swri.org">Jonathan Meyer</maintainer>
 
