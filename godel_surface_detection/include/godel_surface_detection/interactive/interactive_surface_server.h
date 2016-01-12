@@ -70,7 +70,6 @@ public:
 
 
 	bool init();
-	bool load_parameters(std::string node_ns = "");
 	void run();
 	void stop();
 
@@ -95,6 +94,7 @@ public:
 	void toggle_selection_flag(std::string marker_name);
 	void show(std::string marker_name,bool show = true);
 	void show_all(bool show_surf);
+	bool rename_surface(const std::string& old_name, const std::string& new_name);
 
 protected:
 

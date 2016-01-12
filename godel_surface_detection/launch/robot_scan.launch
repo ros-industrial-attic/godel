@@ -1,7 +1,0 @@
-<?xml version=".0" ?>
-<launch>
-	<node name="robot_scan_node" pkg="godel_surface_detection" type="robot_scan_node" args="-m 0" output="screen">
-		<rosparam command="load" file="$(find godel_surface_detection)/config/sia20d/robot_scan.yaml"/>
-		<rosparam command="load" file="$(find godel_surface_detection)/config/surface_detection.yaml"/>
-	</node>
-</launch>
