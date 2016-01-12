@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- arguments -->
+  <arg name="config_path"/>
+
+    <!-- surface detection service -->
+  <node name="surface_blending_service" pkg="godel_surface_detection" type="surface_blending_service" output="screen">
+    <rosparam command="load" file="$(arg config_path)/robot_scan.yaml"/>
+    <rosparam command="load" file="$(arg config_path)/blending_plan.yaml"/>
+    <rosparam command="load" file="$(arg config_path)/surface_detection.yaml"/>
+    <rosparam command="load" file="$(arg config_path)/scan_plan.yaml"/>
+    <param name="publish_region_point_cloud" value="True"/>
+  </node>
+
+  <!-- Blending Tool Path Generation Nodes -->
+  <node name="process_path_generator_node" pkg="godel_process_path_generation" type="process_path_generator_node" output="screen"/>
+  <node name="polygon_offset_node" pkg="godel_polygon_offset" type="godel_polygon_offset_node" output="screen"/>
+</launch>
