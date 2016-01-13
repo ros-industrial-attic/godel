@@ -1,0 +1,25 @@
+<?xml version="1.0" ?>
+<launch>
+
+<!-- Launch service which when called will move robot and then indicate scene is ready   -->
+  <node pkg="industrial_extrinsic_cal" type="ros_robot_trigger_action_service" name="rosRobotSceneTrigger" output="screen" />
+
+<!-- Launch the extrinsic calibration service -->
+  <node pkg="industrial_extrinsic_cal" type="service_node" name="calibration_service_node" output="screen" >
+    <!-- Look in local package for configuration yaml files -->
+    <param name="yaml_file_path" value="$(find godel_calibration_config)/yaml/"/>
+    <!-- store_results* are, as far as I know, not being used -->
+    <!-- output will be saved in file stored in param mutableJointStateYamlFile (defined in calib_moveit_planning...) -->
+    <rosparam>
+      camera_file: "kinect2_camera_def.yaml"
+      target_file: "circles5x5.yaml"
+      cal_job_file: "example_caljob.yaml"
+      store_results_package_name: "godel_calibration_config"
+      store_results_file_name: "cal_results.launch"
+    </rosparam>
+  
+  </node>
+
+<!-- NOTE ONE STILL NEEDS TO CALL THE CALIBRATION SERVICE -->
+
+</launch>

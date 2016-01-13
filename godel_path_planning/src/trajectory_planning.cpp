@@ -54,13 +54,14 @@ namespace
     double y = eigen_pose.translation()(1);
     double z = eigen_pose.translation()(2);
 
+    static const descartes_core::TimingConstraint timing(0.0, 0.1);
 
     return boost::shared_ptr<TrajectoryPt>(
       new CartTrajectoryPt(
             TolerancedFrame(utils::toFrame(x,y, z, rx, ry, rz, descartes_core::utils::EulerConventions::XYZ),
              ToleranceBase::zeroTolerance<PositionTolerance>(x, y, z),
              ToleranceBase::createSymmetric<OrientationTolerance>(rx, ry, 0, 0, 0, 2.0 * M_PI)),
-            0.0, discretization));
+            0.0, discretization, timing));
   }
 
   // Translates a point relative to a reference pose to an absolute transformation

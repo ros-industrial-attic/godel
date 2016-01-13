@@ -9,28 +9,31 @@
   <!--  - if sim=false, a robot_ip and controller(fs100|dx100) arguments is required -->
   <arg name="sim" default="true" />
   <arg name="robot_ip" unless="$(arg sim)" />
-	<arg name="controller" unless="$(arg sim)" />
+	<arg name="controller" unless="$(arg sim)" default="fs100"/>
 	<arg name="rviz" default="true"/>
- 
+  <arg name="version0" default="true"/>
+
   <!-- load the robot_description parameter before launching ROS-I nodes -->
-  <include file="$(find godel_sia20d_moveit_config)/launch/planning_context.launch" >
+  <include file="$(find godel_calibration_config)/launch/calib_planning_context.launch" >
     <arg name="load_robot_description" value="true" />
   </include>
-
+  
   <!-- run the robot simulator and action interface nodes -->
   <group if="$(arg sim)">
-    <include file="$(find industrial_robot_simulator)/launch/robot_interface_simulator.launch" />
-		<rosparam param="initial_joint_state">[-1.34, 1.008, 0.033, -1.168, 0.106, -0.837, 2.430]</rosparam>
+    <remap from="joint_states" to="motoman/joint_states"/>
+    <include file="$(find industrial_robot_simulator)/launch/robot_interface_simulator.launch"/>
+    <rosparam param="initial_joint_state">[-1.34, 1.008, 0.033, -1.168, 0.106, -0.837, 2.430]</rosparam>
   </group>
 
   <!-- run the "real robot" interface nodes -->
   <!--   - this typically includes: robot_state, motion_interface, and joint_trajectory_action nodes -->
   <!--   - replace these calls with appropriate robot-specific calls or launch files -->
   <group unless="$(arg sim)">
+    <remap from="joint_states" to="motoman/joint_states"/>
     <include file="$(find motoman_sia20d_support)/launch/robot_interface_streaming_sia20d.launch" >
       <arg name="robot_ip" value="$(arg robot_ip)"/>
       <arg name="controller" value="$(arg controller)"/>
-      <arg name="version0" value="true" />
+      <arg name="version0" value="$(arg version0)" />
     </include>
   </group>
 
@@ -45,7 +48,19 @@
     <arg name="config" value="true"/>
   </include>
   
-  <include file="$(find godel_sia20d_moveit_config)/launch/default_warehouse_db.launch" />
+    <!-- joint state publisher which combines the mutable and the real joint states for the scene -->
+  <node name="combined_joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher" >
+    <rosparam param="source_list">[motoman/joint_states, mutable_joint_states]</rosparam>
+    <param name="publish_default_velocities" value="true" />
+    <param name="publish_default_efforts" value="true" />
+    <param name="publish_default_positions" value="true" />
+  </node>
+
+    <!-- publish the joint states associated with transforms that might be calibrated-->
+  <node name="mutable_joint_state_publisher" pkg="industrial_extrinsic_cal" type="mutable_joint_state_publisher" output="screen">
+    <param name="mutableJointStateYamlFile" value="$(find godel_calibration_config)/yaml/godel_mutable_joint_states.yaml" />
+    <remap from="joint_states" to="/mutable_joint_states"/>
+  </node>
 
 </launch>
 

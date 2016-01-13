@@ -1,0 +1,59 @@
+<?xml version="1.0" ?>
+<robot name="sia20d_workspace" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:include filename="$(find motoman_sia20d_support)/urdf/sia20d_macro.xacro"/>
+  <xacro:include filename="$(find godel_robot_config)/urdf/workspace_components.xacro"/>
+  <xacro:include filename="$(find godel_calibration_config)/urdf/calib_blending_eff_macro.xacro"/>
+  <xacro:include filename="$(find godel_calibration_config)/urdf/calib_transform_macro.xacro"/>
+  
+
+  <!-- property list -->
+  <xacro:property name="workcell_height" value="1"/>
+  <xacro:property name="coupler_height" value="0.0"/> <!--"0.087"-->
+  <xacro:property name="attached_object_length" value="0.10"/>
+  <xacro:property name="attached_object_width" value="0.10"/>
+  <xacro:property name="attached_object_height" value="0.025"/>
+  <xacro:property name="arm_prefix" value=""/>
+  
+
+  <!-- instantiating workcell definitions -->
+  <xacro:workcell_zone1_components/>
+  <!-- end of workcell definitions -->
+
+  <link name="roof1">
+    <collision>
+      <geometry>
+        <box size="1.40 2.220 0.04"/>
+      </geometry>
+    </collision>  
+  </link>
+
+  <!-- instantiating arm  --> 
+  <xacro:calib_blending_eff_definition prefix="${arm_prefix}" eff_adjustment="0.05"/>
+  <xacro:motoman_sia20d prefix="${arm_prefix}"/>
+
+  <joint name="link_t_to_eff" type="fixed">
+    <parent link="tool0"/>
+    <child link="eff_frame"/>
+    <origin xyz="0 ${coupler_height} 0" rpy="0.0 0.0 3.1416"/>
+  </joint>
+
+  <!-- start of arm-workcell joint definitions -->
+  <joint name="world_to_base" type="fixed">
+    <parent link="world_frame"/>
+    <child link="${arm_prefix}base_link"/>
+    <origin xyz="0.241 0 0" rpy="0 0 0"/>
+  </joint>
+
+  <joint name="world_to_roof1" type="fixed">
+    <parent link="world_frame"/>
+    <child link="roof1"/>
+    <origin xyz="0.65 0 1.32" rpy="0 0 0"/>
+  </joint>
+  
+  <!-- Calibration target definitions -->
+  <link name="target_frame"/>
+  <xacro:calibration_definitions child_link="target_frame" parent_link="world_frame" />
+
+  <!-- end of arm-workcell joint definitions -->  
+
+</robot>
