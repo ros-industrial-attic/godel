@@ -1,0 +1,1 @@
+rosrun moveit_ikfast create_ikfast_moveit_plugin.py abb_irb2400 manipulator irb2400_ikfast_manipulator_plugin /home/ros-industrial/ros/abbikfast/src/irb2400_ikfast_manipulator_plugin/src/abb_irb2400_manipulator_ikfast_solver.cpp

@@ -1,0 +1,12 @@
+<?xml version="1.0" ?>
+<robot name="calib_kinect2_sensor" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find godel_robot_resources)/urdf/calib_transform_macro.xacro"/>
+
+  <xacro:macro name="calib_kinect2_sensor_definitions" params="prefix parent_link">
+    <link name="${prefix}kinect2_link"/>
+
+    <xacro:calibration_definitions child_link="${prefix}kinect2_link" parent_link="${parent_link}" />
+
+  </xacro:macro>
+</robot>
