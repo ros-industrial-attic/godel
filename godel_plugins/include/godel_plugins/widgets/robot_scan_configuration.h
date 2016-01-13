@@ -36,7 +36,7 @@ class RobotScanConfigWidget : public ParameterWindowBase
 {
   Q_OBJECT
 public:
-  RobotScanConfigWidget(godel_msgs::RobotScanParameters params);
+  RobotScanConfigWidget(const godel_msgs::RobotScanParameters& params);
 
   godel_msgs::RobotScanParameters& params() { return params_; }
 

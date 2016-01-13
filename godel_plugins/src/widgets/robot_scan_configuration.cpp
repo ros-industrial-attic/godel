@@ -55,7 +55,7 @@ tf::Transform godel_plugins::PoseWidget::get_values()
 }
 
 // Scan Config Widget
-godel_plugins::RobotScanConfigWidget::RobotScanConfigWidget(godel_msgs::RobotScanParameters params)
+godel_plugins::RobotScanConfigWidget::RobotScanConfigWidget(const godel_msgs::RobotScanParameters& params)
   : params_(params)
 {
   ui_.setupUi(this);

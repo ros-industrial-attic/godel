@@ -8,7 +8,7 @@
 #define RAD2DEG(x) ((x)*57.29578)
 #endif
 
-godel_plugins::SurfaceDetectionConfigWidget::SurfaceDetectionConfigWidget(godel_msgs::SurfaceDetectionParameters params)
+godel_plugins::SurfaceDetectionConfigWidget::SurfaceDetectionConfigWidget(const godel_msgs::SurfaceDetectionParameters& params)
   : params_(params)
 {
   ui_.setupUi(this);

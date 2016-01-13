@@ -13,16 +13,14 @@ class ScanPlanConfigWidget : public ParameterWindowBase
 {
   Q_OBJECT
 public:
-  ScanPlanConfigWidget(godel_msgs::ScanPlanParameters params);
+  ScanPlanConfigWidget(const godel_msgs::ScanPlanParameters& params);
   godel_msgs::ScanPlanParameters& params() { return params_; }
-  static QStringList quality_metric_list;
 
 protected:
   virtual void update_gui_fields();
   virtual void update_internal_values();
   virtual int get_quality_combobox_index();
   virtual int get_scan_method_enum_value();
-
 
   godel_msgs::ScanPlanParameters params_;
   Ui::ScanToolConfigurationWindow ui_;

@@ -13,7 +13,7 @@ class SurfaceDetectionConfigWidget : public ParameterWindowBase
 {
   Q_OBJECT
 public:
-  SurfaceDetectionConfigWidget(godel_msgs::SurfaceDetectionParameters params);
+  SurfaceDetectionConfigWidget(const godel_msgs::SurfaceDetectionParameters& params);
 
   godel_msgs::SurfaceDetectionParameters& params() { return params_; }
 
