@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <launch>
 
-  <include file="$(find godel_sia20d_moveit_config)/launch/planning_context.launch" />
+  <!-- <include file="$(find godel_sia20d_moveit_config)/launch/planning_context.launch" /> -->
 
   <!-- GDB Debug Option -->
   <arg name="debug" default="false" />

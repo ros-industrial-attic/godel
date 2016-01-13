@@ -3,7 +3,6 @@
 	<xacro:include filename="$(find motoman_sia20d_support)/urdf/sia20d_macro.xacro"/>
 	<xacro:include filename="$(find godel_robot_config)/urdf/workspace_components.xacro"/>
 	<xacro:include filename="$(find godel_robot_config)/urdf/blending_eff_macro.xacro"/>
-	<xacro:include filename="$(find godel_robot_config)/urdf/kinect_sensor_macro.xacro"/>
 	
 
 	<!-- property list -->
@@ -13,7 +12,8 @@
 	<xacro:property name="attached_object_width" value="0.10"/>
 	<xacro:property name="attached_object_height" value="0.025"/>
 	<xacro:property name="arm_prefix" value=""/>
-	
+		
+	<xacro:property name="no_go_height" value="0.1"/>
 
 	<!-- instantiating workcell definitions -->
 	<xacro:workcell_zone1_components/>
@@ -27,14 +27,16 @@
 		</collision>	
 	</link>
 
-
-	<!-- instantiating sensor definitions -->
-	<xacro:sensor_definitions prefix="${arm_prefix}" parent_link="${arm_prefix}base_link" 
-		x_val="1.010" y_val="0.169" z_val="1.206" roll="0.005" pitch="1.968" yaw="0.0"/>
-	<!-- end of sensor definitions -->
+	<link name="no_go_zone">
+		<collision>
+			<geometry>
+				<box size="0.8 2.220 ${no_go_height}"/>
+			</geometry>
+		</collision>	
+	</link>
 
 	<!-- instantiating arm  -->	
-	<xacro:blending_eff_definition prefix="${arm_prefix}" eff_adjustment="0.05"/>
+	<xacro:blending_eff_definition prefix="${arm_prefix}" eff_adjustment="0.0575"/>
 	<xacro:motoman_sia20d prefix="${arm_prefix}"/>
 
 	<joint name="link_t_to_eff" type="fixed">
@@ -42,8 +44,6 @@
 		<child link="eff_frame"/>
 		<origin xyz="0 ${coupler_height} 0" rpy="0.0 0.0 3.1416"/>
 	</joint>
-
-
 
 	<!-- start of arm-workcell joint definitions -->
 	<joint name="world_to_base" type="fixed">
@@ -56,6 +56,12 @@
 		<parent link="world_frame"/>
 		<child link="roof1"/>
 		<origin xyz="0.65 0 1.32" rpy="0 0 0"/>
+	</joint>
+
+	<joint name="world_to_no_go" type="fixed">
+		<parent link="world_frame" />
+		<child link="no_go_zone" />
+		<origin xyz="1.0 0 ${no_go_height/2.0} " />
 	</joint>
 		
 

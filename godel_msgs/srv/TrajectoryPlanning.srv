@@ -1,13 +1,26 @@
 # The cartesian points representing path to be blended
 ProcessPath path
 
-#extra parameters that tell descartes how to behave
+## extra parameters that tell descartes how to behave
+# frames
 string group_name
 string tool_frame
 string world_frame
+
+# as opposed to a profilimeter raster path
+bool is_blending_path
+
+# controls whether or not the planner will attempt to plan
+# a motion from the current position of the group
+# to the first point of the process path
+bool plan_from_current_position 
+
+# How finely to search unconstrained angles, if any
 float64 angle_discretization
+
+# Timing data
 float64 interpoint_delay
-uint8 iterations
+
 
 ---
 trajectory_msgs/JointTrajectory trajectory

@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
   roscpp
   sensor_msgs
   interactive_markers
-  octomap_ros
 	moveit_ros_move_group
   moveit_ros_planning_interface
 	tf
@@ -29,7 +28,7 @@ set(godel_surface_detection_INCLUDE_DIRECTORIES
 catkin_package(
   INCLUDE_DIRS include
   LIBRARIES ${PROJECT_NAME}
-  CATKIN_DEPENDS pcl_msgs pcl_ros roscpp sensor_msgs interactive_markers octomap_ros tf tf_conversions godel_process_path_generation godel_msgs
+  CATKIN_DEPENDS pcl_msgs pcl_ros roscpp sensor_msgs interactive_markers tf tf_conversions godel_process_path_generation godel_msgs
 )
 
 ###########
@@ -43,7 +42,8 @@ include_directories(${godel_surface_detection_INCLUDE_DIRECTORIES})
 add_library(${PROJECT_NAME} 
 	src/detection/surface_detection.cpp
   src/scan/robot_scan.cpp
-	src/interactive/interactive_surface_server.cpp )
+	src/interactive/interactive_surface_server.cpp
+  src/scan/profilimeter_scan.cpp )
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 add_dependencies(${PROJECT_NAME} godel_msgs_generate_messages_cpp)
 

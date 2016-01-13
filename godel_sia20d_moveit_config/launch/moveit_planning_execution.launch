@@ -34,7 +34,7 @@
     </include>
   </group>
 
-  <!-- publish the robot state (tf transforms) -->s
+  <!-- publish the robot state (tf transforms) -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
 
   <include file="$(find godel_sia20d_moveit_config)/launch/move_group.launch">

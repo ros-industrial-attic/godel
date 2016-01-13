@@ -34,6 +34,13 @@ namespace motoman_sia20d_descartes
 
     virtual bool getAllIK(const Eigen::Affine3d &pose, std::vector<std::vector<double> > &joint_poses) const;
 
+    virtual descartes_core::RobotModelPtr clone() const
+    {
+      descartes_core::RobotModelPtr ptr (new MotomanSia20dRobotModel);
+      ptr->initialize("robot_description", descartes_moveit::MoveitStateAdapter::group_name_, world_frame_, tool_frame_);
+      return ptr;
+    }
+
   protected:
 
     descartes_core::Frame world_to_base_;// world to arm base

@@ -34,9 +34,9 @@
 #include <pcl/filters/conditional_removal.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <tf/transform_datatypes.h>
-#include <octomap_ros/conversions.h>
 #include <pcl/surface/concave_hull.h>
 #include <pcl/surface/ear_clipping.h>
+#include <pcl/filters/passthrough.h>
 
 const static double CONCAVE_HULL_ALPHA = 0.1;
 
@@ -44,7 +44,6 @@ namespace godel_surface_detection { namespace detection{
 
 SurfaceDetection::SurfaceDetection():
 		acquired_clouds_counter_(0),
-		octree_(new octomap::OcTree(defaults::VOXEL_LEAF_SIZE)),
 		full_cloud_ptr_(new Cloud())
 {
 
@@ -67,7 +66,6 @@ SurfaceDetection::SurfaceDetection():
 	params_.voxel_leafsize=defaults::VOXEL_LEAF_SIZE;
 	params_.marker_alpha=defaults::MARKER_ALPHA;
 	params_.ignore_largest_cluster=defaults::IGNORE_LARGEST_CLUSTER;
-	params_.use_octomap=defaults::USE_OCTOMAP;
 	params_.occupancy_threshold=defaults::OCCUPANCY_THRESHOLD;
 	params_.mls_upsampling_radius=defaults::MLS_UPSAMPLING_RADIUS;
 	params_.mls_point_density=defaults::MLS_POINT_DENSITY;
@@ -86,8 +84,6 @@ SurfaceDetection::~SurfaceDetection()
 
 bool SurfaceDetection::init()
 {
-	octree_->setResolution(params_.voxel_leafsize);
-	octree_->setOccupancyThres(params_.occupancy_threshold);
 	full_cloud_ptr_->header.frame_id = params_.frame_id;
 	acquired_clouds_counter_ = 0;
 	return true;
@@ -217,24 +213,10 @@ void SurfaceDetection::mesh_to_marker(const pcl::PolygonMesh &mesh,
 
 void SurfaceDetection::add_cloud(Cloud& cloud)
 {
-	if(params_.use_octomap)
-	{
-		Cloud::iterator i;
-		for( int i = 0
-				; i < cloud.points.size();i++)
-		{
-			const pcl::PointXYZ &p = cloud.points[i];
-			octomap::point3d entry = octomath::Vector3(p.x,p.y,p.z);
-			octree_->updateNode(entry,true,true);
-		}
-		octree_->updateInnerOccupancy();
-		ROS_INFO_STREAM("Aggregated new cloud to octomap");
-	}
-	else
-	{
-		(*full_cloud_ptr_)+=cloud;
-		ROS_INFO_STREAM("Concatenated new cloud to acquired clouds");
-	}
+	
+	(*full_cloud_ptr_)+=cloud;
+	ROS_INFO_STREAM("Concatenated new cloud to acquired clouds");
+
 	acquired_clouds_counter_++;
 	ROS_INFO_STREAM("Surface Detection is currently holding "<<acquired_clouds_counter_<<" point clouds");
 }
@@ -242,38 +224,6 @@ void SurfaceDetection::add_cloud(Cloud& cloud)
 int SurfaceDetection::get_acquired_clouds_count()
 {
 	return acquired_clouds_counter_;
-}
-
-void SurfaceDetection::process_octree(Cloud& processed_cloud)
-{
-	Cloud::Ptr buffer_cloud_ptr(new Cloud());
-	buffer_cloud_ptr->reserve(octree_->getNumLeafNodes());
-	processed_cloud.clear();
-	octomap::OcTree::tree_iterator i;
-
-	ROS_INFO_STREAM("Searching voxels with threshold > "<<octree_->getOccupancyThres());
-	for(i = octree_->begin_tree(); i != octree_->end_tree(); i++)
-	{
-
-		if(octree_->isNodeOccupied(*i))
-		{
-			pcl::PointXYZ p;
-			p.x = i.getX();
-			p.y = i.getY();
-			p.z = i.getZ();
-			buffer_cloud_ptr->push_back(p);
-		}
-	}
-
-	if(buffer_cloud_ptr->size() > 0)
-	{
-		pcl::copyPointCloud(*buffer_cloud_ptr,processed_cloud);
-		processed_cloud.header.frame_id = params_.frame_id;
-
-	}
-
-	ROS_INFO_STREAM("Total voxels found: "<<buffer_cloud_ptr->size());
-
 }
 
 visualization_msgs::MarkerArray SurfaceDetection::get_surface_markers()
@@ -339,13 +289,7 @@ bool SurfaceDetection::find_surfaces()
 	// main process point cloud
 	Cloud::Ptr process_cloud_ptr = Cloud::Ptr(new Cloud());
 
-	// prepare acquired data
-	if(params_.use_octomap)
-	{
-		process_octree(*process_cloud_ptr);
-	}
-	else
-	{
+	
 		if(full_cloud_ptr_->empty())
 		{
 			return false;
@@ -354,7 +298,7 @@ bool SurfaceDetection::find_surfaces()
 		{
 			pcl::copyPointCloud(*full_cloud_ptr_,*process_cloud_ptr);
 		}
-	}
+	
 
 	// reset members
 	region_colored_cloud_ptr_ = CloudRGB::Ptr(new CloudRGB());
@@ -367,18 +311,23 @@ bool SurfaceDetection::find_surfaces()
 	std::vector<pcl::PointIndices> clusters_indices;
 	std::vector<Normals::Ptr> segment_normals;
 
+	// Pass through filter the data to constrain it to our ROI
+  pcl::PassThrough<pcl::PointXYZ> pass;
+  pass.setInputCloud(process_cloud_ptr);
+  pass.setFilterFieldName("z");
+  pass.setFilterLimits(-0.1, 0.4);
+  pass.filter(*process_cloud_ptr);
+
 	ROS_INFO_STREAM("Surface detection processing a cloud containing "<<process_cloud_ptr->size()<<" points");
-	if(!params_.use_octomap )
+	
+	if(apply_voxel_downsampling(*process_cloud_ptr))
 	{
-		if(apply_voxel_downsampling(*process_cloud_ptr))
-		{
-			ROS_INFO_STREAM("Voxel downsampling succeeded, downsampled cloud size: "<<
-					process_cloud_ptr->size());
-		}
-		else
-		{
-			ROS_WARN_STREAM("Voxel downsampling failed, cloud size :"<<process_cloud_ptr->size());
-		}
+		ROS_INFO_STREAM("Voxel downsampling succeeded, downsampled cloud size: "<<
+				process_cloud_ptr->size());
+	}
+	else
+	{
+		ROS_WARN_STREAM("Voxel downsampling failed, cloud size :"<<process_cloud_ptr->size());
 	}
 
 	if(params_.use_tabletop_seg)

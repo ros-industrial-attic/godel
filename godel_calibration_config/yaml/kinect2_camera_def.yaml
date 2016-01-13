@@ -1,0 +1,38 @@
+---
+
+static_cameras:
+ -
+    camera_name: Kinect2
+    camera_optical_frame: /kinect2_rgb_optical_frame
+    trigger: NO_WAIT_TRIGGER
+    image_topic: /kinect2/rgb_rect/image
+    angle_axis_ax: 0.0
+    angle_axis_ay: 0.0
+    angle_axis_az: 0.0
+    position_x: 0.0
+    position_y: 0.0
+    position_z: 0.0
+    transform_interface: ros_camera_housing_cti
+#    options for transform_interface for cameras include:
+#    ros_camera_bti  broadcast the reference_frame to camera_optical_frame, but parameters map to inverse
+#    ros_camera_lti  listens to the camera_optical_frame relative to reference directly 
+#    ros_camera_housing_lti  listens to the camera_optical_frame relative to reference directly 
+#               must define camera_housing_frame: /camera_frame, but not used
+#    ros_camera_housing_bti  broadcast the reference_frame to camera_housing_frame,
+#               must define camera_housing_frame: /camera_frame
+#    ros_lti  listens to the reference_frame to camera_optical frame, does not invert
+#    ros_bti  broadcasts to the reference_frame to camera_optical frame, does not invert
+#    ros_camera_housing_cti  interfaces to the mutable_joint_state_publisher 
+#           must define camera_housing_frame: /camera_housing_frame
+#           must define camera_mounting_frame: /camera_mounting_frame
+    camera_housing_frame: kinect2_link
+    camera_mounting_frame: kinect2_mount
+    focal_length_x: 1080
+    focal_length_y: 1080
+    center_x: 955.0 #943.14
+    center_y: 553.256
+    distortion_k1: 2.5179e-2
+    distortion_k2: 7.6105e-2
+    distortion_k3: -1.62615e-3
+    distortion_p1: -1.297e-3
+    distortion_p2: -9.636e-4
