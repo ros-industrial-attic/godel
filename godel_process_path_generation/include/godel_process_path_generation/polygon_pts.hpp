@@ -58,7 +58,8 @@ struct PolygonPt
 
   friend ostream& operator<<(ostream &out, const PolygonPt &ppt);
 };
-ostream& operator<<(ostream &out, const PolygonPt &ppt)
+
+inline ostream& operator<<(ostream &out, const PolygonPt &ppt)
 {
   out << "(" << ppt.x << ", " << ppt.y << ")" << std::endl;
   return out;
@@ -67,7 +68,7 @@ ostream& operator<<(ostream &out, const PolygonPt &ppt)
 /**@brief A collection of polygon points that represent the boundary of a polygon.
  * Note: Last point assumed to join to 1st pt, not repeated in data. */
 typedef std::vector<PolygonPt> PolygonBoundary;
-ostream& operator<<(ostream &out, const PolygonBoundary &pb)
+inline ostream& operator<<(ostream &out, const PolygonBoundary &pb)
 {
   for (PolygonBoundary::const_iterator pt=pb.begin(), pt_end=pb.end(); pt != pt_end; ++pt)
   {
@@ -78,7 +79,7 @@ ostream& operator<<(ostream &out, const PolygonBoundary &pb)
 
 /**@brief A collection of polygonal boundaries that make up a complex shape */
 typedef std::vector<PolygonBoundary> PolygonBoundaryCollection;
-ostream& operator<<(ostream &out, const PolygonBoundaryCollection &pbc)
+inline ostream& operator<<(ostream &out, const PolygonBoundaryCollection &pbc)
 {
   size_t idx(0);
   for (PolygonBoundaryCollection::const_iterator pb=pbc.begin(), pb_end=pbc.end(); pb != pb_end; ++pb, ++idx)
