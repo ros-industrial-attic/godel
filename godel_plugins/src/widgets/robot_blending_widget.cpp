@@ -532,31 +532,45 @@ void RobotBlendingWidget::execute_motion_plan_handler()
 void RobotBlendingWidget::save_motion_plan_handler()
 {
 	QString filepath = QFileDialog::getSaveFileName(this, "Save Motion Plan");
-	// No file selected, return immediately
-	ROS_DEBUG_STREAM("You want to save motion plan to: " << filepath.toStdString());
-	request_load_save_motions(filepath.toStdString(), false);
+	std::string path = filepath.toStdString(); 	
+	if (!path.empty())
+	{
+		ROS_DEBUG_STREAM("You want to save motion plan to: " << path);
+		request_load_save_motions(path, false);
+	}
 }
 
 void RobotBlendingWidget::load_motion_plan_handler()
 {
 	QString filepath = QFileDialog::getOpenFileName(this, "Load Motion Plan");
-	// No file selected, so return immediately
-	ROS_DEBUG_STREAM("You want to load a motion plan from: " << filepath.toStdString());
-	request_load_save_motions(filepath.toStdString(), true);
+	std::string path = filepath.toStdString(); 	
+	if (!path.empty())
+	{
+		ROS_DEBUG_STREAM("You want to load a motion plan from: " << path);
+		request_load_save_motions(path, true);
+	}
 }
 
 void RobotBlendingWidget::request_load_save_motions(const std::string& path, bool isLoad)
 {
 	// Pre-condition: The path must not be an empty string
-	if (path.empty()) return;
+	if (path.empty())
+	{
+		ROS_WARN("Cannot save or load an empty path");
+		return;
+	}	
 
 	godel_msgs::LoadSaveMotionPlan srv;
 	srv.request.path = path;
 
 	if (isLoad)
+	{
 		srv.request.mode = godel_msgs::LoadSaveMotionPlan::Request::MODE_LOAD;
+	}
 	else
+	{
 		srv.request.mode = godel_msgs::LoadSaveMotionPlan::Request::MODE_SAVE;
+	}
 
 	if (load_save_motion_plan_client_.call(srv))
 	{

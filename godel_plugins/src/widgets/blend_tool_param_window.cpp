@@ -1,6 +1,6 @@
 #include "godel_plugins/widgets/blend_tool_param_window.h"
 
-godel_plugins::BlendingPlanConfigWidget::BlendingPlanConfigWidget(godel_msgs::BlendingPlanParameters params)
+godel_plugins::BlendingPlanConfigWidget::BlendingPlanConfigWidget(const godel_msgs::BlendingPlanParameters& params)
   : params_(params)
 {
   ui_.setupUi(this);

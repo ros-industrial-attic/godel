@@ -1,6 +1,6 @@
 #include "godel_plugins/widgets/scan_tool_configuration_window.h"
 
-godel_plugins::ScanPlanConfigWidget::ScanPlanConfigWidget(godel_msgs::ScanPlanParameters params)
+godel_plugins::ScanPlanConfigWidget::ScanPlanConfigWidget(const godel_msgs::ScanPlanParameters& params)
   : params_(params)
 {
   ui_.setupUi(this);
@@ -9,11 +9,13 @@ godel_plugins::ScanPlanConfigWidget::ScanPlanConfigWidget(godel_msgs::ScanPlanPa
   connect(ui_.PushButtonCancel, SIGNAL(clicked()), this, SLOT(cancel_changes_handler()));
   connect(ui_.PushButtonSave, SIGNAL(clicked()), this, SLOT(save_changes_handler()));
 
+  // Hard Coded Menu Options
+  QStringList quality_metric_list;
+  quality_metric_list << "rms"; 
+  
   ui_.ComboBoxQualityMetric->addItems(quality_metric_list);
-
 }
 
-QStringList godel_plugins::ScanPlanConfigWidget::quality_metric_list = QStringList() << "rms";
 
 void godel_plugins::ScanPlanConfigWidget::update_gui_fields()
 {

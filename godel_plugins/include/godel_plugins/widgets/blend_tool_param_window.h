@@ -13,7 +13,7 @@ class BlendingPlanConfigWidget : public ParameterWindowBase
 {
   Q_OBJECT
 public:
-  BlendingPlanConfigWidget(godel_msgs::BlendingPlanParameters params);
+  BlendingPlanConfigWidget(const godel_msgs::BlendingPlanParameters& params);
 
   godel_msgs::BlendingPlanParameters& params() { return params_; }
 
