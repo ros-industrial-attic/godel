@@ -1,0 +1,12 @@
+kinect2_link_pitch_joint: 0.0495538828904983
+kinect2_link_roll_joint: 1.57
+kinect2_link_x_joint: 0.0117323762786166
+kinect2_link_y_joint: -0.05952048473715679
+kinect2_link_yaw_joint: -1.57
+kinect2_link_z_joint: -0.01945423487488313
+target_frame_pitch_joint: -0.01897725634824686
+target_frame_roll_joint: 0.01971703849239899
+target_frame_x_joint: 0.9620751006962653
+target_frame_y_joint: 0.1116185574485743
+target_frame_yaw_joint: -1.566643754092422
+target_frame_z_joint: 0.005806703518050738
