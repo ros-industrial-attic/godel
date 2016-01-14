@@ -15,7 +15,7 @@ const static std::string THIS_SERVICE_NAME = "blend_process_execution";
 godel_process_execution::BlendProcessService::BlendProcessService(ros::NodeHandle& nh)
 {
   // Simulation Server
-  sim_client_ = nh.serviceClient<simulator_service::SimulateTrajectory>(SIMULATION_SERVICE_NAME);
+  sim_client_ = nh.serviceClient<industrial_robot_simulator_service::SimulateTrajectory>(SIMULATION_SERVICE_NAME);
   // Trajectory Execution Service
   real_client_ = nh.serviceClient<godel_msgs::TrajectoryExecution>(EXECUTION_SERVICE_NAME);
   // The generic process execution service
@@ -28,8 +28,6 @@ godel_process_execution::BlendProcessService::BlendProcessService(ros::NodeHandl
 bool godel_process_execution::BlendProcessService::executionCallback(godel_msgs::BlendProcessExecution::Request& req,
                                                                          godel_msgs::BlendProcessExecution::Response& res)
 {
-  using simulator_service::SimulateTrajectory;
-
   if (req.simulate)
   {
     return simulateProcess(req);
@@ -86,6 +84,8 @@ bool godel_process_execution::BlendProcessService::executeProcess(godel_msgs::Bl
 
 bool godel_process_execution::BlendProcessService::simulateProcess(godel_msgs::BlendProcessExecution::Request req)
 {
+  using industrial_robot_simulator_service::SimulateTrajectory;
+
   // The simulation server doesn't support any I/O visualizations, so we aggregate the
   // trajectory components and send them all at once
   trajectory_msgs::JointTrajectory aggregate_traj;
