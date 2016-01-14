@@ -20,7 +20,7 @@
 
   <!-- Bring up simulated robot that can be visualized under the tf namespace 'simulation'
        Allows for previewing paths generated before execution. -->
-  <include file="$(find simulator_service)/launch/simulation.launch"/>
+  <include file="$(find industrial_robot_simulator_service)/launch/start_simulation_server.launch"/>
   
   <!-- Brings up the core blending service: this includes the tool path planners
        for both the blender and the laser scanner. -->
