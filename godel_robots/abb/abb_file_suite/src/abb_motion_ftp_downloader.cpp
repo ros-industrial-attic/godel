@@ -96,7 +96,7 @@ void abb_file_suite::AbbMotionFtpDownloader::handleJointTrajectory(const traject
   }
 
   rapid_emitter::ProcessParams params;
-  params.wolf = false;
+  params.wolf_mode = false;
   rapid_emitter::emitJointTrajectoryFile(ofh, pts, params);
   ofh.flush();
   ofh.close();
