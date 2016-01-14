@@ -49,11 +49,12 @@ public:
 	typedef boost::function<void (pcl::PointCloud<pcl::PointXYZ> &cloud)> ScanCallback;
 public:
 	RobotScan();
-	virtual ~RobotScan();
 
 	bool init();
-	bool load_parameters(std::string ns="~");
-	static bool load_parameters(godel_msgs::RobotScanParameters &params,std::string ns="");
+	
+	bool load_parameters(const std::string& filename, const std::string& ns);
+	void save_parameters(const std::string& filename, const std::string& ns);
+
 	void add_scan_callback(ScanCallback cb);
 	bool generate_scan_display_trajectory(moveit_msgs::DisplayTrajectory& traj_data);
 	bool generate_scan_poses(geometry_msgs::PoseArray& poses);
@@ -63,21 +64,8 @@ public:
 	bool move_to_pose(geometry_msgs::Pose& target_pose);
 	int scan(bool move_only = false);
 
-
-	static bool parse_pose_parameter(XmlRpc::XmlRpcValue pose_param,tf::Transform &t);
-	static bool parse_pose_parameter(XmlRpc::XmlRpcValue pose_param,geometry_msgs::Pose &p);
-
-	/**
-	 * \Fills the velocity array of the input trajectory with an estimate computed as the ration of the difference between
-	 * \two joint points and the elapsed time.
-	 * \param[out] traj: Robot trajectory with populated joint values and time stamps for each
-	 */
-	static void apply_simple_trajectory_filter(moveit_msgs::RobotTrajectory& traj);
-
 	static void apply_trajectory_parabolic_time_parameterization(robot_trajectory::RobotTrajectory& rt,
 			moveit_msgs::RobotTrajectory &traj,unsigned int max_iterations=200,double max_time_change_per_it=.6);
-
-	static void apply_speed_reduction(moveit_msgs::RobotTrajectory &traj,double percent_reduction);
 
 protected:
 
@@ -99,27 +87,6 @@ protected:
 public:// parameters
 
 	godel_msgs::RobotScanParameters params_;
-
-/*	// robot move
-	std::string group_name_;
-	std::string world_frame_;
-	std::string tcp_frame_;
-
-	// camera scan poses (It's assumed that the camera is attached to the arm's tcp)
-	tf::Transform tcp_to_cam_pose_;
-	tf::Transform world_to_obj_pose_;
-	double cam_to_obj_zoffset_;
-	double cam_to_obj_xoffset_;
-	double cam_tilt_angle_; // rotation about relative object's y axis (radians)
-	double sweep_angle_start_;
-	double sweep_angle_end_;
-	int num_scan_points_;
-	double reachable_scan_points_ratio_;
-	std::string scan_topic_;
-	bool stop_on_planning_error_;
-
-	// scan transformation
-	std::string scan_target_frame_;*/
 };
 
 } /* namespace detection */

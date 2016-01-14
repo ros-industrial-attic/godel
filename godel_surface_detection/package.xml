@@ -1,41 +1,42 @@
 <?xml version="1.0"?>
 <package>
   <name>godel_surface_detection</name>
-  <version>0.0.0</version>
-  <description>The godel_surface_detection package</description>
+  <version>0.1.0</version>
+  
+  <description>
+    This package houses the primary blending "server" that is responsible for
+    making the whole system go. It is actuated via service calls and farms out
+    jobs to the many planning and execution components of the Godel project. 
+  </description>
+
   <maintainer email="jnicho@swri.org">jnicho</maintainer>
-  <license>Apache2</license>
+  <maintainer email="jmeyer@swri.org">Jonathan Meyer</maintainer>
+  
+  <license>Apache 2.0</license>
 
   <buildtool_depend>catkin</buildtool_depend>
+  
   <build_depend>pcl_msgs</build_depend>
   <build_depend>pcl_ros</build_depend>
   <build_depend>roscpp</build_depend>
   <build_depend>sensor_msgs</build_depend>
   <build_depend>interactive_markers</build_depend>
-  <build_depend>octomap_ros</build_depend>
-	<build_depend>moveit_ros_move_group</build_depend>
-	<build_depend>moveit_ros_planning_interface</build_depend>
-	<build_depend>tf</build_depend>
-	<build_depend>tf_conversions</build_depend>
-	<build_depend>godel_msgs</build_depend>
-	<build_depend>godel_process_path_generation</build_depend>
+  <build_depend>moveit_ros_move_group</build_depend>
+  <build_depend>moveit_ros_planning_interface</build_depend>
+  <build_depend>tf</build_depend>
+  <build_depend>tf_conversions</build_depend>
+  <build_depend>godel_msgs</build_depend>
+  <build_depend>godel_process_path_generation</build_depend>
 
   <run_depend>pcl_msgs</run_depend>
   <run_depend>pcl_ros</run_depend>
   <run_depend>roscpp</run_depend>
   <run_depend>sensor_msgs</run_depend>
   <run_depend>interactive_markers</run_depend>
-  <run_depend>octomap_ros</run_depend>
-	<run_depend>moveit_ros_move_group</run_depend>
   <run_depend>moveit_ros_planning_interface</run_depend>
-	<run_depend>tf</run_depend>
-	<run_depend>tf_conversions</run_depend>
-	<run_depend>godel_msgs</run_depend>
-	<run_depend>godel_process_path_generation</run_depend>
-	<run_depend>godel_sia20d_moveit_config</run_depend>
-
-
-  <export>
-
-  </export>
+  <run_depend>tf</run_depend>
+  <run_depend>tf_conversions</run_depend>
+  <run_depend>godel_msgs</run_depend>
+  <run_depend>godel_process_path_generation</run_depend>
+  <run_depend>godel_sia20d_moveit_config</run_depend>
 </package>
