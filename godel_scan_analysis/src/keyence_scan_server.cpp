@@ -16,7 +16,7 @@ godel_scan_analysis::ScanServer::ScanServer(const ScanServerConfig& config)
   ros::NodeHandle nh;
   scan_sub_ = nh.subscribe("profiles", 500, &ScanServer::scanCallback, this);
   cloud_pub_ = nh.advertise<ColorCloud>(COLOR_CLOUD_TOPIC, 1);
-  map_->header.frame_id = from_frame_;
+  map_->header.frame_id = config_.world_frame;
 
   // Create publisher for the collected color cloud
   timer_ = nh.createTimer(ros::Duration(config.voxel_grid_publish_period), &ScanServer::publishCloud, this);
@@ -70,8 +70,8 @@ inline
 tf::StampedTransform godel_scan_analysis::ScanServer::findTransform(const ros::Time& tm) const
 {
   tf::StampedTransform transform;
-  tf_listener_.waitForTransform(config_.from_frame, config_.to_frame, tm, ros::Duration(TF_WAIT_TIMEOUT));
-  tf_listener_.lookupTransform(config._from_frame, config.to_frame, tm, transform);
+  tf_listener_.waitForTransform(config_.world_frame, config_.scan_frame, tm, ros::Duration(TF_WAIT_TIMEOUT));
+  tf_listener_.lookupTransform(config_.world_frame, config_.scan_frame, tm, transform);
   return transform;
 }
 
