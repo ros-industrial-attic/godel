@@ -40,7 +40,7 @@ static void linkageAdjust(std::vector<double>& joints)
  */
 static std::string fileJoin(const std::string& dir, const std::string& filename)
 {
-  if (dir.back() == "/") return (dir + filename);
+  if (dir[dir.length() - 1] == '/') return (dir + filename);
   else return (dir + std::string("/") + filename);
 }
 
