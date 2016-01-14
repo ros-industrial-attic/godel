@@ -10,7 +10,7 @@
   <arg name="namespace" default="simulation"/>
   <arg name="world_frame" default="world_frame"/>
   <arg name="service_name" default="simulate_trajectory"/>
-  <arg name="action_name" default="follow_joint_trajectory"/>
+  <arg name="action_name" default="joint_trajectory_action"/>
   <!-- The default scale factor is multiplied by trajectory durations to get the final timing -->
   <arg name="scale_factor" default="0.2"/>
   
