@@ -6,5 +6,6 @@ catkin_package()
 install(DIRECTORY
   launch
   urdf
+  meshes
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

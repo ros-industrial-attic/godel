@@ -40,7 +40,7 @@ static void linkageAdjust(std::vector<double>& joints)
  */
 static std::string fileJoin(const std::string& dir, const std::string& filename)
 {
-  if (dir.back() == "/") return (dir + filename);
+  if (dir[dir.length() - 1] == '/') return (dir + filename);
   else return (dir + std::string("/") + filename);
 }
 
@@ -48,7 +48,7 @@ abb_file_suite::AbbMotionFtpDownloader::AbbMotionFtpDownloader(const std::string
                                                                const std::string &listen_topic,
                                                                ros::NodeHandle &nh,
                                                                bool j23_coupled,
-                                                               const std::string temp_file_loc)
+                                                               const std::string& temp_file_loc)
   : ip_(ip)
   , temp_file_loc_(temp_file_loc)
   , j23_coupled_(j23_coupled)
@@ -96,7 +96,7 @@ void abb_file_suite::AbbMotionFtpDownloader::handleJointTrajectory(const traject
   }
 
   rapid_emitter::ProcessParams params;
-  params.wolf = false;
+  params.wolf_mode = false;
   rapid_emitter::emitJointTrajectoryFile(ofh, pts, params);
   ofh.flush();
   ofh.close();

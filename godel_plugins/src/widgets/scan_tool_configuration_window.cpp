@@ -61,7 +61,7 @@ int godel_plugins::ScanPlanConfigWidget::get_quality_combobox_index()
 
 int godel_plugins::ScanPlanConfigWidget::get_scan_method_enum_value()
 {
-  switch (ui_->ComboBoxQualityMetric->currentIndex())
+  switch (ui_.ComboBoxQualityMetric->currentIndex())
   {
   case 0:
     return godel_msgs::ScanPlanParameters::METHOD_RMS;

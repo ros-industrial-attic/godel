@@ -71,7 +71,7 @@ target_link_libraries(ros_abb_ftp_interface_node
 
 
 # Mark executables and/or libraries for installation
-install(TARGETS rapid_generator ros_abb_ftp_interface ros_abb_ftp_interface_node
+install(TARGETS ros_abb_ftp_interface ros_abb_ftp_interface_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
