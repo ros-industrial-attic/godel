@@ -1,0 +1,15 @@
+# Trajectory Execution Service
+# This service executes/simulates a single continuous joint motion. 
+# This service was added in combination with 'godel_path_execution' in order
+# to centralize the duty of managing robot motion.
+
+# Joint trajectory
+trajectory_msgs/JointTrajectory trajectory
+
+# wait for execution to finish before returning
+bool wait_for_execution
+
+# Use the simulated robot or the actual robot
+bool simulate
+---
+# Empty

@@ -1,0 +1,24 @@
+# Load-Save Motion Plan Service
+# Used by GUI components to instruct the primary blending service to perform IO related
+# to motion plans. Motion plans are stored to disk as bag-files through a special interface
+# in 'godel_surface_blending'. A motion plan contains a map of plan names to motion plans,
+# which include joint trajectories, type, and other context. Once loaded, the motion plans
+# become 'available'. Available plans may be seen through the 'GetAvailableMotionPlans.srv'
+# and executed through the 'SelectMotionPlan.srv'. If 'MODE_SAVE' is set, all available
+# motion plans are saved to the given 'path'.
+
+# I/O Mode Enumeration
+int32 MODE_LOAD=0
+int32 MODE_SAVE=1
+
+int32 mode              # Read or write (see I/O Mode Enumeration)
+string path             # Location to read from or write to depending on 'mode'
+---
+
+# Return Codes
+int32 SUCCESS=0         # No issue reading/writing 
+int32 NO_SUCH_FILE=1    # For 'MODE_LOAD'; File could not be found.
+int32 ERROR_LOADING=2   # For 'MODE_LOAD'; File could not be read.
+int32 ERROR_WRITING=3   # For 'MODE_SAVE'; File could not be written.
+
+int32 code              # Success code, see Return Code enumeration
