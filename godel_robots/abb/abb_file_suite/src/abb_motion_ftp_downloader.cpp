@@ -48,7 +48,7 @@ abb_file_suite::AbbMotionFtpDownloader::AbbMotionFtpDownloader(const std::string
                                                                const std::string &listen_topic,
                                                                ros::NodeHandle &nh,
                                                                bool j23_coupled,
-                                                               const std::string temp_file_loc)
+                                                               const std::string& temp_file_loc)
   : ip_(ip)
   , temp_file_loc_(temp_file_loc)
   , j23_coupled_(j23_coupled)
