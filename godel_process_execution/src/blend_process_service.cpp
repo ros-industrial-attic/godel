@@ -1,6 +1,6 @@
 #include <godel_process_execution/blend_process_service.h>
 
-#include <simulator_service/SimulateTrajectory.h>
+#include <industrial_robot_simulator_service/SimulateTrajectory.h>
 #include <godel_msgs/TrajectoryExecution.h>
 
 #include "process_utils.h"

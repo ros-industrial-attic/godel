@@ -1,6 +1,6 @@
 #include <godel_process_execution/abb_blend_process_service.h>
 
-#include <simulator_service/SimulateTrajectory.h>
+#include <industrial_robot_simulator_service/SimulateTrajectory.h>
 #include <moveit_msgs/ExecuteKnownTrajectory.h>
 
 #include <fstream>

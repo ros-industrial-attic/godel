@@ -1,6 +1,6 @@
 #include <godel_process_execution/keyence_process_service.h>
 
-#include <simulator_service/SimulateTrajectory.h>
+#include <industrial_robot_simulator_service/SimulateTrajectory.h>
 #include <moveit_msgs/ExecuteKnownTrajectory.h>
 
 #include "godel_msgs/TrajectoryExecution.h"
