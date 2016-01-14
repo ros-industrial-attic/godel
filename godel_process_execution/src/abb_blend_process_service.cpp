@@ -1,6 +1,6 @@
 #include <godel_process_execution/abb_blend_process_service.h>
 
-#include <simulator_service/SimulateTrajectory.h>
+#include <industrial_robot_simulator_service/SimulateTrajectory.h>
 #include <moveit_msgs/ExecuteKnownTrajectory.h>
 
 #include <fstream>
@@ -84,7 +84,7 @@ static std::vector<rapid_emitter::TrajectoryPt>
 toRapidTrajectory(const trajectory_msgs::JointTrajectory& traj, bool j23_coupled)
 {
   std::vector<rapid_emitter::TrajectoryPt> rapid_pts;
-  rapid_pts.reserve(traj.size());
+  rapid_pts.reserve(traj.points.size());
 
   for (std::size_t i = 0; i < traj.points.size(); ++i)
   {
@@ -126,7 +126,7 @@ static bool writeRapidFile(const std::string& path,
     return false;
   }
 
-  if (!rapid_emitter::emitRapidFile(fp, pts, process_start, process_stop, params))
+  if (!rapid_emitter::emitRapidFile(fp, traj, process_start, process_stop, params))
   {
     ROS_ERROR("Unable to write to RAPID file for blending process.");
     return false;
@@ -142,7 +142,7 @@ godel_process_execution::AbbBlendProcessService::AbbBlendProcessService(ros::Nod
   nh.param<bool>("J23_coupled", j23_coupled_, false);
 
   // Create client services
-  sim_client_ = nh.serviceClient<simulator_service::SimulateTrajectory>(SIMULATION_SERVICE_NAME);
+  sim_client_ = nh.serviceClient<industrial_robot_simulator_service::SimulateTrajectory>(SIMULATION_SERVICE_NAME);
 
   real_client_ = nh.serviceClient<abb_file_suite::ExecuteProgram>(EXECUTION_SERVICE_NAME);
 
@@ -180,7 +180,7 @@ bool godel_process_execution::AbbBlendProcessService::executeProcess(godel_msgs:
   rapid_emitter::ProcessParams params;
   params.spindle_speed = 1.0;
   params.tcp_speed = 200;
-  params.wolf = false;
+  params.wolf_mode = false;
   params.slide_force = 0.0;
   params.output_name = "do_PIO_8";
 
@@ -226,7 +226,7 @@ bool godel_process_execution::AbbBlendProcessService::simulateProcess(godel_msgs
   appendTrajectory(aggregate_traj, req.trajectory_depart);
 
   // Pass the trajectory to the simulation service
-  SimulateTrajectory srv;
+  industrial_robot_simulator_service::SimulateTrajectory srv;
   srv.request.wait_for_execution = req.wait_for_execution;
   srv.request.trajectory = aggregate_traj;
 

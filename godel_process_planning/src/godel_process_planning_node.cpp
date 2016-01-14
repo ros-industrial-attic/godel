@@ -21,9 +21,9 @@ int main(int argc, char** argv)
   pnh.param<std::string>("robot_model_plugin", robot_model_plugin, "");
 
   // IK Plugin parameter must be specified
-  if (ik_plugin.empty())
+  if (robot_model_plugin.empty())
   {
-    ROS_ERROR_STREAM("MUST SPECIFY PARAMETER 'ik_plugin' for godel_process_planning node");
+    ROS_ERROR_STREAM("MUST SPECIFY PARAMETER 'robot_model_plugin' for godel_process_planning node");
     return -1;
   }
 

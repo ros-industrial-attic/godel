@@ -18,7 +18,7 @@ catkin_package(
   LIBRARIES
     ${PROJECT_NAME}
   CATKIN_DEPENDS
-    descarets_core
+    descartes_core
     descartes_moveit
     irb2400_ikfast_manipulator_plugin
     pluginlib

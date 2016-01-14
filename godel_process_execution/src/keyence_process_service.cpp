@@ -1,6 +1,6 @@
 #include <godel_process_execution/keyence_process_service.h>
 
-#include <simulator_service/SimulateTrajectory.h>
+#include <industrial_robot_simulator_service/SimulateTrajectory.h>
 #include <moveit_msgs/ExecuteKnownTrajectory.h>
 
 #include "godel_msgs/TrajectoryExecution.h"
@@ -25,7 +25,7 @@ const static std::string SERVICE_SERVER_NAME = "scan_process_execution";
 godel_process_execution::KeyenceProcessService::KeyenceProcessService(ros::NodeHandle& nh)
 {
   // Connect to motion servers and I/O server
-  sim_client_ = nh.serviceClient<simulator_service::SimulateTrajectory>(SIMULATION_SERVICE_NAME);
+  sim_client_ = nh.serviceClient<industrial_robot_simulator_service::SimulateTrajectory>(SIMULATION_SERVICE_NAME);
 
   real_client_ = nh.serviceClient<godel_msgs::TrajectoryExecution>(EXECUTION_SERVICE_NAME);
 
@@ -41,9 +41,6 @@ godel_process_execution::KeyenceProcessService::KeyenceProcessService(ros::NodeH
 bool godel_process_execution::KeyenceProcessService::executionCallback(godel_msgs::KeyenceProcessExecution::Request& req,
                                                                                 godel_msgs::KeyenceProcessExecution::Response& res)
 {
-  using moveit_msgs::ExecuteKnownTrajectory;
-  using simulator_service::SimulateTrajectory;
-
   if (req.simulate)
   {
     return simulateProcess(req);
@@ -123,6 +120,8 @@ bool godel_process_execution::KeyenceProcessService::executeProcess(godel_msgs::
 
 bool godel_process_execution::KeyenceProcessService::simulateProcess(godel_msgs::KeyenceProcessExecution::Request& req)
 {
+  using industrial_robot_simulator_service::SimulateTrajectory;
+
   // The simulation server doesn't support any I/O visualizations, so we aggregate the
   // trajectory components and send them all at once
   trajectory_msgs::JointTrajectory aggregate_traj;

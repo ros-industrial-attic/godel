@@ -1,5 +1,5 @@
 #include <godel_path_execution/path_execution_service.h>
-#include <simulator_service/SimulateTrajectory.h>
+#include <industrial_robot_simulator_service/SimulateTrajectory.h>
 
 const static std::string ACTION_SERVER_NAME = "joint_trajectory_action";
 const static double ACTION_EXTRA_WAIT_RATIO = 0.2; // 20% past end of trajectory

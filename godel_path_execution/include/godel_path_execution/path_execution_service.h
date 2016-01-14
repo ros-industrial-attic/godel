@@ -13,9 +13,7 @@ namespace godel_path_execution
 class PathExecutionService
 {
 public:
-  PathExecutionService(const std::string& name,
-                       const std::string& action_name,
-                       ros::NodeHandle& nh);
+  PathExecutionService(ros::NodeHandle& nh);
 
   /**
    * Currently forwards the godel_msgs::TrajectoryExecution on to the corresponding
