@@ -1,0 +1,8 @@
+<launch>
+  <!-- 
+  Features the following ROS interfaces: 
+    1.  motion action server : "joint_trajectory_action"
+    2.  this_service_name : "path_execution"
+  -->
+  <node pkg="godel_path_execution" type="path_execution_service_node" name="path_exection_service"/>
+</launch>
