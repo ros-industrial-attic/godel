@@ -21,8 +21,8 @@ point_cloud_descriptions:
     h: 0.0
     resolution: 0.002
   - x: 0.7
-    y: -0.6
-    z: 0.1
+    y: -0.5
+    z: 0.3
     rx: 0.0
     ry: 0.0
     rz: 0.0
