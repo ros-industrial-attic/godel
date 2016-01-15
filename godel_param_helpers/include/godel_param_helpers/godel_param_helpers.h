@@ -2,6 +2,7 @@
 #define GODEL_PARAM_HELPERS_H
 
 #include <ros/serialization.h>
+#include <ros/node_handle.h>
 #include <fstream>
 
 namespace godel_param_helpers
@@ -55,6 +56,30 @@ inline bool fromFile(const std::string& path, T& msg)
   return true;
 }
 
+// for loading parameters from server
+// parameter loading helper
+template <typename T>
+inline bool loadParam(ros::NodeHandle& nh, const std::string& name, T& value)
+{
+  if (!nh.getParam(name, value))
+  {
+    ROS_WARN_STREAM("Unable to load param '" << name << "' in " << nh.getNamespace());
+    return false;
+  }
+  return true;
 }
+
+inline bool loadBoolParam(ros::NodeHandle& nh, const std::string& name, uint8_t& value)
+{
+  bool v;
+  if (loadParam(nh, name, v))
+  {
+    value = v; // bool to uint8_t
+    return true;
+  }
+  return false;
+}
+
+} // end namespace godel_param_helpers
 
 #endif
