@@ -5,7 +5,6 @@ find_package(catkin REQUIRED COMPONENTS
   abb_file_suite
   godel_msgs
   industrial_robot_simulator_service
-  keyence_driver
   trajectory_msgs
 )
 
@@ -16,7 +15,6 @@ catkin_package(
     abb_file_suite
     godel_msgs
     industrial_robot_simulator_service
-    keyence_driver
     trajectory_msgs
 )
 
@@ -51,7 +49,7 @@ add_dependencies(blend_process_service_node industrial_robot_simulator_service_g
 
 add_dependencies(keyence_process_service_node godel_msgs_generate_messages_cpp)
 add_dependencies(keyence_process_service_node industrial_robot_simulator_service_generate_messages_cpp)
-add_dependencies(keyence_process_service_node keyence_driver_generate_messages_cpp)
+
 
 target_link_libraries(abb_blend_process_service_node
   ${catkin_LIBRARIES}

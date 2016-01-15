@@ -9,8 +9,6 @@
 
 #include <boost/thread.hpp>
 
-#include "keyence_driver/ChangeProgram.h"
-
 #include <ros/topic.h>
 
 const static int KEYENCE_PROGRAM_LASER_ON = 4;
@@ -28,8 +26,6 @@ godel_process_execution::KeyenceProcessService::KeyenceProcessService(ros::NodeH
   sim_client_ = nh.serviceClient<industrial_robot_simulator_service::SimulateTrajectory>(SIMULATION_SERVICE_NAME);
 
   real_client_ = nh.serviceClient<godel_msgs::TrajectoryExecution>(EXECUTION_SERVICE_NAME);
-
-  keyence_client_ = nh.serviceClient<keyence_driver::ChangeProgram>(KEYENCE_PROGRAM_SERVICE_NAME);
 
   // Create this process execution server
   server_ = nh.advertiseService<KeyenceProcessService,
@@ -61,6 +57,7 @@ bool godel_process_execution::KeyenceProcessService::executionCallback(godel_msg
 
 bool godel_process_execution::KeyenceProcessService::executeProcess(godel_msgs::KeyenceProcessExecution::Request& req)
 {
+  #if KEYENCE_DRIVER_IMPLEMENTED
   // Check for keyence existence
   if (!keyence_client_.exists())
   {
@@ -116,6 +113,11 @@ bool godel_process_execution::KeyenceProcessService::executeProcess(godel_msgs::
   }
 
   return true;
+  #else
+
+  ROS_WARN_STREAM("Keyence Driver is not yet implemented.");
+  return false;
+  #endif
 }
 
 bool godel_process_execution::KeyenceProcessService::simulateProcess(godel_msgs::KeyenceProcessExecution::Request& req)

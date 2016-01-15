@@ -24,13 +24,16 @@ const static std::string GET_MOTION_PLANS_SERVICE = "get_available_motion_plans"
 const static std::string SELECT_MOTION_PLAN_SERVICE = "select_motion_plan";
 const static std::string LOAD_SAVE_MOTION_PLAN_SERVICE = "load_save_motion_plan";
 
+const static std::string BLEND_PROCESS_EXECUTION_SERVICE = "blend_process_execution";
+const static std::string SCAN_PROCESS_EXECUTION_SERVICE = "scan_process_execution";
+const static std::string BLEND_PROCESS_PLANNING_SERVICE = "blend_process_planning";
+const static std::string SCAN_PROCESS_PLANNING_SERVICE = "keyence_process_planning";
 
 const static std::string TOOL_PATH_PREVIEW_TOPIC = "tool_path_preview";
 const static std::string SELECTED_SURFACES_CHANGED_TOPIC = "selected_surfaces_changed";
 const static std::string ROBOT_SCAN_PATH_PREVIEW_TOPIC = "robot_scan_path_preview";
 const static std::string PUBLISH_REGION_POINT_CLOUD = "publish_region_point_cloud";
 const static std::string REGION_POINT_CLOUD_TOPIC="region_colored_cloud";
-
 
 //  tool visual properties
 const static float TOOL_DIA = .050;
@@ -113,17 +116,12 @@ bool SurfaceBlendingService::init()
   visualize_process_path_client_ =
       nh.serviceClient<godel_process_path_generation::VisualizeBlendingPlan>(VISUALIZE_BLENDING_PATH_SERVICE);
 
-  // Read process execution service names
-  std::string blend_process_service_name, scan_process_service_name;
-  ph.param<std::string>("blend_process_service_name", blend_process_service_name, "blend_process_execution");
-  ph.param<std::string>("scan_process_service_name", scan_process_service_name, "scan_process_execution");
-
   // Process Execution Parameters
-  blend_process_client_ = nh.serviceClient<godel_msgs::BlendProcessExecution>(blend_process_service_name);
-  scan_process_client_ = nh.serviceClient<godel_msgs::KeyenceProcessExecution>(scan_process_service_name);
+  blend_process_client_ = nh.serviceClient<godel_msgs::BlendProcessExecution>(BLEND_PROCESS_EXECUTION_SERVICE);
+  scan_process_client_ = nh.serviceClient<godel_msgs::KeyenceProcessExecution>(SCAN_PROCESS_EXECUTION_SERVICE);
 
-  blend_planning_client_ = nh.serviceClient<godel_msgs::BlendProcessPlanning>("blend_process_planning");
-  keyence_planning_client_ = nh.serviceClient<godel_msgs::KeyenceProcessPlanning>("keyence_process_planning");
+  blend_planning_client_ = nh.serviceClient<godel_msgs::BlendProcessPlanning>(BLEND_PROCESS_PLANNING_SERVICE);
+  keyence_planning_client_ = nh.serviceClient<godel_msgs::KeyenceProcessPlanning>(SCAN_PROCESS_PLANNING_SERVICE);
 
   // service servers
   surf_blend_parameters_server_ = nh.advertiseService(SURFACE_BLENDING_PARAMETERS_SERVICE,
