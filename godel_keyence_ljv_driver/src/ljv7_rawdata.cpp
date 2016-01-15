@@ -36,16 +36,16 @@
 #include <string.h>
 #include <limits.h>
 
-
-int ljv7_unpack_profile_data(unsigned char* src, uint32_t src_sz, uint32_t num_pp, profile_point_t* dst, uint32_t dst_sz)
+int ljv7_unpack_profile_data(unsigned char* src, uint32_t src_sz, uint32_t num_pp,
+                             profile_point_t* dst, uint32_t dst_sz)
 {
   // constants from protocol documentation
   const uint32_t bpp = 20; // bits per profile point
-  const uint32_t ppr =  8; // profiles per 'row'
+  const uint32_t ppr = 8;  // profiles per 'row'
 
   const uint32_t bpb = sizeof(char) * CHAR_BIT; // bits per byte
-  const uint32_t bpr = (bpp * ppr) / bpb; // bytes per 'row'
-  const uint32_t ipr = bpr / sizeof(int32_t); // ints per 'row'
+  const uint32_t bpr = (bpp * ppr) / bpb;       // bytes per 'row'
+  const uint32_t ipr = bpr / sizeof(int32_t);   // ints per 'row'
   unsigned int i = 0, j = 0;
 
   // make sure source buffer is multiple of 'bytes per row' bytes
@@ -67,24 +67,24 @@ int ljv7_unpack_profile_data(unsigned char* src, uint32_t src_sz, uint32_t num_p
     return -3;
   }
 
-  uint32_t* ints_ptr = (uint32_t*) src;
+  uint32_t* ints_ptr = (uint32_t*)src;
   // from: https://graphics.stanford.edu/~seander/bithacks.html#FixedSignExtend
   const int32_t m = 1U << (bpp - 1);
-  for (i = 0, j = 0; j < num_pp; i+=ipr, j+=ppr)
+  for (i = 0, j = 0; j < num_pp; i += ipr, j += ppr)
   {
     // unpack 'ppr' points at a time (which needs 'ipr' int32's)
-    dst[j    ] = ((ints_ptr[i  ] & 0x000FFFFF));
-    dst[j + 1] = ((ints_ptr[i  ] & 0xFFF00000) >> 20) | ((ints_ptr[i+1] & 0x000000FF) << 12);
-    dst[j + 2] = ((ints_ptr[i+1] & 0x0FFFFF00) >>  8);
-    dst[j + 3] = ((ints_ptr[i+1] & 0xF0000000) >> 28) | ((ints_ptr[i+2] & 0x0000FFFF) <<  4);
+    dst[j] = ((ints_ptr[i] & 0x000FFFFF));
+    dst[j + 1] = ((ints_ptr[i] & 0xFFF00000) >> 20) | ((ints_ptr[i + 1] & 0x000000FF) << 12);
+    dst[j + 2] = ((ints_ptr[i + 1] & 0x0FFFFF00) >> 8);
+    dst[j + 3] = ((ints_ptr[i + 1] & 0xF0000000) >> 28) | ((ints_ptr[i + 2] & 0x0000FFFF) << 4);
 
-    dst[j + 4] = ((ints_ptr[i+2] & 0xFFFF0000) >> 16) | ((ints_ptr[i+3] & 0x0000000F) << 16);
-    dst[j + 5] = ((ints_ptr[i+3] & 0x00FFFFF0) >>  4);
-    dst[j + 6] = ((ints_ptr[i+3] & 0xFF000000) >> 24) | ((ints_ptr[i+4] & 0x00000FFF) <<  8);
-    dst[j + 7] = ((ints_ptr[i+4] & 0xFFFFF000) >> 12);
+    dst[j + 4] = ((ints_ptr[i + 2] & 0xFFFF0000) >> 16) | ((ints_ptr[i + 3] & 0x0000000F) << 16);
+    dst[j + 5] = ((ints_ptr[i + 3] & 0x00FFFFF0) >> 4);
+    dst[j + 6] = ((ints_ptr[i + 3] & 0xFF000000) >> 24) | ((ints_ptr[i + 4] & 0x00000FFF) << 8);
+    dst[j + 7] = ((ints_ptr[i + 4] & 0xFFFFF000) >> 12);
 
     // todo: rework this
-    dst[j    ] = (dst[j] ^ m) - m;
+    dst[j] = (dst[j] ^ m) - m;
     dst[j + 1] = (dst[j + 1] ^ m) - m;
     dst[j + 2] = (dst[j + 2] ^ m) - m;
     dst[j + 3] = (dst[j + 3] ^ m) - m;

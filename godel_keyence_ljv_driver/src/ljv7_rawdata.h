@@ -31,15 +31,12 @@
 #ifndef __KEYENCE_DRIVER_LJV7_RAWDATA_H__
 #define __KEYENCE_DRIVER_LJV7_RAWDATA_H__
 
-
 #include <stddef.h>
 #include <stdint.h>
 
-
 typedef int32_t profile_point_t;
 
-
-int ljv7_unpack_profile_data(unsigned char* src, uint32_t src_sz, uint32_t num_pp, profile_point_t* dst, uint32_t dst_sz);
-
+int ljv7_unpack_profile_data(unsigned char* src, uint32_t src_sz, uint32_t num_pp,
+                             profile_point_t* dst, uint32_t dst_sz);
 
 #endif // __KEYENCE_DRIVER_LJV7_RAWDATA_H__

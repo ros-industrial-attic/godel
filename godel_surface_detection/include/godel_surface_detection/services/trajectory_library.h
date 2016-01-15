@@ -23,7 +23,6 @@ public:
 private:
   TrajectoryMap map_;
 };
-
 }
 
 #endif

@@ -35,22 +35,24 @@ namespace descartes
 class ProcessPath
 {
 public:
-  ProcessPath() {};
-  virtual ~ProcessPath() {};
+  ProcessPath(){};
+  virtual ~ProcessPath(){};
 
   /**@brief Add a ProcessPt to pts
    * @param pt Reference to ProcessPt to add to points
    */
-  void addPoint(const ProcessPt &pt) {pts_.push_back(pt);}
+  void addPoint(const ProcessPt& pt) { pts_.push_back(pt); }
 
   /**@brief Add a ProcessTranstition to transition_
    * @param trans Reference to ProcessTransition to add to points
    */
-  void addTransition(const ProcessTransition &trans) {transitions_.push_back(trans);}
+  void addTransition(const ProcessTransition& trans) { transitions_.push_back(trans); }
 
   /**@brief Get copy of data */
-  std::pair<std::vector<ProcessPt>, std::vector<ProcessTransition> > data() const {
-    return std::make_pair(pts_, transitions_); }
+  std::pair<std::vector<ProcessPt>, std::vector<ProcessTransition> > data() const
+  {
+    return std::make_pair(pts_, transitions_);
+  }
 
   /**@brief Convert ProcessPath to line_list marker
    * Does not populate header, ns, id, lifetime, frame_locked
@@ -58,8 +60,11 @@ public:
    */
   visualization_msgs::Marker asMarker() const;
 
-  void clear() {pts_.clear(); transitions_.clear();}
-
+  void clear()
+  {
+    pts_.clear();
+    transitions_.clear();
+  }
 
 protected:
   std::vector<ProcessPt> pts_;

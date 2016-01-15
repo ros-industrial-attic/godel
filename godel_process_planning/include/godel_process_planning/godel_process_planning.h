@@ -41,11 +41,11 @@ private:
   descartes_core::RobotModelPtr blend_model_;
   descartes_core::RobotModelPtr keyence_model_;
   moveit::core::RobotModelConstPtr moveit_model_;
-  pluginlib::ClassLoader<descartes_core::RobotModel> plugin_loader_; // kept around so code doesn't get unloaded
+  pluginlib::ClassLoader<descartes_core::RobotModel>
+      plugin_loader_; // kept around so code doesn't get unloaded
   std::string blend_group_name_;
   std::string keyence_group_name_;
 };
-
 }
 
 #endif

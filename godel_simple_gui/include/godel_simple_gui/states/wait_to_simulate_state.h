@@ -23,8 +23,6 @@ public:
 private:
   std::vector<std::string> plan_names_;
 };
-
 }
 
 #endif // WAIT_TO_SIMULATE_STATE_H
-

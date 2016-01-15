@@ -19,23 +19,24 @@ const static std::string EXECUTION_SERVICE_NAME = "execute_path";
 const static std::string SIMULATION_SERVICE_NAME = "simulate_path";
 const static std::string SERVICE_SERVER_NAME = "scan_process_execution";
 
-
 godel_process_execution::KeyenceProcessService::KeyenceProcessService(ros::NodeHandle& nh)
 {
   // Connect to motion servers and I/O server
-  sim_client_ = nh.serviceClient<industrial_robot_simulator_service::SimulateTrajectory>(SIMULATION_SERVICE_NAME);
+  sim_client_ = nh.serviceClient<industrial_robot_simulator_service::SimulateTrajectory>(
+      SIMULATION_SERVICE_NAME);
 
   real_client_ = nh.serviceClient<godel_msgs::TrajectoryExecution>(EXECUTION_SERVICE_NAME);
 
   // Create this process execution server
-  server_ = nh.advertiseService<KeyenceProcessService,
-                                godel_msgs::KeyenceProcessExecution::Request,
-                                godel_msgs::KeyenceProcessExecution::Response>
-            (SERVICE_SERVER_NAME, &godel_process_execution::KeyenceProcessService::executionCallback, this);
+  server_ = nh.advertiseService<KeyenceProcessService, godel_msgs::KeyenceProcessExecution::Request,
+                                godel_msgs::KeyenceProcessExecution::Response>(
+      SERVICE_SERVER_NAME, &godel_process_execution::KeyenceProcessService::executionCallback,
+      this);
 }
 
-bool godel_process_execution::KeyenceProcessService::executionCallback(godel_msgs::KeyenceProcessExecution::Request& req,
-                                                                                godel_msgs::KeyenceProcessExecution::Response& res)
+bool godel_process_execution::KeyenceProcessService::executionCallback(
+    godel_msgs::KeyenceProcessExecution::Request& req,
+    godel_msgs::KeyenceProcessExecution::Response& res)
 {
   if (req.simulate)
   {
@@ -55,13 +56,15 @@ bool godel_process_execution::KeyenceProcessService::executionCallback(godel_msg
   }
 }
 
-bool godel_process_execution::KeyenceProcessService::executeProcess(godel_msgs::KeyenceProcessExecution::Request& req)
+bool godel_process_execution::KeyenceProcessService::executeProcess(
+    godel_msgs::KeyenceProcessExecution::Request& req)
 {
-  #if KEYENCE_DRIVER_IMPLEMENTED
+#if KEYENCE_DRIVER_IMPLEMENTED
   // Check for keyence existence
   if (!keyence_client_.exists())
   {
-    ROS_ERROR_STREAM("Keyence ROS server is not available on service " << keyence_client_.getService());
+    ROS_ERROR_STREAM("Keyence ROS server is not available on service "
+                     << keyence_client_.getService());
     return false;
   }
 
@@ -89,7 +92,7 @@ bool godel_process_execution::KeyenceProcessService::executeProcess(godel_msgs::
   if (!keyence_client_.call(keyence_srv))
   {
     ROS_ERROR_STREAM("Unable to activate keyence (program " << KEYENCE_PROGRAM_LASER_ON << ").");
-     return false;
+    return false;
   }
 
   if (!real_client_.call(srv_process))
@@ -102,7 +105,8 @@ bool godel_process_execution::KeyenceProcessService::executeProcess(godel_msgs::
   keyence_srv.request.program_no = KEYENCE_PROGRAM_LASER_OFF;
   if (!keyence_client_.call(keyence_srv))
   {
-    ROS_ERROR_STREAM("Unable to de-activate keyence (program " << KEYENCE_PROGRAM_LASER_OFF << ").");
+    ROS_ERROR_STREAM("Unable to de-activate keyence (program " << KEYENCE_PROGRAM_LASER_OFF
+                                                               << ").");
     return false;
   }
 
@@ -113,14 +117,15 @@ bool godel_process_execution::KeyenceProcessService::executeProcess(godel_msgs::
   }
 
   return true;
-  #else
+#else
 
   ROS_WARN_STREAM("Keyence Driver is not yet implemented.");
   return false;
-  #endif
+#endif
 }
 
-bool godel_process_execution::KeyenceProcessService::simulateProcess(godel_msgs::KeyenceProcessExecution::Request& req)
+bool godel_process_execution::KeyenceProcessService::simulateProcess(
+    godel_msgs::KeyenceProcessExecution::Request& req)
 {
   using industrial_robot_simulator_service::SimulateTrajectory;
 

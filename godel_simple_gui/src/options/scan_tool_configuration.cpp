@@ -2,7 +2,7 @@
 #include "ui_scan_tool_configuration.h"
 
 godel_simple_gui::ScanPlanConfigWidget::ScanPlanConfigWidget(godel_msgs::ScanPlanParameters params)
-  : params_(params)
+    : params_(params)
 {
   ui_ = new Ui::ScanToolConfigWindow();
   ui_->setupUi(this);
@@ -66,4 +66,3 @@ int godel_simple_gui::ScanPlanConfigWidget::get_scan_method_enum_value()
     return -1;
   }
 }
-

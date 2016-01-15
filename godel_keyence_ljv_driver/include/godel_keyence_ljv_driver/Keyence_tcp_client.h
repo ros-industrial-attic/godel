@@ -39,41 +39,46 @@
 
 #include <simple_message/smpl_msg_connection.h>
 
-
 namespace industrial
 {
 namespace tcp_client
 {
-
 
 /**
  * \brief Defines TCP client functions.
  *
  * public industrial::tcp_socket::TcpSocket
  */
-class Keyence_TcpClient : public industrial::tcp_client::TcpClient, public industrial::byte_array::ByteArray
+class Keyence_TcpClient : public industrial::tcp_client::TcpClient,
+                          public industrial::byte_array::ByteArray
 {
 public:
-
   // Provides SimpleSerialize access to byte array internals
-  //friend class SimpleSerialize;
+  // friend class SimpleSerialize;
 
   /**
    * \brief Constructor
    */
-  Keyence_TcpClient(){}
+  Keyence_TcpClient() {}
 
   /**
    * \brief Destructor
    */
-  ~Keyence_TcpClient(){}
+  ~Keyence_TcpClient() {}
 
-  bool init(char *buff, int port_num){return industrial::tcp_client::TcpClient::init(buff,port_num);}
-  bool my_sendBytes(industrial::byte_array::ByteArray& buf){return sendBytes(buf);}
-  bool my_receiveBytes(industrial::byte_array::ByteArray& buf, industrial::shared_types::shared_int num_bytes){return receiveBytes(buf, num_bytes);}
+  bool init(char* buff, int port_num)
+  {
+    return industrial::tcp_client::TcpClient::init(buff, port_num);
+  }
+  bool my_sendBytes(industrial::byte_array::ByteArray& buf) { return sendBytes(buf); }
+  bool my_receiveBytes(industrial::byte_array::ByteArray& buf,
+                       industrial::shared_types::shared_int num_bytes)
+  {
+    return receiveBytes(buf, num_bytes);
+  }
 };
 
-} //tcp_client
-} //industrial
+} // tcp_client
+} // industrial
 
 #endif /* GODEL_KEYENCE_LJV_DRIVER_TCP_CLIENT_H */

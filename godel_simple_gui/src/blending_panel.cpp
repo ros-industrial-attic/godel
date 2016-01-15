@@ -4,8 +4,7 @@
 
 #include "godel_simple_gui/blending_widget.h"
 
-godel_simple_gui::BlendingPanel::BlendingPanel(QWidget* parent)
-  : rviz::Panel(parent)
+godel_simple_gui::BlendingPanel::BlendingPanel(QWidget* parent) : rviz::Panel(parent)
 {
   ROS_INFO("Loaded simple blending panel");
 

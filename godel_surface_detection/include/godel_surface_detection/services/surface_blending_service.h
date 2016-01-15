@@ -16,7 +16,6 @@
 #ifndef SURFACE_BLENDING_SERVICE_H
 #define SURFACE_BLENDING_SERVICE_H
 
-
 #include <godel_surface_detection/scan/robot_scan.h>
 #include <godel_surface_detection/detection/surface_detection.h>
 #include <godel_surface_detection/interactive/interactive_surface_server.h>
@@ -65,14 +64,16 @@ struct ProcessPathDetails
  * Associates a name with a visual msgs marker which contains a pose and sequence of points defining
  * a path
  */
-struct ProcessPathResult {
+struct ProcessPathResult
+{
   typedef std::pair<std::string, visualization_msgs::Marker> value_type;
   std::vector<value_type> paths;
 };
 /**
  * Associates a name with a joint trajectory
  */
-struct ProcessPlanResult {
+struct ProcessPlanResult
+{
   typedef std::pair<std::string, godel_msgs::ProcessPlan> value_type;
   std::vector<value_type> plans;
 };
@@ -96,42 +97,45 @@ private:
 
   void publish_selected_surfaces_changed();
 
-  bool run_robot_scan(visualization_msgs::MarkerArray &surfaces);
+  bool run_robot_scan(visualization_msgs::MarkerArray& surfaces);
 
-  bool find_surfaces(visualization_msgs::MarkerArray &surfaces);
+  bool find_surfaces(visualization_msgs::MarkerArray& surfaces);
 
   void remove_previous_process_plan();
-  
+
   /**
    * The following path generation and planning methods are defined in
    * src/blending_service_path_generation.cpp
    */
-  bool generate_process_plan(godel_process_path_generation::VisualizeBlendingPlan &process_plan);
+  bool generate_process_plan(godel_process_path_generation::VisualizeBlendingPlan& process_plan);
 
   bool animate_tool_path();
 
   void tool_animation_timer_callback();
-  
-  visualization_msgs::MarkerArray create_tool_markers(const geometry_msgs::Point &pos, 
-                                                      const geometry_msgs::Pose &pose,
+
+  visualization_msgs::MarkerArray create_tool_markers(const geometry_msgs::Point& pos,
+                                                      const geometry_msgs::Pose& pose,
                                                       std::string frame_id);
 
   // Service callbacks, these components drive this class by signalling events
   // from the user
-  bool surface_detection_server_callback(godel_msgs::SurfaceDetection::Request &req,
-                                         godel_msgs::SurfaceDetection::Response &res);
+  bool surface_detection_server_callback(godel_msgs::SurfaceDetection::Request& req,
+                                         godel_msgs::SurfaceDetection::Response& res);
 
-  bool select_surface_server_callback(godel_msgs::SelectSurface::Request &req, 
-                                      godel_msgs::SelectSurface::Response &res);
+  bool select_surface_server_callback(godel_msgs::SelectSurface::Request& req,
+                                      godel_msgs::SelectSurface::Response& res);
 
-  bool process_path_server_callback(godel_msgs::ProcessPlanning::Request &req, 
-                                    godel_msgs::ProcessPlanning::Response &res);
-  
-  bool surface_blend_parameters_server_callback(godel_msgs::SurfaceBlendingParameters::Request &req, 
-                                                godel_msgs::SurfaceBlendingParameters::Response &res);
+  bool process_path_server_callback(godel_msgs::ProcessPlanning::Request& req,
+                                    godel_msgs::ProcessPlanning::Response& res);
+
+  bool
+  surface_blend_parameters_server_callback(godel_msgs::SurfaceBlendingParameters::Request& req,
+                                           godel_msgs::SurfaceBlendingParameters::Response& res);
 
   // Reads from the surface selection server and generates blend/scan paths for each
-  godel_surface_detection::TrajectoryLibrary generateMotionLibrary(const godel_msgs::BlendingPlanParameters& blend_params, const godel_msgs::ScanPlanParameters &scan_params);
+  godel_surface_detection::TrajectoryLibrary
+  generateMotionLibrary(const godel_msgs::BlendingPlanParameters& blend_params,
+                        const godel_msgs::ScanPlanParameters& scan_params);
 
   bool requestBlendPath(const godel_process_path::PolygonBoundaryCollection& boundaries,
                         const geometry_msgs::Pose& boundary_pose,
@@ -139,17 +143,18 @@ private:
                         visualization_msgs::Marker& path);
 
   bool requestScanPath(const godel_process_path::PolygonBoundaryCollection& boundaries,
-                       const geometry_msgs::Pose& boundary_pose, const godel_msgs::ScanPlanParameters &params,
+                       const geometry_msgs::Pose& boundary_pose,
+                       const godel_msgs::ScanPlanParameters& params,
                        visualization_msgs::Marker& path);
 
-  ProcessPathResult generateProcessPath(const std::string& name,
-                                        const pcl::PolygonMesh& mesh,
-                                        const godel_msgs::BlendingPlanParameters& params, const godel_msgs::ScanPlanParameters &scan_params);
+  ProcessPathResult generateProcessPath(const std::string& name, const pcl::PolygonMesh& mesh,
+                                        const godel_msgs::BlendingPlanParameters& params,
+                                        const godel_msgs::ScanPlanParameters& scan_params);
 
-  ProcessPlanResult generateProcessPlan(const std::string& name, 
+  ProcessPlanResult generateProcessPlan(const std::string& name,
                                         const visualization_msgs::Marker& path,
-                                        const godel_msgs::BlendingPlanParameters& params, 
-                                        const godel_msgs::ScanPlanParameters &scan_params);
+                                        const godel_msgs::BlendingPlanParameters& params,
+                                        const godel_msgs::ScanPlanParameters& scan_params);
 
   bool selectMotionPlanCallback(godel_msgs::SelectMotionPlan::Request& req,
                                 godel_msgs::SelectMotionPlan::Response& res);
@@ -214,7 +219,8 @@ private:
   // results
   godel_msgs::SurfaceDetection::Response latest_surface_detection_results_;
   ProcessPathDetails process_path_results_;
-  std::vector<std::vector<ros::Duration> > duration_results_; // returned by visualize plan service, needed by trajectory planner
+  std::vector<std::vector<ros::Duration> >
+      duration_results_; // returned by visualize plan service, needed by trajectory planner
 
   // parameters
   bool publish_region_point_cloud_;

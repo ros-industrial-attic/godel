@@ -18,28 +18,20 @@ void godel_simple_gui::PlanningState::onStart(BlendingWidget& gui)
   gui.setText("Planning...");
   gui.setButtonsEnabled(false);
 
-  planning_client_ = gui.nodeHandle().serviceClient<godel_msgs::ProcessPlanning>(PROCESS_PATH_SERVICE);
-  QtConcurrent::run(this, &PlanningState::makeRequest,
-                    gui.options().blendingParams(), gui.options().scanParams());
+  planning_client_ =
+      gui.nodeHandle().serviceClient<godel_msgs::ProcessPlanning>(PROCESS_PATH_SERVICE);
+  QtConcurrent::run(this, &PlanningState::makeRequest, gui.options().blendingParams(),
+                    gui.options().scanParams());
 }
 
-void godel_simple_gui::PlanningState::onExit(BlendingWidget& gui)
-{
-  gui.setButtonsEnabled(true);
-}
+void godel_simple_gui::PlanningState::onExit(BlendingWidget& gui) { gui.setButtonsEnabled(true); }
 
 // Handlers for the fixed buttons
-void godel_simple_gui::PlanningState::onNext(BlendingWidget& gui)
-{
-}
+void godel_simple_gui::PlanningState::onNext(BlendingWidget& gui) {}
 
-void godel_simple_gui::PlanningState::onBack(BlendingWidget& gui)
-{
-}
+void godel_simple_gui::PlanningState::onBack(BlendingWidget& gui) {}
 
-void godel_simple_gui::PlanningState::onReset(BlendingWidget& gui)
-{
-}
+void godel_simple_gui::PlanningState::onReset(BlendingWidget& gui) {}
 
 void godel_simple_gui::PlanningState::makeRequest(godel_msgs::BlendingPlanParameters blend_params,
                                                   godel_msgs::ScanPlanParameters scan_params)
@@ -52,13 +44,11 @@ void godel_simple_gui::PlanningState::makeRequest(godel_msgs::BlendingPlanParame
 
   if (planning_client_.call(srv))
   {
-    Q_EMIT newStateAvailable( new WaitToSimulateState() );
+    Q_EMIT newStateAvailable(new WaitToSimulateState());
   }
   else
   {
     ROS_WARN_STREAM("Process planning failed");
-    Q_EMIT newStateAvailable( new SurfaceSelectState() );
+    Q_EMIT newStateAvailable(new SurfaceSelectState());
   }
 }
-
-

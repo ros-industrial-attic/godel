@@ -29,7 +29,6 @@ private:
   ros::ServiceClient sim_client_;
   ros::ServiceClient keyence_client_;
 };
-
 }
 
 #endif // KEYENCE_PROCESS_SERVICE_H

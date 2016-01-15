@@ -29,7 +29,6 @@
 #include <boost/foreach.hpp>
 #include "godel_process_path_generation/polygon_pts.hpp"
 
-
 namespace godel_process_path
 {
 namespace polygon_utils
@@ -37,40 +36,41 @@ namespace polygon_utils
 
 struct PolygonSegment
 {
-  PolygonSegment(const PolygonPt &p1, const PolygonPt &p2): start(p1), end(p2) {};
+  PolygonSegment(const PolygonPt& p1, const PolygonPt& p2) : start(p1), end(p2){};
   PolygonPt start;
   PolygonPt end;
 
   /**@brief Does this segment intersect another
    * Does not account for segments that are nearly parallel
    * @param tol Tolerance on how close endpoints can be to line before considered touching */
-  bool intersects(const PolygonSegment &other, double tol=1e-5) const;
-  inline double length() const {return start.dist(end);};
-  inline double length2() const {return start.dist2(end);};
-  inline PolygonPt vector() const {return end-start;};
-  inline double cross(const PolygonSegment &other) const {return vector().cross(other.vector());};
+  bool intersects(const PolygonSegment& other, double tol = 1e-5) const;
+  inline double length() const { return start.dist(end); };
+  inline double length2() const { return start.dist2(end); };
+  inline PolygonPt vector() const { return end - start; };
+  inline double cross(const PolygonSegment& other) const { return vector().cross(other.vector()); };
 };
 
-void boundaryToSegments(std::vector<PolygonSegment> &segments, const PolygonBoundary &polygon);
+void boundaryToSegments(std::vector<PolygonSegment>& segments, const PolygonBoundary& polygon);
 
 /**@brief Checks that PolygonBoundary is valid (non-self-intersecting)
  * @param bnd Polygon to check
  * @return True if polygon has no self-intersections
  */
-bool checkBoundary(const PolygonBoundary &bnd);
+bool checkBoundary(const PolygonBoundary& bnd);
 
 /**@brief Checks that PolygonBoundaryCollection is valid
  * Checks for self-intersection of each polygon, and global intersections of polygons
  * @param pbc PolygonBoundaryCollection to check
  * @return False if any intersection check is invalid, True otherwise
  */
-bool checkBoundaryCollection(const PolygonBoundaryCollection &pbc);
+bool checkBoundaryCollection(const PolygonBoundaryCollection& pbc);
 
 /**@brief calculate total length of boundary by summing segments */
-inline double circumference(const PolygonBoundary &boundary)
+inline double circumference(const PolygonBoundary& boundary)
 {
-  double dist(0);      // Total distance squared
-  for (PolygonBoundary::const_iterator pt=boundary.begin(); pt!=boost::prior(boundary.end()); ++pt)
+  double dist(0); // Total distance squared
+  for (PolygonBoundary::const_iterator pt = boundary.begin(); pt != boost::prior(boundary.end());
+       ++pt)
   {
     dist += pt->dist(*boost::next(pt));
   }
@@ -83,21 +83,23 @@ inline double circumference(const PolygonBoundary &boundary)
  * @param bnd PolygonBoundary to find closest point in
  * @return pair(index into PolygonBoundary, distance)
  */
-std::pair<size_t, float> closestPoint(const PolygonPt &pt, const PolygonBoundary &bnd);
+std::pair<size_t, float> closestPoint(const PolygonPt& pt, const PolygonBoundary& bnd);
 
 /**@brief Downsample boundary so that edges are represented by endpoints
  * Points may be removed from boundary to satisfy this filter
  * @param boundary PolygonBoundary to modify
- * @param tol allowable angle between adjacent segments to decide if edge is linear. If tol is outside [0, pi/2] it is reset to closest bound.
+ * @param tol allowable angle between adjacent segments to decide if edge is linear. If tol is
+ * outside [0, pi/2] it is reset to closest bound.
  */
-void filter(PolygonBoundary &boundary, double tol);
+void filter(PolygonBoundary& boundary, double tol);
 
 /**@brief Downsample all boundaries so that edges are represented by endpoints
  * Points may be removed from boundaries to satisfy this filter
  * @param boundaries PolygonBoundaryCollection to modify
- * @param tol allowable angle between adjacent segments to decide if edge is linear. If tol is outside [0, pi/2] it is reset to closest bound.
+ * @param tol allowable angle between adjacent segments to decide if edge is linear. If tol is
+ * outside [0, pi/2] it is reset to closest bound.
  */
-inline void filter(PolygonBoundaryCollection &boundaries, double tol)
+inline void filter(PolygonBoundaryCollection& boundaries, double tol)
 {
   // Check bounds of tol.
   if (tol > M_PI_2)
@@ -111,17 +113,17 @@ inline void filter(PolygonBoundaryCollection &boundaries, double tol)
     tol = 0.;
   }
 
-  BOOST_FOREACH(PolygonBoundary &boundary, boundaries)
+  BOOST_FOREACH (PolygonBoundary& boundary, boundaries)
   {
     filter(boundary, tol);
   }
 }
 
 /**@brief Check if a intersects b */
-bool intersects(const PolygonBoundary &a, const PolygonBoundary &b);
+bool intersects(const PolygonBoundary& a, const PolygonBoundary& b);
 
 /**@brief Check if a intersects b */
-bool intersects(const std::vector<PolygonSegment> &a, const std::vector<PolygonSegment> &b);
+bool intersects(const std::vector<PolygonSegment>& a, const std::vector<PolygonSegment>& b);
 
 } /* namespace polygon_utils */
 } /* namespace godel_process_path */

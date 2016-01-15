@@ -5,7 +5,6 @@
 #include <ui_blend_tool_param_window.h>
 #include <godel_msgs/BlendingPlanParameters.h>
 
-
 namespace godel_plugins
 {
 
@@ -25,7 +24,6 @@ protected:
   godel_msgs::BlendingPlanParameters params_;
   Ui::BlendToolParamWindow ui_;
 };
-
 }
 
 #endif // BLEND_TOOL_PARAM_WINDOW_H

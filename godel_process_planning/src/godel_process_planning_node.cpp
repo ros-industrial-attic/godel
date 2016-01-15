@@ -30,11 +30,15 @@ int main(int argc, char** argv)
   using godel_process_planning::ProcessPlanningManager;
 
   // Creates a planning manager that will create the appropriate planning classes and perform
-  // all required initialization. It exposes member functions to handle each kind of processing event.
-  ProcessPlanningManager manager(world_frame, blend_group, blend_tcp, keyence_group, keyence_tcp, robot_model_plugin);
+  // all required initialization. It exposes member functions to handle each kind of processing
+  // event.
+  ProcessPlanningManager manager(world_frame, blend_group, blend_tcp, keyence_group, keyence_tcp,
+                                 robot_model_plugin);
   // Plumb in the appropriate ros services
-  ros::ServiceServer blend_server = nh.advertiseService(DEFAULT_BLEND_PLANNING_SERVICE, &ProcessPlanningManager::handleBlendPlanning, &manager);
-  ros::ServiceServer keyence_server = nh.advertiseService(DEFAULT_KEYENCE_PLANNING_SERVICE, &ProcessPlanningManager::handleKeyencePlanning, &manager);
+  ros::ServiceServer blend_server = nh.advertiseService(
+      DEFAULT_BLEND_PLANNING_SERVICE, &ProcessPlanningManager::handleBlendPlanning, &manager);
+  ros::ServiceServer keyence_server = nh.advertiseService(
+      DEFAULT_KEYENCE_PLANNING_SERVICE, &ProcessPlanningManager::handleKeyencePlanning, &manager);
 
   // Serve and wait for shutdown
   ROS_INFO_STREAM("Godel Process Planning Server Online");

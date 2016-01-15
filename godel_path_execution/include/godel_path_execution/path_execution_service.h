@@ -6,7 +6,6 @@
 #include <actionlib/client/simple_action_client.h>
 #include <control_msgs/FollowJointTrajectoryAction.h>
 
-
 namespace godel_path_execution
 {
 
@@ -22,12 +21,12 @@ public:
    */
   bool executionCallback(godel_msgs::TrajectoryExecution::Request& req,
                          godel_msgs::TrajectoryExecution::Response& res);
+
 private:
   ros::ServiceServer server_;
   actionlib::SimpleActionClient<control_msgs::FollowJointTrajectoryAction> ac_;
   std::string name_;
 };
-
 }
 
 #endif // PATH_EXECUTION_SERVICE_H

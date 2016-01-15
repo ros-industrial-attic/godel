@@ -17,10 +17,8 @@ namespace abb_file_suite
 class AbbMotionFtpDownloader
 {
 public:
-  AbbMotionFtpDownloader(const std::string& ip,
-                         const std::string& listen_topic,
-                         ros::NodeHandle& nh,
-                         bool j23_coupled = false,
+  AbbMotionFtpDownloader(const std::string& ip, const std::string& listen_topic,
+                         ros::NodeHandle& nh, bool j23_coupled = false,
                          const std::string& temp_file_loc = std::string("/tmp"));
 
   /**
@@ -36,7 +34,7 @@ public:
    * @param  req Contains the ABSOLUTE path the RAPID file to upload
    * @param  res No fields in the return value
    * @return     True if the FTP transfer was completed; note this doesn't mean the robot
-   *             succeeded or even read the complete file. 
+   *             succeeded or even read the complete file.
    */
   bool handleServiceCall(abb_file_suite::ExecuteProgram::Request& req,
                          abb_file_suite::ExecuteProgram::Response& res);
@@ -48,7 +46,6 @@ private:
   const std::string temp_file_loc_;
   bool j23_coupled_; /** joints 2 and 3 are coupled (as in ABB IRB2400) */
 };
-
 }
 
 #endif

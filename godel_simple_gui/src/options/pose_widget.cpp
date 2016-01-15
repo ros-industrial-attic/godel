@@ -10,8 +10,7 @@
 #endif
 
 // Pose Widget
-godel_simple_gui::PoseWidget::PoseWidget(QWidget *parent)
-  : QWidget(parent)
+godel_simple_gui::PoseWidget::PoseWidget(QWidget* parent) : QWidget(parent)
 {
   ui_ = new Ui::PoseWidget();
   ui_->setupUi(this);
@@ -21,15 +20,15 @@ godel_simple_gui::PoseWidget::PoseWidget(QWidget *parent)
 void godel_simple_gui::PoseWidget::set_values(const geometry_msgs::Pose& p)
 {
   tf::Transform t;
-  tf::poseMsgToTF(p,t);
+  tf::poseMsgToTF(p, t);
   set_values(t);
 }
 
 void godel_simple_gui::PoseWidget::set_values(const tf::Transform& t)
 {
   tf::Vector3 p = t.getOrigin();
-  tfScalar rx,ry,rz;
-  t.getBasis().getRPY(rx,ry,rz,1);
+  tfScalar rx, ry, rz;
+  t.getBasis().getRPY(rx, ry, rz, 1);
   ui_->LineEditX->setText(QString::number(p.x()));
   ui_->LineEditY->setText(QString::number(p.y()));
   ui_->LineEditZ->setText(QString::number(p.z()));
@@ -40,7 +39,7 @@ void godel_simple_gui::PoseWidget::set_values(const tf::Transform& t)
 
 tf::Transform godel_simple_gui::PoseWidget::get_values()
 {
-  double x,y,z,rx,ry,rz;
+  double x, y, z, rx, ry, rz;
   x = ui_->LineEditX->text().toDouble();
   y = ui_->LineEditY->text().toDouble();
   z = ui_->LineEditZ->text().toDouble();
@@ -49,9 +48,9 @@ tf::Transform godel_simple_gui::PoseWidget::get_values()
   rz = DEG2RAD(ui_->LineEditRz->text().toDouble());
 
   // create transform
-  tf::Vector3 p(x,y,z);
+  tf::Vector3 p(x, y, z);
   tf::Quaternion q;
-  q.setRPY(rx,ry,rz);
+  q.setRPY(rx, ry, rz);
 
-  return tf::Transform(q,p);
+  return tf::Transform(q, p);
 }

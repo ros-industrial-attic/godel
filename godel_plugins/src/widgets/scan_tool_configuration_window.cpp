@@ -1,7 +1,8 @@
 #include "godel_plugins/widgets/scan_tool_configuration_window.h"
 
-godel_plugins::ScanPlanConfigWidget::ScanPlanConfigWidget(const godel_msgs::ScanPlanParameters& params)
-  : params_(params)
+godel_plugins::ScanPlanConfigWidget::ScanPlanConfigWidget(
+    const godel_msgs::ScanPlanParameters& params)
+    : params_(params)
 {
   ui_.setupUi(this);
 
@@ -11,11 +12,10 @@ godel_plugins::ScanPlanConfigWidget::ScanPlanConfigWidget(const godel_msgs::Scan
 
   // Hard Coded Menu Options
   QStringList quality_metric_list;
-  quality_metric_list << "rms"; 
-  
+  quality_metric_list << "rms";
+
   ui_.ComboBoxQualityMetric->addItems(quality_metric_list);
 }
-
 
 void godel_plugins::ScanPlanConfigWidget::update_gui_fields()
 {
@@ -44,7 +44,6 @@ void godel_plugins::ScanPlanConfigWidget::update_internal_values()
   params_.window_width = ui_.LineEditWindowWidth->text().toDouble();
   params_.min_qa_value = ui_.LineEditMinQAValue->text().toDouble();
   params_.max_qa_value = ui_.LineEditMaxQAValue->text().toDouble();
-
 }
 
 int godel_plugins::ScanPlanConfigWidget::get_quality_combobox_index()
@@ -57,7 +56,6 @@ int godel_plugins::ScanPlanConfigWidget::get_quality_combobox_index()
     return -1;
   }
 }
-
 
 int godel_plugins::ScanPlanConfigWidget::get_scan_method_enum_value()
 {

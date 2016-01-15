@@ -19,32 +19,24 @@ void godel_simple_gui::ScanningState::onStart(BlendingWidget& gui)
 {
   gui.setButtonsEnabled(false);
   gui.setText("Scanning...");
-  surface_client_ = gui.nodeHandle().serviceClient<godel_msgs::SurfaceDetection>(SURFACE_DETECTION_SERVICE);
-  QtConcurrent::run(this, &ScanningState::makeRequest,
-                          gui.options().robotScanParams(),
-                          gui.options().surfaceDetectionParams());
+  surface_client_ =
+      gui.nodeHandle().serviceClient<godel_msgs::SurfaceDetection>(SURFACE_DETECTION_SERVICE);
+  QtConcurrent::run(this, &ScanningState::makeRequest, gui.options().robotScanParams(),
+                    gui.options().surfaceDetectionParams());
 }
 
-void godel_simple_gui::ScanningState::onExit(BlendingWidget& gui)
-{
-  gui.setButtonsEnabled(true);
-}
+void godel_simple_gui::ScanningState::onExit(BlendingWidget& gui) { gui.setButtonsEnabled(true); }
 
 // Handlers for the fixed buttons
-void godel_simple_gui::ScanningState::onNext(BlendingWidget& gui)
-{
-}
+void godel_simple_gui::ScanningState::onNext(BlendingWidget& gui) {}
 
-void godel_simple_gui::ScanningState::onBack(BlendingWidget& gui)
-{
-}
+void godel_simple_gui::ScanningState::onBack(BlendingWidget& gui) {}
 
-void godel_simple_gui::ScanningState::onReset(BlendingWidget& gui)
-{
-}
+void godel_simple_gui::ScanningState::onReset(BlendingWidget& gui) {}
 
-void godel_simple_gui::ScanningState::makeRequest(godel_msgs::RobotScanParameters scan_params,
-                                                  godel_msgs::SurfaceDetectionParameters surface_params)
+void godel_simple_gui::ScanningState::makeRequest(
+    godel_msgs::RobotScanParameters scan_params,
+    godel_msgs::SurfaceDetectionParameters surface_params)
 {
   godel_msgs::SurfaceDetection srv;
   srv.request.action = srv.request.SCAN_AND_FIND_ONLY;
@@ -54,11 +46,10 @@ void godel_simple_gui::ScanningState::makeRequest(godel_msgs::RobotScanParameter
   if (!surface_client_.call(srv))
   {
     ROS_WARN_STREAM("Unable to call surface detection service");
-    Q_EMIT newStateAvailable( new ScanTeachState() );
+    Q_EMIT newStateAvailable(new ScanTeachState());
   }
   else
   {
-    Q_EMIT newStateAvailable( new SurfaceSelectState() );
+    Q_EMIT newStateAvailable(new SurfaceSelectState());
   }
 }
-

@@ -11,9 +11,8 @@ class BlendingWidget;
 
 class BlendingPanel : public rviz::Panel
 {
-Q_OBJECT
+  Q_OBJECT
 public:
-
   BlendingPanel(QWidget* parent = 0);
 
   virtual ~BlendingPanel();
@@ -22,9 +21,7 @@ public:
 
 protected:
   BlendingWidget* widget_;
-
 };
-
 }
 
 #endif

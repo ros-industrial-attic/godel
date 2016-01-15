@@ -57,8 +57,6 @@
 // pkg local includes
 #include "ljv7_rawdata.h"
 
-
-
 // keyence protocol / profile related defines
 #define KEYENCE_DEFAULT_TCP_PORT 24691
 #define KEYENCE_DEFAULT_TCP_PORT_HS 24692
@@ -72,14 +70,12 @@
 #define KEYENCE_INFINITE_DISTANCE_VALUE2 -524286
 
 // values LJ Navigator uses for out-of-range points (in meters)
-#define KEYENCE_INFINITE_DISTANCE_VALUE_SI  -999.9990d / 1e3
+#define KEYENCE_INFINITE_DISTANCE_VALUE_SI -999.9990d / 1e3
 #define KEYENCE_INFINITE_DISTANCE_VALUE_SI2 -999.9970d / 1e3
-
 
 // default values for parameters
 #define DEFAULT_SAMPLE_RATE 10.0
 #define DEFAULT_FRAME_ID "sensor_optical_frame"
-
 
 // error codes for receive_get_profile_response(..)
 #define RESP_ERR_OK 0
@@ -91,7 +87,6 @@
 #define RESP_ERR_BRC 6
 #define RESP_ERR_ABN_BODY_LEN 7
 #define RESP_ERR_HDR_RET_CODE 8
-
 
 // local types
 typedef pcl::PointCloud<pcl::PointXYZ> point_cloud_t;
@@ -111,37 +106,39 @@ typedef struct
   bool cnv_inf_pts;
 } config_t;
 
-
 /**
  * Extract type at 'offset' into byte array pointed to by 'buf'.
  */
-template <typename T>
-static T extract_field(unsigned char* buf, uint32_t offset) { return ( *((T*) (buf+offset))); }
-
+template <typename T> static T extract_field(unsigned char* buf, uint32_t offset)
+{
+  return (*((T*)(buf + offset)));
+}
 
 // prototypes
 bool send_get_profile_request(industrial::tcp_client::Keyence_TcpClient& tcp_client);
-int receive_get_profile_response(industrial::tcp_client::Keyence_TcpClient& tcp_client, unsigned char* response_data, uint32_t* response_data_sz);
-int unpack_response_command_data(unsigned char* cmd_data, uint32_t cmd_data_sz, keyence_profile_t& profile);
-int keyence_profile_to_pc(keyence_profile_t& profile, point_cloud_t::Ptr msg, bool cnv_inf_pts, double scale_factor);
-
+int receive_get_profile_response(industrial::tcp_client::Keyence_TcpClient& tcp_client,
+                                 unsigned char* response_data, uint32_t* response_data_sz);
+int unpack_response_command_data(unsigned char* cmd_data, uint32_t cmd_data_sz,
+                                 keyence_profile_t& profile);
+int keyence_profile_to_pc(keyence_profile_t& profile, point_cloud_t::Ptr msg, bool cnv_inf_pts,
+                          double scale_factor);
 
 // TODO: refactor node to (a) proper clas(ses), avoid global variables
 config_t config_;
 
-void dr_callback(godel_keyence_ljv_driver::KeyenceConfig &config, uint32_t level)
+void dr_callback(godel_keyence_ljv_driver::KeyenceConfig& config, uint32_t level)
 {
   ROS_DEBUG("Reconfigure Request (scale_factor: %.2f; "
-    "cnv_inf_pts: %s)", config.scale_factor, config.cnv_inf_pts ? "true" : "false");
+            "cnv_inf_pts: %s)",
+            config.scale_factor, config.cnv_inf_pts ? "true" : "false");
 
   config_.pc_scale_factor = config.scale_factor;
   config_.cnv_inf_pts = config.cnv_inf_pts;
 }
 
-
 int main(int argc, char** argv)
 {
-  ros::init (argc, argv, "keyence_lj_driver");
+  ros::init(argc, argv, "keyence_lj_driver");
   ros::NodeHandle nh, pnh("~");
 
   // ros parameters
@@ -185,8 +182,8 @@ int main(int argc, char** argv)
   pnh.param("sample_rate", sample_rate, DEFAULT_SAMPLE_RATE);
   pnh.param<std::string>("frame_id", frame_id, DEFAULT_FRAME_ID);
 
-  ROS_INFO("Connecting to %s (TCP %d), expecting a single %s head",
-    sensor_host.c_str(), sensor_port, head_a_model.c_str());
+  ROS_INFO("Connecting to %s (TCP %d), expecting a single %s head", sensor_host.c_str(),
+           sensor_port, head_a_model.c_str());
 
   ROS_INFO("Scaling profiles %.2f times", config_.pc_scale_factor);
   ROS_INFO("Attempting to publish at %.2f Hz", sample_rate);
@@ -195,7 +192,7 @@ int main(int argc, char** argv)
     ROS_INFO("Profile points at infinite distances published with Z: +Inf (REP-117)");
   else
     ROS_INFO("Profile points at infinite distances published with Z: %.2f (m)",
-      KEYENCE_INFINITE_DISTANCE_VALUE_SI);
+             KEYENCE_INFINITE_DISTANCE_VALUE_SI);
 
   // setup point cloud message (we reuse single one)
   // TODO: this won't work with nodelets
@@ -211,11 +208,10 @@ int main(int argc, char** argv)
   tcp_client.init(const_cast<char*>(sensor_host.c_str()), sensor_port);
   if (!tcp_client.makeConnect())
   {
-    ROS_FATAL("Could not connect to controller at %s (TCP %d). Aborting",
-      sensor_host.c_str(), sensor_port);
+    ROS_FATAL("Could not connect to controller at %s (TCP %d). Aborting", sensor_host.c_str(),
+              sensor_port);
     return EX_IOERR;
   }
-
 
   /**
    * Main loop:
@@ -228,7 +224,7 @@ int main(int argc, char** argv)
    */
   int res = 0;
   ros::Rate sleeper(sample_rate);
-  while(ros::ok() /* && still connected*/)
+  while (ros::ok() /* && still connected*/)
   {
     // sleep?
     sleeper.sleep();
@@ -245,13 +241,13 @@ int main(int argc, char** argv)
       continue;
     }
 
-    if(!send_get_profile_request(tcp_client))
+    if (!send_get_profile_request(tcp_client))
     {
       ROS_FATAL("Sending GetProfile request failed. Aborting");
       break;
     }
 
-    if((res = receive_get_profile_response(tcp_client, response_data, &response_data_sz)) < 0)
+    if ((res = receive_get_profile_response(tcp_client, response_data, &response_data_sz)) < 0)
     {
       if (res == -RESP_ERR_EAGAIN)
       {
@@ -290,7 +286,6 @@ int main(int argc, char** argv)
   return EX_OK;
 }
 
-
 bool send_get_profile_request(industrial::tcp_client::Keyence_TcpClient& tcp_client)
 {
   // TODO: lots of magic nrs (protocol constants)
@@ -301,14 +296,14 @@ bool send_get_profile_request(industrial::tcp_client::Keyence_TcpClient& tcp_cli
   buf.load(0x00000020); // total pkt length: 32 bytes
 
   buf.load(0x00F00001); // it's a request & pkg version
-  buf.load(       0x0); // 'fixed as 0x00'
+  buf.load(0x0);        // 'fixed as 0x00'
   buf.load(0x00000014); // body length: 20 bytes
 
-  buf.load(      0x42); // command code: get profile
+  buf.load(0x42); // command code: get profile
 
-  buf.load(       0x0); // profile bank: active surface (page 9, comm lib refman)
-  buf.load(       0x0); // profile pos : from current (page 9, comm lib refman)
-  buf.load(       0x1); // nr of profile (how many profiles do we want in a single reply)
+  buf.load(0x0);        // profile bank: active surface (page 9, comm lib refman)
+  buf.load(0x0);        // profile pos : from current (page 9, comm lib refman)
+  buf.load(0x1);        // nr of profile (how many profiles do we want in a single reply)
   buf.load(0x00000101); // last bits: 'nr of demanded profile' & 'erase reading data'
                         // 'nr of demanded profile' only valid/necessary when 'profile pos'
                         // has been set to '2: specify position'
@@ -320,11 +315,11 @@ bool send_get_profile_request(industrial::tcp_client::Keyence_TcpClient& tcp_cli
   return tcp_client.my_sendBytes(buf);
 }
 
-
 /**
  * Returns the 'response data' part of a GetProfile reply
  */
-int receive_get_profile_response(industrial::tcp_client::Keyence_TcpClient& tcp_client, unsigned char* response_data, uint32_t* response_data_sz)
+int receive_get_profile_response(industrial::tcp_client::Keyence_TcpClient& tcp_client,
+                                 unsigned char* response_data, uint32_t* response_data_sz)
 {
   // TODO: magic nr: large 'enough'
   const uint32_t buf_sz = 4096;
@@ -336,7 +331,7 @@ int receive_get_profile_response(industrial::tcp_client::Keyence_TcpClient& tcp_
   barray.init();
 
   // first receive prefix.pkt_len, so we know how large pkt is
-  if(!tcp_client.my_receiveBytes(barray, sizeof(pkt_len)))
+  if (!tcp_client.my_receiveBytes(barray, sizeof(pkt_len)))
   {
     ROS_ERROR("Error receiving prefix.pkt_len. Aborting");
     return -RESP_ERR_PFX_LEN;
@@ -344,16 +339,15 @@ int receive_get_profile_response(industrial::tcp_client::Keyence_TcpClient& tcp_
 
   ROS_DEBUG("raw pkt_len: 0x%X", *((uint32_t*)barray.getRawDataPtr()));
 
-  if(!barray.unload(&pkt_len, sizeof(pkt_len)))
+  if (!barray.unload(&pkt_len, sizeof(pkt_len)))
   {
     ROS_ERROR("Error unloading prefix.pkt_len. Aborting");
     return -RESP_ERR_UNL_PFX_LEN;
   }
 
-  if(pkt_len >= buf_sz)
+  if (pkt_len >= buf_sz)
   {
-    ROS_ERROR("Incoming pkt too large for buffer (%d > %d). Aborting",
-      pkt_len, buf_sz);
+    ROS_ERROR("Incoming pkt too large for buffer (%d > %d). Aborting", pkt_len, buf_sz);
     return -RESP_ERR_PKT_BUFF_OVERFLOW;
   }
 
@@ -365,7 +359,7 @@ int receive_get_profile_response(industrial::tcp_client::Keyence_TcpClient& tcp_
     ROS_DEBUG("Reading %d bytes from socket", to_receive);
 
     // TODO: This is blocking, no way to timeout from this
-    if(!tcp_client.my_receiveBytes(barray, to_receive))
+    if (!tcp_client.my_receiveBytes(barray, to_receive))
     {
       ROS_ERROR("Error receiving GetProfile response part. Aborting");
       return -RESP_ERR_RECV_PAYLOAD;
@@ -379,22 +373,23 @@ int receive_get_profile_response(industrial::tcp_client::Keyence_TcpClient& tcp_
   if (buf_ptr > pkt_len)
   {
     ROS_WARN("GetProfile response was larger than "
-      "expected (%d > %d)", buf_ptr, pkt_len);
+             "expected (%d > %d)",
+             buf_ptr, pkt_len);
   }
 
   // extract fields from raw pkt data
-  const uint8_t  return_code = extract_field<uint8_t>(buf, 4);
+  const uint8_t return_code = extract_field<uint8_t>(buf, 4);
   const uint32_t body_length = extract_field<uint32_t>(buf, 8);
 
-  ROS_DEBUG("GetProfile response with %d retcode. Body length: %d",
-    return_code, body_length);
+  ROS_DEBUG("GetProfile response with %d retcode. Body length: %d", return_code, body_length);
 
   // check reply, make sure we got what we expected
   // TODO: magic nr
   if (return_code != 0)
   {
     ROS_WARN("Received unexpected return code "
-      "from sensor for GetProfile: 0x%02X", return_code);
+             "from sensor for GetProfile: 0x%02X",
+             return_code);
     return -RESP_ERR_HDR_RET_CODE;
   }
 
@@ -403,7 +398,7 @@ int receive_get_profile_response(industrial::tcp_client::Keyence_TcpClient& tcp_
   {
     // 12 bytes of response header, +1 for the 'command code' byte
     // in the response body
-    const uint8_t body_return_code  = extract_field<uint8_t>(buf, 13);
+    const uint8_t body_return_code = extract_field<uint8_t>(buf, 13);
 
     if (body_return_code == KEYENCE_RET_CODE_NO_DATA)
     {
@@ -420,7 +415,8 @@ int receive_get_profile_response(industrial::tcp_client::Keyence_TcpClient& tcp_
   if (body_length < 512 /*bytes*/)
   {
     ROS_WARN("Abnormal (for GetProfile) body length encountered "
-      "(%d bytes), ignoring response", body_length);
+             "(%d bytes), ignoring response",
+             body_length);
     return -RESP_ERR_ABN_BODY_LEN;
   }
 
@@ -438,10 +434,10 @@ int receive_get_profile_response(industrial::tcp_client::Keyence_TcpClient& tcp_
   return RESP_ERR_OK;
 }
 
-
 // assumption: 'profile' already initialised, with 'points' array already alloc-ed
 // assumption2: single head, no compression
-int unpack_response_command_data(unsigned char* cmd_data, uint32_t cmd_data_sz, keyence_profile_t& profile)
+int unpack_response_command_data(unsigned char* cmd_data, uint32_t cmd_data_sz,
+                                 keyence_profile_t& profile)
 {
   /* Need:
    *  - number of profile points
@@ -467,10 +463,10 @@ int unpack_response_command_data(unsigned char* cmd_data, uint32_t cmd_data_sz, 
   unsigned char* point_data = profile_data + point_data_offset;
 
   // get simple fields
-  profile.num_points  = extract_field<uint16_t>(profile_info, 0);
-  profile.data_unit   = extract_field<uint16_t>(profile_info, 2);
-  profile.x_start     = extract_field<int32_t> (profile_info, 4);
-  profile.x_increment = extract_field<int32_t> (profile_info, 8);
+  profile.num_points = extract_field<uint16_t>(profile_info, 0);
+  profile.data_unit = extract_field<uint16_t>(profile_info, 2);
+  profile.x_start = extract_field<int32_t>(profile_info, 4);
+  profile.x_increment = extract_field<int32_t>(profile_info, 8);
 
   // check
   if (profile.points == NULL)
@@ -486,18 +482,18 @@ int unpack_response_command_data(unsigned char* cmd_data, uint32_t cmd_data_sz, 
   const uint32_t encoder_count = extract_field<uint32_t>(profile_data, 8);
 
   ROS_DEBUG("Unpacking profile %d. Nr of points: %d; data unit: %d; X Start: %d; X Incr: %d",
-    trigger_count, profile.num_points, profile.data_unit, profile.x_start, profile.x_increment);
+            trigger_count, profile.num_points, profile.data_unit, profile.x_start,
+            profile.x_increment);
 
   // unpack profile points
   // TODO: hard coded point_data sz (should calculate from pointers)
   const uint32_t point_data_sz = 2000; // bytes
-  int res = ljv7_unpack_profile_data(point_data, point_data_sz,
-    profile.num_points, profile.points, (profile.num_points * sizeof(profile_point_t)));
+  int res = ljv7_unpack_profile_data(point_data, point_data_sz, profile.num_points, profile.points,
+                                     (profile.num_points * sizeof(profile_point_t)));
 
   if (res != 0)
   {
-    ROS_WARN("Error unpacking profile data (err: %d). Ignoring profile %d",
-      res, trigger_count);
+    ROS_WARN("Error unpacking profile data (err: %d). Ignoring profile %d", res, trigger_count);
     return res;
   }
 
@@ -505,13 +501,13 @@ int unpack_response_command_data(unsigned char* cmd_data, uint32_t cmd_data_sz, 
   return 0;
 }
 
-
 // assumption: 'msg' is a properly setup (and empty) PointCloud msg
-int keyence_profile_to_pc(keyence_profile_t& profile, point_cloud_t::Ptr msg, bool cnv_inf_pts, double scale_factor)
+int keyence_profile_to_pc(keyence_profile_t& profile, point_cloud_t::Ptr msg, bool cnv_inf_pts,
+                          double scale_factor)
 {
   // TODO: get proper timestamp from somewhere
   // pcl header stamps are in microseconds
-  msg->header.stamp = ros::Time::now().toNSec()/1e3;
+  msg->header.stamp = ros::Time::now().toNSec() / 1e3;
   msg->width = profile.num_points;
 
   const double x_start = (profile.x_start * KEYENCE_PDEPTH_UNIT);
@@ -528,7 +524,7 @@ int keyence_profile_to_pc(keyence_profile_t& profile, point_cloud_t::Ptr msg, bo
     // filter out 'infinite distance' points
     // REP-117: http://www.ros.org/reps/rep-0117.html
     //  "out of range detections will be represented by +Inf."
-    if(profile.points[i] == KEYENCE_INFINITE_DISTANCE_VALUE)
+    if (profile.points[i] == KEYENCE_INFINITE_DISTANCE_VALUE)
     {
       if (cnv_inf_pts)
         z = std::numeric_limits<double>::infinity();
@@ -538,7 +534,7 @@ int keyence_profile_to_pc(keyence_profile_t& profile, point_cloud_t::Ptr msg, bo
 
     // device returns two different values that are supposed to be interpreted
     // as out-of-range or 'infinite'. This is the second
-    if(profile.points[i] == KEYENCE_INFINITE_DISTANCE_VALUE2)
+    if (profile.points[i] == KEYENCE_INFINITE_DISTANCE_VALUE2)
     {
       if (cnv_inf_pts)
         z = std::numeric_limits<double>::infinity();

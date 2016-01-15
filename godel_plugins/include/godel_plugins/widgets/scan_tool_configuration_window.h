@@ -5,7 +5,6 @@
 #include <ui_scan_tool_configuration_window.h>
 #include <godel_msgs/ScanPlanParameters.h>
 
-
 namespace godel_plugins
 {
 
@@ -25,7 +24,6 @@ protected:
   godel_msgs::ScanPlanParameters params_;
   Ui::ScanToolConfigurationWindow ui_;
 };
-
 }
 
 #endif // SCAN_TOOL_CONFIGURATION_WINDOW_H

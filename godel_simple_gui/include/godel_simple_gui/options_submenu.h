@@ -8,8 +8,9 @@
 #include "godel_simple_gui/options/blend_tool_configuration.h"
 #include "godel_simple_gui/options/scan_tool_configuration.h"
 
-namespace Ui {
-  class OptionsSubmenu;
+namespace Ui
+{
+class OptionsSubmenu;
 }
 
 namespace godel_simple_gui
@@ -51,4 +52,3 @@ private:
 } // end namespace godel_simple_gui
 
 #endif // OPTIONS_SUBMENU_H
-

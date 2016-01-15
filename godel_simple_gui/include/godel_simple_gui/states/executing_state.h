@@ -31,8 +31,6 @@ private:
   std::vector<std::string> plan_names_;
   ros::ServiceClient real_client_;
 };
-
 }
 
 #endif // EXECUTING_STATE_H
-

@@ -15,18 +15,18 @@ namespace godel_plugins
 /**
  * @brief The PoseWidget class
  */
-class PoseWidget: public QWidget
+class PoseWidget : public QWidget
 {
-Q_OBJECT
+  Q_OBJECT
 public:
-        PoseWidget(QWidget *parent = NULL);
+  PoseWidget(QWidget* parent = NULL);
 
-        void set_values(const geometry_msgs::Pose& p);
-        void set_values(const tf::Transform &t);
-        tf::Transform get_values();
+  void set_values(const geometry_msgs::Pose& p);
+  void set_values(const tf::Transform& t);
+  tf::Transform get_values();
 
 protected:
-        Ui::PoseWidget ui_;
+  Ui::PoseWidget ui_;
 };
 
 /**
@@ -46,12 +46,10 @@ protected:
   virtual void update_internal_values();
 
   godel_msgs::RobotScanParameters params_;
-  PoseWidget *world_to_obj_pose_widget_;
-  PoseWidget *tcp_to_cam_pose_widget_;
+  PoseWidget* world_to_obj_pose_widget_;
+  PoseWidget* tcp_to_cam_pose_widget_;
   Ui::RobotScanConfigWindow ui_;
 };
-
 }
 
 #endif // ROBOT_SCAN_CONFIGURATION_H
-

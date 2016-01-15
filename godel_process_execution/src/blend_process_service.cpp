@@ -15,18 +15,19 @@ const static std::string THIS_SERVICE_NAME = "blend_process_execution";
 godel_process_execution::BlendProcessService::BlendProcessService(ros::NodeHandle& nh)
 {
   // Simulation Server
-  sim_client_ = nh.serviceClient<industrial_robot_simulator_service::SimulateTrajectory>(SIMULATION_SERVICE_NAME);
+  sim_client_ = nh.serviceClient<industrial_robot_simulator_service::SimulateTrajectory>(
+      SIMULATION_SERVICE_NAME);
   // Trajectory Execution Service
   real_client_ = nh.serviceClient<godel_msgs::TrajectoryExecution>(EXECUTION_SERVICE_NAME);
   // The generic process execution service
-  server_ = nh.advertiseService<BlendProcessService,
-                                godel_msgs::BlendProcessExecution::Request,
-                                godel_msgs::BlendProcessExecution::Response>
-            (THIS_SERVICE_NAME, &godel_process_execution::BlendProcessService::executionCallback, this);
+  server_ = nh.advertiseService<BlendProcessService, godel_msgs::BlendProcessExecution::Request,
+                                godel_msgs::BlendProcessExecution::Response>(
+      THIS_SERVICE_NAME, &godel_process_execution::BlendProcessService::executionCallback, this);
 }
 
-bool godel_process_execution::BlendProcessService::executionCallback(godel_msgs::BlendProcessExecution::Request& req,
-                                                                         godel_msgs::BlendProcessExecution::Response& res)
+bool godel_process_execution::BlendProcessService::executionCallback(
+    godel_msgs::BlendProcessExecution::Request& req,
+    godel_msgs::BlendProcessExecution::Response& res)
 {
   if (req.simulate)
   {
@@ -47,7 +48,8 @@ bool godel_process_execution::BlendProcessService::executionCallback(godel_msgs:
   }
 }
 
-bool godel_process_execution::BlendProcessService::executeProcess(godel_msgs::BlendProcessExecution::Request req)
+bool godel_process_execution::BlendProcessService::executeProcess(
+    godel_msgs::BlendProcessExecution::Request req)
 {
   godel_msgs::TrajectoryExecution srv_approach;
   srv_approach.request.wait_for_execution = true;
@@ -82,7 +84,8 @@ bool godel_process_execution::BlendProcessService::executeProcess(godel_msgs::Bl
   return true;
 }
 
-bool godel_process_execution::BlendProcessService::simulateProcess(godel_msgs::BlendProcessExecution::Request req)
+bool godel_process_execution::BlendProcessService::simulateProcess(
+    godel_msgs::BlendProcessExecution::Request req)
 {
   using industrial_robot_simulator_service::SimulateTrajectory;
 

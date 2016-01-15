@@ -9,9 +9,10 @@
 #include <ros/console.h>
 #include "godel_simple_gui/blending_widget.h"
 
-godel_simple_gui::WaitToExecuteState::WaitToExecuteState(const std::vector<std::string> &plans)
-  : plan_names_(plans)
-{}
+godel_simple_gui::WaitToExecuteState::WaitToExecuteState(const std::vector<std::string>& plans)
+    : plan_names_(plans)
+{
+}
 
 void godel_simple_gui::WaitToExecuteState::onStart(BlendingWidget& gui)
 {
@@ -28,17 +29,17 @@ void godel_simple_gui::WaitToExecuteState::onExit(BlendingWidget& gui)
 void godel_simple_gui::WaitToExecuteState::onNext(BlendingWidget& gui)
 {
   ROS_INFO_STREAM("WaitToExecuteState next");
-  Q_EMIT newStateAvailable( new ExecutingState(plan_names_) );
+  Q_EMIT newStateAvailable(new ExecutingState(plan_names_));
 }
 
 void godel_simple_gui::WaitToExecuteState::onBack(BlendingWidget& gui)
 {
   ROS_INFO_STREAM("WaitToExecuteState back");
-  Q_EMIT newStateAvailable( new WaitToSimulateState() );
+  Q_EMIT newStateAvailable(new WaitToSimulateState());
 }
 
 void godel_simple_gui::WaitToExecuteState::onReset(BlendingWidget& gui)
 {
   ROS_INFO_STREAM("WaitToExecuteState reset");
-  Q_EMIT newStateAvailable( new ScanTeachState() );
+  Q_EMIT newStateAvailable(new ScanTeachState());
 }

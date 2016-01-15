@@ -18,7 +18,6 @@ public:
   virtual void onBack(BlendingWidget& gui);
   virtual void onReset(BlendingWidget& gui);
 };
-
 }
 
 #endif

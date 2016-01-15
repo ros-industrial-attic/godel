@@ -37,24 +37,25 @@ namespace descartes
 class OrientationConstraint
 {
 public:
-  OrientationConstraint() {};
-  virtual ~OrientationConstraint() {};
+  OrientationConstraint(){};
+  virtual ~OrientationConstraint(){};
 
-  void setTolerance(double x, double y, double z) {
-    setToleranceX(x); setToleranceY(y); setToleranceZ(z); }
+  void setTolerance(double x, double y, double z)
+  {
+    setToleranceX(x);
+    setToleranceY(y);
+    setToleranceZ(z);
+  }
 
-  void setToleranceX(double tol) {
-    x_axis_tolerance_ = std::abs(tol); }
+  void setToleranceX(double tol) { x_axis_tolerance_ = std::abs(tol); }
 
-  void setToleranceY(double tol) {
-    y_axis_tolerance_ = std::abs(tol); }
+  void setToleranceY(double tol) { y_axis_tolerance_ = std::abs(tol); }
 
-  void setToleranceZ(double tol) {
-    z_axis_tolerance_ = std::abs(tol); }
+  void setToleranceZ(double tol) { z_axis_tolerance_ = std::abs(tol); }
 
 protected:
   Eigen::AngleAxisd nominal_orientation_;
-  double x_axis_tolerance_, y_axis_tolerance_, z_axis_tolerance_;       /**<Applied as nominal +/- tol */
+  double x_axis_tolerance_, y_axis_tolerance_, z_axis_tolerance_; /**<Applied as nominal +/- tol */
 };
 typedef boost::shared_ptr<OrientationConstraint> OrientationConstraintPtr;
 
@@ -63,20 +64,17 @@ typedef boost::shared_ptr<OrientationConstraint> OrientationConstraintPtr;
 class PositionConstraint
 {
 public:
-  PositionConstraint() {};
-  virtual ~PositionConstraint() {};
+  PositionConstraint(){};
+  virtual ~PositionConstraint(){};
 
-  void addBody(const bodies::BodyPtr &body) {
-    constraint_region_.push_back(body); }
+  void addBody(const bodies::BodyPtr& body) { constraint_region_.push_back(body); }
 
-  const std::vector<bodies::BodyPtr>& getConstraintRegion() {
-    return constraint_region_; }
+  const std::vector<bodies::BodyPtr>& getConstraintRegion() { return constraint_region_; }
 
 protected:
-  std::vector<bodies::BodyPtr>  constraint_region_;
+  std::vector<bodies::BodyPtr> constraint_region_;
 };
 typedef boost::shared_ptr<PositionConstraint> PositionConstraintPtr;
-
 
 class ProcessPt
 {
@@ -84,25 +82,29 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 public:
-  ProcessPt(): nominal_pose_(Eigen::Affine3d::Identity()) {};
-  virtual ~ProcessPt() {};
+  ProcessPt() : nominal_pose_(Eigen::Affine3d::Identity()){};
+  virtual ~ProcessPt(){};
 
-  const Eigen::Affine3d& getFrame() const {return frame_transform_;}
+  const Eigen::Affine3d& getFrame() const { return frame_transform_; }
 
-  Eigen::Affine3d& pose() {return nominal_pose_;}
-  const Eigen::Affine3d& pose() const {return nominal_pose_;}
+  Eigen::Affine3d& pose() { return nominal_pose_; }
+  const Eigen::Affine3d& pose() const { return nominal_pose_; }
 
-  void setFrame(const std::pair<std::string, Eigen::Affine3d> &frame) {pt_frame_=frame.first; frame_transform_=frame.second;}
+  void setFrame(const std::pair<std::string, Eigen::Affine3d>& frame)
+  {
+    pt_frame_ = frame.first;
+    frame_transform_ = frame.second;
+  }
 
-  void setPosePosition(double x, double y, double z) {nominal_pose_.translation() << x, y, z; }
+  void setPosePosition(double x, double y, double z) { nominal_pose_.translation() << x, y, z; }
 
 private:
-  Eigen::Affine3d nominal_pose_;        /**<Default pose of process point */
-  std::string pt_frame_;                /**<Frame pt is expressed in */
-  Eigen::Affine3d frame_transform_;     /**<Transform from planning frame to current pt_frame */
+  Eigen::Affine3d nominal_pose_;    /**<Default pose of process point */
+  std::string pt_frame_;            /**<Frame pt is expressed in */
+  Eigen::Affine3d frame_transform_; /**<Transform from planning frame to current pt_frame */
   PositionConstraintPtr position_constraint_;
   OrientationConstraintPtr orientation_constraint_;
-//  kinematic_constraints::KinematicConstraintSetPtr constraints_;
+  //  kinematic_constraints::KinematicConstraintSetPtr constraints_;
 };
 
 } /* namespace descartes*/
