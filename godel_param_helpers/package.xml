@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<package>
+  <name>godel_param_helpers</name>
+  <version>0.1.0</version>
+  <description>
+    This package implements routines for loading, saving, and checking for the
+    existence of user parameters.
+  </description>
+
+  <maintainer email="jmeyer@swri.org">Jonathan Meyer</maintainer>
+
+  <license>Apache 2.0</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+
+  <build_depend>roscpp</build_depend>
+  <run_depend>roscpp</run_depend>
+
+</package>
