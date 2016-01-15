@@ -35,6 +35,9 @@
 
 const std::string OFFSET_POLYGON_SERVICE="offset_polygon";
 
+const static double DISCRETIZATION_DISTANCE = 0.01; // m
+const static double TRAVERSE_HEIGHT = 0.075; // m
+
 double dist(const Eigen::Affine3d &from, const Eigen::Affine3d &to)
 {
   return (from.translation()-to.translation()).norm();
@@ -67,11 +70,11 @@ bool generateProcessPlan(descartes::ProcessPath &process_path, const godel_msgs:
   // Create ProcessPathGenerator and initialize.
   godel_process_path::ProcessPathGenerator ppg;
   ppg.verbose_ = true;
-  ppg.setDiscretizationDistance(req.params.discretization);
+  ppg.setDiscretizationDistance(DISCRETIZATION_DISTANCE);
   ppg.setMargin(req.params.margin);
   ppg.setOverlap(req.params.overlap);
   ppg.setToolRadius(req.params.tool_radius);
-  ppg.setTraverseHeight(req.params.safe_traverse_height);
+  ppg.setTraverseHeight(TRAVERSE_HEIGHT);
 
   godel_process_path::ProcessVelocity vel;
   vel.approach = req.params.approach_spd;
@@ -89,10 +92,12 @@ bool generateProcessPlan(descartes::ProcessPath &process_path, const godel_msgs:
   // Call polygon_offset service.
   godel_msgs::OffsetBoundaryRequest ob_req;
   godel_msgs::OffsetBoundaryResponse ob_res;
-  ob_req.discretization = req.params.discretization;
+  
+  ob_req.discretization = DISCRETIZATION_DISTANCE;
   ob_req.initial_offset = req.params.tool_radius + req.params.margin;
   ob_req.offset_distance = req.params.tool_radius - req.params.overlap;
   ob_req.polygons = req.surface.boundaries;
+
   if (!offset_service_client->call(ob_req, ob_res))
   {
     ROS_ERROR("Bad response from %s", offset_service_client->getService().c_str());
