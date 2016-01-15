@@ -13,6 +13,7 @@ find_package(catkin REQUIRED COMPONENTS
   tf
   tf_conversions
   godel_process_path_generation
+  godel_param_helpers
   godel_msgs
 )
 find_package(Boost REQUIRED COMPONENTS system)
@@ -31,6 +32,7 @@ catkin_package(
     tf
     tf_conversions
     godel_process_path_generation
+    godel_param_helpers
     godel_msgs
 )
 

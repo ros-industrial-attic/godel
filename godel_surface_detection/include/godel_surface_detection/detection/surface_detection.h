@@ -141,8 +141,8 @@ public:
 
 	bool init();
 	
-	bool load_parameters(const std::string& filename, const std::string& ns);
-	void save_parameters(const std::string& filename, const std::string& ns);
+	bool load_parameters(const std::string& filename);
+	void save_parameters(const std::string& filename);
 
 	bool find_surfaces();
 	std::string get_results_summary();
