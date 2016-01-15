@@ -9,6 +9,7 @@
   <arg name="sim" default="true" />
   <arg name="robot_ip" unless="$(arg sim)" />
   <arg name="rviz" default="true"/>
+  <arg name="use_ftp" default="true"/>
  
   <!-- load the robot_description parameter before launching ROS-I nodes -->
   <include file="$(find godel_irb2400_moveit_config)/launch/planning_context.launch" >
@@ -24,9 +25,19 @@
   <!--   - this typically includes: robot_state, motion_interface, and joint_trajectory_action nodes -->
   <!--   - replace these calls with appropriate robot-specific calls or launch files -->
   <group unless="$(arg sim)">
-    <include file="$(find abb_irb2400_support)/launch/robot_interface_download_irb2400.launch" >
-      <arg name="robot_ip" value="$(arg robot_ip)"/>
-    </include>
+    <group if="$(arg use_ftp)">
+      <include file="$(find godel_irb2400_moveit_config)/launch/irb2400_robot_ftp_interface.launch">
+        <arg name="robot_ip" value="$(arg robot_ip)"/>
+        <arg name="J23_coupled" value="true"/>
+      </include>
+    </group>
+
+    <!-- If we're not simulating and not using the ABB FTP server... -->
+    <group unless="$(arg use_ftp)">
+      <include file="$(find abb_irb2400_support)/launch/robot_interface_download_irb2400.launch" >
+        <arg name="robot_ip" value="$(arg robot_ip)"/>
+      </include>
+    </group>
   </group>
 
   <!-- publish the robot state (tf transforms) -->
