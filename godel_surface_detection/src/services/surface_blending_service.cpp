@@ -66,10 +66,22 @@ bool SurfaceBlendingService::init()
   // to save to disk
   ph.param<std::string>("param_cache_prefix", param_cache_prefix_, "");
 
-  this->load_blend_parameters(param_cache_prefix_ + BLEND_PARAMS_FILE);
-  this->load_scan_parameters(param_cache_prefix_ + SCAN_PARAMS_FILE);
-  robot_scan_.load_parameters(param_cache_prefix_ + ROBOT_SCAN_PARAMS_FILE);
-  surface_detection_.load_parameters(param_cache_prefix_ + SURFACE_DETECTION_PARAMS_FILE);
+  if (!this->load_blend_parameters(param_cache_prefix_ + BLEND_PARAMS_FILE))
+  {
+    ROS_WARN("Unable to load blending process parameters.");
+  }
+  if (!this->load_scan_parameters(param_cache_prefix_ + SCAN_PARAMS_FILE))
+  {
+    ROS_WARN("Unable to load scan process parameters.");
+  }
+  if (!robot_scan_.load_parameters(param_cache_prefix_ + ROBOT_SCAN_PARAMS_FILE))
+  {
+    ROS_WARN("Unable to load robot macro scan parameters.");
+  }
+  if (!surface_detection_.load_parameters(param_cache_prefix_ + SURFACE_DETECTION_PARAMS_FILE))
+  {
+    ROS_WARN("Unable to load surface detection parameters.");
+  }
 
   // save default parameters
   default_robot_scan_params__ = robot_scan_.params_;
@@ -169,7 +181,25 @@ void SurfaceBlendingService::run()
 // Blending Parameters
 bool SurfaceBlendingService::load_blend_parameters(const std::string& filename)
 {
-  return godel_param_helpers::fromFile(filename, blending_plan_params_);
+  using godel_param_helpers::loadParam;
+  using godel_param_helpers::loadBoolParam;
+
+  if (godel_param_helpers::fromFile(filename, blending_plan_params_))
+  {
+    return true;
+  }
+  // otherwise default to the parameter server
+  ros::NodeHandle nh ("~/blending_plan");
+  return loadParam(nh, "tool_radius", blending_plan_params_.tool_radius) &&
+         loadParam(nh, "margin", blending_plan_params_.margin) &&
+         loadParam(nh, "overlap", blending_plan_params_.overlap) &&
+         loadParam(nh, "approach_spd", blending_plan_params_.approach_spd) &&
+         loadParam(nh, "blending_spd", blending_plan_params_.blending_spd) &&
+         loadParam(nh, "retract_spd", blending_plan_params_.retract_spd) &&
+         loadParam(nh, "traverse_spd", blending_plan_params_.traverse_spd) &&
+         loadParam(nh, "discretization", blending_plan_params_.discretization) &&
+         loadParam(nh, "safe_traverse_height", blending_plan_params_.safe_traverse_height) &&
+         loadParam(nh, "min_boundary_length", blending_plan_params_.min_boundary_length);
 }
 
 void SurfaceBlendingService::save_blend_parameters(const std::string& filename)
@@ -177,13 +207,31 @@ void SurfaceBlendingService::save_blend_parameters(const std::string& filename)
   if (!godel_param_helpers::toFile(filename, blending_plan_params_))
   {
     ROS_WARN_STREAM("Unable to save blending-plan parameters to: " << filename);
-  } 
+  }
 }
 
 // Profilimeter parameters
 bool SurfaceBlendingService::load_scan_parameters(const std::string& filename)
 {
-  return godel_param_helpers::fromFile(filename, scan_plan_params_);
+  using godel_param_helpers::loadParam;
+  using godel_param_helpers::loadBoolParam;
+
+  if (godel_param_helpers::fromFile(filename, scan_plan_params_))
+  {
+    return true;
+  }
+
+  // otherwise we load default parameters from the param server
+  ros::NodeHandle nh("~/scan_plan");
+  return loadParam(nh, "traverse_speed", scan_plan_params_.traverse_spd) &&
+         loadParam(nh, "margin", scan_plan_params_.margin) &&
+         loadParam(nh, "overlap", scan_plan_params_.overlap) &&
+         loadParam(nh, "scan_width", scan_plan_params_.scan_width) &&
+         loadParam(nh, "min_qa_value", scan_plan_params_.min_qa_value) &&
+         loadParam(nh, "max_qa_value", scan_plan_params_.max_qa_value) &&
+         loadParam(nh, "approach_distance", scan_plan_params_.approach_distance) &&
+         loadParam(nh, "window_width", scan_plan_params_.window_width);
+
 }
 
 void SurfaceBlendingService::save_scan_parameters(const std::string& filename)

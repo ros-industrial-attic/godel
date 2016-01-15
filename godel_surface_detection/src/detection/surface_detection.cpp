@@ -104,7 +104,44 @@ void SurfaceDetection::clear_results()
 
 bool SurfaceDetection::load_parameters(const std::string& filename)
 {
-	return godel_param_helpers::fromFile(filename, params_);
+  using godel_param_helpers::loadParam;
+  using godel_param_helpers::loadBoolParam;
+
+
+  if (godel_param_helpers::fromFile(filename, params_))
+  {
+    return true;
+  }
+  ros::NodeHandle nh ("~/surface_detection");
+  return loadParam(nh, params::FRAME_ID, params_.frame_id)&&
+         loadParam(nh, params::K_SEARCH, params_.k_search) &&
+
+         loadParam(nh, params::STOUTLIER_MEAN, params_.meanK) &&
+         loadParam(nh, params::STOUTLIER_STDEV_THRESHOLD, params_.stdv_threshold) &&
+
+         loadParam(nh, params::REGION_GROWING_MIN_CLUSTER_SIZE, params_.rg_min_cluster_size) &&
+         loadParam(nh, params::REGION_GROWING_MAX_CLUSTER_SIZE, params_.rg_max_cluster_size) &&
+         loadParam(nh, params::REGION_GROWING_NEIGHBORS, params_.rg_neightbors) &&
+         loadParam(nh, params::REGION_GROWING_SMOOTHNESS_THRESHOLD, params_.rg_smoothness_threshold) &&
+         loadParam(nh, params::REGION_GROWING_CURVATURE_THRESHOLD, params_.rg_curvature_threshold) &&
+
+         loadParam(nh, params::PLANE_APROX_REFINEMENT_SEG_MAX_ITERATIONS, params_.pa_seg_max_iterations) &&
+         loadParam(nh, params::PLANE_APROX_REFINEMENT_SEG_DIST_THRESHOLD, params_.pa_seg_dist_threshold) &&
+         loadParam(nh, params::PLANE_APROX_REFINEMENT_SAC_PLANE_DISTANCE, params_.pa_sac_plane_distance) &&
+         loadParam(nh, params::PLANE_APROX_REFINEMENT_KDTREE_RADIUS, params_.pa_kdtree_radius) &&
+         loadBoolParam(nh, params::PLANE_APROX_REFINEMENT_ENABLED, params_.pa_enabled) &&
+
+         loadParam(nh, params::VOXEL_LEAF_SIZE, params_.voxel_leafsize) &&
+         loadParam(nh, params::OCCUPANCY_THRESHOLD, params_.occupancy_threshold) &&
+
+         loadParam(nh, params::MLS_UPSAMPLING_RADIUS, params_.mls_upsampling_radius) &&
+         loadParam(nh, params::MLS_POINT_DENSITY, params_.mls_point_density) &&
+         loadParam(nh, params::MLS_SEARCH_RADIUS, params_.mls_search_radius) &&
+
+         loadBoolParam(nh, params::USE_TABLETOP_SEGMENTATION, params_.use_tabletop_seg) &&
+         loadParam(nh, params::TABLETOP_SEG_DISTANCE_THRESH, params_.tabletop_seg_distance_threshold) &&
+         loadParam(nh, params::MARKER_ALPHA, params_.marker_alpha) &&
+         loadBoolParam(nh, params::IGNORE_LARGEST_CLUSTER, params_.ignore_largest_cluster);
 }
 
 void SurfaceDetection::save_parameters(const std::string& filename)

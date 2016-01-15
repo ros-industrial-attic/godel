@@ -26,7 +26,20 @@
 #include <moveit/trajectory_processing/iterative_time_parameterization.h>
 #include <godel_param_helpers/godel_param_helpers.h>
 
+
 static const std::string DEFAULT_MOVEIT_PLANNER = "RRTConnectkConfigDefault"; 
+
+static bool loadPoseParam(ros::NodeHandle& nh, const std::string& name, geometry_msgs::Pose& pose)
+{
+  using namespace godel_param_helpers;
+  return loadParam(nh, name + "/trans/x", pose.position.x) &&
+         loadParam(nh, name + "/trans/y", pose.position.y) &&
+         loadParam(nh, name + "/trans/z", pose.position.z) &&
+         loadParam(nh, name + "/quat/x", pose.orientation.x) &&
+         loadParam(nh, name + "/quat/y", pose.orientation.y) &&
+         loadParam(nh, name + "/quat/z", pose.orientation.z) &&
+         loadParam(nh, name + "/quat/w", pose.orientation.w);
+}
 
 namespace godel_surface_detection {
 namespace scan {
@@ -74,7 +87,31 @@ bool RobotScan::init()
 
 bool RobotScan::load_parameters(const std::string& filename)
 {
-	return godel_param_helpers::fromFile(filename, params_);
+  using godel_param_helpers::loadParam;
+  using godel_param_helpers::loadBoolParam;
+
+  if (godel_param_helpers::fromFile(filename, params_))
+  {
+    return true;
+  }
+  // otherwise load from parameters
+  ros::NodeHandle nh ("~/robot_scan");
+  return loadParam(nh, "group_name", params_.group_name) &&
+         loadParam(nh, "home_position", params_.home_position) &&
+         loadParam(nh, "world_frame", params_.world_frame) &&
+         loadParam(nh, "tcp_frame", params_.tcp_frame) &&
+         loadPoseParam(nh, "tcp_to_cam_pose", params_.tcp_to_cam_pose)&&
+         loadPoseParam(nh, "world_to_obj_pose", params_.world_to_obj_pose) &&
+         loadParam(nh, "cam_to_obj_zoffset", params_.cam_to_obj_zoffset) &&
+         loadParam(nh, "cam_to_obj_xoffset", params_.cam_to_obj_xoffset) &&
+         loadParam(nh, "cam_tilt_angle", params_.cam_tilt_angle) &&
+         loadParam(nh, "sweep_angle_start", params_.sweep_angle_start) &&
+         loadParam(nh, "sweep_angle_end", params_.sweep_angle_end) &&
+         loadParam(nh, "scan_topic", params_.scan_topic) &&
+         loadParam(nh, "num_scan_points", params_.num_scan_points) &&
+         loadParam(nh, "reachable_scan_points_ratio", params_.reachable_scan_points_ratio) &&
+         loadParam(nh, "scan_target_frame", params_.scan_target_frame) &&
+         loadBoolParam(nh, "stop_on_planning_error", params_.stop_on_planning_error);
 }
 
 void RobotScan::save_parameters(const std::string& filename)
