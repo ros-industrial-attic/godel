@@ -15,9 +15,11 @@
   </include>
 
   <!-- Process execution nodes: These monitor the state of robot's execution of the planned path. They can be, and in this case are, robot or vendor specific -->
-  <node name="blend_process_execution" pkg="godel_process_execution" type="abb_blend_process_service_node"/>
-  <node name="scan_process_execution" pkg="godel_process_execution" type="keyence_process_service_node"/>
-
+  <group>
+    <remap from="simulate_path" to="simulation/simulate_trajectory"/>
+    <node name="blend_process_execution" pkg="godel_process_execution" type="abb_blend_process_service_node"/>
+    <node name="scan_process_execution" pkg="godel_process_execution" type="keyence_process_service_node"/>
+  </group>
   <!-- Bring up simulated robot that can be visualized under the tf namespace 'simulation'
        Allows for previewing paths generated before execution. -->
   <include file="$(find industrial_robot_simulator_service)/launch/start_simulation_server.launch"/>
