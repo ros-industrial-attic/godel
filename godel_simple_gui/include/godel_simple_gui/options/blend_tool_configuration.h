@@ -5,8 +5,9 @@
 
 #include "godel_msgs/BlendingPlanParameters.h"
 
-namespace Ui {
-  class BlendToolConfigWindow;
+namespace Ui
+{
+class BlendToolConfigWindow;
 }
 
 namespace godel_simple_gui
@@ -28,7 +29,6 @@ protected:
   godel_msgs::BlendingPlanParameters params_;
   Ui::BlendToolConfigWindow* ui_;
 };
-
 }
 
 #endif // BLEND_TOOL_CONFIGURATION_H

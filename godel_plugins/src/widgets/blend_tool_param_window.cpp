@@ -1,7 +1,8 @@
 #include "godel_plugins/widgets/blend_tool_param_window.h"
 
-godel_plugins::BlendingPlanConfigWidget::BlendingPlanConfigWidget(const godel_msgs::BlendingPlanParameters& params)
-  : params_(params)
+godel_plugins::BlendingPlanConfigWidget::BlendingPlanConfigWidget(
+    const godel_msgs::BlendingPlanParameters& params)
+    : params_(params)
 {
   ui_.setupUi(this);
 
@@ -29,5 +30,4 @@ void godel_plugins::BlendingPlanConfigWidget::update_internal_values()
   params_.tool_radius = ui_.LineEditSpindleDiameter->text().toDouble();
   params_.overlap = ui_.lineEditOverlap->text().toDouble();
   params_.margin = ui_.LineEditMargin->text().toDouble();
-
 }

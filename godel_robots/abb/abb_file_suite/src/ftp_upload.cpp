@@ -14,7 +14,7 @@ const static long DEFAULT_TIMEOUT = 0; // Don't timeout
 const static long DEFAULT_RETRIES = 5;
 
 /* parse headers for Content-Length */
-static size_t getcontentlengthfunc(void *ptr, size_t size, size_t nmemb, void *stream)
+static size_t getcontentlengthfunc(void* ptr, size_t size, size_t nmemb, void* stream)
 {
   int r;
   long len = 0;
@@ -23,21 +23,21 @@ static size_t getcontentlengthfunc(void *ptr, size_t size, size_t nmemb, void *s
   r = sscanf(static_cast<const char*>(ptr), "Content-Length: %ld\n", &len);
 
   if (r) /* Microsoft: we don't read the specs */
-    *((long *) stream) = len;
+    *((long*)stream) = len;
 
   return size * nmemb;
 }
 
 /* discard downloaded data */
-static size_t discardfunc(void *ptr, size_t size, size_t nmemb, void *stream)
+static size_t discardfunc(void* ptr, size_t size, size_t nmemb, void* stream)
 {
   return size * nmemb;
 }
 
 /* read data to upload */
-static size_t readfunc(void *ptr, size_t size, size_t nmemb, void *stream)
+static size_t readfunc(void* ptr, size_t size, size_t nmemb, void* stream)
 {
-  FILE *f = static_cast<FILE*>(stream);
+  FILE* f = static_cast<FILE*>(stream);
   size_t n;
 
   if (ferror(f))
@@ -48,17 +48,17 @@ static size_t readfunc(void *ptr, size_t size, size_t nmemb, void *stream)
   return n;
 }
 
-
-static int upload(CURL *curlhandle, const char * remotepath, const char * localpath,
-           long timeout, long tries)
+static int upload(CURL* curlhandle, const char* remotepath, const char* localpath, long timeout,
+                  long tries)
 {
-  FILE *f;
+  FILE* f;
   long uploaded_len = 0;
   CURLcode r = CURLE_GOT_NOTHING;
   int c;
 
   f = fopen(localpath, "rb");
-  if (f == NULL) {
+  if (f == NULL)
+  {
     perror(NULL);
     return 0;
   }
@@ -85,9 +85,11 @@ static int upload(CURL *curlhandle, const char * remotepath, const char * localp
 
   curl_easy_setopt(curlhandle, CURLOPT_VERBOSE, 1L);
 
-  for (c = 0; (r != CURLE_OK) && (c < tries); c++) {
+  for (c = 0; (r != CURLE_OK) && (c < tries); c++)
+  {
     /* are we resuming? */
-    if (c) { /* yes */
+    if (c)
+    { /* yes */
       /* determine the length of the file already written */
 
       /*
@@ -112,7 +114,8 @@ static int upload(CURL *curlhandle, const char * remotepath, const char * localp
 
       curl_easy_setopt(curlhandle, CURLOPT_APPEND, 1L);
     }
-    else { /* no */
+    else
+    { /* no */
       curl_easy_setopt(curlhandle, CURLOPT_APPEND, 0L);
     }
 
@@ -123,15 +126,16 @@ static int upload(CURL *curlhandle, const char * remotepath, const char * localp
 
   if (r == CURLE_OK)
     return 1;
-  else {
+  else
+  {
     fprintf(stderr, "%s\n", curl_easy_strerror(r));
     return 0;
   }
 }
 
-bool abb_file_suite::uploadFile(const std::string &ftp_addr, const std::string &filepath)
+bool abb_file_suite::uploadFile(const std::string& ftp_addr, const std::string& filepath)
 {
-  CURL *curlhandle = NULL;
+  CURL* curlhandle = NULL;
 
   curl_global_init(CURL_GLOBAL_ALL);
   curlhandle = curl_easy_init();

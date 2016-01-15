@@ -14,43 +14,35 @@
 
 const static std::string SELECT_MOTION_PLAN_SERVICE = "select_motion_plan";
 
-struct BadExecutionError {
-  BadExecutionError(const std::string& what)
-    : what(what)
-  {}
+struct BadExecutionError
+{
+  BadExecutionError(const std::string& what) : what(what) {}
   std::string what;
 };
 
-godel_simple_gui::ExecutingState::ExecutingState(const std::vector<std::string> &plans)
-  : plan_names_(plans)
-{}
+godel_simple_gui::ExecutingState::ExecutingState(const std::vector<std::string>& plans)
+    : plan_names_(plans)
+{
+}
 
 void godel_simple_gui::ExecutingState::onStart(BlendingWidget& gui)
 {
   gui.setText("Executing...");
   gui.setButtonsEnabled(false);
 
-  real_client_ = gui.nodeHandle().serviceClient<godel_msgs::SelectMotionPlan>(SELECT_MOTION_PLAN_SERVICE);
+  real_client_ =
+      gui.nodeHandle().serviceClient<godel_msgs::SelectMotionPlan>(SELECT_MOTION_PLAN_SERVICE);
   QtConcurrent::run(this, &ExecutingState::executeAll);
 }
 
-void godel_simple_gui::ExecutingState::onExit(BlendingWidget& gui)
-{
-  gui.setButtonsEnabled(true);
-}
+void godel_simple_gui::ExecutingState::onExit(BlendingWidget& gui) { gui.setButtonsEnabled(true); }
 
 // Handlers for the fixed buttons
-void godel_simple_gui::ExecutingState::onNext(BlendingWidget& gui)
-{
-}
+void godel_simple_gui::ExecutingState::onNext(BlendingWidget& gui) {}
 
-void godel_simple_gui::ExecutingState::onBack(BlendingWidget& gui)
-{
-}
+void godel_simple_gui::ExecutingState::onBack(BlendingWidget& gui) {}
 
-void godel_simple_gui::ExecutingState::onReset(BlendingWidget& gui)
-{
-}
+void godel_simple_gui::ExecutingState::onReset(BlendingWidget& gui) {}
 
 void godel_simple_gui::ExecutingState::executeAll()
 {
@@ -60,17 +52,17 @@ void godel_simple_gui::ExecutingState::executeAll()
     {
       executeOne(plan_names_[i]);
     }
-    
-    Q_EMIT newStateAvailable( new WaitToExecuteState(plan_names_) );
+
+    Q_EMIT newStateAvailable(new WaitToExecuteState(plan_names_));
   }
   catch (const BadExecutionError& err)
   {
     ROS_ERROR_STREAM("There was an error executing a plan " << err.what);
-    Q_EMIT newStateAvailable( new ErrorState(err.what, new WaitToExecuteState(plan_names_)) ); 
+    Q_EMIT newStateAvailable(new ErrorState(err.what, new WaitToExecuteState(plan_names_)));
   }
 }
 
-void godel_simple_gui::ExecutingState::executeOne(const std::string &plan)
+void godel_simple_gui::ExecutingState::executeOne(const std::string& plan)
 {
   ROS_DEBUG_STREAM("Executing " << plan);
   godel_msgs::SelectMotionPlan srv;
@@ -84,8 +76,3 @@ void godel_simple_gui::ExecutingState::executeOne(const std::string &plan)
     throw BadExecutionError(ss.str());
   }
 }
-
-
-
-
-

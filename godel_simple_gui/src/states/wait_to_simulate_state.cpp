@@ -21,8 +21,8 @@ void godel_simple_gui::WaitToSimulateState::onStart(BlendingWidget& gui)
 {
   gui.setText("Ready to Simulate.\nPress 'Next' to observe the plan.");
 
-  ros::ServiceClient client =
-      gui.nodeHandle().serviceClient<godel_msgs::GetAvailableMotionPlans>(GET_AVAILABLE_MOTION_PLANS_SERVICE);
+  ros::ServiceClient client = gui.nodeHandle().serviceClient<godel_msgs::GetAvailableMotionPlans>(
+      GET_AVAILABLE_MOTION_PLANS_SERVICE);
 
   godel_msgs::GetAvailableMotionPlans srv;
   if (client.call(srv))
@@ -36,31 +36,26 @@ void godel_simple_gui::WaitToSimulateState::onStart(BlendingWidget& gui)
 
   if (plan_names_.empty())
   {
-    Q_EMIT newStateAvailable( new ErrorState("No motion plans available. "
-                                             "Please check surface selections and try again",
-                                             new SurfaceSelectState()) );
+    Q_EMIT newStateAvailable(new ErrorState("No motion plans available. "
+                                            "Please check surface selections and try again",
+                                            new SurfaceSelectState()));
   }
 }
 
-void godel_simple_gui::WaitToSimulateState::onExit(BlendingWidget& gui)
-{
-}
+void godel_simple_gui::WaitToSimulateState::onExit(BlendingWidget& gui) {}
 
 // Handlers for the fixed buttons
 void godel_simple_gui::WaitToSimulateState::onNext(BlendingWidget& gui)
 {
-  Q_EMIT newStateAvailable( new SimulatingState(plan_names_) );
+  Q_EMIT newStateAvailable(new SimulatingState(plan_names_));
 }
 
 void godel_simple_gui::WaitToSimulateState::onBack(BlendingWidget& gui)
 {
-  Q_EMIT newStateAvailable( new SurfaceSelectState() );
+  Q_EMIT newStateAvailable(new SurfaceSelectState());
 }
 
 void godel_simple_gui::WaitToSimulateState::onReset(BlendingWidget& gui)
 {
-  Q_EMIT newStateAvailable( new ScanTeachState() );
+  Q_EMIT newStateAvailable(new ScanTeachState());
 }
-
-
-

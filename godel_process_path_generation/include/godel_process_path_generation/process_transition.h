@@ -34,84 +34,97 @@ namespace descartes
 class ProcessTransitionConstraint
 {
 public:
-  ProcessTransitionConstraint() {};
-  virtual ~ProcessTransitionConstraint() {};
+  ProcessTransitionConstraint(){};
+  virtual ~ProcessTransitionConstraint(){};
 
   virtual bool isValid() = 0;
 };
 
-struct JointVelocityConstraint: public ProcessTransitionConstraint
+struct JointVelocityConstraint : public ProcessTransitionConstraint
 {
-  JointVelocityConstraint() {};
-  JointVelocityConstraint(const JointVelocityConstraint& other): min(other.min), desired(other.desired), max(other.max) {};
+  JointVelocityConstraint(){};
+  JointVelocityConstraint(const JointVelocityConstraint& other)
+      : min(other.min), desired(other.desired), max(other.max){};
 
-  //TODO write
-  //TODO comment
+  // TODO write
+  // TODO comment
   virtual bool isValid();
 
   std::vector<double> min, desired, max;
 };
 typedef boost::shared_ptr<JointVelocityConstraint> JointVelocityConstraintPtr;
 
-struct LinearVelocityConstraint: public ProcessTransitionConstraint
+struct LinearVelocityConstraint : public ProcessTransitionConstraint
 {
-  LinearVelocityConstraint(): min(0.), desired(0.), max(0.) {};
-  LinearVelocityConstraint(double _min, double _desired, double _max): min(_min), desired(_desired), max(_max) {};
-  LinearVelocityConstraint(double _desired): min(0.), desired(_desired), max(std::numeric_limits<double>::max()) {};
-  LinearVelocityConstraint(const LinearVelocityConstraint &other): min(other.min), desired(other.desired), max(other.max) {};
+  LinearVelocityConstraint() : min(0.), desired(0.), max(0.){};
+  LinearVelocityConstraint(double _min, double _desired, double _max)
+      : min(_min), desired(_desired), max(_max){};
+  LinearVelocityConstraint(double _desired)
+      : min(0.), desired(_desired), max(std::numeric_limits<double>::max()){};
+  LinearVelocityConstraint(const LinearVelocityConstraint& other)
+      : min(other.min), desired(other.desired), max(other.max){};
 
-  //TODO write
-  //TODO comment
+  // TODO write
+  // TODO comment
   virtual bool isValid();
 
   double min, desired, max;
 };
 typedef boost::shared_ptr<LinearVelocityConstraint> LinearVelocityConstraintPtr;
 
-struct RotationalVelocityConstraint: public ProcessTransitionConstraint
+struct RotationalVelocityConstraint : public ProcessTransitionConstraint
 {
-  RotationalVelocityConstraint(): min(0.), desired(0.), max(0.) {};
-  RotationalVelocityConstraint(const RotationalVelocityConstraint &other): min(other.min), desired(other.desired), max(other.max) {};
-  //TODO write
-  //TODO comment
+  RotationalVelocityConstraint() : min(0.), desired(0.), max(0.){};
+  RotationalVelocityConstraint(const RotationalVelocityConstraint& other)
+      : min(other.min), desired(other.desired), max(other.max){};
+  // TODO write
+  // TODO comment
   virtual bool isValid();
 
   double min, desired, max;
 };
 typedef boost::shared_ptr<RotationalVelocityConstraint> RotationalVelocityConstraintPtr;
 
-
 class ProcessTransition
 {
 public:
-  ProcessTransition() {};
-  virtual ~ProcessTransition() {};
+  ProcessTransition(){};
+  virtual ~ProcessTransition(){};
 
-  //TODO write
-  //TODO comment
+  // TODO write
+  // TODO comment
   bool constraintsValid();
 
-  void setJointVelocityConstraint(const JointVelocityConstraint &jvc) {
-    joint_velocity_.reset(new JointVelocityConstraint(jvc)); }
-  void setJointVelocityConstraint(const JointVelocityConstraintPtr &jvc) {
-    joint_velocity_ = jvc; }
+  void setJointVelocityConstraint(const JointVelocityConstraint& jvc)
+  {
+    joint_velocity_.reset(new JointVelocityConstraint(jvc));
+  }
+  void setJointVelocityConstraint(const JointVelocityConstraintPtr& jvc) { joint_velocity_ = jvc; }
 
-  void setLinearVelocityConstraint(const LinearVelocityConstraint &lvc) {
-    linear_velocity_.reset(new LinearVelocityConstraint(lvc)); }
-  void setLinearVelocityConstraint(const LinearVelocityConstraintPtr &lvc) {
-    linear_velocity_ = lvc; }
+  void setLinearVelocityConstraint(const LinearVelocityConstraint& lvc)
+  {
+    linear_velocity_.reset(new LinearVelocityConstraint(lvc));
+  }
+  void setLinearVelocityConstraint(const LinearVelocityConstraintPtr& lvc)
+  {
+    linear_velocity_ = lvc;
+  }
 
-  void setRotationalVelocityConstraint(const RotationalVelocityConstraint &rvc) {
-    rotational_velocity_.reset(new RotationalVelocityConstraint(rvc)); }
-  void setRotationalVelocityConstraint(const RotationalVelocityConstraintPtr &rvc) {
-    rotational_velocity_ = rvc; }
+  void setRotationalVelocityConstraint(const RotationalVelocityConstraint& rvc)
+  {
+    rotational_velocity_.reset(new RotationalVelocityConstraint(rvc));
+  }
+  void setRotationalVelocityConstraint(const RotationalVelocityConstraintPtr& rvc)
+  {
+    rotational_velocity_ = rvc;
+  }
 
-  const LinearVelocityConstraintPtr& getLinearVelocity() const {return linear_velocity_;}
+  const LinearVelocityConstraintPtr& getLinearVelocity() const { return linear_velocity_; }
 
 protected:
-  JointVelocityConstraintPtr            joint_velocity_;        /**<n*rad/s */
-  LinearVelocityConstraintPtr           linear_velocity_;       /**<m/s */
-  RotationalVelocityConstraintPtr       rotational_velocity_;   /**<rad/s */
+  JointVelocityConstraintPtr joint_velocity_;           /**<n*rad/s */
+  LinearVelocityConstraintPtr linear_velocity_;         /**<m/s */
+  RotationalVelocityConstraintPtr rotational_velocity_; /**<rad/s */
 };
 
 } /* namespace descartes */

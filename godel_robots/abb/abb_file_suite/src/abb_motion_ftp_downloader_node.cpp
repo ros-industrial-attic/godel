@@ -22,7 +22,8 @@ int main(int argc, char** argv)
 
   abb_file_suite::AbbMotionFtpDownloader ftp(ip, topic, nh, j23_coupled);
 
-  ROS_INFO("ABB FTP-Trajectory-Downloader (ip %s) initialized. Listening on topic %s.", ip.c_str(), topic.c_str());
+  ROS_INFO("ABB FTP-Trajectory-Downloader (ip %s) initialized. Listening on topic %s.", ip.c_str(),
+           topic.c_str());
   ros::spin();
 
   return 0;

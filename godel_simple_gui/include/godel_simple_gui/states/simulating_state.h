@@ -31,8 +31,6 @@ private:
   std::vector<std::string> plan_names_;
   ros::ServiceClient sim_client_;
 };
-
 }
 
 #endif // SIMULATING_STATE_H
-

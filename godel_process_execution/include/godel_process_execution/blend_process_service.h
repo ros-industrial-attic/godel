@@ -24,7 +24,6 @@ private:
   ros::ServiceClient real_client_;
   ros::ServiceClient sim_client_;
 };
-
 }
 
 #endif // BLEND_PROCESS_SERVICE_H

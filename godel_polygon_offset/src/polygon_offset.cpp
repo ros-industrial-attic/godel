@@ -34,7 +34,6 @@
 #include <godel_process_path_generation/utils.h>
 #include "godel_polygon_offset/polygon_offset.h"
 
-
 using godel_process_path::PolygonBoundaryCollection;
 using godel_process_path::PolygonBoundary;
 using godel_process_path::PolygonPt;
@@ -44,11 +43,11 @@ using godel_process_path::utils::moveItemFrom;
 
 typedef std::vector<ovd::MGVertex> MachiningLoopList;
 
-
 namespace godel_polygon_offset
 {
 
-bool PolygonOffset::init(const PolygonBoundaryCollection &pbc, double _offset, double _initial_offset, double _discretization)
+bool PolygonOffset::init(const PolygonBoundaryCollection& pbc, double _offset,
+                         double _initial_offset, double _discretization)
 {
   if (_offset <= 0. || _initial_offset <= 0. || _discretization <= 0)
   {
@@ -57,7 +56,7 @@ bool PolygonOffset::init(const PolygonBoundaryCollection &pbc, double _offset, d
   }
 
   // Reset PolygonOffset for new operations.
-  vd_.reset(new ovd::VoronoiDiagram(1,100));
+  vd_.reset(new ovd::VoronoiDiagram(1, 100));
   offset_ = _offset;
   initial_offset_ = _initial_offset;
   discretization_ = _discretization;
@@ -66,11 +65,12 @@ bool PolygonOffset::init(const PolygonBoundaryCollection &pbc, double _offset, d
   // Add all points to vd.
   std::vector<std::vector<int> > pt_id_collection;
   PolygonBoundaryCollection::const_iterator boundary, bs_end;
-  for (boundary=pbc.begin(), bs_end=pbc.end(); boundary!=bs_end; ++boundary)
+  for (boundary = pbc.begin(), bs_end = pbc.end(); boundary != bs_end; ++boundary)
   {
     std::vector<int> pt_id;
-    bool first=true;
-    for (PolygonBoundary::const_iterator pt=boundary->begin(), b_end=boundary->end(); pt!=b_end; ++pt)
+    bool first = true;
+    for (PolygonBoundary::const_iterator pt = boundary->begin(), b_end = boundary->end();
+         pt != b_end; ++pt)
     {
       pt_id.push_back(vd_->insert_point_site(ovd::Point(pt->x, pt->y)));
       ROS_INFO_COND(verbose_, "Added point %i at location %f, %f", pt_id.back(), pt->x, pt->y);
@@ -79,13 +79,13 @@ bool PolygonOffset::init(const PolygonBoundaryCollection &pbc, double _offset, d
   }
 
   // Connect points into boundaries.
-  for (boundary=pbc.begin(); boundary!=bs_end; ++boundary)
+  for (boundary = pbc.begin(); boundary != bs_end; ++boundary)
   {
-    std::vector<int> &pt_id = pt_id_collection.at(boundary-pbc.begin());
-    for (size_t ii=0; ii<pt_id.size()-1; ++ii)
+    std::vector<int>& pt_id = pt_id_collection.at(boundary - pbc.begin());
+    for (size_t ii = 0; ii < pt_id.size() - 1; ++ii)
     {
-      ROS_INFO_COND(verbose_, "Adding line from pt %i to pt %i", pt_id.at(ii), pt_id.at(ii+1));
-      vd_->insert_line_site(pt_id.at(ii), pt_id.at(ii+1));
+      ROS_INFO_COND(verbose_, "Adding line from pt %i to pt %i", pt_id.at(ii), pt_id.at(ii + 1));
+      vd_->insert_line_site(pt_id.at(ii), pt_id.at(ii + 1));
     }
     ROS_INFO_COND(verbose_, "Closing loop from pt %i to pt %i", pt_id.back(), pt_id.front());
     vd_->insert_line_site(pt_id.back(), pt_id.front());
@@ -109,7 +109,8 @@ bool PolygonOffset::init(const PolygonBoundaryCollection &pbc, double _offset, d
   return init_ok_;
 }
 
-bool PolygonOffset::generateOrderedOffsets(PolygonBoundaryCollection &polygons, std::vector<double> &offsets)
+bool PolygonOffset::generateOrderedOffsets(PolygonBoundaryCollection& polygons,
+                                           std::vector<double>& offsets)
 {
   if (!init_ok_)
   {
@@ -122,7 +123,8 @@ bool PolygonOffset::generateOrderedOffsets(PolygonBoundaryCollection &polygons, 
   ovd::OffsetSorter sorter(g);
 
   /* Perform offsets:
-   * Start with initial_offset, and proceed with offset distance until no further offsets are generated.
+   * Start with initial_offset, and proceed with offset distance until no further offsets are
+   * generated.
    * Add each offset to sorter for subsequent sorting. */
   double offset_distance(initial_offset_);
   size_t loop_count(0);
@@ -135,7 +137,8 @@ bool PolygonOffset::generateOrderedOffsets(PolygonBoundaryCollection &polygons, 
       break;
     }
     loop_count += offset_list.size();
-    for (ovd::OffsetLoops::const_iterator loop=offset_list.begin(), loops_end=offset_list.end(); loop!=loops_end; ++loop)
+    for (ovd::OffsetLoops::const_iterator loop = offset_list.begin(), loops_end = offset_list.end();
+         loop != loops_end; ++loop)
     {
       sorter.add_loop(*loop);
     }
@@ -143,21 +146,22 @@ bool PolygonOffset::generateOrderedOffsets(PolygonBoundaryCollection &polygons, 
   }
   if (loop_count == 0)
   {
-    ROS_WARN_STREAM("No offsets were generated: " << std::endl <<
-                    "Initial Offset: " << initial_offset_ << " (m)");
+    ROS_WARN_STREAM("No offsets were generated: " << std::endl
+                                                  << "Initial Offset: " << initial_offset_
+                                                  << " (m)");
     return false;
   }
   ROS_INFO_COND(verbose_, "Created %li offset loops", loop_count);
 
   // Perform initial sort.
   sorter.sort_loops();
-  const ovd::MachiningGraph &mg = sorter.getMachiningGraph();
+  const ovd::MachiningGraph& mg = sorter.getMachiningGraph();
 
-  MachiningLoopList ordered_loops, unordered_loops;       // For tracking order of loops for machining
+  MachiningLoopList ordered_loops, unordered_loops; // For tracking order of loops for machining
 
   // Populate unordered loops with all graph vertices
   ovd::MGVertexItr loop, vertex_end;
-  for (boost::tie(loop, vertex_end) = boost::vertices(mg); loop!=vertex_end; ++loop)
+  for (boost::tie(loop, vertex_end) = boost::vertices(mg); loop != vertex_end; ++loop)
   {
     unordered_loops.push_back(*loop);
   }
@@ -172,7 +176,7 @@ bool PolygonOffset::generateOrderedOffsets(PolygonBoundaryCollection &polygons, 
     // Find deepest loop
     double largest_offset(0);
     ovd::MGVertex deepest_loop;
-    BOOST_FOREACH(ovd::MGVertex loop_descriptor, unordered_loops)
+    BOOST_FOREACH (ovd::MGVertex loop_descriptor, unordered_loops)
     {
       if (mg[loop_descriptor].offset_distance > largest_offset)
       {
@@ -190,7 +194,8 @@ bool PolygonOffset::generateOrderedOffsets(PolygonBoundaryCollection &polygons, 
     {
       if (exists(child, unordered_loops))
       {
-        ROS_INFO_COND(verbose_, "Moving loop at depth %f to ordered list.", mg[child].offset_distance);
+        ROS_INFO_COND(verbose_, "Moving loop at depth %f to ordered list.",
+                      mg[child].offset_distance);
         moveItemFrom(unordered_loops, ordered_loops, child);
       }
       else
@@ -204,24 +209,26 @@ bool PolygonOffset::generateOrderedOffsets(PolygonBoundaryCollection &polygons, 
   // Populate polygons and offsets
   polygons.clear();
   offsets.clear();
-  BOOST_FOREACH(ovd::MGVertex loop_descriptor, ordered_loops)
+  BOOST_FOREACH (ovd::MGVertex loop_descriptor, ordered_loops)
   {
     PolygonBoundary polygon;
-    const ovd::OffsetLoop &loop = mg[loop_descriptor];
+    const ovd::OffsetLoop& loop = mg[loop_descriptor];
     ovd::OffsetVertex prior_vtx = loop.vertices.front();
-    std::list<ovd::OffsetVertex>::const_iterator vtx=boost::next(loop.vertices.begin());
-    while ( vtx!=loop.vertices.end() )
+    std::list<ovd::OffsetVertex>::const_iterator vtx = boost::next(loop.vertices.begin());
+    while (vtx != loop.vertices.end())
     {
       PolygonPt prior(prior_vtx.p.x, prior_vtx.p.y), current(vtx->p.x, vtx->p.y);
       std::vector<PolygonPt> pts;
       if (vtx->r == -1)
       {
-        pts = godel_process_path::utils::geometry::discretizeLinear(prior, current, discretization_);
+        pts =
+            godel_process_path::utils::geometry::discretizeLinear(prior, current, discretization_);
       }
       else
       {
         PolygonPt arc_center(vtx->c.x, vtx->c.y);
-        pts = godel_process_path::utils::geometry::discretizeArc2D(prior, current, arc_center, !vtx->cw, discretization_);
+        pts = godel_process_path::utils::geometry::discretizeArc2D(prior, current, arc_center,
+                                                                   !vtx->cw, discretization_);
       }
       polygon.insert(polygon.end(), pts.begin(), pts.end());
       pts.clear();

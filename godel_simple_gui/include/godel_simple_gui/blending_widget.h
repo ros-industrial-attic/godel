@@ -9,7 +9,7 @@
 
 namespace Ui
 {
-  class BlendingWidget;
+class BlendingWidget;
 }
 
 namespace godel_simple_gui
@@ -17,13 +17,13 @@ namespace godel_simple_gui
 
 class BlendingWidget : public QWidget
 {
-Q_OBJECT
+  Q_OBJECT
 public:
   BlendingWidget(QWidget* parent = 0);
 
   virtual ~BlendingWidget();
 
-  // Interface for the states to interact with 
+  // Interface for the states to interact with
   void setText(const std::string& txt);
   void setButtonsEnabled(bool enabled);
 
@@ -52,7 +52,7 @@ protected:
   OptionsSubmenu* options_;
 
   // Options Subwindow
-  
+
   // ROS specific stuff
   ros::NodeHandle nh_;
 
@@ -72,7 +72,6 @@ protected:
  *
  * And back to the start
  */
-
 }
 
 #endif

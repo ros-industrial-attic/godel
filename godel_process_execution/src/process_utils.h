@@ -6,7 +6,7 @@
 namespace godel_process_execution
 {
 
-void appendTrajectory(trajectory_msgs::JointTrajectory& original, 
+void appendTrajectory(trajectory_msgs::JointTrajectory& original,
                       const trajectory_msgs::JointTrajectory& next);
 }
 

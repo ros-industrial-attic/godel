@@ -2,8 +2,9 @@
 
 #include "ui_blend_tool_configuration.h"
 
-godel_simple_gui::BlendingPlanConfigWidget::BlendingPlanConfigWidget(godel_msgs::BlendingPlanParameters params)
-  : params_(params)
+godel_simple_gui::BlendingPlanConfigWidget::BlendingPlanConfigWidget(
+    godel_msgs::BlendingPlanParameters params)
+    : params_(params)
 {
   ui_ = new Ui::BlendToolConfigWindow();
   ui_->setupUi(this);

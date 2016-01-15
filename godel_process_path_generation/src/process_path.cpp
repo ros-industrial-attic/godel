@@ -34,9 +34,9 @@ visualization_msgs::Marker ProcessPath::asMarker() const
   visualization_msgs::Marker marker;
   marker.action = visualization_msgs::Marker::ADD;
   marker.pose.position.x = marker.pose.position.y = marker.pose.position.z = 0.;
-  marker.scale.x = .002;        /*1mm line width*/
+  marker.scale.x = .002; /*1mm line width*/
   marker.type = visualization_msgs::Marker::LINE_STRIP;
-  for (std::vector<ProcessPt>::const_iterator pt = pts_.begin(); pt!=pts_.end(); ++pt)
+  for (std::vector<ProcessPt>::const_iterator pt = pts_.begin(); pt != pts_.end(); ++pt)
   {
     geometry_msgs::Point marker_pt;
     marker_pt.x = pt->pose().translation()(0);

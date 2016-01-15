@@ -36,8 +36,7 @@ using godel_polygon_offset::OffsetPolygonRequest;
 using godel_polygon_offset::OffsetPolygonResponse;
 using namespace godel_process_path;
 
-
-bool offset_polygons_cb(OffsetPolygonRequest &req, OffsetPolygonResponse &res)
+bool offset_polygons_cb(OffsetPolygonRequest& req, OffsetPolygonResponse& res)
 {
   godel_polygon_offset::PolygonOffset po;
   po.verbose_ = true;
@@ -48,7 +47,7 @@ bool offset_polygons_cb(OffsetPolygonRequest &req, OffsetPolygonResponse &res)
 
   if (req.initial_offset <= 0.)
   {
-    req.initial_offset = req.offset_distance;   // Default initial offset if unspecified.
+    req.initial_offset = req.offset_distance; // Default initial offset if unspecified.
   }
   if (!po.init(pbc, req.offset_distance, req.initial_offset, req.discretization))
   {
@@ -65,7 +64,7 @@ bool offset_polygons_cb(OffsetPolygonRequest &req, OffsetPolygonResponse &res)
   return true;
 }
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
   ros::init(argc, argv, "polygon_offset_node");
   ros::NodeHandle nh;

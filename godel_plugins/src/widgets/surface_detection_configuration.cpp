@@ -8,8 +8,9 @@
 #define RAD2DEG(x) ((x)*57.29578)
 #endif
 
-godel_plugins::SurfaceDetectionConfigWidget::SurfaceDetectionConfigWidget(const godel_msgs::SurfaceDetectionParameters& params)
-  : params_(params)
+godel_plugins::SurfaceDetectionConfigWidget::SurfaceDetectionConfigWidget(
+    const godel_msgs::SurfaceDetectionParameters& params)
+    : params_(params)
 {
   ui_.setupUi(this);
 
@@ -30,11 +31,13 @@ void godel_plugins::SurfaceDetectionConfigWidget::update_gui_fields()
   ui_.LineEditRgMinClusterSize->setText(QString::number(params_.rg_min_cluster_size));
   ui_.LineEditRgMaxClusterSize->setText(QString::number(params_.rg_max_cluster_size));
   ui_.LineEditRgNeighbors->setText(QString::number(params_.rg_neightbors));
-  ui_.LineEditRgSmoothnessThreshold->setText(QString::number(RAD2DEG(params_.rg_smoothness_threshold)));
+  ui_.LineEditRgSmoothnessThreshold->setText(
+      QString::number(RAD2DEG(params_.rg_smoothness_threshold)));
   ui_.LineEditRgCurvatureThreshold->setText(QString::number(params_.rg_curvature_threshold));
 
   ui_.LineEditVoxelLeaf->setText(QString::number(params_.voxel_leafsize));
-  ui_.LineEditTabletopSegmentationDist->setText(QString::number(params_.tabletop_seg_distance_threshold));
+  ui_.LineEditTabletopSegmentationDist->setText(
+      QString::number(params_.tabletop_seg_distance_threshold));
   ui_.CheckBoxUseTabletopSegmentation->setChecked(static_cast<bool>(params_.use_tabletop_seg));
   ui_.CheckBoxIgnoreLargestCluster->setChecked(static_cast<bool>(params_.ignore_largest_cluster));
 
@@ -45,9 +48,9 @@ void godel_plugins::SurfaceDetectionConfigWidget::update_gui_fields()
   ui_.LineEditTrSearchRadius->setText(QString::number(params_.tr_search_radius));
   ui_.LineEditTrMu->setText(QString::number(params_.tr_mu));
   ui_.LineEditTrNearestNeighbors->setText(QString::number(params_.tr_max_nearest_neighbors));
-  ui_.LineEditTrMaxSurfaceAngle->setText(QString::number(RAD2DEG( params_.tr_max_surface_angle)));
-  ui_.LineEditTrMinAngle->setText(QString::number(RAD2DEG( params_.tr_min_angle)));
-  ui_.LineEditTrMaxAngle->setText(QString::number(RAD2DEG( params_.tr_max_angle)));
+  ui_.LineEditTrMaxSurfaceAngle->setText(QString::number(RAD2DEG(params_.tr_max_surface_angle)));
+  ui_.LineEditTrMinAngle->setText(QString::number(RAD2DEG(params_.tr_min_angle)));
+  ui_.LineEditTrMaxAngle->setText(QString::number(RAD2DEG(params_.tr_max_angle)));
   ui_.CheckBoxTrNormalConsistency->setChecked(static_cast<bool>(params_.tr_normal_consistency));
 
   ui_.CheckBoxPaEnabled->setChecked(static_cast<bool>(params_.pa_enabled));
@@ -84,7 +87,7 @@ void godel_plugins::SurfaceDetectionConfigWidget::update_internal_values()
   params_.tr_search_radius = ui_.LineEditTrSearchRadius->text().toDouble();
   params_.tr_mu = ui_.LineEditTrMu->text().toDouble();
   params_.tr_max_nearest_neighbors = ui_.LineEditTrNearestNeighbors->text().toDouble();
-  params_.tr_max_surface_angle = DEG2RAD( ui_.LineEditTrMaxSurfaceAngle->text().toDouble());
+  params_.tr_max_surface_angle = DEG2RAD(ui_.LineEditTrMaxSurfaceAngle->text().toDouble());
   params_.tr_min_angle = DEG2RAD(ui_.LineEditTrMinAngle->text().toDouble());
   params_.tr_max_angle = DEG2RAD(ui_.LineEditTrMaxAngle->text().toDouble());
   params_.tr_normal_consistency = ui_.CheckBoxTrNormalConsistency->isChecked();

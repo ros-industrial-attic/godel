@@ -24,7 +24,6 @@
 
 #include "godel_process_path_generation/process_transition.h"
 
-
 namespace descartes
 {
 
@@ -34,7 +33,7 @@ bool JointVelocityConstraint::isValid()
   {
     return false;
   }
-  for (size_t ii=0; ii<min.size(); ++ii)
+  for (size_t ii = 0; ii < min.size(); ++ii)
   {
     if (min.at(ii) > max.at(ii) || min.at(ii) > desired.at(ii) || desired.at(ii) > max.at(ii))
     {
@@ -61,7 +60,5 @@ bool RotationalVelocityConstraint::isValid()
   }
   return true;
 }
-
-
 
 } /* namespace descartes */

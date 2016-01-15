@@ -6,8 +6,9 @@
 
 #include "godel_msgs/RobotScanParameters.h"
 
-namespace Ui {
-  class RobotScanConfigWindow;
+namespace Ui
+{
+class RobotScanConfigWindow;
 }
 
 namespace godel_simple_gui
@@ -28,12 +29,10 @@ public:
   virtual void update_internal_fields();
 
 protected:
-
   godel_msgs::RobotScanParameters params_;
   PoseWidget* world_to_obj_pose_widget_;
   PoseWidget* tcp_to_cam_pose_widget_;
   Ui::RobotScanConfigWindow* ui_;
 };
-
 }
 #endif

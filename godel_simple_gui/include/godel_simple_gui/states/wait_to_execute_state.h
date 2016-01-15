@@ -25,7 +25,5 @@ public:
 private:
   std::vector<std::string> plan_names_;
 };
-
 }
 #endif // WAIT_FOR_EXECUTE_STATE_H
-

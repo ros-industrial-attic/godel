@@ -6,9 +6,9 @@
 #include <QMessageBox>
 
 godel_simple_gui::ErrorState::ErrorState(const std::string& msg, GuiState* next_state)
-  : msg_(msg)
-  , next_state_(next_state)
-{}
+    : msg_(msg), next_state_(next_state)
+{
+}
 
 void godel_simple_gui::ErrorState::onStart(BlendingWidget& gui)
 {
@@ -19,7 +19,8 @@ void godel_simple_gui::ErrorState::onStart(BlendingWidget& gui)
   window_ = new QWidget();
 
   QMessageBox::StandardButton reply;
-  reply = QMessageBox::critical(window_, tr("Warning"), QString::fromStdString(msg_), QMessageBox::Ok);
+  reply =
+      QMessageBox::critical(window_, tr("Warning"), QString::fromStdString(msg_), QMessageBox::Ok);
   Q_EMIT newStateAvailable(next_state_);
 }
 
@@ -30,14 +31,8 @@ void godel_simple_gui::ErrorState::onExit(BlendingWidget& gui)
 }
 
 // Handlers for the fixed buttons
-void godel_simple_gui::ErrorState::onNext(BlendingWidget& gui)
-{
-}
+void godel_simple_gui::ErrorState::onNext(BlendingWidget& gui) {}
 
-void godel_simple_gui::ErrorState::onBack(BlendingWidget& gui)
-{
-}
+void godel_simple_gui::ErrorState::onBack(BlendingWidget& gui) {}
 
-void godel_simple_gui::ErrorState::onReset(BlendingWidget& gui)
-{
-}
+void godel_simple_gui::ErrorState::onReset(BlendingWidget& gui) {}

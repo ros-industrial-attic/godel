@@ -13,61 +13,62 @@
 
 namespace godel_scan_analysis
 {
-  /**
-   * @brief Structure for the configuration parameters associated with
-   *        the ScanServer
-   */
-  struct ScanServerConfig
-  {
-    std::string world_frame;
-    std::string scan_frame;
-    double voxel_grid_leaf_size;
-    double voxel_grid_publish_period;
-  };
+/**
+ * @brief Structure for the configuration parameters associated with
+ *        the ScanServer
+ */
+struct ScanServerConfig
+{
+  std::string world_frame;
+  std::string scan_frame;
+  double voxel_grid_leaf_size;
+  double voxel_grid_publish_period;
+};
+
+/**
+ * Defines the ROS interface for a surface-quality-map
+ */
+class ScanServer
+{
+public:
+  typedef pcl::PointCloud<pcl::PointXYZRGB> ColorCloud;
+  typedef pcl::PointCloud<pcl::PointXYZ> Cloud;
+
+  ScanServer(const ScanServerConfig& config);
 
   /**
-   * Defines the ROS interface for a surface-quality-map 
+   * Analyzes the passed-in cloud and adds the scored points to the internal map
    */
-  class ScanServer
-  {
-  public:
-    typedef pcl::PointCloud<pcl::PointXYZRGB> ColorCloud;
-    typedef pcl::PointCloud<pcl::PointXYZ> Cloud;
+  void scanCallback(const Cloud& cloud);
 
-    ScanServer(const ScanServerConfig& config);
+  /**
+   * A debug call-back to publish point-clouds meant for ROS
+   */
+  void publishCloud(const ros::TimerEvent&) const;
 
-    /**
-     * Analyzes the passed-in cloud and adds the scored points to the internal map
-     */
-    void scanCallback(const Cloud& cloud);
+  /**
+   * Queries the underlying map for a colorized point cloud representing the current surface quality
+   * of the system
+   * @return Shared-Pointer to const PointCloud<PointXYZRGB>
+   */
+  ColorCloud::ConstPtr getSurfaceQuality() const { return map_; }
 
-    /**
-     * A debug call-back to publish point-clouds meant for ROS
-     */
-    void publishCloud(const ros::TimerEvent&) const;
+private:
+  void transformScan(ColorCloud& cloud, const ros::Time& tm) const;
+  tf::StampedTransform findTransform(const ros::Time& tm) const;
 
-    /**
-     * Queries the underlying map for a colorized point cloud representing the current surface quality of the system
-     * @return Shared-Pointer to const PointCloud<PointXYZRGB>
-     */
-    ColorCloud::ConstPtr getSurfaceQuality() const { return map_; }
-    
-  private:
-    void transformScan(ColorCloud& cloud, const ros::Time& tm) const;
-    tf::StampedTransform findTransform(const ros::Time& tm) const;
-
-
-    RoughnessScorer scorer_; /** Object that scores individual lines */
-    ColorCloud::Ptr map_; /** Data structure that contains colorised surface quality results */
-    ColorCloud::Ptr buffer_; /** Temporarily holds scan results for post-processing and tf lookup */
-    tf::TransformListener tf_listener_; // for looking up transforms between laser scan and arm position
-    ros::Subscriber scan_sub_; // for listening to scans
-    ros::Publisher cloud_pub_; // for outputting colored clouds of data
-    ros::Timer timer_; // Publish timer for color cloud
-    std::string from_frame_; // typically laser_scan_frame
-    std::string to_frame_; // typically world_frame
-    ScanServerConfig config_;
-  };
+  RoughnessScorer scorer_; /** Object that scores individual lines */
+  ColorCloud::Ptr map_;    /** Data structure that contains colorised surface quality results */
+  ColorCloud::Ptr buffer_; /** Temporarily holds scan results for post-processing and tf lookup */
+  tf::TransformListener
+      tf_listener_;          // for looking up transforms between laser scan and arm position
+  ros::Subscriber scan_sub_; // for listening to scans
+  ros::Publisher cloud_pub_; // for outputting colored clouds of data
+  ros::Timer timer_;         // Publish timer for color cloud
+  std::string from_frame_;   // typically laser_scan_frame
+  std::string to_frame_;     // typically world_frame
+  ScanServerConfig config_;
+};
 
 } // end namespace godel_scan_analysis
 

@@ -39,8 +39,6 @@ protected Q_SLOTS:
   virtual void cancel_changes_handler();
   virtual void save_changes_handler();
 };
-
 }
 
 #endif // PARAMETER_WINDOW_BASE_H
-

@@ -30,7 +30,6 @@ private:
   ros::ServiceClient sim_client_;
   bool j23_coupled_;
 };
-
 }
 
 #endif // ABB_BLEND_PROCESS_SERVICE_H

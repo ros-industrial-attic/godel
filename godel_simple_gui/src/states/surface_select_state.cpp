@@ -10,23 +10,20 @@ void godel_simple_gui::SurfaceSelectState::onStart(BlendingWidget& gui)
   gui.setText("Pick Surfaces With Mouse\nPress Next to Continue");
 }
 
-void godel_simple_gui::SurfaceSelectState::onExit(BlendingWidget& gui)
-{
-}
+void godel_simple_gui::SurfaceSelectState::onExit(BlendingWidget& gui) {}
 
 // Handlers for the fixed buttons
 void godel_simple_gui::SurfaceSelectState::onNext(BlendingWidget& gui)
 {
-  Q_EMIT newStateAvailable( new PlanningState() );
+  Q_EMIT newStateAvailable(new PlanningState());
 }
 
 void godel_simple_gui::SurfaceSelectState::onBack(BlendingWidget& gui)
 {
-  Q_EMIT newStateAvailable( new ScanTeachState() );
+  Q_EMIT newStateAvailable(new ScanTeachState());
 }
 
 void godel_simple_gui::SurfaceSelectState::onReset(BlendingWidget& gui)
 {
-  Q_EMIT newStateAvailable( new ScanTeachState() );
+  Q_EMIT newStateAvailable(new ScanTeachState());
 }
-

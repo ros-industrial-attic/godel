@@ -27,8 +27,6 @@ private:
   GuiState* next_state_;
   QWidget* window_;
 };
-
 }
 
 #endif // ERROR_STATE_H
-

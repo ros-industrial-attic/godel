@@ -13,7 +13,7 @@ namespace rms
 // Utility functions for fitting and using least-squares lines //
 /////////////////////////////////////////////////////////////////
 
-template<typename FloatType, typename InputIt>
+template <typename FloatType, typename InputIt>
 LineFitSums<FloatType> calculateSums(InputIt begin, InputIt end)
 {
   LineFitSums<FloatType> sums;
@@ -36,19 +36,19 @@ LineFitSums<FloatType> calculateSums(InputIt begin, InputIt end)
   return sums;
 }
 
-template<typename FloatType>
+template <typename FloatType>
 LineCoef<FloatType> calculateLineCoefs(const LineFitSums<FloatType>& sums)
-{  
+{
   FloatType x_mean = sums.x / sums.n;
   FloatType y_mean = sums.y / sums.n;
 
   FloatType slope = (sums.xy - sums.x * y_mean) / (sums.x2 - sums.x * x_mean);
   FloatType intercept = y_mean - slope * x_mean;
 
-  return LineCoef<FloatType>(slope, intercept); 
+  return LineCoef<FloatType>(slope, intercept);
 }
 
-template<typename FloatType, typename IOIter>
+template <typename FloatType, typename IOIter>
 void adjustWithLineInPlace(const LineCoef<FloatType>& line, IOIter begin, IOIter end)
 {
   while (begin != end)
@@ -58,13 +58,12 @@ void adjustWithLineInPlace(const LineCoef<FloatType>& line, IOIter begin, IOIter
   }
 }
 
-
-template<typename FloatType, typename IOIter>
+template <typename FloatType, typename IOIter>
 Scan<FloatType> adjustWithLine(const LineCoef<FloatType>& line, IOIter begin, IOIter end)
 {
   Scan<FloatType> scan;
   scan.points.reserve(std::distance(begin, end));
-  
+
   Point<FloatType> temp;
 
   while (begin != end)
@@ -82,7 +81,7 @@ Scan<FloatType> adjustWithLine(const LineCoef<FloatType>& line, IOIter begin, IO
 // Utility functions for scoring algorithms //
 //////////////////////////////////////////////
 
-template<typename FloatType, typename InputIt>
+template <typename FloatType, typename InputIt>
 inline FloatType sumSquared(InputIt begin, InputIt end, FloatType init = FloatType())
 {
   while (begin != end)
@@ -93,7 +92,7 @@ inline FloatType sumSquared(InputIt begin, InputIt end, FloatType init = FloatTy
   return init;
 }
 
-template<typename FloatType, typename InputIt>
+template <typename FloatType, typename InputIt>
 inline FloatType sumAbsValue(InputIt begin, InputIt end, FloatType init = FloatType())
 {
   while (begin != end)
@@ -108,15 +107,13 @@ inline FloatType sumAbsValue(InputIt begin, InputIt end, FloatType init = FloatT
 // Surface Roughness Scoring Algorithms //
 //////////////////////////////////////////
 
-template<typename FloatType, typename InputIt>
-FloatType scoreRms(InputIt begin, InputIt end)
+template <typename FloatType, typename InputIt> FloatType scoreRms(InputIt begin, InputIt end)
 {
   std::size_t n = std::distance(begin, end);
   return std::sqrt(sumSquared<FloatType>(begin, end) / n);
 }
 
-template<typename FloatType, typename InputIt>
-FloatType scoreAvgAbs(InputIt begin, InputIt end)
+template <typename FloatType, typename InputIt> FloatType scoreAvgAbs(InputIt begin, InputIt end)
 {
   std::size_t n = std::distance(begin, end);
   return sumAbsValue<FloatType>(begin, end) / n;
@@ -126,8 +123,8 @@ FloatType scoreAvgAbs(InputIt begin, InputIt end)
 // Kernel Operations for Applying a Score Function //
 /////////////////////////////////////////////////////
 
-template<class Op, typename InputIt, typename OutputIt>
-void kernelOp(InputIt wbegin, InputIt wend, InputIt in_end, OutputIt out_begin, Op op = Op()) 
+template <class Op, typename InputIt, typename OutputIt>
+void kernelOp(InputIt wbegin, InputIt wend, InputIt in_end, OutputIt out_begin, Op op = Op())
 {
   while (wend != in_end)
   {

@@ -29,8 +29,6 @@ private:
 
   ros::ServiceClient planning_client_;
 };
-
 }
 
 #endif // PLANNING_STATE_H
-

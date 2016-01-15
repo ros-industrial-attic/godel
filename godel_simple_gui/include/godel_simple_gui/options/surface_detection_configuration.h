@@ -5,8 +5,9 @@
 #include <ui_surface_detection_configuration.h>
 #include <godel_msgs/SurfaceDetectionParameters.h>
 
-namespace Ui {
-  class SurfaceDetectionConfigWindow;
+namespace Ui
+{
+class SurfaceDetectionConfigWindow;
 }
 
 namespace godel_simple_gui
@@ -29,8 +30,6 @@ protected:
   godel_msgs::SurfaceDetectionParameters params_;
   Ui::SurfaceDetectionConfigWindow* ui_;
 };
-
 }
 
 #endif // SURFACE_DETECTION_CONFIGURATION_H
-

@@ -6,7 +6,7 @@ const static std::string BLEND_TRAJECTORY_BAGFILE = "blend_trajectory.bag";
 const static std::string BLEND_TRAJECTORY_GROUP_NAME = "manipulator_tcp";
 const static std::string BLEND_TRAJECTORY_TOOL_FRAME = "tcp_frame";
 const static std::string BLEND_TRAJECTORY_WORLD_FRAME = "world_frame";
-const static double BLEND_TRAJECTORY_ANGLE_DISC = M_PI/10.0;
+const static double BLEND_TRAJECTORY_ANGLE_DISC = M_PI / 10.0;
 
 // Temporary constants for storing scan path planning parameters
 // Will be replaced by loadable, savable parameters
@@ -52,14 +52,15 @@ filterPolygonBoundaries(const godel_process_path::PolygonBoundaryCollection& bou
   return filtered_boundaries;
 }
 
-bool SurfaceBlendingService::requestBlendPath(const godel_process_path::PolygonBoundaryCollection& boundaries,
-                                              const geometry_msgs::Pose& boundary_pose,
-                                              const godel_msgs::BlendingPlanParameters& params,
-                                              visualization_msgs::Marker& path)
+bool SurfaceBlendingService::requestBlendPath(
+    const godel_process_path::PolygonBoundaryCollection& boundaries,
+    const geometry_msgs::Pose& boundary_pose, const godel_msgs::BlendingPlanParameters& params,
+    visualization_msgs::Marker& path)
 {
   godel_process_path_generation::VisualizeBlendingPlan srv;
   srv.request.params = params;
-  godel_process_path::utils::translations::godelToGeometryMsgs(srv.request.surface.boundaries, boundaries);
+  godel_process_path::utils::translations::godelToGeometryMsgs(srv.request.surface.boundaries,
+                                                               boundaries);
   tf::poseTFToMsg(tf::Transform::getIdentity(), srv.request.surface.pose);
 
   if (!visualize_process_path_client_.call(srv))
@@ -68,24 +69,26 @@ bool SurfaceBlendingService::requestBlendPath(const godel_process_path::PolygonB
   }
 
   // blend process path calculations suceeded. Save data into results.
-  path  = srv.response.path;
+  path = srv.response.path;
   path.ns = PATH_NAMESPACE;
   path.pose = boundary_pose;
 
   return true;
 }
 
-bool SurfaceBlendingService::requestScanPath(const godel_process_path::PolygonBoundaryCollection& boundaries,
-                                             const geometry_msgs::Pose& boundary_pose,
-                                             const godel_msgs::ScanPlanParameters& params,
-                                             visualization_msgs::Marker& path)
+bool SurfaceBlendingService::requestScanPath(
+    const godel_process_path::PolygonBoundaryCollection& boundaries,
+    const geometry_msgs::Pose& boundary_pose, const godel_msgs::ScanPlanParameters& params,
+    visualization_msgs::Marker& path)
 {
   using namespace godel_process_path;
   using godel_process_path::utils::translations::godelToVisualizationMsgs;
 
-  if (boundaries.empty()) return false;
+  if (boundaries.empty())
+    return false;
 
-  PolygonBoundary scan = godel_surface_detection::generateProfilimeterScanPath(boundaries.front(), params);
+  PolygonBoundary scan =
+      godel_surface_detection::generateProfilimeterScanPath(boundaries.front(), params);
   utils::translations::godelToVisualizationMsgs(path, scan, std_msgs::ColorRGBA());
   // Add in an approach and depart vector
   const geometry_msgs::Point& start_pt = path.points.front();
@@ -115,10 +118,10 @@ bool SurfaceBlendingService::requestScanPath(const godel_process_path::PolygonBo
   return true;
 }
 
-ProcessPathResult SurfaceBlendingService::generateProcessPath(const std::string& name, 
-                                                              const pcl::PolygonMesh& mesh,
-                                                              const godel_msgs::BlendingPlanParameters& blend_params,
-                                                              const godel_msgs::ScanPlanParameters& scan_params)
+ProcessPathResult
+SurfaceBlendingService::generateProcessPath(const std::string& name, const pcl::PolygonMesh& mesh,
+                                            const godel_msgs::BlendingPlanParameters& blend_params,
+                                            const godel_msgs::ScanPlanParameters& scan_params)
 {
   using godel_process_path::PolygonBoundaryCollection;
   using godel_process_path::PolygonBoundary;
@@ -132,8 +135,9 @@ ProcessPathResult SurfaceBlendingService::generateProcessPath(const std::string&
     return result;
   }
 
-  // Read & filter boundaries that are ill-formed or too small 
-  PolygonBoundaryCollection filtered_boundaries = filterPolygonBoundaries(mesh_importer_.getBoundaries(), blend_params);
+  // Read & filter boundaries that are ill-formed or too small
+  PolygonBoundaryCollection filtered_boundaries =
+      filterPolygonBoundaries(mesh_importer_.getBoundaries(), blend_params);
   // Read pose
   geometry_msgs::Pose boundary_pose;
   mesh_importer_.getPose(boundary_pose);
@@ -210,8 +214,9 @@ ProcessPathResult SurfaceBlendingService::generateProcessPath(const std::string&
   return result;
 }
 
-godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotionLibrary(const godel_msgs::BlendingPlanParameters& blend_params,
-                                                                                         const godel_msgs::ScanPlanParameters& scan_params)
+godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotionLibrary(
+    const godel_msgs::BlendingPlanParameters& blend_params,
+    const godel_msgs::ScanPlanParameters& scan_params)
 {
   std::vector<pcl::PolygonMesh> meshes;
   surface_server_.get_selected_surfaces(meshes);
@@ -231,7 +236,8 @@ godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotio
     ProcessPathResult paths = generateProcessPath(names[i], meshes[i], blend_params, scan_params);
     for (std::size_t j = 0; j < paths.paths.size(); ++j)
     {
-      ProcessPlanResult plan = generateProcessPlan(paths.paths[j].first, paths.paths[j].second, blend_params, scan_params);
+      ProcessPlanResult plan = generateProcessPlan(paths.paths[j].first, paths.paths[j].second,
+                                                   blend_params, scan_params);
       for (std::size_t k = 0; k < plan.plans.size(); ++k)
       {
         lib.get()[plan.plans[k].first] = plan.plans[k].second;
@@ -243,15 +249,17 @@ godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotio
 
 static inline bool isBlendingPath(const std::string& name)
 {
-  const static std::string suffix ("_blend");
-  if (name.size() < suffix.size()) return false;
-  return name.find(suffix, name.size()-suffix.length()) != std::string::npos;
+  const static std::string suffix("_blend");
+  if (name.size() < suffix.size())
+    return false;
+  return name.find(suffix, name.size() - suffix.length()) != std::string::npos;
 }
 
-ProcessPlanResult SurfaceBlendingService::generateProcessPlan(const std::string& name, 
-                                                              const visualization_msgs::Marker& path,
-                                                              const godel_msgs::BlendingPlanParameters& params, 
-                                                              const godel_msgs::ScanPlanParameters &scan_params)
+ProcessPlanResult
+SurfaceBlendingService::generateProcessPlan(const std::string& name,
+                                            const visualization_msgs::Marker& path,
+                                            const godel_msgs::BlendingPlanParameters& params,
+                                            const godel_msgs::ScanPlanParameters& scan_params)
 {
   ProcessPlanResult result;
 

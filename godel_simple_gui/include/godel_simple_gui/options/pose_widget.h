@@ -6,27 +6,27 @@
 #include <tf/transform_datatypes.h>
 #include <geometry_msgs/Pose.h>
 
-namespace Ui {
-  class PoseWidget;
+namespace Ui
+{
+class PoseWidget;
 }
 
 namespace godel_simple_gui
 {
 
-class PoseWidget: public QWidget
+class PoseWidget : public QWidget
 {
-Q_OBJECT
+  Q_OBJECT
 public:
-        PoseWidget(QWidget *parent = NULL);
+  PoseWidget(QWidget* parent = NULL);
 
-        void set_values(const geometry_msgs::Pose& p);
-        void set_values(const tf::Transform &t);
-        tf::Transform get_values();
+  void set_values(const geometry_msgs::Pose& p);
+  void set_values(const tf::Transform& t);
+  tf::Transform get_values();
 
 protected:
-        Ui::PoseWidget* ui_;
+  Ui::PoseWidget* ui_;
 };
-
 }
 
 #endif

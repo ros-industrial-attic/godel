@@ -31,29 +31,29 @@
 
 using descartes::ProcessPt;
 
-
 namespace godel_process_path
 {
 
-void operator<<(ProcessPt &pr_pt, const PolygonPt &pg_pt)
+void operator<<(ProcessPt& pr_pt, const PolygonPt& pg_pt)
 {
   pr_pt.setPosePosition(pg_pt.x, pg_pt.y, 0.);
 }
 
-
-void ProcessPathGenerator::addInterpolatedProcessPts(const ProcessPt &start, const ProcessPt &end, double vel)
+void ProcessPathGenerator::addInterpolatedProcessPts(const ProcessPt& start, const ProcessPt& end,
+                                                     double vel)
 {
-  const Eigen::Affine3d &p1 = start.pose();
-  const Eigen::Affine3d &p2 = end.pose();
+  const Eigen::Affine3d& p1 = start.pose();
+  const Eigen::Affine3d& p2 = end.pose();
   double sep = (p2.translation() - p1.translation()).norm();
   if (sep > max_discretization_distance_)
   {
-    size_t new_ptcnt = static_cast<size_t>(std::ceil(sep/max_discretization_distance_) - 1.);
-    for (size_t ii=1; ii<=new_ptcnt; ++ii)
+    size_t new_ptcnt = static_cast<size_t>(std::ceil(sep / max_discretization_distance_) - 1.);
+    for (size_t ii = 1; ii <= new_ptcnt; ++ii)
     {
-      double t = static_cast<double>(ii)/static_cast<double>(new_ptcnt+1.);
-      Eigen::Vector3d pos = (1-t) * p1.translation() + t * p2.translation();
-      Eigen::Quaterniond rot(Eigen::Quaterniond(p1.rotation()).slerp(t, Eigen::Quaterniond(p2.rotation())));
+      double t = static_cast<double>(ii) / static_cast<double>(new_ptcnt + 1.);
+      Eigen::Vector3d pos = (1 - t) * p1.translation() + t * p2.translation();
+      Eigen::Quaterniond rot(
+          Eigen::Quaterniond(p1.rotation()).slerp(t, Eigen::Quaterniond(p2.rotation())));
 
       ProcessPt new_pt = start;
       new_pt.pose() = Eigen::Translation3d(pos) * rot;
@@ -63,26 +63,25 @@ void ProcessPathGenerator::addInterpolatedProcessPts(const ProcessPt &start, con
   }
 }
 
-void ProcessPathGenerator::addPolygonToProcessPath(const PolygonBoundary &bnd_ref, double vel)
+void ProcessPathGenerator::addPolygonToProcessPath(const PolygonBoundary& bnd_ref, double vel)
 {
   PolygonBoundary bnd = bnd_ref;
   bnd.push_back(bnd.front());
   ProcessPt process_pt;
-  BOOST_FOREACH(const PolygonPt &pg_pt, bnd)
+  BOOST_FOREACH (const PolygonPt& pg_pt, bnd)
   {
     process_pt << pg_pt;
     process_path_.addPoint(process_pt);
     process_path_.addTransition(velToTransition(vel));
   }
-
 }
 
-void ProcessPathGenerator::addTraverseToProcessPath(const PolygonPt &from, const PolygonPt &to)
+void ProcessPathGenerator::addTraverseToProcessPath(const PolygonPt& from, const PolygonPt& to)
 {
-  ProcessPt start,      /*last point from previous path*/
-            retract,    /*safe point above previous path*/
-            approach,   /*safe point above next path*/
-            end;        /*start point of next path*/
+  ProcessPt start, /*last point from previous path*/
+      retract,     /*safe point above previous path*/
+      approach,    /*safe point above next path*/
+      end;         /*start point of next path*/
 
   start << from;
   retract.setPosePosition(from.x, from.y, safe_traverse_height_);
@@ -90,22 +89,25 @@ void ProcessPathGenerator::addTraverseToProcessPath(const PolygonPt &from, const
   end << to;
 
   addInterpolatedProcessPts(start, retract, velocity_.retract);
-  process_path_.addPoint(retract);      /*addInterpolatedPoints does not add endpoints */
+  process_path_.addPoint(retract); /*addInterpolatedPoints does not add endpoints */
   process_path_.addTransition(velToTransition(velocity_.retract));
   addInterpolatedProcessPts(retract, approach, velocity_.traverse);
   process_path_.addPoint(approach);
   process_path_.addTransition(velToTransition(velocity_.traverse));
-  addInterpolatedProcessPts(approach, end, velocity_.approach); //TODO Moving to 1st pt of next path is at vel.blending instead of vel.approach
+  addInterpolatedProcessPts(approach, end, velocity_.approach); // TODO Moving to 1st pt of next
+                                                                // path is at vel.blending instead
+                                                                // of vel.approach
 }
 
 bool ProcessPathGenerator::createProcessPath()
 {
   if (!variables_ok())
   {
-    ROS_WARN_STREAM("Problem with variable values in ProcessPathGenerator, were they set properly?" << std::endl <<
-                    "Tool Radius: " << tool_radius_ << "(m)" << std::endl <<
-                    "Margin: " << margin_ << "(m)" << std::endl <<
-                    "Overlap: " << overlap_ << "(m)");
+    ROS_WARN_STREAM("Problem with variable values in ProcessPathGenerator, were they set properly?"
+                    << std::endl
+                    << "Tool Radius: " << tool_radius_ << "(m)" << std::endl
+                    << "Margin: " << margin_ << "(m)" << std::endl
+                    << "Overlap: " << overlap_ << "(m)");
     return false;
   }
 
@@ -131,7 +133,7 @@ bool ProcessPathGenerator::createProcessPath()
   // Add approach vector
   process_path_.clear();
   ProcessPt approach, start;
-  const PolygonPt &first = *(path_polygons_->begin()->begin());
+  const PolygonPt& first = *(path_polygons_->begin()->begin());
 
   approach.setPosePosition(first.x, first.y, safe_traverse_height_);
   start << first;
@@ -142,24 +144,24 @@ bool ProcessPathGenerator::createProcessPath()
   // Do all loops until last
   double current_offset = std::numeric_limits<double>::max();
   size_t pgIdx(0);
-  while (pgIdx < path_polygons_->size()-1)
+  while (pgIdx < path_polygons_->size() - 1)
   {
     current_offset = path_offsets_->at(pgIdx);
-    const PolygonBoundary &polygon = path_polygons_->at(pgIdx);
+    const PolygonBoundary& polygon = path_polygons_->at(pgIdx);
     addPolygonToProcessPath(polygon, velocity_.blending);
     ROS_INFO_COND(verbose_, "Added polygon %li to process path.", pgIdx);
 
-    const PolygonPt last_pgpt = polygon.front(); //Each polygon ends where it starts
+    const PolygonPt last_pgpt = polygon.front(); // Each polygon ends where it starts
     ProcessPt last_pt;
     last_pt << last_pgpt;
 
     ++pgIdx;
-    PolygonBoundary &next_polygon = path_polygons_->at(pgIdx);
+    PolygonBoundary& next_polygon = path_polygons_->at(pgIdx);
 
     if (path_offsets_->at(pgIdx) < current_offset)
-    {   /*Take one step out*/
+    { /*Take one step out*/
       size_t rotate_index = polygon_utils::closestPoint(last_pgpt, next_polygon).first;
-      std::rotate(next_polygon.begin(), next_polygon.begin()+rotate_index, next_polygon.end());
+      std::rotate(next_polygon.begin(), next_polygon.begin() + rotate_index, next_polygon.end());
       ProcessPt next_pt;
       next_pt << next_polygon.front();
       addInterpolatedProcessPts(last_pt, next_pt, velocity_.approach);
@@ -173,7 +175,7 @@ bool ProcessPathGenerator::createProcessPath()
   }
 
   // Add last loop and retract
-  const PolygonBoundary &polygon = path_polygons_->at(pgIdx);
+  const PolygonBoundary& polygon = path_polygons_->at(pgIdx);
   addPolygonToProcessPath(polygon, velocity_.blending);
   ROS_INFO_COND(verbose_, "Added polygon %li to process path.", pgIdx);
   const PolygonPt last_pgpt = polygon.front();

@@ -1,15 +1,12 @@
 #include "godel_process_planning/godel_process_planning.h"
 #include <moveit/robot_model_loader/robot_model_loader.h>
 
-godel_process_planning::ProcessPlanningManager::ProcessPlanningManager(const std::string &world_frame,
-                                                                       const std::string &blend_group,
-                                                                       const std::string &blend_tcp,
-                                                                       const std::string &keyence_group,
-                                                                       const std::string &keyence_tcp,
-                                                                       const std::string &robot_model_plugin)
-  : plugin_loader_("descartes_core", "descartes_core::RobotModel")
-  , blend_group_name_(blend_group)
-  , keyence_group_name_(keyence_group)
+godel_process_planning::ProcessPlanningManager::ProcessPlanningManager(
+    const std::string& world_frame, const std::string& blend_group, const std::string& blend_tcp,
+    const std::string& keyence_group, const std::string& keyence_tcp,
+    const std::string& robot_model_plugin)
+    : plugin_loader_("descartes_core", "descartes_core::RobotModel"),
+      blend_group_name_(blend_group), keyence_group_name_(keyence_group)
 {
   // Attempt to load and initialize the blending robot model
   blend_model_ = plugin_loader_.createInstance(robot_model_plugin);

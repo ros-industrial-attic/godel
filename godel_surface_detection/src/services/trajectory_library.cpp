@@ -21,7 +21,7 @@ void godel_surface_detection::TrajectoryLibrary::load(const std::string& filenam
   bag.open(filename, rosbag::bagmode::Read);
   rosbag::View view(bag);
 
-  for(rosbag::View::iterator it = view.begin(); it != view.end(); ++it)
+  for (rosbag::View::iterator it = view.begin(); it != view.end(); ++it)
   {
     godel_msgs::ProcessPlanPtr ptr = it->instantiate<godel_msgs::ProcessPlan>();
     if (!ptr)

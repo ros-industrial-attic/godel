@@ -5,7 +5,6 @@
 #include <ui_surface_detection_configuration.h>
 #include <godel_msgs/SurfaceDetectionParameters.h>
 
-
 namespace godel_plugins
 {
 
@@ -25,8 +24,6 @@ protected:
   godel_msgs::SurfaceDetectionParameters params_;
   Ui::SurfaceDetectionConfigWindow ui_;
 };
-
 }
 
 #endif // SURFACE_DETECTION_CONFIGURATION_H
-

@@ -13,10 +13,7 @@ void godel_plugins::ParameterWindowBase::accept_changes_handler()
   hide();
 }
 
-void godel_plugins::ParameterWindowBase::cancel_changes_handler()
-{
-  hide();
-}
+void godel_plugins::ParameterWindowBase::cancel_changes_handler() { hide(); }
 
 void godel_plugins::ParameterWindowBase::save_changes_handler()
 {

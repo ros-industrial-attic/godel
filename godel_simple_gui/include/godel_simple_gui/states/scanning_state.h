@@ -29,7 +29,6 @@ private:
 
   ros::ServiceClient surface_client_;
 };
-
 }
 
 #endif

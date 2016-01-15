@@ -9,8 +9,7 @@
 #include "godel_simple_gui/states/scan_teach_state.h"
 
 godel_simple_gui::BlendingWidget::BlendingWidget(QWidget* parent)
-  : QWidget(parent)
-  , active_state_(NULL)
+    : QWidget(parent), active_state_(NULL)
 {
   // UI setup
   ui_ = new Ui::BlendingWidget;
@@ -20,7 +19,7 @@ godel_simple_gui::BlendingWidget::BlendingWidget(QWidget* parent)
   options_->hide();
 
   // Starts in scan teach state
-  changeState( new ScanTeachState() );
+  changeState(new ScanTeachState());
 
   // Wire in buttons
   connect(ui_->pushButtonNext, SIGNAL(clicked()), this, SLOT(onNextButton()));
@@ -46,34 +45,21 @@ void godel_simple_gui::BlendingWidget::setText(const std::string& txt)
   ui_->textEditStatus->setPlainText(QString::fromStdString(txt));
 }
 
-void godel_simple_gui::BlendingWidget::onNextButton()
-{
-  active_state_->onNext(*this);
-}
+void godel_simple_gui::BlendingWidget::onNextButton() { active_state_->onNext(*this); }
 
-void godel_simple_gui::BlendingWidget::onBackButton()
-{
-  active_state_->onBack(*this);
-}
+void godel_simple_gui::BlendingWidget::onBackButton() { active_state_->onBack(*this); }
 
-void godel_simple_gui::BlendingWidget::onResetButton()
-{
-  active_state_->onReset(*this);
-}
+void godel_simple_gui::BlendingWidget::onResetButton() { active_state_->onReset(*this); }
 
-void godel_simple_gui::BlendingWidget::onOptionsButton()
-{
-  options_->show();
-}
+void godel_simple_gui::BlendingWidget::onOptionsButton() { options_->show(); }
 
-void godel_simple_gui::BlendingWidget::onOptionsSave()
-{
-}
+void godel_simple_gui::BlendingWidget::onOptionsSave() {}
 
 void godel_simple_gui::BlendingWidget::changeState(GuiState* new_state)
 {
   // Don't transition to a null new state
-  if (!new_state) return;
+  if (!new_state)
+    return;
 
   if (active_state_)
   {
@@ -98,7 +84,9 @@ void godel_simple_gui::BlendingWidget::loadParameters()
 {
   godel_msgs::SurfaceBlendingParameters srv;
   srv.request.action = srv.request.GET_CURRENT_PARAMETERS;
-  ros::ServiceClient param_client = nodeHandle().serviceClient<godel_msgs::SurfaceBlendingParameters>("surface_blending_parameters");
+  ros::ServiceClient param_client =
+      nodeHandle().serviceClient<godel_msgs::SurfaceBlendingParameters>(
+          "surface_blending_parameters");
 
   setButtonsEnabled(false);
   param_client.waitForExistence();
@@ -116,5 +104,3 @@ void godel_simple_gui::BlendingWidget::loadParameters()
   }
   setButtonsEnabled(true);
 }
-
-

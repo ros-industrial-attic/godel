@@ -9,7 +9,6 @@ namespace godel_simple_gui
 // Forward declare Main Widget
 class BlendingWidget;
 
-
 class GuiState : public QObject
 {
   Q_OBJECT
@@ -27,9 +26,7 @@ public:
 
 Q_SIGNALS:
   void newStateAvailable(GuiState*);
-
 };
-
 }
 
 #endif

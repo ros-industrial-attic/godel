@@ -20,7 +20,7 @@
 #include <ros/ros.h>
 #include <boost/thread/thread.hpp>
 
-int main(int argc, char **argv)
+int main(int argc, char** argv)
 {
   testing::InitGoogleTest(&argc, argv);
   ros::init(argc, argv, "utest");
