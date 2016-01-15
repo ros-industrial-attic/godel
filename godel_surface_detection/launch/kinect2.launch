@@ -5,5 +5,4 @@
     <arg name="fps_limit" value="2" />
     <arg name="publish_tf" value="true"/>
   </include>
-
 </launch>

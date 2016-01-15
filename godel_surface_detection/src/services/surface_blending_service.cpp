@@ -713,7 +713,6 @@ bool SurfaceBlendingService::surface_blend_parameters_server_callback(godel_msgs
 bool SurfaceBlendingService::selectMotionPlanCallback(godel_msgs::SelectMotionPlan::Request& req,
                                                       godel_msgs::SelectMotionPlan::Response& res)
 {
-  ROS_ERROR_STREAM("EXECUTION: " << req.name << " with sim: " << (req.simulate ? "true" : "false"));
   // Check to ensure the plan exists
   if (trajectory_library_.get().find(req.name) == trajectory_library_.get().end())
   {
