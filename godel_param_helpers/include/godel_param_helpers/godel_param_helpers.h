@@ -2,11 +2,10 @@
 #define GODEL_PARAM_HELPERS_H
 
 #include <ros/serialization.h>
-#include <ifstream>
+#include <fstream>
 
 namespace godel_param_helpers
 {
-
 // Write a message to disk
 template<class T>
 inline bool toFile(const std::string& path, const T& msg)
@@ -52,7 +51,7 @@ inline bool fromFile(const std::string& path, T& msg)
   boost::shared_array<uint8_t> ibuffer (new uint8_t[file_size]);
   ifs.read((char*)ibuffer.get(), file_size);
   ser::IStream istream (ibuffer.get(), file_size);
-  ser::deserialize(istream, val);
+  ser::deserialize(istream, msg);
   return true;
 }
 

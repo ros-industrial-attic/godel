@@ -24,6 +24,7 @@
 #include <math.h>
 #include <moveit/robot_state/conversions.h>
 #include <moveit/trajectory_processing/iterative_time_parameterization.h>
+#include <godel_param_helpers/godel_param_helpers.h>
 
 static const std::string DEFAULT_MOVEIT_PLANNER = "RRTConnectkConfigDefault"; 
 
@@ -39,10 +40,10 @@ const double RobotScan::MIN_JOINT_VELOCITY = 0.01f ; // rad/sect
 RobotScan::RobotScan()
 {
 
-	params_.group_name = "manipulator";
+	params_.group_name = "manipulator_asus";
 	params_.home_position = "home";
 	params_.world_frame = "world_frame";
-	params_.tcp_frame = "tcp";
+	params_.tcp_frame = "kinect2_move_frame";
 	tf::poseTFToMsg(tf::Transform::getIdentity(),params_.tcp_to_cam_pose);
 	tf::poseTFToMsg(tf::Transform::getIdentity(),params_.world_to_obj_pose);
 	params_.cam_to_obj_zoffset = 0;
@@ -71,13 +72,17 @@ bool RobotScan::init()
 	return true;
 }
 
-bool RobotScan::load_parameters(const std::string& filename, const std::string& ns)
+bool RobotScan::load_parameters(const std::string& filename)
 {
-	return true;
+	return godel_param_helpers::fromFile(filename, params_);
 }
 
-void RobotScan::save_parameters(const std::string& filename, const std::string& ns)
+void RobotScan::save_parameters(const std::string& filename)
 {
+	if (!godel_param_helpers::toFile(filename, params_))
+	{
+		ROS_WARN_STREAM("Unable to save macro scan-parameters to: " << filename);
+	} 
 }
 
 void RobotScan::add_scan_callback(ScanCallback cb)

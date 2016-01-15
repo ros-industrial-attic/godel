@@ -86,13 +86,13 @@ public:
   void run();
 
 private:
-  bool load_blend_parameters(const std::string& filename, const std::string& ns);
+  bool load_blend_parameters(const std::string& filename);
 
-  void save_blend_parameters(const std::string& filename, const std::string& ns);
+  void save_blend_parameters(const std::string& filename);
 
-  bool load_scan_parameters(const std::string& filename, const std::string& ns);
+  bool load_scan_parameters(const std::string& filename);
 
-  void save_scan_parameters(const std::string& filename, const std::string& ns);
+  void save_scan_parameters(const std::string& filename);
 
   void publish_selected_surfaces_changed();
 
@@ -224,6 +224,9 @@ private:
 
   godel_surface_detection::TrajectoryLibrary trajectory_library_;
   int marker_counter_;
+
+  // Parameter loading and saving
+  std::string param_cache_prefix_;
 };
 
 #endif // surface blending services

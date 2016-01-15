@@ -9,6 +9,8 @@
 #include <godel_msgs/BlendProcessPlanning.h>
 #include <godel_msgs/KeyenceProcessPlanning.h>
 
+#include <godel_param_helpers/godel_param_helpers.h>
+
 // topics and services
 const static std::string TRAJECTORY_PLANNING_SERVICE = "trajectory_planner";
 const static std::string SURFACE_DETECTION_SERVICE = "surface_detection";
@@ -38,17 +40,13 @@ const static float TOOL_SHAFT_LEN = .045;
 const static std::string TOOL_FRAME_ID = "process_tool";
 
 // Default filepaths and namespaces for caching stored parameters
-const static std::string BLEND_PARAMS_FILE = "godel_blending_parameters.yaml";
-const static std::string BLEND_PARAMS_NS = "blending_plan";
+const static std::string BLEND_PARAMS_FILE = "godel_blending_parameters.msg";
 
-const static std::string SCAN_PARAMS_FILE = "godel_scan_parameters.yaml";
-const static std::string SCAN_PARAMS_NS = "scan_plan";
+const static std::string SCAN_PARAMS_FILE = "godel_scan_parameters.msg";
 
-const static std::string ROBOT_SCAN_PARAMS_FILE = "godel_robot_scan_parameters.yaml";
-const static std::string ROBOT_SCAN_PARAMS_NS = "robot_scan";
+const static std::string ROBOT_SCAN_PARAMS_FILE = "godel_robot_scan_parameters.msg";
 
-const static std::string SURFACE_DETECTION_PARAMS_FILE = "godel_surface_detection_parameters.yaml";
-const static std::string SURFACE_DETECTION_PARAMS_NS = "surface_detection";
+const static std::string SURFACE_DETECTION_PARAMS_FILE = "godel_surface_detection_parameters.msg";
 
 
 SurfaceBlendingService::SurfaceBlendingService()
@@ -64,11 +62,15 @@ bool SurfaceBlendingService::init()
 
   // loading parameters
   ph.getParam(PUBLISH_REGION_POINT_CLOUD,publish_region_point_cloud_);
+  // Load the 'prefix' that will be combined with parameters msg base names
+  // to save to disk
+  ph.param<std::string>("param_cache_prefix", param_cache_prefix_, "");
 
-  this->load_blend_parameters(BLEND_PARAMS_FILE, BLEND_PARAMS_NS);
-  this->load_scan_parameters(SCAN_PARAMS_FILE, SCAN_PARAMS_NS);
-  robot_scan_.load_parameters(ROBOT_SCAN_PARAMS_FILE, ROBOT_SCAN_PARAMS_NS);
-  surface_detection_.load_parameters(SURFACE_DETECTION_PARAMS_FILE, SURFACE_DETECTION_PARAMS_NS);
+  this->load_blend_parameters(param_cache_prefix_ + BLEND_PARAMS_FILE);
+  this->load_scan_parameters(param_cache_prefix_ + SCAN_PARAMS_FILE);
+  robot_scan_.load_parameters(param_cache_prefix_ + ROBOT_SCAN_PARAMS_FILE);
+  surface_detection_.load_parameters(param_cache_prefix_ + SURFACE_DETECTION_PARAMS_FILE);
+
   // save default parameters
   default_robot_scan_params__ = robot_scan_.params_;
   default_surf_detection_params_ = surface_detection_.params_;
@@ -99,9 +101,6 @@ bool SurfaceBlendingService::init()
   visualize_process_path_client_ =
       nh.serviceClient<godel_process_path_generation::VisualizeBlendingPlan>(VISUALIZE_BLENDING_PATH_SERVICE);
 
-  // trajectory_planner_client_ = nh.serviceClient<godel_msgs::TrajectoryPlanning>(TRAJECTORY_PLANNING_SERVICE);
-
-  // trajectory_execution_client_ = nh.serviceClient<godel_msgs::TrajectoryExecution>(PATH_EXECUTION_SERVICE);
   // Read process execution service names
   std::string blend_process_service_name, scan_process_service_name;
   ph.param<std::string>("blend_process_service_name", blend_process_service_name, "blend_process_execution");
@@ -168,23 +167,31 @@ void SurfaceBlendingService::run()
 
 
 // Blending Parameters
-bool SurfaceBlendingService::load_blend_parameters(const std::string& filename, const std::string& ns)
+bool SurfaceBlendingService::load_blend_parameters(const std::string& filename)
 {
-  return true;
+  return godel_param_helpers::fromFile(filename, blending_plan_params_);
 }
 
-void SurfaceBlendingService::save_blend_parameters(const std::string& filename, const std::string& ns)
+void SurfaceBlendingService::save_blend_parameters(const std::string& filename)
 {
+  if (!godel_param_helpers::toFile(filename, blending_plan_params_))
+  {
+    ROS_WARN_STREAM("Unable to save blending-plan parameters to: " << filename);
+  } 
 }
 
 // Profilimeter parameters
-bool SurfaceBlendingService::load_scan_parameters(const std::string& filename, const std::string& ns)
+bool SurfaceBlendingService::load_scan_parameters(const std::string& filename)
 {
-  return true;
+  return godel_param_helpers::fromFile(filename, scan_plan_params_);
 }
 
-void SurfaceBlendingService::save_scan_parameters(const std::string& filename, const std::string& ns)
+void SurfaceBlendingService::save_scan_parameters(const std::string& filename)
 {
+  if (!godel_param_helpers::toFile(filename, scan_plan_params_))
+  {
+    ROS_WARN_STREAM("Unable to save scan-plan parameters to: " << filename);
+  }
 }
 
 void SurfaceBlendingService::publish_selected_surfaces_changed()
@@ -641,13 +648,13 @@ bool SurfaceBlendingService::surface_blend_parameters_server_callback(godel_msgs
     robot_scan_.params_ = req.robot_scan;
     blending_plan_params_ = req.blending_plan;
     scan_plan_params_ = req.scan_plan;
-    ROS_ERROR_STREAM(scan_plan_params_);
+
     if (req.action == godel_msgs::SurfaceBlendingParameters::Request::SAVE_PARAMETERS)
     {
-      this->save_blend_parameters(BLEND_PARAMS_FILE, BLEND_PARAMS_NS);
-      this->save_scan_parameters(SCAN_PARAMS_FILE, SCAN_PARAMS_NS);
-      robot_scan_.save_parameters(ROBOT_SCAN_PARAMS_FILE, ROBOT_SCAN_PARAMS_NS);
-      surface_detection_.save_parameters(SURFACE_DETECTION_PARAMS_FILE, SURFACE_DETECTION_PARAMS_NS);
+      this->save_blend_parameters(param_cache_prefix_ + BLEND_PARAMS_FILE);
+      this->save_scan_parameters(param_cache_prefix_ + SCAN_PARAMS_FILE);
+      robot_scan_.save_parameters(param_cache_prefix_ + ROBOT_SCAN_PARAMS_FILE);
+      surface_detection_.save_parameters(param_cache_prefix_ + SURFACE_DETECTION_PARAMS_FILE);
     }
     break;
   }

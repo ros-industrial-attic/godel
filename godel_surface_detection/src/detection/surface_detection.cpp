@@ -37,6 +37,8 @@
 #include <pcl/surface/concave_hull.h>
 #include <pcl/surface/ear_clipping.h>
 #include <pcl/filters/passthrough.h>
+#include <godel_param_helpers/godel_param_helpers.h>
+
 
 const static double CONCAVE_HULL_ALPHA = 0.1;
 const static double PASSTHROUGH_Z_MIN = -0.5;
@@ -100,13 +102,17 @@ void SurfaceDetection::clear_results()
 	meshes_.clear();
 }
 
-bool SurfaceDetection::load_parameters(const std::string& filename, const std::string& ns)
+bool SurfaceDetection::load_parameters(const std::string& filename)
 {
-	return true;
+	return godel_param_helpers::fromFile(filename, params_);
 }
 
-void SurfaceDetection::save_parameters(const std::string& filename, const std::string& ns)
+void SurfaceDetection::save_parameters(const std::string& filename)
 {
+	if (!godel_param_helpers::toFile(filename, params_))
+	{
+		ROS_WARN_STREAM("Unable to save surface-detection parameters to: " << filename);
+	} 
 }
 
 void SurfaceDetection::mesh_to_marker(const pcl::PolygonMesh &mesh,
@@ -256,11 +262,11 @@ bool SurfaceDetection::find_surfaces()
 	std::vector<Normals::Ptr> segment_normals;
 
 	// Pass through filter the data to constrain it to our ROI
-  pcl::PassThrough<pcl::PointXYZ> pass;
-  pass.setInputCloud(process_cloud_ptr);
-  pass.setFilterFieldName("z");
-  pass.setFilterLimits(PASSTHROUGH_Z_MIN, PASSTHROUGH_Z_MAX);
-  pass.filter(*process_cloud_ptr);
+	pcl::PassThrough<pcl::PointXYZ> pass;
+	pass.setInputCloud(process_cloud_ptr);
+	pass.setFilterFieldName("z");
+	pass.setFilterLimits(PASSTHROUGH_Z_MIN, PASSTHROUGH_Z_MAX);
+	pass.filter(*process_cloud_ptr);
 
 	ROS_INFO_STREAM("Surface detection processing a cloud containing "<<process_cloud_ptr->size()<<" points");
 	
@@ -712,7 +718,7 @@ bool SurfaceDetection::apply_planar_reprojection(const Cloud& in, Cloud& out)
 	}
 
 	// If successful, extract points relevant to the plane
- 	pcl::ExtractIndices<pcl::PointXYZ> extract;
+	pcl::ExtractIndices<pcl::PointXYZ> extract;
 	extract.setInputCloud (in.makeShared());
 	extract.setIndices (plane_inliers_ptr);
 	extract.setNegative (false);
