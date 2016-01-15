@@ -1,0 +1,51 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- arguments -->
+  <arg name="sim_robot" default="true"/>
+  <arg name="robot_ip" unless="$(arg sim_robot)" />
+  <arg name="sim_sensor" default="true"/>
+  <arg name="robot_model_plugin" default="abb_irb2400_descartes/AbbIrb2400RobotModel"/>
+
+  <!-- Brings up action interface for simple trajectory execution - used by laser scanner process execution -->
+  <node name="path_execution_service" pkg="godel_path_execution" type="path_execution_service_node"/>
+
+  <!-- Launches the blend/scan process planners: requires descartes plugin for the robot model -->
+  <include file="$(find godel_process_planning)/launch/process_planning.launch">
+    <arg name="robot_model_plugin" value="$(arg robot_model_plugin)"/>
+  </include>
+
+  <!-- Process execution nodes: These monitor the state of robot's execution of the planned path. They can be, and in this case are, robot or vendor specific -->
+  <group>
+    <remap from="simulate_path" to="simulation/simulate_trajectory"/>
+    <node name="blend_process_execution" pkg="godel_process_execution" type="abb_blend_process_service_node"/>
+    <node name="scan_process_execution" pkg="godel_process_execution" type="keyence_process_service_node"/>
+  </group>
+  <!-- Bring up simulated robot that can be visualized under the tf namespace 'simulation'
+       Allows for previewing paths generated before execution. -->
+  <include file="$(find industrial_robot_simulator_service)/launch/start_simulation_server.launch"/>
+  
+  <!-- Brings up the core blending service: this includes the tool path planners
+       for both the blender and the laser scanner. -->
+  <include file="$(find godel_surface_detection)/launch/godel_core.launch">
+    <arg name="config_path" value="$(find godel_irb2400_support)/config"/>
+  </include>
+
+  <!-- If the user specifies a 'fake' sensor, publish fake data clouds -->
+  <group if="$(arg sim_sensor)">
+    <remap from="generated_cloud" to="sensor_point_cloud"/>
+    <node pkg="godel_surface_detection" type="point_cloud_generator_node" name="point_cloud_generator_node">
+      <rosparam command="load" file="$(find godel_irb2400_support)/config/point_cloud_descriptions.yaml"/>
+    </node>
+  </group>
+  
+  <!-- rviz w/ specified configuration -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_irb2400_support)/rviz/irb2400_blending.rviz" output="screen" launch-prefix="nice" required="true"/>
+
+  <!-- Bring up the MoveIt interface to the real or simulated robot -->
+  <include file="$(find godel_irb2400_moveit_config)/launch/moveit_planning_execution.launch">
+    <arg name="rviz" value="false"/>
+    <arg name="sim" value="$(arg sim_robot)"/>
+    <arg name="robot_ip" value="$(arg robot_ip)" unless="$(arg sim_robot)"/>
+  </include>
+  
+</launch>

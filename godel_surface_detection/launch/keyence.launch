@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- arguments -->
+  <arg name="controller_ip" default="192.168.125.2"/>
+  <arg name="sample_rate" default="200" />
+
+  <!-- surface detection service -->
+  <node name="keyence_driver" pkg="keyence_driver" type="keyence_driver_node" output="screen">
+    <param name="controller_ip" value="$(arg controller_ip)"/>
+    <param name="sample_rate" value="$(arg sample_rate)"/>
+    <param name="head_a_model" value="true"/>
+  </node>
+
+  <node name="godel_scan_analysis" pkg="godel_scan_analysis" type="godel_scan_analysis_node" output="screen">
+  </node>
+
+</launch>

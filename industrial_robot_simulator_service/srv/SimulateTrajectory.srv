@@ -1,0 +1,7 @@
+ # The trajectory to execute 
+trajectory_msgs/JointTrajectory trajectory
+
+# Set this to true if the service should block until the execution is complete
+bool wait_for_execution
+---
+# Empty

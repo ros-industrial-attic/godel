@@ -1,0 +1,21 @@
+# Select Motion Plan Service
+# Used by external processes to command the 'godel_surface_blending' service to
+# execute an 'available' motion plan.
+
+# See 'LoadSaveMotionPlan.srv' for more details on the motion plan concept
+
+string name                 # Name of the motion plan to be executed
+
+bool simulate               # If true, the motion plan will be simulated and not executed.
+
+bool wait_for_execution     # If true, the execution service will block until the trajectory
+                            # is complete. Otherwise, returns immediately.
+---
+# Return Code Enumeration
+int32 SUCCESS=0 
+int32 NO_SUCH_NAME=1
+
+# Error code (see above enum) indicating ability to START the motion plan.
+# This error code does not currently capture all of the things that might
+# go wrong during the execution of such a plan.
+int32 code

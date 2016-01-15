@@ -1,0 +1,101 @@
+<?xml version="1.0" ?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  
+  <xacro:include filename="$(find godel_robot_resources)/urdf/kinect2_sensor_macro.xacro"/>
+  <xacro:include filename="$(find godel_robot_resources)/urdf/calib_kinect2_sensor_macro.xacro"/>
+
+  <!-- parameter list -->
+  <xacro:property name="blend_tcp_x" value="-0.18415"/> 
+  <xacro:property name="blend_tcp_y" value="-0.088502"/>
+  <xacro:property name="blend_tcp_z" value="0.056356"/>
+
+  <xacro:property name="keyence_optical_x" value="0.287"/>
+  <xacro:property name="keyence_optical_y" value="-0.057"/>
+  <xacro:property name="keyence_optical_z" value="0.088502"/>
+
+  <xacro:property name="kinect_mount_x" value="0.09"/>
+  <xacro:property name="kinect_mount_y" value="-0.065"/>
+  <xacro:property name="kinect_mount_z" value="0.15"/>
+
+  <xacro:macro name="blending_eff_definition" params="prefix calibration">
+    <!-- Base link - attach your robot to this link -->
+    <link name="${prefix}eff_frame"/>
+
+    <link name="${prefix}tcp_frame"/>
+
+    <link name="${prefix}keyence_sensor_optical_frame"/>
+    <link name="${prefix}keyence_tcp_frame" />
+
+    <link name="${prefix}gripper_body">
+      <visual>
+        <geometry>
+          <mesh filename="package://godel_robot_resources/meshes/visual/blending_eff.stl" />
+        </geometry>
+        <material name="grey">
+          <color rgba="0.5 0.5 0.5 1.0"/>
+        </material>
+      </visual>
+      <collision>
+       <geometry>
+          <mesh filename="package://godel_robot_resources/meshes/collision/blending_eff.stl" />
+        </geometry>
+      </collision>
+    </link>
+
+    <!-- Adjust these values after calibration -->
+    <link name="${prefix}kinect2_mount"/>
+    
+    <!-- Conditionally include the 'calibratable' camera definition -->
+    <xacro:if value="${calibration}">
+      <xacro:calib_kinect2_sensor_definitions prefix="${prefix}" parent_link="${prefix}kinect2_mount"/>
+    </xacro:if>
+    
+    <xacro:unless value="${calibration}">
+      <xacro:kinect2_sensor_definitions prefix="${prefix}" parent_link="${prefix}kinect2_mount" 
+        x_val="-0.05490207720545535" 
+        y_val="-0.1108059263096891" 
+        z_val="-0.01737111616208457" 
+        roll="1.591199900154373" 
+        pitch="0.009672124637678808" 
+        yaw="-1.573233882247353"/>
+    </xacro:unless>
+
+    <joint name="${prefix}gripper_to_keyence_optical" type="fixed">
+      <parent link="${prefix}gripper_body"/>
+      <child link="${prefix}keyence_sensor_optical_frame"/>
+      <origin xyz="${keyence_optical_x} ${keyence_optical_y} ${keyence_optical_z}" rpy="0 -1.5707963267948966 0"/>
+    </joint>
+
+    <joint name="${prefix}keyence_optical_to_keyence_tcp" type="fixed">
+      <parent link="${prefix}keyence_sensor_optical_frame"/>
+      <child link="${prefix}keyence_tcp_frame"/>
+      <origin rpy="0 3.141592653589793 0"/>
+    </joint>
+
+    <joint name="${prefix}gripper_to_palm" type="fixed">
+      <parent link="${prefix}eff_frame"/>
+      <child link="${prefix}gripper_body"/>
+    </joint>
+
+    <joint name="${prefix}gripper_to_kinect2_mount" type="fixed">
+      <parent link="${prefix}gripper_body"/>
+      <child link="${prefix}kinect2_mount"/>
+      <origin xyz="${kinect_mount_x} ${kinect_mount_y} ${kinect_mount_z}" rpy="0 3.141592653589793 -1.5707963267948966"/>
+    </joint>
+
+    <joint name="${prefix}gripper_to_tcp" type="fixed">
+      <parent link="${prefix}gripper_body"/>
+      <child link="${prefix}tcp_frame"/>
+      <origin xyz="${blend_tcp_x} ${blend_tcp_y} ${blend_tcp_z}" rpy="0 -1.5707963267948966 0"/>
+    </joint>
+
+    <link name="${prefix}kinect2_move_frame" />
+
+    <joint name="${prefix}kinect2_move_frame_joint" type="fixed">
+      <parent link="${prefix}kinect2_mount"/>
+      <child link="${prefix}kinect2_move_frame"/>
+      <origin rpy="3.14159 0 3.14159" xyz="0 0 0"/>
+    </joint>
+
+  </xacro:macro>
+</robot>

@@ -1,0 +1,44 @@
+<?xml version="1.0" ?>
+
+<!-- 
+  This launch file brings up a series of nodes in a special namespace
+  that simulate the same robot loaded normally.
+ -->
+
+<launch>
+
+  <arg name="namespace" default="simulation"/>
+  <arg name="world_frame" default="world_frame"/>
+  <arg name="service_name" default="simulate_trajectory"/>
+  <arg name="action_name" default="joint_trajectory_action"/>
+  <!-- The default scale factor is multiplied by trajectory durations to get the final timing -->
+  <arg name="scale_factor" default="0.2"/>
+  
+  <group ns="$(arg namespace)">
+
+    <!-- publish the robot state (tf transforms) in a namespaced topic -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher">
+      <param name="tf_prefix" value="$(arg namespace)"/>
+    </node>
+
+    <!-- Connects the simulation world_frame with the real world_frame so rviz can visualize both at once -->
+    <node pkg="tf" type="static_transform_publisher" name="world_to_sim_publisher" 
+      args="0 0 0 0 0 0 
+            $(arg world_frame) $(arg namespace)/$(arg world_frame) 1000"/>
+
+    <!-- Lets the controller read from the real robot's joint names -->
+    <remap from="controller_joint_names" to="/controller_joint_names"/>
+    
+    <!-- Launches a robot simulator with associated action server -->
+    <include file="$(find industrial_robot_simulator)/launch/robot_interface_simulator.launch"/>
+
+    <!-- Launches service interface to the simulator -->
+    <node pkg="industrial_robot_simulator_service" type="simulator_service_node" name="simulator_service" output="screen">
+      <param name="service_name" value="$(arg service_name)"/>
+      <param name="action_name" value="$(arg action_name)"/>
+      <param name="scale_factor" value="$(arg scale_factor)"/>
+    </node>
+
+  </group>
+
+</launch>

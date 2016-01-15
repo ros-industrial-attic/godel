@@ -1,0 +1,17 @@
+<launch>
+  <arg name="world_frame" default="world_frame"/>
+  <arg name="blend_group" default="manipulator_tcp"/>
+  <arg name="blend_tcp" default="tcp_frame"/>
+  <arg name="keyence_group" default="manipulator_keyence"/>
+  <arg name="keyence_tcp" default="keyence_tcp_frame"/>
+  <arg name="robot_model_plugin"/>
+
+  <node name="godel_process_planning" pkg="godel_process_planning" type="godel_process_planning_node">
+    <param name="world_frame" value="$(arg world_frame)"/>
+    <param name="blend_group" value="$(arg blend_group)"/>
+    <param name="blend_tcp" value="$(arg blend_tcp)"/>
+    <param name="keyence_group" value="$(arg keyence_group)"/>
+    <param name="keyence_tcp" value="$(arg keyence_tcp)"/>
+    <param name="robot_model_plugin" value="$(arg robot_model_plugin)"/>
+  </node>
+</launch>

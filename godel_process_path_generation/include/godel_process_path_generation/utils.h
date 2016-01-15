@@ -51,7 +51,7 @@ namespace geometry
 {
 
 template <class Pt>
-std::vector<Pt> discretizeArc2D(const Pt &p1, const Pt &p2, const Pt &c, bool positive_rotation, double max_sep)
+inline std::vector<Pt> discretizeArc2D(const Pt &p1, const Pt &p2, const Pt &c, bool positive_rotation, double max_sep)
 {
   std::vector<Pt> vec;
   vec.push_back(p1);    // Add first point
@@ -88,7 +88,7 @@ std::vector<Pt> discretizeArc2D(const Pt &p1, const Pt &p2, const Pt &c, bool po
 }
 
 template <class Pt>
-std::vector<Pt> discretizeLinear(const Pt &p1, const Pt &p2, double max_sep)
+inline std::vector<Pt> discretizeLinear(const Pt &p1, const Pt &p2, double max_sep)
 {
   //add [start-end) with interpolated points between
   std::vector<Pt> vec;
@@ -116,7 +116,7 @@ namespace translations
  * @param polygons_msg vector of Polygons populated from PolygonBoundaryCollection. Z-value is unchanged.
  * @param pbc Collection of PolygonBoundaries.
  */
-void godelToGeometryMsgs(std::vector<geometry_msgs::Polygon> &polygons_msg, const godel_process_path::PolygonBoundaryCollection &pbc)
+inline void godelToGeometryMsgs(std::vector<geometry_msgs::Polygon> &polygons_msg, const godel_process_path::PolygonBoundaryCollection &pbc)
 {
   polygons_msg.clear();
   BOOST_FOREACH(::godel_process_path::PolygonBoundary polygon, pbc)
@@ -137,7 +137,7 @@ void godelToGeometryMsgs(std::vector<geometry_msgs::Polygon> &polygons_msg, cons
  * @param pbc Collection of PolygonBoundaries.
  * @param polygons_msg vector of Polygons populated from PolygonBoundaryCollection. Z-value is ignored.
  */
-void geometryMsgsToGodel(godel_process_path::PolygonBoundaryCollection &pbc, const std::vector<geometry_msgs::Polygon> &polygons_msg)
+inline void geometryMsgsToGodel(godel_process_path::PolygonBoundaryCollection &pbc, const std::vector<geometry_msgs::Polygon> &polygons_msg)
 {
   pbc.clear();
   BOOST_FOREACH(geometry_msgs::Polygon polygon_msg, polygons_msg)
@@ -160,7 +160,7 @@ void geometryMsgsToGodel(godel_process_path::PolygonBoundaryCollection &pbc, con
  * @param default_color Color to use for all points in marker.
  * @param default_scale Line width.
  */
-void godelToVisualizationMsgs(visualization_msgs::Marker &marker, const godel_process_path::PolygonBoundary &polygon,
+inline void godelToVisualizationMsgs(visualization_msgs::Marker &marker, const godel_process_path::PolygonBoundary &polygon,
                               std_msgs::ColorRGBA default_color = std_msgs::ColorRGBA(), double default_scale = .001)
 {
   marker.type = visualization_msgs::Marker::LINE_STRIP;
@@ -183,7 +183,7 @@ void godelToVisualizationMsgs(visualization_msgs::Marker &marker, const godel_pr
  * @param default_color Color to use for all points in all markers.
  * @param default_scale Line width for all markers.
  */
-void godelToVisualizationMsgs(visualization_msgs::MarkerArray &markers, const godel_process_path::PolygonBoundaryCollection &pbc,
+inline void godelToVisualizationMsgs(visualization_msgs::MarkerArray &markers, const godel_process_path::PolygonBoundaryCollection &pbc,
                               std_msgs::ColorRGBA default_color = std_msgs::ColorRGBA(), double default_scale = .001)
 {
   markers.markers.clear();
@@ -203,7 +203,7 @@ void godelToVisualizationMsgs(visualization_msgs::MarkerArray &markers, const go
  * @return True if item exists in container.
  */
 template <class Item, class Container>
-bool exists(const Item &item, const Container &container)
+inline bool exists(const Item &item, const Container &container)
 {
   return std::find(container.begin(), container.end(), item) != container.end();
 }
@@ -215,7 +215,7 @@ bool exists(const Item &item, const Container &container)
  * @return True if child found. If return is false, child left unchanged.
  */
 template <class Graph>
-bool getFirstChild(typename ::boost::graph_traits<Graph>::vertex_descriptor &child,
+inline bool getFirstChild(typename ::boost::graph_traits<Graph>::vertex_descriptor &child,
                    const typename ::boost::graph_traits<Graph>::vertex_descriptor &parent,
                    const Graph &g)
 {
@@ -237,7 +237,7 @@ bool getFirstChild(typename ::boost::graph_traits<Graph>::vertex_descriptor &chi
  * @return True if item moved successfully, false if "from" does not contain "iter"
  */
 template <class Container>
-bool moveIterFrom(Container &from, Container &to, typename Container::iterator iter)
+inline bool moveIterFrom(Container &from, Container &to, typename Container::iterator iter)
 {
   if (iter >= from.begin() && iter < from.end())
   {
@@ -256,7 +256,7 @@ bool moveIterFrom(Container &from, Container &to, typename Container::iterator i
  * @return True if item moved successfully, false if "from" does not contain "item"
  */
 template <class Container, class Item>
-bool moveItemFrom(Container &from, Container &to, const Item &item)
+inline bool moveItemFrom(Container &from, Container &to, const Item &item)
 {
   typename Container::iterator iter = std::find(from.begin(), from.end(), item);
   if (iter!=from.end())

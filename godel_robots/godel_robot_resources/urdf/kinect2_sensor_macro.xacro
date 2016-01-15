@@ -1,0 +1,13 @@
+<?xml version="1.0" ?>
+<robot name="kinect2_sensor" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:macro name="kinect2_sensor_definitions" params="prefix parent_link x_val y_val z_val roll pitch yaw">
+    <link name="${prefix}kinect2_link"/>
+
+    <joint name="${parent_link}_to_kinect2_link" type="fixed">
+      <parent link="${parent_link}"/>
+      <child link="${prefix}kinect2_link"/>
+      <origin xyz="${x_val} ${y_val} ${z_val}" rpy="${roll} ${pitch} ${yaw}"/>
+    </joint>
+
+  </xacro:macro>
+</robot>

@@ -1,0 +1,8 @@
+<?xml version="1.0" ?>
+<launch>
+  <remap from="/kinect2/hd/points" to="/sensor_point_cloud"/>
+  <include file="$(find kinect2_bridge)/launch/kinect2_bridge.launch" >
+    <arg name="fps_limit" value="2" />
+    <arg name="publish_tf" value="true"/>
+  </include>
+</launch>

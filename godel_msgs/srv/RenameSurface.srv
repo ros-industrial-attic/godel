@@ -1,0 +1,9 @@
+# Used to rename a surface loaded into the surface server
+string old_name
+string new_name
+
+---
+int32 SUCCESS=0
+int32 NO_SUCH_NAME=1
+
+int32 code
