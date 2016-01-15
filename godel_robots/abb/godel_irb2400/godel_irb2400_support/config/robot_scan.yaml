@@ -15,7 +15,7 @@ robot_scan:
       w: 1
   world_to_obj_pose:
     trans:
-      x: 2.0
+      x: 1.0
       y: 0.0
       z: 0.5
     quat:
@@ -32,4 +32,4 @@ robot_scan:
   scan_target_frame: world_frame
   reachable_scan_points_ratio: 1.0
   stop_on_planning_error: true
-  num_scan_points: 5
+  num_scan_points: 3

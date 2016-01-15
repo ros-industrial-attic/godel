@@ -1,6 +1,6 @@
 scan_plan:
   scan_width: 0.01
-  traverse_speed: 0.0025
+  traverse_speed: 0.2
   approach_distance: 0.15
   overlap: 0.001
   margin: 0
