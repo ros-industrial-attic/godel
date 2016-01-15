@@ -9,8 +9,6 @@
 
 #include <boost/thread.hpp>
 
-#include "keyence_driver/ChangeProgram.h"
-
 #include <ros/topic.h>
 
 const static int KEYENCE_PROGRAM_LASER_ON = 4;
@@ -28,8 +26,6 @@ godel_process_execution::KeyenceProcessService::KeyenceProcessService(ros::NodeH
   sim_client_ = nh.serviceClient<industrial_robot_simulator_service::SimulateTrajectory>(SIMULATION_SERVICE_NAME);
 
   real_client_ = nh.serviceClient<godel_msgs::TrajectoryExecution>(EXECUTION_SERVICE_NAME);
-
-  keyence_client_ = nh.serviceClient<keyence_driver::ChangeProgram>(KEYENCE_PROGRAM_SERVICE_NAME);
 
   // Create this process execution server
   server_ = nh.advertiseService<KeyenceProcessService,
@@ -61,61 +57,8 @@ bool godel_process_execution::KeyenceProcessService::executionCallback(godel_msg
 
 bool godel_process_execution::KeyenceProcessService::executeProcess(godel_msgs::KeyenceProcessExecution::Request& req)
 {
-  // Check for keyence existence
-  if (!keyence_client_.exists())
-  {
-    ROS_ERROR_STREAM("Keyence ROS server is not available on service " << keyence_client_.getService());
-    return false;
-  }
-
-  godel_msgs::TrajectoryExecution srv_approach;
-  srv_approach.request.wait_for_execution = true;
-  srv_approach.request.trajectory = req.trajectory_approach;
-
-  godel_msgs::TrajectoryExecution srv_process;
-  srv_process.request.wait_for_execution = true;
-  srv_process.request.trajectory = req.trajectory_process;
-
-  godel_msgs::TrajectoryExecution srv_depart;
-  srv_depart.request.wait_for_execution = true;
-  srv_depart.request.trajectory = req.trajectory_depart;
-
-  if (!real_client_.call(srv_approach))
-  {
-    ROS_ERROR("Execution client unavailable or unable to execute approach trajectory.");
-    return false;
-  }
-
-  keyence_driver::ChangeProgram keyence_srv;
-  keyence_srv.request.program_no = KEYENCE_PROGRAM_LASER_ON;
-
-  if (!keyence_client_.call(keyence_srv))
-  {
-    ROS_ERROR_STREAM("Unable to activate keyence (program " << KEYENCE_PROGRAM_LASER_ON << ").");
-     return false;
-  }
-
-  if (!real_client_.call(srv_process))
-  {
-    ROS_ERROR("Execution client unavailable or unable to execute process trajectory.");
-    return false;
-  }
-
-  // Turn keyence off
-  keyence_srv.request.program_no = KEYENCE_PROGRAM_LASER_OFF;
-  if (!keyence_client_.call(keyence_srv))
-  {
-    ROS_ERROR_STREAM("Unable to de-activate keyence (program " << KEYENCE_PROGRAM_LASER_OFF << ").");
-    return false;
-  }
-
-  if (!real_client_.call(srv_depart))
-  {
-    ROS_ERROR("Execution client unavailable or unable to execute departure trajectory.");
-    return false;
-  }
-
-  return true;
+  ROS_WARN_STREAM("Keyence driver is unimplemented.");
+  return false;
 }
 
 bool godel_process_execution::KeyenceProcessService::simulateProcess(godel_msgs::KeyenceProcessExecution::Request& req)

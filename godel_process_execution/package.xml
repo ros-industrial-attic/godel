@@ -17,12 +17,10 @@
   <build_depend>abb_file_suite</build_depend>
   <build_depend>godel_msgs</build_depend>
   <build_depend>industrial_robot_simulator_service</build_depend>
-  <build_depend>keyence_driver</build_depend>
   <build_depend>trajectory_msgs</build_depend>
 
   <run_depend>abb_file_suite</run_depend>
   <run_depend>godel_msgs</run_depend>
   <run_depend>industrial_robot_simulator_service</run_depend>
-  <run_depend>keyence_driver</run_depend>
   <run_depend>trajectory_msgs</run_depend>
 </package>
