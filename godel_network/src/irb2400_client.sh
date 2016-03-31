@@ -8,9 +8,9 @@
 
 if [ $# != 3 ]  
 then 
-	echo "USAGE: $0 MasterIP namespace auto_blending" 
-	echo " e.g.: $0 192.168.1.20 opnear3 true" 
-	exit 0
+  echo "USAGE: $0 MasterIP namespace auto_blending" 
+  echo " e.g.: $0 192.168.1.20 opnear3 true" 
+  exit 0
 fi 
 
 #######################################
