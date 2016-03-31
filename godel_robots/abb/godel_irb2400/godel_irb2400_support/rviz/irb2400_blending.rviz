@@ -59,7 +59,7 @@ Visualization Manager:
       Show Axes: false
       Show Descriptions: true
       Show Visual Aids: false
-      Update Topic: /surface_marker_server/update
+      Update Topic: surface_marker_server/update
       Value: true
     - Alpha: 0.4
       Autocompute Intensity Bounds: true
@@ -86,7 +86,7 @@ Visualization Manager:
       Size (Pixels): 1
       Size (m): 0.01
       Style: Points
-      Topic: /sensor_point_cloud
+      Topic: sensor_point_cloud
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
@@ -314,13 +314,13 @@ Visualization Manager:
       Size (Pixels): 3
       Size (m): 0.01
       Style: Points
-      Topic: /color_cloud
+      Topic: color_cloud
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
     - Class: rviz/MarkerArray
       Enabled: true
-      Marker Topic: /tool_path_preview
+      Marker Topic: tool_path_preview
       Name: Tool Path Preview
       Namespaces:
         blend_paths: true
@@ -355,12 +355,12 @@ Visualization Manager:
     - Class: rviz/FocusCamera
     - Class: rviz/Measure
     - Class: rviz/SetInitialPose
-      Topic: /initialpose
+      Topic: initialpose
     - Class: rviz/SetGoal
-      Topic: /move_base_simple/goal
+      Topic: move_base_simple/goal
     - Class: rviz/PublishPoint
       Single click: true
-      Topic: /clicked_point
+      Topic: clicked_point
   Value: true
   Views:
     Current:

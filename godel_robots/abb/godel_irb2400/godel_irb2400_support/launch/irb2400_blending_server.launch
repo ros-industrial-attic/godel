@@ -1,0 +1,49 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- arguments -->
+  <arg name="namespace" default=""/>
+  <arg name="first_robot" default="false"/>
+  <arg name="sim_robot" default="true"/>
+  <arg name="robot_ip" unless="$(arg sim_robot)" />
+  <arg name="sim_sensor" default="true"/>
+  <arg name="robot_model_plugin" default="abb_irb2400_descartes/AbbIrb2400RobotModel"/>
+
+  <!-- Brings up action interface for simple trajectory execution - used by laser scanner process execution -->
+  <node name="path_execution_service" pkg="godel_path_execution" type="path_execution_service_node" ns="$(arg namespace)"/>
+
+  <!-- Launches the blend/scan process planners: requires descartes plugin for the robot model -->
+  <include file="$(find godel_process_planning)/launch/process_planning.launch" ns="$(arg namespace)">
+    <arg name="robot_model_plugin" value="$(arg robot_model_plugin)"/>
+  </include>
+
+  <!-- Process execution nodes: These monitor the state of robot's execution of the planned path. They can be, and in this case are, robot or vendor specific -->
+  <group ns="$(arg namespace)">
+    <remap from="simulate_path" to="simulate_trajectory"/>
+    <node name="blend_process_execution" pkg="godel_process_execution" type="abb_blend_process_service_node"/>
+    <node name="scan_process_execution" pkg="godel_process_execution" type="keyence_process_service_node"/>
+  </group>
+
+  <!-- Bring up simulated robot that can be visualized under the tf namespace 'simulation'
+       Allows for previewing paths generated before execution. -->
+  <include file="$(find industrial_robot_simulator_service)/launch/start_simulation_server.launch" > <arg name="namespace" value="$(arg namespace)"/>
+  </include>
+  
+  <!-- Brings up the core blending service: this includes the tool path planners for both the blender and the laser scanner. --> <include file="$(find godel_surface_detection)/launch/godel_core.launch"  ns="$(arg namespace)">
+    <arg name="config_path" value="$(find godel_irb2400_support)/config"/>
+  </include>
+
+  <!-- Bring up the MoveIt interface to the real or simulated robot -->
+  <include file="$(find godel_irb2400_moveit_config)/launch/moveit_planning_execution.launch" if="$(arg first_robot)">
+    <arg name="rviz" value="false"/>
+    <arg name="sim" value="$(arg sim_robot)"/>
+    <arg name="robot_ip" value="$(arg robot_ip)" unless="$(arg sim_robot)"/>
+  </include>
+
+  <!-- Bring up the MoveIt interface to all the robots in different namespace-->
+  <group ns="$(arg namespace)">
+  <include file="$(find godel_irb2400_moveit_config)/launch/move_group.launch" >
+    <arg name="publish_monitored_planning_scene" value="true" />
+  </include>
+ </group>
+
+</launch>
