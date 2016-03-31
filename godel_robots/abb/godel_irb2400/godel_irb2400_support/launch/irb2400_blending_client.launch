@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<launch>
+  <!-- arguments -->
+  <arg name="namespace" default=""/>
+  <arg name="auto_run" default="false"/>
+  <arg name="sim_robot" default="true"/>
+  <arg name="robot_ip" unless="$(arg sim_robot)" />
+  <arg name="sim_sensor" default="true"/>
+  <arg name="robot_model_plugin" default="abb_irb2400_descartes/AbbIrb2400RobotModel"/>
+
+  <group if="$(arg sim_sensor)" ns="$(arg namespace)">
+    <remap from="generated_cloud" to="sensor_point_cloud"/>
+    <node pkg="godel_surface_detection" type="point_cloud_generator_node" name="point_cloud_generator_node">
+      <rosparam command="load" file="$(find godel_irb2400_support)/config/point_cloud_descriptions.yaml"/>
+    </node>
+  </group >
+
+  <!-- rviz w/ specified configuration -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_irb2400_support)/rviz/irb2400_blending_launch.rviz" output="screen" required="true" ns="$(arg namespace)"/>
+
+  <!-- automatically run -->
+  <node name="robot_auto_blending" pkg="godel_surface_detection" type="robot_auto_blending" output="screen" ns="$(arg namespace)" if="$(arg auto_run)" />
+
+</launch>
+
