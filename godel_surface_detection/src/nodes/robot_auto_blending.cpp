@@ -30,13 +30,13 @@ int main(int argc, char** argv)
   while (ros::ok())
   {
 	//Get parameters for surface detection
-	godel_msgs::SurfaceBlendingParameters param_srv;
-	param_srv.request.action = param_srv.request.GET_CURRENT_PARAMETERS;
-	ros::ServiceClient param_client = nh.serviceClient<godel_msgs::SurfaceBlendingParameters>(SURFACE_BLENDING_PARAMETERS);
-	std::vector<std::string> plan_names;
+    godel_msgs::SurfaceBlendingParameters param_srv;
+    param_srv.request.action = param_srv.request.GET_CURRENT_PARAMETERS;
+    ros::ServiceClient param_client = nh.serviceClient<godel_msgs::SurfaceBlendingParameters>(SURFACE_BLENDING_PARAMETERS);
+    std::vector<std::string> plan_names;
 
-	if (param_client.call(param_srv))
-	{
+    if (param_client.call(param_srv))
+    {
 	  //Scan and detect surface
 	  godel_msgs::SurfaceDetection surfacedetection_srv;
 	  surfacedetection_srv.request.action = 3;
