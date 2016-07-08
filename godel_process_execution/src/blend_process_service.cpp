@@ -8,7 +8,7 @@
 
 #include <ros/topic.h>
 
-const static std::string EXECUTION_SERVICE_NAME = "execute_path";
+const static std::string EXECUTION_SERVICE_NAME = "path_execution";
 const static std::string SIMULATION_SERVICE_NAME = "simulate_path";
 const static std::string THIS_SERVICE_NAME = "blend_process_execution";
 
