@@ -327,7 +327,7 @@ bool RobotScan::create_scan_trajectory(std::vector<geometry_msgs::Pose>& scan_po
 
   geometry_msgs::Pose pose;
   double alpha;
-  double alpha_incr =
+  double alpha_incr = params_.num_scan_points == 1 ? 0.0 :
       (params_.sweep_angle_end - params_.sweep_angle_start) / (params_.num_scan_points - 1);
   double eef_step = 4 * alpha_incr * params_.cam_to_obj_xoffset;
   double jump_threshold = 0.0f;
@@ -347,6 +347,7 @@ bool RobotScan::create_scan_trajectory(std::vector<geometry_msgs::Pose>& scan_po
     obj_to_cam_pose = zoffset_disp * rot_alpha_about_z * xoffset_disp * rot_tilt_about_y;
     world_to_tcp = world_to_obj_tf * obj_to_cam_pose * tcp_to_cam_tf.inverse();
     tf::poseTFToMsg(world_to_tcp, pose);
+    ROS_WARN_STREAM("POSE " << i << " " << pose);
     scan_poses.push_back(pose);
   }
 
