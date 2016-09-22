@@ -14,6 +14,8 @@ find_package(catkin REQUIRED COMPONENTS
              trajectory_msgs
              eigen_conversions
              cmake_modules
+             moveit_core
+             moveit_ros_planning_interface
 )
 
 find_package(Boost REQUIRED COMPONENTS system)
