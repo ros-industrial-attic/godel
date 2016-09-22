@@ -53,7 +53,8 @@ add_library(ros_abb_ftp_interface
 
 add_executable(ros_abb_ftp_interface_node src/abb_motion_ftp_downloader_node.cpp)
 
-add_dependencies(ros_abb_ftp_interface_node abb_file_suite_generate_messages_cpp)
+add_dependencies(ros_abb_ftp_interface abb_file_suite_generate_messages_cpp)
+#add_dependencies(ros_abb_ftp_interface_node abb_file_suite_generate_messages_cpp)
 
 target_link_libraries(ros_abb_ftp_interface
   rapid_generator
