@@ -339,12 +339,27 @@ void RobotBlendingWidget::selection_changed_handler()
 
 void RobotBlendingWidget::increase_tab_index_handler()
 {
-  ui_.TabWidgetCreateLib->setCurrentIndex(ui_.TabWidgetCreateLib->currentIndex() + 1);
+    if (ui_.TabWidgetCreateLib->currentIndex() < 2)
+    {
+        ui_.TabWidgetCreateLib->setCurrentIndex(ui_.TabWidgetCreateLib->currentIndex() + 1);
+    }
+    else
+    {
+        ui_.TabWidgetCreateLib->setCurrentIndex(ui_.TabWidgetCreateLib->currentIndex());
+    }
 }
 
 void RobotBlendingWidget::decrease_tab_index_handler()
 {
-  ui_.TabWidgetCreateLib->setCurrentIndex(ui_.TabWidgetCreateLib->currentIndex() - 1);
+    if (ui_.TabWidgetCreateLib->currentIndex() > 0)
+    {
+        ui_.TabWidgetCreateLib->setCurrentIndex(ui_.TabWidgetCreateLib->currentIndex() - 1);
+    }
+
+    else
+    {
+        ui_.TabWidgetCreateLib->setCurrentIndex(ui_.TabWidgetCreateLib->currentIndex());
+    }
 }
 
 void RobotBlendingWidget::scan_button_handler()
