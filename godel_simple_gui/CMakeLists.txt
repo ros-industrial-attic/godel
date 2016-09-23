@@ -7,9 +7,6 @@ find_package(catkin REQUIRED COMPONENTS
   rviz
 )
 
-#find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
-#include(${QT_USE_FILE})
-
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Gui REQUIRED)
@@ -110,9 +107,6 @@ target_link_libraries(${PROJECT_NAME}
                       ${catkin_LIBRARIES}
                       Qt5::Widgets
                       Qt5::Gui 
-                      #${QT_LIBRARIES} 
-                      #${QT_QTCORE_LIBRARY} 
-                      #${QT_QTGUI_LIBRARY}
                       )
 
 add_dependencies(${PROJECT_NAME} godel_msgs_generate_messages_cpp)
