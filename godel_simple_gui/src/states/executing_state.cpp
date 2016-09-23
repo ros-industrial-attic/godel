@@ -10,7 +10,7 @@
 
 #include "godel_msgs/SelectMotionPlan.h"
 
-#include <QtConcurrentRun>
+#include <QtConcurrent/QtConcurrentRun>
 
 const static std::string SELECT_MOTION_PLAN_SERVICE = "select_motion_plan";
 

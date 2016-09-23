@@ -13,7 +13,7 @@
 
 #include "godel_msgs/GetAvailableMotionPlans.h"
 
-#include <QtConcurrentRun>
+#include <QtConcurrent/QtConcurrentRun>
 
 const static std::string GET_AVAILABLE_MOTION_PLANS_SERVICE = "get_available_motion_plans";
 

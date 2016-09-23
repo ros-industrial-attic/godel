@@ -7,8 +7,9 @@ find_package(catkin REQUIRED COMPONENTS
   rviz
 )
 
-find_package(Qt4 COMPONENTS QtCore QtGui REQUIRED)
-include(${QT_USE_FILE})
+find_package(Qt5Widgets REQUIRED)
+find_package(Qt5Core REQUIRED)
+find_package(Qt5Gui REQUIRED)
 
 catkin_package(
   CATKIN_DEPENDS godel_msgs roscpp rviz
@@ -86,8 +87,8 @@ set(godel_simple_gui_INCLUDE_DIRECTORIES
 
 add_definitions(-DQT_NO_KEYWORDS)
 
-qt4_wrap_cpp(godel_simple_gui_MOCS ${godel_simple_gui_HDRS})
-qt4_wrap_ui(godel_simple_gui_UIS_H ${godel_simple_gui_UIS})
+qt5_wrap_cpp(godel_simple_gui_MOCS ${godel_simple_gui_HDRS})
+qt5_wrap_ui(godel_simple_gui_UIS_H ${godel_simple_gui_UIS})
 
 include_directories(include)
 include_directories(
@@ -102,7 +103,11 @@ add_library(${PROJECT_NAME}
   ${godel_simple_gui_SRCS}
 )
 
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${QT_LIBRARIES} ${QT_QTCORE_LIBRARY} ${QT_QTGUI_LIBRARY})
+target_link_libraries(${PROJECT_NAME} 
+                      ${catkin_LIBRARIES}
+                      Qt5::Widgets
+                      Qt5::Gui 
+                      )
 
 add_dependencies(${PROJECT_NAME} godel_msgs_generate_messages_cpp)
 
