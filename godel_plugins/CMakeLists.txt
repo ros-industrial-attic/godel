@@ -14,12 +14,6 @@ find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Gui REQUIRED)
 
-#find_package(Qt5 COMPONENTS Qt5Core Qt5Gui REQUIRED)
-#find_package(Qt5Widgets REQUIRED)
-
-#include(${QT_USE_FILE})
-#add_definitions(-DQT_NO_KEYWORDS)
-
 set(godel_plugins_SRCS
   src/rqt_plugins/robot_blending_plugin.cpp
   src/rviz_panels/robot_blending_panel.cpp
@@ -88,9 +82,6 @@ target_link_libraries(${PROJECT_NAME}
   ${catkin_LIBRARIES} 
   Qt5::Widgets
   Qt5::Gui
-  #${QT_LIBRARIES} 
-  #${QT_QTCORE_LIBRARY} 
-  #${QT_QTGUI_LIBRARY}
 )
 
 add_dependencies(${PROJECT_NAME} godel_msgs_generate_messages_cpp)
