@@ -131,7 +131,8 @@ void RobotBlendingWidget::init()
 
   // moving to first tab
   ui_.TabWidgetCreateLib->setCurrentIndex(0);
-
+  ROS_INFO_STREAM("Current Index " << ui_.TabWidgetCreateLib->currentIndex());
+  
   // setting up timer
   QTimer* timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(update_handler()));
@@ -342,10 +343,7 @@ void RobotBlendingWidget::increase_tab_index_handler()
     if (ui_.TabWidgetCreateLib->currentIndex() < 2)
     {
         ui_.TabWidgetCreateLib->setCurrentIndex(ui_.TabWidgetCreateLib->currentIndex() + 1);
-    }
-    else
-    {
-        ui_.TabWidgetCreateLib->setCurrentIndex(ui_.TabWidgetCreateLib->currentIndex());
+        //ROS_INFO_STREAM("Current Index " << ui_.TabWidgetCreateLib->currentIndex());
     }
 }
 
@@ -354,11 +352,7 @@ void RobotBlendingWidget::decrease_tab_index_handler()
     if (ui_.TabWidgetCreateLib->currentIndex() > 0)
     {
         ui_.TabWidgetCreateLib->setCurrentIndex(ui_.TabWidgetCreateLib->currentIndex() - 1);
-    }
-
-    else
-    {
-        ui_.TabWidgetCreateLib->setCurrentIndex(ui_.TabWidgetCreateLib->currentIndex());
+        //ROS_INFO_STREAM("Current Index " << ui_.TabWidgetCreateLib->currentIndex());
     }
 }
 
@@ -460,6 +454,7 @@ void RobotBlendingWidget::surface_detection_completed_handler()
   if (surface_detection_op_succeeded_)
   {
     ui_.TabWidgetCreateLib->setCurrentIndex(1);
+    //ROS_INFO_STREAM("Current Index " << ui_.TabWidgetCreateLib->currentIndex());
   }
   ui_.TabWidget->setEnabled(true);
 }
@@ -491,6 +486,7 @@ void RobotBlendingWidget::generate_process_path_handler()
     update_motion_plan_list(plan_names);
 
     ui_.TabWidgetCreateLib->setCurrentIndex(2);
+    //ROS_INFO_STREAM("Current Index " << ui_.TabWidgetCreateLib->currentIndex());
   }
 }
 
