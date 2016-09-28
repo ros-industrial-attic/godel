@@ -680,6 +680,7 @@ bool SurfaceDetection::apply_voxel_downsampling(Cloud& cloud)
 bool SurfaceDetection::apply_mls_surface_smoothing(const Cloud& cloud_in, Cloud& cloud_out,
                                                    Normals& normals)
 {
+  return true;
   pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>());
   pcl::PointCloud<pcl::PointNormal> mls_points;
   pcl::MovingLeastSquares<pcl::PointXYZ, pcl::PointNormal> mls;

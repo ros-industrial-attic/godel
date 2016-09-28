@@ -4,7 +4,7 @@
   <arg name="config_path"/>
 
     <!-- surface detection service -->
-  <node name="surface_blending_service" pkg="godel_surface_detection" type="surface_blending_service" full="screen">
+  <node name="surface_blending_service" pkg="godel_surface_detection" type="surface_blending_service">
     <rosparam command="load" file="$(arg config_path)/robot_scan.yaml"/>
     <rosparam command="load" file="$(arg config_path)/blending_plan.yaml"/>
     <rosparam command="load" file="$(arg config_path)/surface_detection.yaml"/>
