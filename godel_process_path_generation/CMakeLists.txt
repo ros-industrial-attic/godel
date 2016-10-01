@@ -20,6 +20,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 find_package(Boost REQUIRED COMPONENTS system)
 find_package(PCL 1.7 REQUIRED QUIET)
+#find_package(PCL 1.7.2 EXACT REQUIRED QUIET)
 find_package(Eigen REQUIRED)
 
 ## Generate services in the 'srv' folder
