@@ -1,0 +1,6 @@
+<?xml version="1.0" ?>
+<launch>
+  <remap from="/camera/depth/points" to="/sensor_point_cloud"/>
+  <include file="$(find ensenso)/launch/ensenso.launch" >
+  </include>
+</launch>
