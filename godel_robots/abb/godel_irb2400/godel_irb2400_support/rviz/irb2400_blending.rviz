@@ -85,7 +85,7 @@ Visualization Manager:
       Size (Pixels): 1
       Size (m): 0.00999999978
       Style: Points
-      Topic: /sensor_point_cloud
+      Topic: /depth/ds_points
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
