@@ -40,8 +40,8 @@
 #include <godel_param_helpers/godel_param_helpers.h>
 
 const static double CONCAVE_HULL_ALPHA = 0.1;
-const static double PASSTHROUGH_Z_MIN = -0.5;
-const static double PASSTHROUGH_Z_MAX = 0.5;
+const static double PASSTHROUGH_Z_MIN = -5;
+const static double PASSTHROUGH_Z_MAX = 5;
 
 namespace godel_surface_detection
 {
