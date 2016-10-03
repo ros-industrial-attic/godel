@@ -428,7 +428,6 @@ bool SurfaceDetection::find_surfaces()
   // applying mls surface smoothing
   for (int i = 0; i < surface_clouds_.size(); i++)
   {
-
     Normals::Ptr segment_normal_ptr = Normals::Ptr(new Normals());
     Cloud::Ptr segment_cloud_ptr = surface_clouds_[i];
     int count = segment_cloud_ptr->size();
@@ -753,6 +752,18 @@ bool SurfaceDetection::apply_planar_reprojection(const Cloud& in, Cloud& out)
   if (plane_inliers_ptr->indices.size() == 0)
   {
     ROS_WARN_STREAM(__FUNCTION__ << ": Could not segment out plane");
+    return false;
+  }
+
+  // HACK: Return false if plane is rotated too far from Z axis
+  Eigen::Vector3d plane_normal ((*coeff_ptr).values[0], (*coeff_ptr).values[1], (*coeff_ptr).values[2]);
+  Eigen::Vector3d z_dir (0, 0, 1);
+
+  double z_angle = std::abs(std::acos( plane_normal.normalized().dot(z_dir) ));
+  const double max_angle = M_PI / 3.0;
+  if (z_angle > max_angle && z_angle < (M_PI - max_angle))
+  {
+    ROS_WARN("Surface normal not close enough to Z: %f vs max of %f", z_angle, max_angle);
     return false;
   }
 
