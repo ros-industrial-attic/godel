@@ -28,6 +28,7 @@
     <disable_collisions link1="base_link" link2="link_2" reason="Never" />
     <disable_collisions link1="base_link" link2="link_3" reason="Never" />
     <disable_collisions link1="gripper_body" link2="link_3" reason="Never" />
+    <disable_collisions link1="gripper_body" link2="link_4" reason="Because" />
     <disable_collisions link1="gripper_body" link2="link_5" reason="Never" />
     <disable_collisions link1="gripper_body" link2="link_6" reason="Adjacent" />
     <disable_collisions link1="link_1" link2="link_2" reason="Adjacent" />
