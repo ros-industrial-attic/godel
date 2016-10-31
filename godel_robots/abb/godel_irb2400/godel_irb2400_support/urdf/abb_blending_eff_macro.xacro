@@ -107,6 +107,7 @@
     <joint name="${prefix}ensenso_move_frame_join" type="fixed">
       <parent link="${prefix}ensenso_sensor_optical_frame"/>
       <child link="${prefix}kinect2_move_frame"/>
+      <origin rpy="0 -${half_pi} 0"/>
     </joint>
 
   </xacro:macro>
