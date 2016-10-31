@@ -8,7 +8,7 @@
   <!-- instantiating arm  --> 
   <xacro:abb_irb2400 prefix=""/>
   <!-- instantiating end effector  -->
-  <xacro:blending_eff_definition prefix="" calibration="0"/>
+  <xacro:blending_eff_definition prefix=""/>
 
   <!-- Attach the end effector to the end of the robot arm (tool0) -->
   <joint name="link_t_to_eff" type="fixed">
