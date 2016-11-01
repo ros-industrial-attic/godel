@@ -167,6 +167,7 @@ bool ProcessPlanningManager::handleKeyencePlanning(
   // Attempt to solve the initial path
   if (!descartesSolve(seed_path, keyence_model_, solved_path))
   {
+    ROS_ERROR_STREAM("Descartes unable to solve scanning path");
     return false;
   }
 
@@ -206,6 +207,7 @@ bool ProcessPlanningManager::handleKeyencePlanning(
   }
   catch (std::runtime_error& e)
   {
+    ROS_ERROR_STREAM("Exception caught when planning keyence scan path: " << e.what());
     return false;
   }
 }
