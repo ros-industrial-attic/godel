@@ -209,6 +209,7 @@ bool ProcessPlanningManager::handleBlendPlanning(godel_msgs::BlendProcessPlannin
   }
   catch (const std::runtime_error& e)
   {
+    ROS_ERROR_STREAM("Exception caught when planning blending path: " << e.what());
     return false;
   }
 }
