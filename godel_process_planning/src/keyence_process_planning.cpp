@@ -172,34 +172,41 @@ bool ProcessPlanningManager::handleKeyencePlanning(
 
   // Refine the approach and depart plans by attempting joint interpolation and using MoveIt if
   // necessary
-  trajectory_msgs::JointTrajectory approach =
-      planFreeMove(*keyence_model_, keyence_group_name_, moveit_model_,
-                   extractJoints(*keyence_model_, *solved_path[0]),
-                   extractJoints(*keyence_model_, *solved_path[to_process.size()]));
+  try
+  {
+    trajectory_msgs::JointTrajectory approach =
+        planFreeMove(*keyence_model_, keyence_group_name_, moveit_model_,
+                     extractJoints(*keyence_model_, *solved_path[0]),
+                     extractJoints(*keyence_model_, *solved_path[to_process.size()]));
 
-  trajectory_msgs::JointTrajectory depart = planFreeMove(
-      *keyence_model_, keyence_group_name_, moveit_model_,
-      extractJoints(*keyence_model_, *solved_path[to_process.size() + process_points.size() - 1]),
-      extractJoints(*keyence_model_, *solved_path[seed_path.size() - 1]));
-  // Segment out process path from initial solution
-  DescartesTraj process_part(solved_path.begin() + to_process.size(),
-                             solved_path.end() - from_process.size());
-  trajectory_msgs::JointTrajectory process = toROSTrajectory(process_part, *keyence_model_);
+    trajectory_msgs::JointTrajectory depart = planFreeMove(
+        *keyence_model_, keyence_group_name_, moveit_model_,
+        extractJoints(*keyence_model_, *solved_path[to_process.size() + process_points.size() - 1]),
+        extractJoints(*keyence_model_, *solved_path[seed_path.size() - 1]));
+    // Segment out process path from initial solution
+    DescartesTraj process_part(solved_path.begin() + to_process.size(),
+                               solved_path.end() - from_process.size());
+    trajectory_msgs::JointTrajectory process = toROSTrajectory(process_part, *keyence_model_);
 
-  // Translate the Descartes trajectory into a ROS joint trajectory
-  const std::vector<std::string>& joint_names =
-      moveit_model_->getJointModelGroup(keyence_group_name_)->getActiveJointModelNames();
+    // Translate the Descartes trajectory into a ROS joint trajectory
+    const std::vector<std::string>& joint_names =
+        moveit_model_->getJointModelGroup(keyence_group_name_)->getActiveJointModelNames();
 
-  res.plan.trajectory_process = process;
-  res.plan.trajectory_approach = approach;
-  res.plan.trajectory_depart = depart;
+    res.plan.trajectory_process = process;
+    res.plan.trajectory_approach = approach;
+    res.plan.trajectory_depart = depart;
 
-  godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_approach);
-  godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_depart);
-  godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_process);
+    godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_approach);
+    godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_depart);
+    godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_process);
 
-  res.plan.type = godel_msgs::ProcessPlan::SCAN_TYPE;
+    res.plan.type = godel_msgs::ProcessPlan::SCAN_TYPE;
 
-  return true;
+    return true;
+  }
+  catch (std::runtime_error& e)
+  {
+    return false;
+  }
 }
 }
