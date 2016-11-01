@@ -172,37 +172,45 @@ bool ProcessPlanningManager::handleBlendPlanning(godel_msgs::BlendProcessPlannin
   //  2. Use MoveIt (RRT-Connect) if the above fails
   // This is the only portion of the trajectory that is collision checked. Note this
   // method also converts the Descartes points into ROS trajectories.
-  trajectory_msgs::JointTrajectory approach =
-      planFreeMove(*blend_model_, blend_group_name_, moveit_model_,
-                   extractJoints(*blend_model_, *solved_path[0]),
-                   extractJoints(*blend_model_, *solved_path[to_process.size()]));
+  try
+  {
+    trajectory_msgs::JointTrajectory approach =
+        planFreeMove(*blend_model_, blend_group_name_, moveit_model_,
+                     extractJoints(*blend_model_, *solved_path[0]),
+                     extractJoints(*blend_model_, *solved_path[to_process.size()]));
 
-  trajectory_msgs::JointTrajectory depart = planFreeMove(
-      *blend_model_, blend_group_name_, moveit_model_,
-      extractJoints(*blend_model_, *solved_path[to_process.size() + process_points.size() - 1]),
-      extractJoints(*blend_model_, *solved_path[seed_path.size() - 1]));
+    trajectory_msgs::JointTrajectory depart = planFreeMove(
+        *blend_model_, blend_group_name_, moveit_model_,
+        extractJoints(*blend_model_, *solved_path[to_process.size() + process_points.size() - 1]),
+        extractJoints(*blend_model_, *solved_path[seed_path.size() - 1]));
 
-  // Break out the process path from the seed path and convert to ROS messages
-  DescartesTraj process_part(solved_path.begin() + to_process.size(),
-                             solved_path.end() - from_process.size());
-  trajectory_msgs::JointTrajectory process = toROSTrajectory(process_part, *blend_model_);
+    // Break out the process path from the seed path and convert to ROS messages
+    DescartesTraj process_part(solved_path.begin() + to_process.size(),
+                               solved_path.end() - from_process.size());
+    trajectory_msgs::JointTrajectory process = toROSTrajectory(process_part, *blend_model_);
 
-  // Fill in result trajectories
-  res.plan.trajectory_process = process;
-  res.plan.trajectory_approach = approach;
-  res.plan.trajectory_depart = depart;
+    // Fill in result trajectories
+    res.plan.trajectory_process = process;
+    res.plan.trajectory_approach = approach;
+    res.plan.trajectory_depart = depart;
 
-  // Fill in result header information
-  const std::vector<std::string>& joint_names =
-      moveit_model_->getJointModelGroup(blend_group_name_)->getActiveJointModelNames();
+    // Fill in result header information
+    const std::vector<std::string>& joint_names =
+        moveit_model_->getJointModelGroup(blend_group_name_)->getActiveJointModelNames();
 
-  godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_approach);
-  godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_depart);
-  godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_process);
+    godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_approach);
+    godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_depart);
+    godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_process);
 
-  // set the type to blend plan
-  res.plan.type = godel_msgs::ProcessPlan::BLEND_TYPE;
+    // set the type to blend plan
+    res.plan.type = godel_msgs::ProcessPlan::BLEND_TYPE;
 
-  return true;
+    return true;
+  }
+  catch (const std::runtime_error& e)
+  {
+    return false;
+  }
 }
-}
+
+} // end namespace
