@@ -52,8 +52,8 @@ static inline descartes_core::TrajectoryPtPtr toDescartesPt(const Eigen::Affine3
  * @param target  The joint configuration at end of motion
  * @return cost value
  */
-static inline double freeSpaceCostFunction(const std::vector<double>& source,
-                                           const std::vector<double>& target)
+double freeSpaceCostFunctionBlending(const std::vector<double>& source,
+                                     const std::vector<double>& target)
 {
   // The cost function here penalizes large single joint motions in an effort to
   // keep the robot from flipping a joint, even if some other joints have to move
@@ -105,57 +105,6 @@ toDescartesTraj(const geometry_msgs::Pose& ref, const std::vector<geometry_msgs:
 }
 
 /**
- * @brief Given a list of possible joint solutions, remove those that end in collision. Checking via 'model'.
- */
-static std::vector<std::vector<double>> filterColliding(descartes_core::RobotModel& model,
-                                                        const std::vector<std::vector<double>>& candidates)
-{
-  model.setCheckCollisions(true);
-
-  std::vector<std::vector<double>> results;
-
-  for (const auto& c : candidates)
-  {
-    if (model.isValid(c))
-      results.push_back(c);
-  }
-
-  model.setCheckCollisions(false);
-  return results;
-}
-
-/**
- * @brief Given an initial position and a list of candidates, select the 'best' start position for process path.
- * @param start The initial pose of the robot (where you are moving from)
- * @param model The descartes RobotModel used for collision checking
- * @param candidates The possible candidate poses
- * @return The 'best' pose or an exception if no candidates are valid
- */
-static std::vector<double> pickBestStartPose(const std::vector<double>& start,
-                                             descartes_core::RobotModel& model,
-                                             const std::vector<std::vector<double>>& candidates)
-{
-  // step 1: Filter out candidates that are already in collision
-  auto not_colliding = filterColliding(model, candidates);
-  ROS_WARN("After filtering: %lu", not_colliding.size());
-  // step 2: sort them by "closeness" cost
-  std::sort(not_colliding.begin(), not_colliding.end(), [&start] (const std::vector<double>& a, const std::vector<double>& b) {
-    auto a_cost = freeSpaceCostFunction(start, a);
-    auto b_cost = freeSpaceCostFunction(start, b);
-    return a_cost < b_cost;
-  });
-
-
-  // return max
-  if (not_colliding.empty())
-  {
-    throw std::runtime_error("No valid starting poses");
-  }
-
-  return not_colliding.front();
-}
-
-/**
  * @brief Computes a joint motion plan based on input points and the blending process; this includes
  *        motion from current position to process path and back to the starting position.
  * @param req Process plan including reference pose, points, and process parameters
@@ -182,7 +131,7 @@ bool ProcessPlanningManager::handleBlendPlanning(godel_msgs::BlendProcessPlannin
   std::vector<std::vector<double> > start_joint_poses;
   process_points.front()->getJointPoses(*blend_model_, start_joint_poses);
 
-  auto start_pose = pickBestStartPose(current_joints, *blend_model_, start_joint_poses);
+  auto start_pose = godel_process_planning::pickBestStartPose(current_joints, *blend_model_, start_joint_poses, freeSpaceCostFunctionBlending);
 
   DescartesTraj solved_path;
   // Calculate tool pose of robot starting config so that we can go back here on the

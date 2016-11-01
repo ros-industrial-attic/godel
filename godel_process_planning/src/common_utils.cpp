@@ -263,3 +263,21 @@ trajectory_msgs::JointTrajectory godel_process_planning::planFreeMove(
     return godel_process_planning::getMoveitPlan(group_name, start, stop, moveit_model);
   }
 }
+
+std::vector<std::vector<double>>
+godel_process_planning::filterColliding(descartes_core::RobotModel& model,
+                                        const std::vector<std::vector<double>>& candidates)
+{
+  model.setCheckCollisions(true);
+
+  std::vector<std::vector<double>> results;
+
+  for (const auto& c : candidates)
+  {
+    if (model.isValid(c))
+      results.push_back(c);
+  }
+
+  model.setCheckCollisions(false);
+  return results;
+}

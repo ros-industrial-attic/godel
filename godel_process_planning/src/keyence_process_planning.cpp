@@ -11,9 +11,40 @@
 // FILE LOCAL CONSTANTS
 const static std::string JOINT_TOPIC_NAME =
     "joint_states"; // ROS topic to subscribe to for robot state
+const double FREE_SPACE_MAX_ANGLE_DELTA =
+    M_PI_2; // The maximum angle a joint during a freespace motion
+            // from the start to end position without that motion
+            // being penalized. Avoids flips.
+const double FREE_SPACE_ANGLE_PENALTY =
+    5.0; // The factor by which a joint motion is multiplied if said
+         // motion is greater than the max.
 
 namespace godel_process_planning
 {
+
+/**
+ * @brief Computes a 'cost' value for a robot motion between 'source' and 'target'
+ * @param source  The joint configuration at start of motion
+ * @param target  The joint configuration at end of motion
+ * @return cost value
+ */
+ double freeSpaceCostFunctionScan(const std::vector<double>& source,
+                                  const std::vector<double>& target)
+{
+  // The cost function here penalizes large single joint motions in an effort to
+  // keep the robot from flipping a joint, even if some other joints have to move
+  // a bit more.
+  double cost = 0.0;
+  for (std::size_t i = 0; i < source.size(); ++i)
+  {
+    double diff = std::abs(source[i] - target[i]);
+    if (diff > FREE_SPACE_MAX_ANGLE_DELTA)
+      cost += FREE_SPACE_ANGLE_PENALTY * diff;
+    else
+      cost += diff;
+  }
+  return cost;
+}
 
 /**
  * @brief Translated an Eigen pose to a Descartes trajectory point appropriate for the scan process!
@@ -95,31 +126,34 @@ bool ProcessPlanningManager::handleKeyencePlanning(
 
   // Transform process path from geometry msgs to descartes points
   DescartesTraj process_points = toDescartesTraj(req.path.reference, req.path.points, req.params);
-  DescartesTraj solved_path;
 
   // Capture the current state of the robot
   std::vector<double> current_joints = getCurrentJointState(JOINT_TOPIC_NAME);
 
-  // Current pose
+  // Compute all of the joint poses at the start of the process path
+  std::vector<std::vector<double> > start_joint_poses;
+  process_points.front()->getJointPoses(*keyence_model_, start_joint_poses);
+
+  auto start_pose = pickBestStartPose(current_joints, *keyence_model_, start_joint_poses, freeSpaceCostFunctionScan);
+
+  DescartesTraj solved_path;
+  // Calculate tool pose of robot starting config so that we can go back here on the
+  // return move
   Eigen::Affine3d init_pose;
   keyence_model_->getFK(current_joints, init_pose);
-
-  // Calculate nominal pose of initial process point
-  Eigen::Affine3d process_start_pose;
-  process_points.front()->getNominalCartPose(std::vector<double>(), *keyence_model_,
-                                             process_start_pose);
-
-  // Calculate nominal pose of final process point
+  // Compute the nominal tool pose of the final process point
   Eigen::Affine3d process_stop_pose;
   process_points.back()->getNominalCartPose(std::vector<double>(), *keyence_model_,
                                             process_stop_pose);
 
-  // Create interpolation segment from init position to process path
-  DescartesTraj to_process = createLinearPath(init_pose, process_start_pose);
+  // Joint interpolate from the initial robot position to 'best' starting configuration of process
+  // path
+  DescartesTraj to_process = createJointPath(current_joints, start_pose);
   to_process.front() =
       descartes_core::TrajectoryPtPtr(new descartes_trajectory::JointTrajectoryPt(current_joints));
 
-  // Create interpolation segment from end of process path to init position
+  // To get a rough estimate of process path cost, add a cartesian move from the final process point
+  // to the starting position again.
   DescartesTraj from_process = createLinearPath(process_stop_pose, init_pose);
   from_process.back() =
       descartes_core::TrajectoryPtPtr(new descartes_trajectory::JointTrajectoryPt(current_joints));
