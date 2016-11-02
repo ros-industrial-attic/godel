@@ -6,8 +6,7 @@
   <arg name="keyence_tcp" default="keyence_tcp_frame"/>
   <arg name="robot_model_plugin"/>
 
-  <node name="godel_process_planning" pkg="godel_process_planning" type="godel_process_planning_node" respawn="true"
-        launch-prefix="xterm -e gdb --args">
+  <node name="godel_process_planning" pkg="godel_process_planning" type="godel_process_planning_node" respawn="true">
     <param name="world_frame" value="$(arg world_frame)"/>
     <param name="blend_group" value="$(arg blend_group)"/>
     <param name="blend_tcp" value="$(arg blend_tcp)"/>
