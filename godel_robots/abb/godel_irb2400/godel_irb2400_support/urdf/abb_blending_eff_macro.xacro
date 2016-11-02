@@ -13,9 +13,15 @@
   <xacro:property name="keyence_optical_y" value="-0.057"/>
   <xacro:property name="keyence_optical_z" value="0.088502"/>
 
+<<<<<<< HEAD
   <xacro:property name="kinect_mount_x" value="0.09"/>
   <xacro:property name="kinect_mount_y" value="-0.065"/>
   <xacro:property name="kinect_mount_z" value="0.15"/>
+=======
+  <xacro:property name="blend_tcp_x" value="0"/>
+  <xacro:property name="blend_tcp_y" value="0"/>
+  <xacro:property name="blend_tcp_z" value="0.036"/> <!-- TBD -->
+>>>>>>> cfd46a8... Moved blending tool offsets slight down such that the tool goes into the part just a little bit.
 
   <xacro:macro name="blending_eff_definition" params="prefix calibration">
     <!-- Base link - attach your robot to this link -->
