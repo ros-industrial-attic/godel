@@ -25,7 +25,7 @@
 =======
   <xacro:property name="blend_tcp_x" value="0"/>
   <xacro:property name="blend_tcp_y" value="0"/>
-  <xacro:property name="blend_tcp_z" value="0.038"/> <!-- TBD -->
+  <xacro:property name="blend_tcp_z" value="0.036"/> <!-- TBD -->
 
   <xacro:property name="chuck_tcp_x" value="-0.2483"/>
   <xacro:property name="chuck_tcp_y" value="0"/>
