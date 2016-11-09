@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(godel_process_path_generation)
+ADD_DEFINITIONS( -std=c++11 )
 
 
 find_package(catkin REQUIRED COMPONENTS
