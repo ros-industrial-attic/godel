@@ -1,17 +1,6 @@
 <?xml version="1.0" ?>
 <launch>
-<<<<<<< HEAD
   <remap from="/depth/points" to="/sensor_point_cloud"/>
   <include file="$(find ensenso_publisher)/launch/ensenso_publisher_node.launch" >
-=======
   <remap from="/kinect2/hd/points" to="/sensor_point_cloud"/>
-  <!--<include file="$(find kinect2_bridge)/launch/kinect2_bridge.launch" >
-    <arg name="fps_limit" value="2" />
-    <arg name="publish_tf" value="true"/>
-<<<<<<< HEAD
->>>>>>> bb6d97b... Added frame for doing ensenso extrinsic calibration
-  </include>
-=======
-  </include>-->
->>>>>>> d7ffb72... There is something strange afoot with Descartes at certain angles on certain parts.
 </launch>
