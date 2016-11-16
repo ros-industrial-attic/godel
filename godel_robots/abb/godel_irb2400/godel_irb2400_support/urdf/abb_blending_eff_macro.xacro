@@ -36,7 +36,7 @@
     <link name="${prefix}gripper_body">
       <visual>
         <geometry>
-          <mesh filename="package://godel_irb2400_support/meshes/visual/ensenso_blending_eff.stl"/>
+          <mesh filename="package://godel_irb2400_support/meshes/visual/Bracket.STL"/>
         </geometry>
         <material name="grey">
           <color rgba="0.5 0.5 0.5 1.0"/>
@@ -49,9 +49,58 @@
       </collision>
     </link>
 
+
     <joint name="${prefix}eff_frame_to_eff_body" type="fixed">
       <parent link="${prefix}eff_frame"/>
       <child link="${prefix}gripper_body"/>
+    </joint>
+
+    <link name="${prefix}blending_tool">
+        <visual>
+            <geometry>
+                <mesh filename="package://godel_irb2400_support/meshes/visual/Blending_Tool.STL"/>
+            </geometry>
+            <material name="red">
+                <color rgba="1 0 0 1"/>
+            </material>
+        </visual>
+    </link>
+
+    <joint name="${prefix}bracket_to_blending_tool" type="fixed">
+        <parent link="${prefix}gripper_body"/>
+        <child link="${prefix}blending_tool"/>
+    </joint>
+
+    <link name="${prefix}ensenso">
+        <visual>
+            <geometry>
+                <mesh filename="package://godel_irb2400_support/meshes/visual/Ensenso.STL"/>
+            </geometry>
+            <material name="blue">
+                <color rgba="0 0 1 1"/>
+            </material>
+        </visual>
+    </link>
+
+    <joint name="${prefix}bracket_to_ensenso" type="fixed">
+        <parent link="${prefix}gripper_body"/>
+        <child link="${prefix}ensenso"/>
+    </joint>
+
+    <link name="${prefix}keyence">
+        <visual>
+            <geometry>
+                <mesh filename="package://godel_irb2400_support/meshes/visual/Laser_Sensor.STL"/>
+            </geometry>
+            <material name="yellow">
+                <color rgba="1 1 0 1"/>
+            </material>
+        </visual>
+    </link>
+
+    <joint name="${prefix}bracket_to_keyence" type="fixed">
+        <parent link="${prefix}gripper_body"/>
+        <child link="${prefix}keyence"/>
     </joint>
 
     <!-- Frames for the motorized spindle on the end-->
