@@ -12,25 +12,17 @@
   <xacro:property name="keyence_tcp_y" value="0.2863"/>
   <xacro:property name="keyence_tcp_z" value="0.12192"/>
 
-<<<<<<< HEAD
-<<<<<<< HEAD
   <xacro:property name="kinect_mount_x" value="0.09"/>
   <xacro:property name="kinect_mount_y" value="-0.065"/>
   <xacro:property name="kinect_mount_z" value="0.15"/>
-=======
+
   <xacro:property name="blend_tcp_x" value="0"/>
   <xacro:property name="blend_tcp_y" value="0"/>
-  <xacro:property name="blend_tcp_z" value="0.036"/> <!-- TBD -->
->>>>>>> cfd46a8... Moved blending tool offsets slight down such that the tool goes into the part just a little bit.
-=======
-  <xacro:property name="blend_tcp_x" value="0"/>
-  <xacro:property name="blend_tcp_y" value="0"/>
-  <xacro:property name="blend_tcp_z" value="0.036"/> <!-- TBD -->
+  <xacro:property name="blend_tcp_z" value="0.040"/> <!-- TBD -->
 
   <xacro:property name="chuck_tcp_x" value="-0.2483"/>
   <xacro:property name="chuck_tcp_y" value="0"/>
   <xacro:property name="chuck_tcp_z" value="0.12192"/>
->>>>>>> 16b9648... Added new end-effector model and URDF. Tested with robot in sim. Camera tool frame appears off, but that's fixable.
 
 
   <xacro:property name="half_pi" value="1.5707963267948966"/>
