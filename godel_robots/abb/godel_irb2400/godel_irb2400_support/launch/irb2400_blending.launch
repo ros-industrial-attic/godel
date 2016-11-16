@@ -48,6 +48,16 @@
       <rosparam command="load" file="$(find godel_irb2400_support)/config/point_cloud_descriptions.yaml"/>
     </node>
   </group>
+
+  <!-- If the user uses the real sensor, launch the ensenso publisher node -->
+  <group unless="$(arg sim_sensor)">
+    <remap from="/depth/points" to="/sensor_point_cloud"/>
+    <param name="camera_frame_id" type="string" value="tool0" />
+    <node name="ensenso_publisher_node" pkg="ensenso_publisher" type="ensenso_publisher_node" output="screen">
+        <param name="FlexView" type="bool" value="true" />
+        <param name="FlexViewImages" type="int" value="4" />
+    </node>
+  </group>
   
   <group if="$(arg debug_mode)">
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_irb2400_support)/rviz/irb2400_blending.rviz" output="screen" launch-prefix="xterm -e gdb --args" required="true"/>
