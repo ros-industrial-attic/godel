@@ -1,61 +1,20 @@
 Panels:
+  - Class: godel_simple_gui/BlendingPanel
+    Name: BlendingPanel
   - Class: rviz/Displays
-    Help Height: 81
+    Help Height: 78
     Name: Displays
     Property Tree Widget:
       Expanded:
-        - /Macro-Scan Cloud1
-        - /TF1
-        - /TF1/Frames1
-<<<<<<< HEAD
-      Splitter Ratio: 0.491566002
-    Tree Height: 862
-=======
-      Splitter Ratio: 0.491566
-    Tree Height: 334
->>>>>>> d7ffb72... There is something strange afoot with Descartes at certain angles on certain parts.
-  - Class: rviz/Selection
-    Name: Selection
-  - Class: rviz/Tool Properties
-    Expanded:
-      - /2D Pose Estimate1
-      - /2D Nav Goal1
-      - /Publish Point1
-    Name: Tool Properties
-    Splitter Ratio: 0.588679016
-  - Class: rviz/Views
-    Expanded:
-      - /Current View1
-    Name: Views
-    Splitter Ratio: 0.5
-  - Class: rviz/Time
-    Experimental: false
-    Name: Time
-    SyncMode: 0
-    SyncSource: Macro-Scan Cloud
-  - Class: godel_simple_gui/BlendingPanel
-    Name: BlendingPanel
+        - /Tool Path Preview1
+      Splitter Ratio: 0.5
+    Tree Height: 337
+  - Class: godel_plugins/RobotBlendingPanel
+    Name: RobotBlendingPanel
+    TextEntry: test_field
 Visualization Manager:
   Class: ""
   Displays:
-    - Alpha: 0.5
-      Cell Size: 0.200000003
-      Class: rviz/Grid
-      Color: 160; 160; 164
-      Enabled: true
-      Line Style:
-        Line Width: 0.0299999993
-        Value: Lines
-      Name: Grid
-      Normal Cell Count: 0
-      Offset:
-        X: 0
-        Y: 0
-        Z: 0
-      Plane: XY
-      Plane Cell Count: 14
-      Reference Frame: <Fixed Frame>
-      Value: true
     - Class: rviz/InteractiveMarkers
       Enable Transparency: true
       Enabled: true
@@ -83,27 +42,31 @@ Visualization Manager:
       Max Intensity: 4096
       Min Color: 0; 0; 0
       Min Intensity: 0
-      Name: Macro-Scan Cloud
+      Name: Macro Scan Cloud
       Position Transformer: XYZ
       Queue Size: 1
       Selectable: false
       Size (Pixels): 1
       Size (m): 0.00999999978
       Style: Points
-<<<<<<< HEAD
-      Topic: /depth/ds_points
-=======
       Topic: /sensor_point_cloud
->>>>>>> d7ffb72... There is something strange afoot with Descartes at certain angles on certain parts.
       Unreliable: false
       Use Fixed Frame: true
       Use rainbow: true
       Value: true
-    - Arrow Length: 0.0500000007
+    - Alpha: 1
+      Arrow Length: 0.0500000007
+      Axes Length: 0.100000001
+      Axes Radius: 0.00999999978
       Class: rviz/PoseArray
       Color: 0; 255; 255
       Enabled: true
+      Head Length: 0.0700000003
+      Head Radius: 0.0299999993
       Name: Camera Image Points
+      Shaft Length: 0.230000004
+      Shaft Radius: 0.00999999978
+      Shape: Arrow (Flat)
       Topic: robot_scan_path_preview
       Unreliable: false
       Value: true
@@ -126,6 +89,11 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        blending_tool:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         chuck_tip_frame:
           Alpha: 1
           Show Axes: false
@@ -134,11 +102,21 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        ensenso:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         ensenso_sensor_optical_frame:
           Alpha: 1
           Show Axes: false
           Show Trail: false
         gripper_body:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        keyence:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -197,7 +175,7 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-      Name: Actual Robot
+      Name: ActualRobot
       Robot Description: robot_description
       TF Prefix: ""
       Update Interval: 0
@@ -222,6 +200,11 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        blending_tool:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         chuck_tip_frame:
           Alpha: 1
           Show Axes: false
@@ -230,11 +213,21 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
+        ensenso:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
         ensenso_sensor_optical_frame:
           Alpha: 1
           Show Axes: false
           Show Trail: false
         gripper_body:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        keyence:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -293,7 +286,7 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-      Name: Simulated Robot
+      Name: SimulatedRobot
       Robot Description: robot_description
       TF Prefix: simulation
       Update Interval: 0
@@ -334,143 +327,25 @@ Visualization Manager:
       Marker Topic: /tool_path_preview
       Name: Tool Path Preview
       Namespaces:
-        {}
+        blend_paths: true
+        edge_path: true
+        scan_paths: true
       Queue Size: 100
       Value: true
     - Class: rviz/TF
-      Enabled: true
+      Enabled: false
       Frame Timeout: 15
       Frames:
-        All Enabled: false
-        base:
-          Value: false
-        base_link:
-          Value: false
-        camera_optical_frame:
-          Value: true
-        eff_frame:
-          Value: false
-        gripper_body:
-          Value: false
-        keyence_sensor_optical_frame:
-          Value: false
-        keyence_tcp_frame:
-          Value: false
-        kinect2_link:
-          Value: false
-        kinect2_mount:
-          Value: false
-        kinect2_move_frame:
-          Value: true
-        link_1:
-          Value: false
-        link_2:
-          Value: false
-        link_3:
-          Value: false
-        link_4:
-          Value: false
-        link_5:
-          Value: false
-        link_6:
-          Value: false
-        simulation/base:
-          Value: false
-        simulation/base_link:
-          Value: false
-        simulation/eff_frame:
-          Value: false
-        simulation/gripper_body:
-          Value: false
-        simulation/keyence_sensor_optical_frame:
-          Value: false
-        simulation/keyence_tcp_frame:
-          Value: false
-        simulation/kinect2_link:
-          Value: false
-        simulation/kinect2_mount:
-          Value: false
-        simulation/kinect2_move_frame:
-          Value: false
-        simulation/link_1:
-          Value: false
-        simulation/link_2:
-          Value: false
-        simulation/link_3:
-          Value: false
-        simulation/link_4:
-          Value: false
-        simulation/link_5:
-          Value: false
-        simulation/link_6:
-          Value: false
-        simulation/tcp_frame:
-          Value: false
-        simulation/tool0:
-          Value: false
-        simulation/world_frame:
-          Value: false
-        tcp_frame:
-          Value: false
-        tool0:
-          Value: false
-        world_frame:
-          Value: false
+        All Enabled: true
       Marker Scale: 1
       Name: TF
       Show Arrows: true
       Show Axes: true
-      Show Names: false
+      Show Names: true
       Tree:
-        world_frame:
-          base_link:
-            base:
-              {}
-            link_1:
-              link_2:
-                link_3:
-                  link_4:
-                    link_5:
-                      link_6:
-                        tool0:
-                          eff_frame:
-                            gripper_body:
-                              keyence_sensor_optical_frame:
-                                keyence_tcp_frame:
-                                  {}
-                              kinect2_mount:
-                                kinect2_link:
-                                  {}
-                                kinect2_move_frame:
-                                  camera_optical_frame:
-                                    {}
-                              tcp_frame:
-                                {}
-          simulation/world_frame:
-            simulation/base_link:
-              simulation/base:
-                {}
-              simulation/link_1:
-                simulation/link_2:
-                  simulation/link_3:
-                    simulation/link_4:
-                      simulation/link_5:
-                        simulation/link_6:
-                          simulation/tool0:
-                            simulation/eff_frame:
-                              simulation/gripper_body:
-                                simulation/keyence_sensor_optical_frame:
-                                  simulation/keyence_tcp_frame:
-                                    {}
-                                simulation/kinect2_mount:
-                                  simulation/kinect2_link:
-                                    {}
-                                  simulation/kinect2_move_frame:
-                                    {}
-                                simulation/tcp_frame:
-                                  {}
+        {}
       Update Interval: 0
-      Value: true
+      Value: false
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
@@ -480,79 +355,45 @@ Visualization Manager:
   Tools:
     - Class: rviz/Interact
       Hide Inactive Objects: true
-    - Class: rviz/MoveCamera
     - Class: rviz/Select
-    - Class: rviz/FocusCamera
-    - Class: rviz/Measure
     - Class: rviz/SetInitialPose
-      Topic: /initialpose
+      Topic: initialpose
     - Class: rviz/SetGoal
-      Topic: /move_base_simple/goal
-    - Class: rviz/PublishPoint
-      Single click: true
-      Topic: /clicked_point
+      Topic: goal
   Value: true
   Views:
     Current:
       Class: rviz/Orbit
-<<<<<<< HEAD
-      Distance: 3.59605002
-=======
-      Distance: 0.946504
->>>>>>> d7ffb72... There is something strange afoot with Descartes at certain angles on certain parts.
+      Distance: 2.96323609
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 0.879561007
-        Y: 0.0209378004
-        Z: 0.585848987
+        X: 0.285701603
+        Y: -0.451847017
+        Z: 0.755266011
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.0500000007
       Name: Current View
-<<<<<<< HEAD
       Near Clip Distance: 0.00999999978
-      Pitch: -0.2901977
+      Pitch: 0.434797406
       Target Frame: <Fixed Frame>
       Value: Orbit (rviz)
-      Yaw: 0.418592721
-=======
-      Near Clip Distance: 0.01
-      Pitch: 0.899803
-      Target Frame: <Fixed Frame>
-      Value: Orbit (rviz)
-      Yaw: 0.84668
->>>>>>> d7ffb72... There is something strange afoot with Descartes at certain angles on certain parts.
+      Yaw: 6.12970448
     Saved: ~
 Window Geometry:
   BlendingPanel:
     collapsed: false
   Displays:
     collapsed: false
-  Height: 1176
+  Height: 1148
   Hide Left Dock: false
-  Hide Right Dock: true
-<<<<<<< HEAD
-  QMainWindow State: 000000ff00000000fd0000000400000000000001b80000040efc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006400fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afc000000280000040e000000fb0100001dfa000000000100000003fb0000001a0042006c0065006e00640069006e006700500061006e0065006c0100000000ffffffff0000009500fffffffb000000240052006f0062006f00740042006c0065006e00640069006e006700500061006e0065006c0100000000ffffffff0000000000000000fb000000100044006900730070006c0061007900730100000000000001a10000016a00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f000003f5fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a005600690065007700730000000041000003f5000000b000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007510000003efc0100000002fb0000000800540069006d00650100000000000007510000030000fffffffb0000000800540069006d00650100000000000004500000000000000000000005930000040e00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
-=======
-  QMainWindow State: 000000ff00000000fd0000000400000000000001b80000039cfc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006400fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afc000000280000039c000000fb0100001dfa000000010100000003fb0000001a0042006c0065006e00640069006e006700500061006e0065006c0100000000ffffffff0000009400fffffffb000000240052006f0062006f00740042006c0065006e00640069006e006700500061006e0065006c0100000000ffffffff000000bd00fffffffb000000100044006900730070006c0061007900730100000000000001a10000016a00fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f000003f5fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a005600690065007700730000000041000003f5000000b000fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000005ff0000003efc0100000002fb0000000800540069006d00650100000000000005ff000002f600fffffffb0000000800540069006d00650100000000000004500000000000000000000004410000039c00000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Hide Right Dock: false
+  QMainWindow State: 000000ff00000000fd00000001000000000000022b00000436fc0200000002fc0000002800000436000000fb0100001dfa000000020100000003fb000000240052006f0062006f00740042006c0065006e00640069006e006700500061006e0065006c0100000000ffffffff000000bf00fffffffb000000100044006900730070006c0061007900730100000000ffffffff0000016a00fffffffb0000001a0042006c0065006e00640069006e006700500061006e0065006c0100000000000001ba0000009500fffffffb0000001a0042006c0065006e00640069006e006700500061006e0065006c0000000448000000160000000000000000000003ce0000043600000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   RobotBlendingPanel:
     collapsed: false
->>>>>>> d7ffb72... There is something strange afoot with Descartes at certain angles on certain parts.
-  Selection:
-    collapsed: false
-  Time:
-    collapsed: false
-  Tool Properties:
-    collapsed: false
-  Views:
-    collapsed: true
-<<<<<<< HEAD
-  Width: 1873
-  X: 47
-  Y: 24
-=======
   Width: 1535
-  X: 55
-  Y: 100
->>>>>>> d7ffb72... There is something strange afoot with Descartes at certain angles on certain parts.
+  X: 65
+  Y: 24
