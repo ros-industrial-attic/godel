@@ -30,10 +30,25 @@
     <disable_collisions link1="base_link" link2="link_1" reason="Adjacent" />
     <disable_collisions link1="base_link" link2="link_2" reason="Never" />
     <disable_collisions link1="base_link" link2="link_3" reason="Never" />
+    <disable_collisions link1="blending_tool" link2="ensenso" reason="Never" />
+    <disable_collisions link1="blending_tool" link2="gripper_body" reason="Adjacent" />
+    <disable_collisions link1="blending_tool" link2="keyence" reason="Never" />
+    <disable_collisions link1="blending_tool" link2="link_3" reason="Never" />
+    <disable_collisions link1="blending_tool" link2="link_5" reason="Never" />
+    <disable_collisions link1="blending_tool" link2="link_6" reason="Never" />
+    <disable_collisions link1="ensenso" link2="gripper_body" reason="Adjacent" />
+    <disable_collisions link1="ensenso" link2="keyence" reason="Never" />
+    <disable_collisions link1="ensenso" link2="link_2" reason="Never" />
+    <disable_collisions link1="ensenso" link2="link_3" reason="Never" />
+    <disable_collisions link1="ensenso" link2="link_5" reason="Never" />
+    <disable_collisions link1="ensenso" link2="link_6" reason="Never" />
+    <disable_collisions link1="gripper_body" link2="keyence" reason="Adjacent" />
     <disable_collisions link1="gripper_body" link2="link_3" reason="Never" />
-    <disable_collisions link1="gripper_body" link2="link_4" reason="Because" />
     <disable_collisions link1="gripper_body" link2="link_5" reason="Never" />
     <disable_collisions link1="gripper_body" link2="link_6" reason="Adjacent" />
+    <disable_collisions link1="keyence" link2="link_3" reason="Never" />
+    <disable_collisions link1="keyence" link2="link_5" reason="Never" />
+    <disable_collisions link1="keyence" link2="link_6" reason="Never" />
     <disable_collisions link1="link_1" link2="link_2" reason="Adjacent" />
     <disable_collisions link1="link_1" link2="link_3" reason="Never" />
     <disable_collisions link1="link_2" link2="link_3" reason="Adjacent" />
