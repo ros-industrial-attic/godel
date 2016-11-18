@@ -107,6 +107,36 @@ toDescartesTraj(const geometry_msgs::Pose& ref, const std::vector<geometry_msgs:
 }
 
 /**
+ * @brief transforms an input, in the form of a reference pose and points relative to that pose,
+ * into Descartes'
+ *        native format. Also adds in associated parameters.
+ * @param points Sequence of poses (relative to the world space of blending robot model)
+ * @param params Surface blending parameters, including info such as traversal speed
+ * @return The input trajectory encoded in Descartes points
+ */
+static godel_process_planning::DescartesTraj
+toDescartesTraj(const geometry_msgs::PoseArray& ref,
+                const godel_msgs::ScanPlanParameters& params)
+{
+  DescartesTraj traj;
+  traj.reserve(ref.poses.size());
+  if (ref.poses.empty())
+    return traj;
+
+  Eigen::Affine3d last_pose = createNominalTransform(ref.poses.front());
+
+  for (std::size_t i = 0; i < ref.poses.size(); ++i)
+  {
+    Eigen::Affine3d this_pose = createNominalTransform(ref.poses[i]);
+    double dt = (this_pose.translation() - last_pose.translation()).norm() / params.traverse_spd;
+    traj.push_back(toDescartesPt(this_pose, dt));
+    last_pose = this_pose;
+  }
+
+  return traj;
+}
+
+/**
  * @brief Computes a joint motion plan based on input points and the scan process; this includes
  *        motion from current position to process path and back to the starting position.
  * @param req Process plan including reference pose, points, and process parameters
@@ -118,14 +148,14 @@ bool ProcessPlanningManager::handleKeyencePlanning(
     godel_msgs::KeyenceProcessPlanning::Response& res)
 {
   // Precondition: Input trajectory must be non-zero
-  if (req.path.points.empty())
+  if (req.path.poses.poses.empty())
   {
     ROS_WARN("%s: Cannot create scan process plan for empty trajectory", __FUNCTION__);
     return false;
   }
 
   // Transform process path from geometry msgs to descartes points
-  DescartesTraj process_points = toDescartesTraj(req.path.reference, req.path.points, req.params);
+  DescartesTraj process_points = toDescartesTraj(req.path.poses, req.params);
 
   // Capture the current state of the robot
   std::vector<double> current_joints = getCurrentJointState(JOINT_TOPIC_NAME);
@@ -133,6 +163,14 @@ bool ProcessPlanningManager::handleKeyencePlanning(
   // Compute all of the joint poses at the start of the process path
   std::vector<std::vector<double> > start_joint_poses;
   process_points.front()->getJointPoses(*keyence_model_, start_joint_poses);
+
+  if (start_joint_poses.empty())
+  {
+    ROS_WARN_STREAM("Keyence Planning Service: Could not compute any inverse kinematic solutions for "
+                    "the first point in the process path.");
+
+    return false;
+  }
 
   auto start_pose = pickBestStartPose(current_joints, *keyence_model_, start_joint_poses, freeSpaceCostFunctionScan);
 

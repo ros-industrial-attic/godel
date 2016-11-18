@@ -25,6 +25,14 @@ Eigen::Affine3d createNominalTransform(const geometry_msgs::Pose& ref_pose,
                                        const geometry_msgs::Point& pt);
 
 /**
+   * @brief Converts a point relative to given pose into a robot tool pose (i.e. flip z)
+   * @param ref_pose Reference pose (in world frame) for 'pt'
+   * @param pt 3-dimensional offset from pose for the given point
+   * @return Tool pose corresponding to this surface point
+   */
+Eigen::Affine3d createNominalTransform(const geometry_msgs::Pose& ref_pose);
+
+/**
  * @brief Given a path and robot model, this method creates a descartes planner and attempts to
  * solve the path
  * @param in_path Trajectory to solve
