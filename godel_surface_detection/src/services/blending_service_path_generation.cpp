@@ -64,10 +64,7 @@ bool SurfaceBlendingService::requestEdgePath(
     visualization_msgs::Marker& visualization,
     geometry_msgs::PoseArray& path)
 {
-
-  ROS_WARN_STREAM("\n\n\n\n");
-  ROS_WARN_STREAM(boundaries);
-  geometry_msgs::Pose p;
+  // Construct Visualization
   geometry_msgs::Point pnt;
   size_t idx(0);
   for (godel_process_path::PolygonBoundaryCollection::const_iterator pb = boundaries.begin(), pb_end = boundaries.end(); pb != pb_end;
@@ -75,20 +72,53 @@ bool SurfaceBlendingService::requestEdgePath(
   {
     for (godel_process_path::PolygonBoundary::const_iterator pt = pb->begin(), pt_end = pb->end(); pt != pt_end; ++pt)
     {
-      p.orientation.x = 0.0;
-      p.orientation.y = 0.0;
-      p.orientation.z = 0.0;
-      p.orientation.w = 1.0;
-      p.position.x = pnt.x = pt->x; + boundary_pose.position.x;
-      p.position.y = pnt.y = pt->y; + boundary_pose.position.y;
-      p.position.z = pnt.z = z_ref; + boundary_pose.position.z;
-      path.poses.push_back(p);
+      pnt.x = pt->x;
+      pnt.y = pt->y;
+      pnt.z = z_ref;
       visualization.points.push_back(pnt);
     }
   }
 
-  ROS_INFO_STREAM(visualization);
-  path.poses.push_back(*(path.poses.begin()));
+  visualization.points.push_back(*(visualization.points.begin()));
+
+  // Add in an approach and depart vector
+  const geometry_msgs::Point& start_pt = visualization.points.front();
+  const geometry_msgs::Point& end_pt = visualization.points.back();
+  // Approach vector
+  std::vector<geometry_msgs::Point> approach_points;
+  for (std::size_t i = 0; i < SCAN_APPROACH_STEP_COUNT; ++i)
+  {
+    geometry_msgs::Point pt = start_pt;
+    pt.z += (SCAN_APPROACH_STEP_COUNT - i) * SCAN_APPROACH_STEP_DISTANCE;
+    approach_points.push_back(pt);
+  }
+  // Depart vector
+  std::vector<geometry_msgs::Point> depart_points;
+  for (std::size_t i = 0; i < SCAN_APPROACH_STEP_COUNT; ++i)
+  {
+    geometry_msgs::Point pt = end_pt;
+    pt.z += i * SCAN_APPROACH_STEP_DISTANCE;
+    depart_points.push_back(pt);
+  }
+  // Insert into path
+  visualization.points.insert(visualization.points.end(), depart_points.begin(), depart_points.end());
+  visualization.points.insert(visualization.points.begin(), approach_points.begin(), approach_points.end());
+
+  // Construct Poses
+  geometry_msgs::Pose p;
+  p.orientation.x = 0.0;
+  p.orientation.y = 0.0;
+  p.orientation.z = 0.0;
+  p.orientation.w = 1.0;
+
+  for(int i = 0; i < visualization.points.size(); i++)
+  {
+    p.position.x = visualization.points[i].x + boundary_pose.position.x;
+    p.position.y = visualization.points[i].y + boundary_pose.position.y;
+    p.position.z = visualization.points[i].z + boundary_pose.position.z;
+    path.poses.push_back(p);
+  }
+
 
   // blend process path calculations suceeded. Save data into results.
   visualization.ns = PATH_NAMESPACE;
@@ -148,9 +178,6 @@ bool SurfaceBlendingService::requestScanPath(
   using namespace godel_process_path;
   using godel_process_path::utils::translations::godelToVisualizationMsgs;
 
-  ROS_ERROR_STREAM("\n\n\n\n");
-  ROS_ERROR_STREAM(boundaries);
-
   if (boundaries.empty())
     return false;
 
@@ -191,6 +218,7 @@ bool SurfaceBlendingService::requestScanPath(
     p.position.x = visualization.points[i].x + boundary_pose.position.x;
     p.position.y = visualization.points[i].y + boundary_pose.position.y;
     p.position.z = visualization.points[i].z + boundary_pose.position.z;
+    path.poses.push_back(p);
   }
 
   return true;
