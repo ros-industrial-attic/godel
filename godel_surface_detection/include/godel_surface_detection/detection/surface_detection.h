@@ -146,6 +146,7 @@ public:
   void save_parameters(const std::string& filename);
 
   bool find_surfaces();
+  bool find_surfaces_old();
   std::string get_results_summary();
 
   static void mesh_to_marker(const pcl::PolygonMesh& mesh, visualization_msgs::Marker& marker);

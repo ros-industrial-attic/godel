@@ -1,5 +1,5 @@
 #include <godel_surface_detection/services/surface_blending_service.h>
-
+#include <godel_surface_detection/detection/surface_segmentation.h>
 #include <godel_msgs/TrajectoryExecution.h>
 
 // Process Execution
@@ -299,7 +299,7 @@ bool SurfaceBlendingService::find_surfaces(visualization_msgs::MarkerArray& surf
       surface_server_.add_surface(meshes[i]);
     }
 
-    // copying to surface markers to output argument
+    // copying surface markers to output argument
     visualization_msgs::MarkerArray markers_msg = surface_detection_.get_surface_markers();
     surfaces.markers.insert(surfaces.markers.begin(), markers_msg.markers.begin(),
                             markers_msg.markers.end());
