@@ -111,14 +111,24 @@ bool SurfaceBlendingService::requestEdgePath(
   p.orientation.z = 0.0;
   p.orientation.w = 1.0;
 
+  // Transform points to world frame and generate pose
+  Eigen::Affine3d boundary_pose_eigen;
+  Eigen::Affine3d eigen_p;
+  Eigen::Affine3d result;
+
+  tf::poseMsgToEigen(boundary_pose, boundary_pose_eigen);
+
   for(int i = 0; i < visualization.points.size(); i++)
   {
-    p.position.x = visualization.points[i].x + boundary_pose.position.x;
-    p.position.y = visualization.points[i].y + boundary_pose.position.y;
-    p.position.z = visualization.points[i].z + boundary_pose.position.z;
+    p.position.x = visualization.points[i].x;
+    p.position.y = visualization.points[i].y;
+    p.position.z = visualization.points[i].z;
+
+    tf::poseMsgToEigen(p, eigen_p);
+    result = boundary_pose_eigen*eigen_p;
+    tf::poseEigenToMsg(result, p);
     path.poses.push_back(p);
   }
-
 
   // blend process path calculations suceeded. Save data into results.
   visualization.ns = PATH_NAMESPACE;
@@ -126,7 +136,6 @@ bool SurfaceBlendingService::requestEdgePath(
 
   return true;
 }
-
 
 bool SurfaceBlendingService::requestBlendPath(
     const godel_process_path::PolygonBoundaryCollection& boundaries,
@@ -154,11 +163,22 @@ bool SurfaceBlendingService::requestBlendPath(
   p.orientation.z = boundary_pose.orientation.z;
   p.orientation.w = boundary_pose.orientation.w;
 
+  // Transform points to world frame and generate pose
+  Eigen::Affine3d boundary_pose_eigen;
+  Eigen::Affine3d eigen_p;
+  Eigen::Affine3d result;
+
+  tf::poseMsgToEigen(boundary_pose, boundary_pose_eigen);
+
   for (int i = 0; i < visualization.points.size(); i++)
   {
-    p.position.x = visualization.points[i].x + boundary_pose.position.x;
-    p.position.y = visualization.points[i].y + boundary_pose.position.y;
-    p.position.z = visualization.points[i].z + boundary_pose.position.z;
+    p.position.x = visualization.points[i].x;
+    p.position.y = visualization.points[i].y;
+    p.position.z = visualization.points[i].z;
+
+    tf::poseMsgToEigen(p, eigen_p);
+    result = boundary_pose_eigen*eigen_p;
+    tf::poseEigenToMsg(result, p);
     path.poses.push_back(p);
   }
 
@@ -213,13 +233,27 @@ bool SurfaceBlendingService::requestScanPath(
   p.orientation.z = boundary_pose.orientation.z;
   p.orientation.w = boundary_pose.orientation.w;
 
+  // Transform points to world frame and generate pose
+  Eigen::Affine3d boundary_pose_eigen;
+  Eigen::Affine3d eigen_p;
+  Eigen::Affine3d result;
+
+  tf::poseMsgToEigen(boundary_pose, boundary_pose_eigen);
+
   for(int i = 0; i < visualization.points.size(); i++)
   {
-    p.position.x = visualization.points[i].x + boundary_pose.position.x;
-    p.position.y = visualization.points[i].y + boundary_pose.position.y;
-    p.position.z = visualization.points[i].z + boundary_pose.position.z;
+    p.position.x = visualization.points[i].x;
+    p.position.y = visualization.points[i].y;
+    p.position.z = visualization.points[i].z;
+
+    tf::poseMsgToEigen(p, eigen_p);
+    result = boundary_pose_eigen*eigen_p;
+    tf::poseEigenToMsg(result, p);
     path.poses.push_back(p);
   }
+
+  visualization.ns = PATH_NAMESPACE;
+  visualization.pose = boundary_pose;
 
   return true;
 }
