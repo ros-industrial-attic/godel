@@ -158,10 +158,10 @@ bool SurfaceBlendingService::requestBlendPath(
   // blend process path calculations suceeded. Save data into results.
   visualization = srv.response.path;
   geometry_msgs::Pose p;
-  p.orientation.x = boundary_pose.orientation.x;
-  p.orientation.y = boundary_pose.orientation.y;
-  p.orientation.z = boundary_pose.orientation.z;
-  p.orientation.w = boundary_pose.orientation.w;
+  p.orientation.x = 0.0;
+  p.orientation.y = 0.0;
+  p.orientation.z = 0.0;
+  p.orientation.w = 1.0;
 
   // Transform points to world frame and generate pose
   Eigen::Affine3d boundary_pose_eigen;
