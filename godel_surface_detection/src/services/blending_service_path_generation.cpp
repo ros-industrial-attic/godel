@@ -361,7 +361,7 @@ SurfaceBlendingService::generateProcessPath(const std::string& name,
   geometry_msgs::PoseArray all_poses;
   for(int i = 0; i < sorted_boundaries.size(); i++)
   {
-    if(sorted_boundaries.at(i).size() < BOUNDARY_THRESHOLD)
+    if(sorted_boundaries.at(i)->size() < BOUNDARY_THRESHOLD)
       continue;
 
     geometry_msgs::PoseArray edge_poses;
