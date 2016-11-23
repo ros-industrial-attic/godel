@@ -24,6 +24,10 @@
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>
 
+static const int MAX_CLUSTER_SIZE = 100000;
+static const int MIN_CLUSTER_SIZE = 2500;
+static const int NUM_NEIGHBORS = 30;
+
 
 template <bool IsManifoldT>
 struct MeshTraits
@@ -35,8 +39,8 @@ struct MeshTraits
   typedef boost::integral_constant <bool, IsManifoldT> IsManifold;
 };
 
-typedef MeshTraits <true > ManifoldMeshTraits;
-typedef pcl::geometry::PolygonMesh <ManifoldMeshTraits> Mesh;
+typedef MeshTraits <true >                               ManifoldMeshTraits;
+typedef pcl::geometry::PolygonMesh <ManifoldMeshTraits>  Mesh;
 typedef typename Mesh::HalfEdgeIndex                     HalfEdgeIndex;
 typedef typename Mesh::HalfEdgeIndices                   HalfEdgeIndices;
 typedef typename Mesh::InnerHalfEdgeAroundFaceCirculator IHEAFC;
@@ -100,7 +104,7 @@ class surfaceSegmentation
   void setInputCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr icloud)
   {
     input_cloud_->clear();
-    BOOST_FOREACH(pcl::PointXYZ pt, *icloud)
+    for(const auto& pt : *icloud)
     {
       input_cloud_->push_back(pt);
     }
@@ -112,8 +116,9 @@ class surfaceSegmentation
   */
   void addCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr icloud)
   {
-    // push input_cloud onto icloud and then add, this strange sequence keeps ordering of clouds and does not duplicate setInputCloud code
-    BOOST_FOREACH(pcl::PointXYZ pt, input_cloud_->points)
+    // push input_cloud onto icloud and then add, this strange sequence keeps ordering of clouds
+    // and does not duplicate setInputCloud code
+    for(const auto& pt : input_cloud_->points)
     {
       icloud->push_back(pt);
     }
@@ -126,9 +131,11 @@ class surfaceSegmentation
   pcl::PointCloud<pcl::Boundary>::Ptr getBoundaryCloud()
   {
     pcl::PointCloud<pcl::Boundary>::Ptr bps (new pcl::PointCloud<pcl::Boundary> ());
-    if(normals_->points.size()==0 || input_cloud_->points.size() == 0)
-      pcl::console::print_highlight ("must set input_cloud_ and compute normals_ before calling getBoundaryCloud()\n");
 
+    if(normals_->points.size()==0 || input_cloud_->points.size() == 0)
+    {
+      ROS_INFO_STREAM("Must set input_cloud_ and comput normals_ before calling getBoundaryCloud()");
+    }
     else
     {
       pcl::BoundaryEstimation<pcl::PointXYZ, pcl::Normal, pcl::Boundary> best;
@@ -149,19 +156,21 @@ class surfaceSegmentation
     pcl::search::Search<pcl::PointXYZ>::Ptr tree =
         boost::shared_ptr<pcl::search::Search<pcl::PointXYZ>> (new pcl::search::KdTree<pcl::PointXYZ>);
     pcl::RegionGrowing<pcl::PointXYZ, pcl::Normal> rg;
+
     rg.setSmoothModeFlag (false); // Depends on the cloud being processed
     rg.setSmoothnessThreshold (10.0 / 180.0 * M_PI);
-    rg.setMaxClusterSize(1000000);
+    rg.setMaxClusterSize(MAX_CLUSTER_SIZE);
     rg.setSearchMethod (tree);
-    rg.setMinClusterSize(10);
-    rg.setNumberOfNeighbours (30);
+    rg.setMinClusterSize(MIN_CLUSTER_SIZE);
+    rg.setNumberOfNeighbours (NUM_NEIGHBORS);
+
     float smooth_thresh = rg.getSmoothnessThreshold();
     float resid_thresh = rg.getResidualThreshold();
+
     // rg.setCurvatureTestFlag();
     rg.setResidualTestFlag(true);
     rg.setResidualThreshold(resid_thresh);
     rg.setCurvatureThreshold(1.0);
-
     rg.setInputCloud (input_cloud_);
     rg.setInputNormals (normals_);
 
@@ -178,7 +187,8 @@ class surfaceSegmentation
     // concatenate rgb fields and normals to cloud
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_with_colors(new pcl::PointCloud<pcl::PointXYZRGB>);
     pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr cloud_with_normals(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
-    BOOST_FOREACH(pcl::PointXYZ pt, *input_cloud_)
+
+    for(const auto& pt : input_cloud_->points)
     {
       pcl::PointXYZRGB npt(0,255,0);
       npt.x = pt.x;
@@ -190,6 +200,7 @@ class surfaceSegmentation
 
     // Initialize objects
     pcl::GreedyProjectionTriangulation<pcl::PointXYZRGBNormal> gp3;
+
     // Create search tree*
     pcl::search::KdTree<pcl::PointXYZRGBNormal>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGBNormal>);
     tree->setInputCloud (cloud_with_normals);
@@ -227,11 +238,9 @@ class surfaceSegmentation
         {
         rtn = used[i];
         used[i].first = 1;
-        //	  if(rtn.second ==0)     pcl::console::print_highlight ("returning 0 with i=%d\n",i);
         break;
         }
       }
-
       return(rtn);
     }
 
@@ -240,8 +249,8 @@ class surfaceSegmentation
     int longest = 0;
     int long_idx = 0;
     int length=0;
-    ROS_INFO_STREAM("In sort boundary");
-    for(int i=0;i<sorted_boundaries.size();i++)
+
+    for(int i = 0; i < sorted_boundaries.size(); i++)
       sorted_boundaries[i]->clear();
 
     sorted_boundaries.clear();
@@ -250,7 +259,6 @@ class surfaceSegmentation
     /* initialize used pairs */
     std::vector<std::pair<int,int> > used;
     used.reserve(boundary_indices->size());
-    ROS_INFO_STREAM("Used pairs reserved");
     for(int i = 0; i < boundary_indices->size(); i++)
     {
       std::pair<int, int> p;
@@ -261,8 +269,6 @@ class surfaceSegmentation
 
     pcl::KdTreeFLANN<pcl::PointXYZ> kdtree(true);// true indicates return sorted radius search results
     kdtree.setInputCloud(input_cloud_, boundary_indices); // use just the boundary points for searching
-    ROS_INFO_STREAM("Kdtree input cloud set");
-
 
     std::pair<int, int> n = getNextUnused(used);
     while( n.first >= 0 )
@@ -304,27 +310,30 @@ class surfaceSegmentation
 
           q++;
 
-        } while (q<pt_indices.size() && add_pt_idx == -1); // is there an unused point in the vicinity of the current spt?
+        } while (q < pt_indices.size() && add_pt_idx == -1); // unused point in the vicinity of the current spt?
 
         if(add_pt_idx !=-1)
         {
           current_boundary->push_back(add_pt_idx);
           spt = input_cloud_->points[add_pt_idx]; // search near the new point next time
-        } // end if ad_pt_idx was found
+        }
         else
+        { // end if ad_pt_idx was found
           break;		/* end of boundary */
+        }
       }// there are points within the radius
 
       sorted_boundaries.push_back(current_boundary);
       n = getNextUnused(used);
     }
+
     return(sorted_boundaries.size());
   }
 
 
   void setSearchRadius(double radius)
   {
-    if(radius>0)
+    if(radius > 0)
       radius_ = radius;
   }
 
@@ -341,8 +350,8 @@ class surfaceSegmentation
     {		// smoothing filters must have an odd number of coefficients
       coef_.clear();
       num_coef_ = coef.size();
-      double sum =0;
-      for(int i=0; i<num_coef_; i++)
+      double sum = 0;
+      for(int i = 0; i < num_coef_; i++)
       {
         coef_.push_back(coef[i]);
         sum += coef[i];
@@ -360,34 +369,38 @@ class surfaceSegmentation
   void smoothVector(std::vector<double>&x_in, std::vector<double> &x_out)
   {
     int n = x_in.size();
-
-    // initialize the filter using tail of x_in
-    std::vector<double> xv;
-    xv.clear();
-    for(int j=num_coef_-1; j>=0; j--)
-      xv.push_back(x_in[n-j-1]);
-
-    // cycle through every and apply the filter
-    for(int j=1; j<n-1; j++)
+    if( n <= num_coef_)
     {
-      // shift backwards
-      for(int k=0; k<num_coef_-1; k++)
-        xv[k] = xv[k+1];
+      x_out = x_in;
+    }
+    else
+    {
+      // initialize the filter using tail of x_in
+      std::vector<double> xv;
+      xv.clear();
+      for(int j = num_coef_ - 1; j >= 0; j--)
+        xv.push_back(x_in[n-j-1]);
 
-      // get next input to filter which is num_coef/2 in front of current point being smoothed
-      int idx = (j+num_coef_/2)%n;
-      //      pcl::console::print_highlight ("idx = %d\n", idx);
-      xv[num_coef_ - 1] = x_in[idx]; // j'th point
+      // cycle through every and apply the filter
+      for(int j = 1; j < n - 1; j++)
+      {
+        // shift backwards
+        for(int k = 0; k < num_coef_ - 1; k++)
+          xv[k] = xv[k + 1];
 
-    // apply the filter
-    double sum = 0.0;
-    for(int k=0; k<num_coef_; k++)
-      sum += xv[k]*coef_[k];
+        // get next input to filter which is num_coef/2 in front of current point being smoothed
+        int idx = (j + num_coef_ / 2) % n;
+        xv[num_coef_ - 1] = x_in[idx]; // j'th point
 
-    // save point
-    x_out.push_back(sum/gain_);
+        // apply the filter
+        double sum = 0.0;
+        for(int k = 0; k < num_coef_; k++)
+          sum += xv[k] * coef_[k];
 
-    }// end for every point
+        // save point
+        x_out.push_back(sum / gain_);
+      }// end for every point
+    }
   }
 
 
@@ -396,7 +409,8 @@ class surfaceSegmentation
   {
     std::vector<double> x_in, x_out, y_in, y_out, z_in, z_out;
     std::vector<double> nx_in, nx_out, ny_in, ny_out, nz_in, nz_out;
-    for(int i=0;i<pts_in.size(); i++)
+
+    for(int i = 0; i < pts_in.size(); i++)
     {
       x_in.push_back(pts_in[i].x);
       y_in.push_back(pts_in[i].y);
@@ -412,17 +426,16 @@ class surfaceSegmentation
     smoothVector(ny_in,ny_out);
     smoothVector(nz_in,nz_out);
 
-    pts_out.clear();
-    for(int i=0;i<pts_in.size(); i++)
+    for(int i = 0; i < pts_in.size(); i++)
     {
       pcl::PointNormal pt;
       pt.x = x_out[i];
       pt.y = y_out[i];
       pt.z = z_out[i];
-      double norm = sqrt(nx_out[i]*nx_out[i] + ny_out[i]*ny_out[i] + nz_out[i]*nz_out[i]);
-      pt.normal_x = nx_out[i]/norm;
-      pt.normal_y = ny_out[i]/norm;
-      pt.normal_z = nz_out[i]/norm;
+      double norm = sqrt(nx_out[i] * nx_out[i] + ny_out[i] * ny_out[i] + nz_out[i] * nz_out[i]);
+      pt.normal_x = nx_out[i] / norm;
+      pt.normal_y = ny_out[i] / norm;
+      pt.normal_z = nz_out[i] / norm;
       pts_out.push_back(pt);
     }
   }
@@ -433,59 +446,84 @@ class surfaceSegmentation
                              std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>> &poses)
   {
     // grab the position and normal values
-    std::vector<pcl::PointNormal> pts,spts;
-    for(int i=0;i<boundaries[sb]->size();i++)
+    std::vector<pcl::PointNormal> pts, spts;
+    for(int i = 0; i < boundaries[sb]->size(); i++)
     {
       pcl::PointNormal pt;
       int idx = boundaries[sb]->at(i);
       pt.x = input_cloud_->points[idx].x;
       pt.y = input_cloud_->points[idx].y;
       pt.z = input_cloud_->points[idx].z;
-      pt.normal_x = normals_->at(idx).normal_x;
-      pt.normal_y = normals_->at(idx).normal_y;
-      pt.normal_z = normals_->at(idx).normal_z;
+
+      int sign_ofz=1;
+      if(normals_->at(idx).normal_z < 0)
+        sign_ofz = -1;
+
+      pt.normal_x = sign_ofz * normals_->at(idx).normal_x;
+      pt.normal_y = sign_ofz * normals_->at(idx).normal_y;
+      pt.normal_z = sign_ofz * normals_->at(idx).normal_z;
       pts.push_back(pt);
     }
     smoothPointNormal(pts, spts);
 
     std::vector<pcl::PointXYZ> vels;
-    for(int i=0;i<pts.size();i++)
+    for(int i = 0; i < spts.size(); i++)
     {
       pcl::PointXYZ v;
-      int next = (i+1)%pts.size();
-      v.x = pts[next].x-pts[i].x;
-      v.y = pts[next].y-pts[i].y;
-      v.z = pts[next].z-pts[i].z;
-      double norm = sqrt(v.x*v.x + v.y*v.y + v.z*v.z);
-      if(norm==0) norm = 1.0;	/* avoid division by zero */
-      v.x = v.x/norm;
-      v.y = v.y/norm;
-      v.z = v.z/norm;
+      int next = (i + 1) % pts.size();
+      v.x = spts[next].x - spts[i].x;
+      v.y = spts[next].y - spts[i].y;
+      v.z = spts[next].z - spts[i].z;
+      double norm = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+      if(norm == 0)
+        norm = 1.0;	/* avoid division by zero */
+      v.x = v.x / norm;
+      v.y = v.y / norm;
+      v.z = v.z / norm;
       vels.push_back(v);
     }
 
-    poses.clear();
-    for(int i=0;i<pts.size();i++)
+    // make sure normal and velocity vectors are orthogonal
+    for(int i = 0; i < spts.size(); i++)
     {
-      Eigen::Matrix4d current_pose = Eigen::MatrixXd::Identity(4,4);
-      current_pose(0,3) = pts[i].x;
-      current_pose(1,3) = pts[i].y;
-      current_pose(2,3) = pts[i].z;
+       double dot = spts[i].normal_x * vels[i].x + spts[i].normal_y * vels[i].y + spts[i].normal_z * vels[i].z;
+       vels[i].x -= dot * spts[i].normal_x;
+       vels[i].y -= dot * spts[i].normal_y;
+       vels[i].z -= dot * spts[i].normal_z;
+
+       double norm = sqrt(vels[i].x * vels[i].x + vels[i].y * vels[i].y + vels[i].z * vels[i].z);
+
+       if(norm == 0)
+         norm = 1;
+
+       vels[i].x = vels[i].x / norm;
+       vels[i].y = vels[i].y / norm;
+       vels[i].z = vels[i].z / norm;
+
+    }
+
+    poses.clear();
+    for(int i = 0; i < spts.size(); i++)
+    {
+      Eigen::Matrix4d current_pose = Eigen::MatrixXd::Identity(4, 4);
+      current_pose(0, 3) = spts[i].x;
+      current_pose(1, 3) = spts[i].y;
+      current_pose(2, 3) = spts[i].z;
 
       // set z vector same as of normal of surface
-      current_pose(0,2) = -pts[i].normal_x;
-      current_pose(1,2) = -pts[i].normal_y;
-      current_pose(2,2) = -pts[i].normal_z;
+      current_pose(0, 2) = spts[i].normal_x;
+      current_pose(1, 2) = spts[i].normal_y;
+      current_pose(2, 2) = spts[i].normal_z;
 
       // set x of tool in direction of motion
-      current_pose(0,0) = vels[i].x;
-      current_pose(1,0) = vels[i].y;
-      current_pose(2,0) = vels[i].z;
+      current_pose(0, 0) = vels[i].x;
+      current_pose(1, 0) = vels[i].y;
+      current_pose(2, 0) = vels[i].z;
 
       // y is the cross product of z with x
-      current_pose(0,1) =  current_pose(1,2)*current_pose(2,0)  -  current_pose(1,0)*current_pose(2,2);
-      current_pose(1,1) = -current_pose(0,2)*current_pose(2,0) + current_pose(0,0)*current_pose(2,2);
-      current_pose(2,1) =  current_pose(0,2)*current_pose(1,0)  -  current_pose(0,0)*current_pose(1,2);
+      current_pose(0, 1) =  current_pose(1, 2) * current_pose(2,0) - current_pose(1, 0) * current_pose(2, 2);
+      current_pose(1, 1) = -current_pose(0, 2) * current_pose(2,0) + current_pose(0, 0) * current_pose(2, 2);
+      current_pose(2, 1) =  current_pose(0, 2) * current_pose(1,0) - current_pose(0, 0) * current_pose(1, 2);
       poses.push_back(current_pose);
     }
   }
@@ -498,7 +536,6 @@ class surfaceSegmentation
     chull.setInputCloud(in);
     chull.setAlpha(500.0);
     chull.reconstruct(mesh);
-    pcl::console::print_highlight ("mesh  has  %d polygons\n", mesh.polygons.size());
 
     return mesh.polygons.size() > 0;
   }
@@ -515,7 +552,6 @@ class surfaceSegmentation
     std::vector <bool> visited (mesh.sizeEdges (), false);
     IHEAFC circ, circ_end;
 
-    pcl::console::print_highlight ("looking at %d half edges\n", mesh.sizeHalfEdges());
     for (HalfEdgeIndex i (0); i<HalfEdgeIndex (mesh.sizeHalfEdges ()); ++i)
     {
       if (mesh.isBoundary (i) && !visited [pcl::geometry::toEdgeIndex (i).get ()])
@@ -528,7 +564,7 @@ class surfaceSegmentation
         {
         visited [pcl::geometry::toEdgeIndex (circ.getTargetIndex ()).get ()] = true;
         boundary_he.push_back (circ.getTargetIndex ());
-        } while (++circ != circ_end);
+        } while ( ++circ != circ_end);
 
         boundary_he_collection.push_back (boundary_he);
       }
@@ -559,7 +595,7 @@ private:
     pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
     ne.setSearchMethod (tree);
     //  ne.setRadiusSearch (radius_);
-    ne.setKSearch (50);
+    ne.setKSearch (100);
     ne.compute (*normals_);
   }
 

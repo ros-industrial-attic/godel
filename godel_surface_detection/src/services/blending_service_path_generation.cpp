@@ -26,7 +26,9 @@ const static double SCAN_TRAJECTORY_ANGLE_DISC = 0.2;
 const static int SCAN_APPROACH_STEP_COUNT = 5;
 const static double SCAN_APPROACH_STEP_DISTANCE = 0.01; // 5cm
 
-const static double SEGMENTATION_SEARCH_RADIUS = 0.02; // 1mm
+// Edge Processing constants
+const static double SEGMENTATION_SEARCH_RADIUS = 0.030; // 3cm
+const static int BOUNDARY_THRESHOLD = 10;
 
 // Variables to select path type
 const static int PATH_TYPE_BLENDING = 0;
@@ -43,11 +45,12 @@ filterPolygonBoundaries(const godel_process_path::PolygonBoundaryCollection& bou
                         const godel_msgs::BlendingPlanParameters& params)
 {
   godel_process_path::PolygonBoundaryCollection filtered_boundaries;
+
   for (std::size_t i = 0; i < boundaries.size(); ++i)
   {
     const godel_process_path::PolygonBoundary& bnd = boundaries[i];
-
     double circ = godel_process_path::polygon_utils::circumference(bnd);
+
     if (circ < params.min_boundary_length)
     {
       ROS_WARN_STREAM("Ignoring boundary with length " << circ);
@@ -67,34 +70,26 @@ filterPolygonBoundaries(const godel_process_path::PolygonBoundaryCollection& bou
 }
 
 
-bool SurfaceBlendingService::requestEdgePath(
-    std::vector<pcl::IndicesPtr> &boundaries,
-    int index,
-    surfaceSegmentation& SS,
-    visualization_msgs::Marker& visualization,
-    geometry_msgs::PoseArray& path)
+bool SurfaceBlendingService::requestEdgePath(std::vector<pcl::IndicesPtr> &boundaries,
+                                             int index,
+                                             surfaceSegmentation& SS,
+                                             visualization_msgs::Marker& visualization,
+                                             geometry_msgs::PoseArray& path)
 {
-  ROS_INFO_STREAM("Entering requestEdgePath");
   geometry_msgs::Pose geo_pose;
-  geometry_msgs::Point pt;
   std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>> poses;
-  ROS_INFO_STREAM("Attempting to get boundary trajectory");
-  SS.getBoundaryTrajectory(boundaries, index, poses);
-  ROS_INFO_STREAM("Got boundary trajectory");
 
+  // Get boundary trajectory and trim last two poses (last poses are susceptible to large velocity changes)
+  SS.getBoundaryTrajectory(boundaries, index, poses);
+  poses.resize(poses.size() - 2);
+
+  // Convert eigen poses to geometry poses for messaging and visualization
   for(const auto& p : poses)
   {
     Eigen::Affine3d pose(p.matrix());
     tf::poseEigenToMsg(pose, geo_pose);
     path.poses.push_back(geo_pose);
-
-    pt.x = geo_pose.position.x;
-    pt.y = geo_pose.position.y;
-    pt.z = geo_pose.position.z;
-    visualization.points.push_back(pt);
   }
-  visualization.header.frame_id = "world_frame";
-  ROS_INFO_STREAM(visualization);
 
   return true;
 }
@@ -285,8 +280,6 @@ SurfaceBlendingService::generateProcessPath(const std::string& name,
   using godel_process_path::PolygonBoundaryCollection;
   using godel_process_path::PolygonBoundary;
 
-  ROS_INFO_STREAM("Entering generateProcessPath");
-
   ProcessPathResult result;
 
   // Calculate boundaries for a surface
@@ -299,6 +292,7 @@ SurfaceBlendingService::generateProcessPath(const std::string& name,
   // Read & filter boundaries that are ill-formed or too small
   PolygonBoundaryCollection filtered_boundaries =
       filterPolygonBoundaries(mesh_importer_.getBoundaries(), blend_params);
+
   // Read pose
   geometry_msgs::Pose boundary_pose;
   mesh_importer_.getPose(boundary_pose);
@@ -342,13 +336,12 @@ SurfaceBlendingService::generateProcessPath(const std::string& name,
   ROS_INFO_STREAM("Blend Path Generation Complete");
 
   // Send request to edge path generation service
-  visualization_msgs::Marker edge_visualization;
-  geometry_msgs::PoseArray edge_poses;
   std::vector<pcl::IndicesPtr> sorted_boundaries;
 
   ROS_INFO_STREAM("Surface has " + std::to_string(surface->points.size()) + "points");
   // Compute the boundary
   surfaceSegmentation SS(surface);
+
   SS.setSearchRadius(SEGMENTATION_SEARCH_RADIUS);
   std::vector<double> filt_coef;
   filt_coef.push_back(1);
@@ -360,37 +353,28 @@ SurfaceBlendingService::generateProcessPath(const std::string& name,
   filt_coef.push_back(3);
   filt_coef.push_back(2);
   filt_coef.push_back(1);
+
   SS.setSmoothCoef(filt_coef);
   computeBoundaries(surface, SS, sorted_boundaries);
+
   ROS_INFO_STREAM("Boundaries Computed");
+  geometry_msgs::PoseArray all_poses;
   for(int i = 0; i < sorted_boundaries.size(); i++)
   {
+    if(sorted_boundaries.at(i).size() < BOUNDARY_THRESHOLD)
+      continue;
+
+    geometry_msgs::PoseArray edge_poses;
+    visualization_msgs::Marker edge_visualization;
+
     if(requestEdgePath(sorted_boundaries, i, SS, edge_visualization, edge_poses))
     {
-      ProcessPathResult::value_type edge_path_result; // pair<string, viz_msgs::Marker>
-      edge_path_result.first = name + "_edge";
+      ProcessPathResult::value_type edge_path_result; // pair<string, geometry_msgs::PoseArray>
+      edge_path_result.first = name + "_edge_" + std::to_string(i);
       edge_path_result.second = edge_poses;
       result.paths.push_back(edge_path_result);
 
-      // Hack for visualization sake
-      edge_visualization.header.frame_id = "world_frame";
-      edge_visualization.id = marker_counter_++;
-      edge_visualization.header.stamp = ros::Time::now();
-      edge_visualization.lifetime = ros::Duration(0.0);
-      edge_visualization.ns = "edge_path";
-      edge_visualization.pose = boundary_pose;
-      edge_visualization.action = visualization_msgs::Marker::ADD;
-      edge_visualization.type = visualization_msgs::Marker::LINE_STRIP;
-      edge_visualization.scale.x = 0.004;
-      std_msgs::ColorRGBA color;
-      color.r = 0.0;
-      color.b = 1.0;
-      color.g = 0.0;
-      color.a = 1.0;
-      edge_visualization.colors.clear();
-      edge_visualization.color = color;
-
-      process_path_results_.edge_visualization_.markers.push_back(edge_visualization);
+      all_poses.poses.insert(std::end(all_poses.poses), std::begin(edge_poses.poses), std::end(edge_poses.poses));
     }
     else
     {
@@ -398,6 +382,12 @@ SurfaceBlendingService::generateProcessPath(const std::string& name,
       ROS_WARN_STREAM("Could not calculate blend path for surface: " << name);
     }
   }
+
+  // Publish all poses for all boundaries
+  all_poses.header.frame_id = "world_frame";
+  all_poses.header.stamp = ros::Time::now();
+  edge_visualization_pub_.publish(all_poses);
+
 
   // Request laser scan paths
   visualization_msgs::Marker scan_visualization;
@@ -450,15 +440,11 @@ godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotio
   int ind;
   for(const auto& s : names)
   {
-    ROS_INFO_STREAM(s);
     std::string t = s;
     t.erase(0, SURFACE_DESIGNATION.size());
     ind = std::stoi(t) - 1;
-    ROS_INFO_STREAM(ind);
     selected_clouds.push_back(surface_clouds.at(ind));
   }
-  ROS_INFO_STREAM("There are " + std::to_string(selected_clouds.size()) + " selected surface clouds");
-  ROS_INFO_STREAM("There are " + std::to_string(meshes.size()) + " meshes");
 
 
   ROS_ASSERT(names.size() == meshes.size());
@@ -499,7 +485,7 @@ static inline bool isEdgePath(const std::string& name)
   const static std::string suffix("_edge");
   if (name.size() < suffix.size())
     return false;
-  return name.find(suffix, name.size() - suffix.length()) != std::string::npos;
+  return name.find(suffix) != std::string::npos;
 }
 
 ProcessPlanResult
