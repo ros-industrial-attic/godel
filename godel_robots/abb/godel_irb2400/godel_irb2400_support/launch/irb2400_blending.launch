@@ -53,7 +53,7 @@
   <group unless="$(arg sim_sensor)">
     <remap from="/depth/points" to="/sensor_point_cloud"/>
     <param name="camera_frame_id" type="string" value="tool0" />
-    <node name="ensenso_publisher_node" pkg="ensenso_publisher" type="ensenso_publisher_node" output="screen">
+    <node name="ensenso_publisher_node" pkg="ensenso_publisher" type="ensenso_publisher_node" output="screen" required="true">
         <param name="FlexView" type="bool" value="true" />
         <param name="FlexViewImages" type="int" value="4" />
     </node>
