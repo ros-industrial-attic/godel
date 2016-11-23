@@ -44,6 +44,8 @@
 const static double CONCAVE_HULL_ALPHA = 0.1;
 const static double PASSTHROUGH_Z_MIN = -5;
 const static double PASSTHROUGH_Z_MAX = 5;
+const static int DOWNSAMPLE_NUMBER = 3;
+const static std::string PCD_DEBUG_DIR = "/home/ros-industrial/Documents/godel_debug/pcd/";
 
 namespace godel_surface_detection
 {
@@ -273,7 +275,7 @@ void SurfaceDetection::get_region_colored_cloud(sensor_msgs::PointCloud2& cloud_
 
 bool SurfaceDetection::find_surfaces()
 {
-  ROS_INFO_STREAM("\n\nFind Surfaces Routine");
+  ROS_INFO_STREAM("Find Surfaces Call");
 
   // Reset members
   surface_clouds_.clear();
@@ -289,19 +291,19 @@ bool SurfaceDetection::find_surfaces()
   else
     pcl::copyPointCloud(*full_cloud_ptr_, *process_cloud_ptr);
 
-  pcl::io::savePCDFile("/home/ros-industrial/Documents/starting_process_cloud.pcd", *process_cloud_ptr);
+  pcl::io::savePCDFile(PCD_DEBUG_DIR + "starting_process_cloud.pcd", *process_cloud_ptr);
 
   // Remove NANs
   std::vector<int> indices;
   pcl::removeNaNFromPointCloud (*process_cloud_ptr, *process_cloud_ptr, indices);
 
-  pcl::io::savePCDFile("/home/ros-industrial/Documents/no_nans_cloud.pcd", *process_cloud_ptr);
+  pcl::io::savePCDFile(PCD_DEBUG_DIR + "no_nans_cloud.pcd", *process_cloud_ptr);
 
   // Subsample Cloud
   pcl::PointCloud<pcl::PointXYZ>::Ptr part_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
-  BOOST_FOREACH(pcl::PointXYZ pt, process_cloud_ptr->points)
+  for(const auto& pt : process_cloud_ptr->points)
   {
-    int q = rand()%5;
+    int q = rand() % DOWNSAMPLE_NUMBER;
     //int q = 0;
     if (q ==0)
     {
@@ -316,7 +318,7 @@ bool SurfaceDetection::find_surfaces()
 
   // Segment the part into surface regions using a "region growing" scheme
   surfaceSegmentation SS(part_cloud_ptr);
-  pcl::io::savePCDFile("/home/ros-industrial/Documents/part_cloud.pcd", *part_cloud_ptr);
+  pcl::io::savePCDFile(PCD_DEBUG_DIR + "part_cloud.pcd", *part_cloud_ptr);
   region_colored_cloud_ptr_ = CloudRGB::Ptr(new CloudRGB());
   std::vector <pcl::PointIndices> clusters = SS.computeSegments(region_colored_cloud_ptr_);
 
@@ -362,7 +364,6 @@ bool SurfaceDetection::find_surfaces()
   {
     pcl::PolygonMesh mesh;
     visualization_msgs::Marker marker;
-
 
     if (apply_concave_hull(*surface_clouds_[i], mesh))
     {
