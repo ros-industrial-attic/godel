@@ -1,3 +1,11 @@
 <launch>
+    <arg name="moveit_octomap_sensor_params_file" default="$(find godel_irb2400_moveit_config)/config/sensors_rgbd.yaml" />
 
+    <!-- Params for the octomap monitor -->
+    <!-- TODO: determine proper values -->
+    <param name="octomap_frame" type="string" value="world_frame" />
+    <param name="octomap_resolution" type="double" value="0.025" />
+    <param name="max_range" type="double" value="5.0" />
+
+    <rosparam command="load" file="$(arg moveit_octomap_sensor_params_file)" />
 </launch>
