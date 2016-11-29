@@ -76,6 +76,9 @@ bool godel_process_planning::descartesSolve(const godel_process_planning::Descar
 {
   // Create planner
   descartes_core::PathPlannerBasePtr planner(new descartes_planner::DensePlanner);
+
+  robot_model->updateInternals();
+
   if (!planner->initialize(robot_model))
   {
     ROS_ERROR("%s: Failed to initialize planner with robot model", __FUNCTION__);
