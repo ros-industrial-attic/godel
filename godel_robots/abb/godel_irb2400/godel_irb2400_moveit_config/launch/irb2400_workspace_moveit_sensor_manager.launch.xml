@@ -7,5 +7,10 @@
     <param name="octomap_resolution" type="double" value="0.025" />
     <param name="max_range" type="double" value="5.0" />
 
+    <!-- TODO: "robot_description" is a 'magic string', should be an arg -->
+    <!-- TODO: not the proper place for this parameter -->
+    <!-- TODO: not sure if this is necessary in real setup -->
+    <param name="/robot_description_planning/shape_transform_cache_lookup_wait_time" value="0.2" />
+
     <rosparam command="load" file="$(arg moveit_octomap_sensor_params_file)" />
 </launch>
