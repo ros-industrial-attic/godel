@@ -231,6 +231,21 @@ bool ProcessPlanningManager::handleBlendPlanning(godel_msgs::BlendProcessPlannin
                                solved_path.end() - from_process.size());
     trajectory_msgs::JointTrajectory process = toROSTrajectory(process_part, *blend_model_);
 
+    blend_model_->setCheckCollisions(true);
+
+    for (std::size_t i = 0; i < process.points.size(); ++i)
+    {
+      const auto& pt = process.points[i];
+      if (!blend_model_->isValid(pt.positions))
+      {
+        ROS_WARN_STREAM("Position in blending path (" << i << ") invalid: Joint limit or collision detected\n");
+        return false;
+      }
+    }
+
+    blend_model_->setCheckCollisions(false);
+
+
     // Fill in result trajectories
     res.plan.trajectory_process = process;
     res.plan.trajectory_approach = approach;
