@@ -136,6 +136,7 @@ bool SurfaceBlendingService::requestBlendPath(
     tf::poseMsgToEigen(p, eigen_p);
     result = boundary_pose_eigen*eigen_p;
     tf::poseEigenToMsg(result, p);
+    p.orientation = boundary_pose.orientation;
     path.poses.push_back(p);
   }
 
@@ -333,6 +334,11 @@ SurfaceBlendingService::generateProcessPath(const std::string& name,
     ROS_WARN_STREAM("Could not calculate blend path for surface: " << name);
   }
 
+  // Publish all poses for all boundaries
+  blend_poses.header.frame_id = "world_frame";
+  blend_poses.header.stamp = ros::Time::now();
+  blend_visualization_pub_.publish(blend_poses);
+
   ROS_INFO_STREAM("Blend Path Generation Complete");
 
   // Send request to edge path generation service
@@ -358,7 +364,7 @@ SurfaceBlendingService::generateProcessPath(const std::string& name,
   computeBoundaries(surface, SS, sorted_boundaries);
 
   ROS_INFO_STREAM("Boundaries Computed");
-  geometry_msgs::PoseArray all_poses;
+  geometry_msgs::PoseArray all_edge_poses;
   for(int i = 0; i < sorted_boundaries.size(); i++)
   {
     if(sorted_boundaries.at(i)->size() < BOUNDARY_THRESHOLD)
@@ -374,7 +380,7 @@ SurfaceBlendingService::generateProcessPath(const std::string& name,
       edge_path_result.second = edge_poses;
       result.paths.push_back(edge_path_result);
 
-      all_poses.poses.insert(std::end(all_poses.poses), std::begin(edge_poses.poses), std::end(edge_poses.poses));
+      all_edge_poses.poses.insert(std::end(all_edge_poses.poses), std::begin(edge_poses.poses), std::end(edge_poses.poses));
     }
     else
     {
@@ -383,10 +389,18 @@ SurfaceBlendingService::generateProcessPath(const std::string& name,
     }
   }
 
+  /*
+   * Set the orientation for all edge points to be the orientation of the surface normal
+   * This is a hack that should be removed when planar surfaces assumption is dropped
+   * The main purpose here is to "smooth" the trajectory of the edges w.r.t. the z axis
+  */
+  for(auto& p : all_edge_poses.poses)
+    p.orientation = boundary_pose.orientation;
+
   // Publish all poses for all boundaries
-  all_poses.header.frame_id = "world_frame";
-  all_poses.header.stamp = ros::Time::now();
-  edge_visualization_pub_.publish(all_poses);
+  all_edge_poses.header.frame_id = "world_frame";
+  all_edge_poses.header.stamp = ros::Time::now();
+  edge_visualization_pub_.publish(all_edge_poses);
 
 
   // Request laser scan paths

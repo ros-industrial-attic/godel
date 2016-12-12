@@ -212,7 +212,9 @@ private:
   ros::Publisher selected_surf_changed_pub_;
   ros::Publisher point_cloud_pub_;
   ros::Publisher tool_path_markers_pub_;
+  ros::Publisher blend_visualization_pub_;
   ros::Publisher edge_visualization_pub_;
+
   // Timers
   bool stop_tool_animation_;
 
