@@ -229,28 +229,6 @@ trajectory_msgs::JointTrajectory godel_process_planning::planFreeMove(
     moveit::core::RobotModelConstPtr moveit_model, const std::vector<double>& start,
     const std::vector<double>& stop)
 {
-  // Using a mutable model, turns collision checking on for just the
-  // period of this function. Functions called in this function may
-  // throw exceptions and this makes sure the system state is always
-  // valid
-  struct CollisionsGuard
-  {
-    CollisionsGuard(descartes_core::RobotModel& model) : model_(model)
-    {
-      model.setCheckCollisions(true);
-      ROS_WARN_STREAM("Enabling collision");
-    }
-    ~CollisionsGuard()
-    {
-      model_.setCheckCollisions(false);
-      ROS_WARN_STREAM("Disable collision");
-    }
-    descartes_core::RobotModel& model_;
-  };
-
-  // Create gaurd to enable collisions only for this function
-  CollisionsGuard guard(model);
-
   // Attempt joint interpolated motion
   DescartesTraj joint_approach = createJointPath(start, stop);
 
@@ -281,8 +259,6 @@ std::vector<std::vector<double>>
 godel_process_planning::filterColliding(descartes_core::RobotModel& model,
                                         const std::vector<std::vector<double>>& candidates)
 {
-  model.setCheckCollisions(true);
-
   std::vector<std::vector<double>> results;
 
   for (const auto& c : candidates)
@@ -290,7 +266,5 @@ godel_process_planning::filterColliding(descartes_core::RobotModel& model,
     if (model.isValid(c))
       results.push_back(c);
   }
-
-  model.setCheckCollisions(false);
   return results;
 }
