@@ -377,7 +377,17 @@ SurfaceBlendingService::generateProcessPath(const std::string& name,
     {
       ProcessPathResult::value_type edge_path_result; // pair<string, geometry_msgs::PoseArray>
       edge_path_result.first = name + "_edge_" + std::to_string(i);
+
+      /*
+       * Set the orientation for all edge points to be the orientation of the surface normal
+       * This is a hack that should be removed when planar surfaces assumption is dropped
+       * The main purpose here is to "smooth" the trajectory of the edges w.r.t. the z axis
+      */
+      for(auto& p : edge_poses.poses)
+        p.orientation = boundary_pose.orientation;
+
       edge_path_result.second = edge_poses;
+
       result.paths.push_back(edge_path_result);
 
       all_edge_poses.poses.insert(std::end(all_edge_poses.poses), std::begin(edge_poses.poses), std::end(edge_poses.poses));
@@ -388,14 +398,6 @@ SurfaceBlendingService::generateProcessPath(const std::string& name,
       ROS_WARN_STREAM("Could not calculate blend path for surface: " << name);
     }
   }
-
-  /*
-   * Set the orientation for all edge points to be the orientation of the surface normal
-   * This is a hack that should be removed when planar surfaces assumption is dropped
-   * The main purpose here is to "smooth" the trajectory of the edges w.r.t. the z axis
-  */
-  for(auto& p : all_edge_poses.poses)
-    p.orientation = boundary_pose.orientation;
 
   // Publish all poses for all boundaries
   all_edge_poses.header.frame_id = "world_frame";
