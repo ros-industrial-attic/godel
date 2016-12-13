@@ -31,3 +31,6 @@ default_warehouse_mongo_db/
 
 # editor files
 *.autosave
+
+# rviz configuration files
+*.rviz
