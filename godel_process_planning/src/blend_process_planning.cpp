@@ -153,6 +153,9 @@ bool ProcessPlanningManager::handleBlendPlanning(godel_msgs::BlendProcessPlannin
     return false;
   }
 
+  // Enable Collision Checks
+  blend_model_->setCheckCollisions(true);
+
   // Transform process path from geometry msgs to descartes points
   DescartesTraj process_points = toDescartesTraj(req.path.poses, req.params);
 
@@ -231,8 +234,6 @@ bool ProcessPlanningManager::handleBlendPlanning(godel_msgs::BlendProcessPlannin
                                solved_path.end() - from_process.size());
     trajectory_msgs::JointTrajectory process = toROSTrajectory(process_part, *blend_model_);
 
-    blend_model_->setCheckCollisions(true);
-
     for (std::size_t i = 0; i < process.points.size(); ++i)
     {
       const auto& pt = process.points[i];
@@ -242,8 +243,6 @@ bool ProcessPlanningManager::handleBlendPlanning(godel_msgs::BlendProcessPlannin
         return false;
       }
     }
-
-    blend_model_->setCheckCollisions(false);
 
 
     // Fill in result trajectories
