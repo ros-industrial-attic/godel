@@ -34,7 +34,6 @@
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/filters/conditional_removal.h>
 #include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/io/io.h>
 #include <tf/transform_datatypes.h>
 #include <pcl/surface/concave_hull.h>
 #include <pcl/surface/ear_clipping.h>
@@ -45,7 +44,6 @@ const static double CONCAVE_HULL_ALPHA = 0.1;
 const static double PASSTHROUGH_Z_MIN = -5;
 const static double PASSTHROUGH_Z_MAX = 5;
 const static int DOWNSAMPLE_NUMBER = 3;
-const static std::string PCD_DEBUG_DIR = "/home/ros-industrial/Documents/godel_debug/pcd/";
 
 namespace godel_surface_detection
 {
@@ -282,51 +280,34 @@ bool SurfaceDetection::find_surfaces()
   mesh_markers_.markers.clear();
   meshes_.clear();
 
-  // process point clouds
-  pcl::PointCloud<pcl::PointXYZ>::Ptr process_cloud_ptr (new pcl::PointCloud<pcl::PointXYZ>());
-
-  // copy point cloud pointer
+  // Ensure cloud ptr is not empty
   if (full_cloud_ptr_->empty())
     return false;
-  else
-    pcl::copyPointCloud(*full_cloud_ptr_, *process_cloud_ptr);
 
-  pcl::io::savePCDFile(PCD_DEBUG_DIR + "starting_process_cloud.pcd", *process_cloud_ptr);
+  // Create Processing Cloud
+  pcl::PointCloud<pcl::PointXYZ>::Ptr process_cloud_ptr (new pcl::PointCloud<pcl::PointXYZ>());
+  process_cloud_ptr->header = full_cloud_ptr_->header;
 
-  // Remove NANs
-  std::vector<int> indices;
-  pcl::removeNaNFromPointCloud (*process_cloud_ptr, *process_cloud_ptr, indices);
-
-  pcl::io::savePCDFile(PCD_DEBUG_DIR + "no_nans_cloud.pcd", *process_cloud_ptr);
-
-  // Subsample Cloud
-  pcl::PointCloud<pcl::PointXYZ>::Ptr part_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
-  for(const auto& pt : process_cloud_ptr->points)
+  // Subsample full cloud into processing cloud
+  for(const auto& pt : full_cloud_ptr_->points)
   {
     int q = rand() % DOWNSAMPLE_NUMBER;
-    //int q = 0;
     if (q ==0)
     {
       if(pt.x !=0.0 && pt.y!=0.0 && pt.z !=0.0 && pcl::isFinite(pt))
       {
-        part_cloud_ptr->push_back(pt);
+        process_cloud_ptr->push_back(pt);
       }
     }
   }
 
-  part_cloud_ptr->header = process_cloud_ptr->header;
-
-  // Segment the part into surface regions using a "region growing" scheme
-  surfaceSegmentation SS(part_cloud_ptr);
-  pcl::io::savePCDFile(PCD_DEBUG_DIR + "part_cloud.pcd", *part_cloud_ptr);
+  // Segment the part into surface clusters using a "region growing" scheme
+  surfaceSegmentation SS(process_cloud_ptr);
   region_colored_cloud_ptr_ = CloudRGB::Ptr(new CloudRGB());
   std::vector <pcl::PointIndices> clusters = SS.computeSegments(region_colored_cloud_ptr_);
-
-  ROS_INFO_STREAM("Number of clusters:" + std::to_string(clusters.size()));
-
   pcl::PointIndices::Ptr inliers_ptr(new pcl::PointIndices());
 
-  // Extract points from segments into their own point clouds
+  // Extract points from clusters into their own point clouds
   for (int i = 0; i < clusters.size(); i++)
   {
     Cloud::Ptr segment_cloud_ptr = Cloud::Ptr(new Cloud());
@@ -338,7 +319,7 @@ bool SurfaceDetection::find_surfaces()
     {
       inliers_ptr->indices.insert(inliers_ptr->indices.end(), indices.indices.begin(), indices.indices.end());
 
-      pcl::copyPointCloud(*part_cloud_ptr, indices, *segment_cloud_ptr);
+      pcl::copyPointCloud(*process_cloud_ptr, indices, *segment_cloud_ptr);
       surface_clouds_.push_back(segment_cloud_ptr);
     }
   }

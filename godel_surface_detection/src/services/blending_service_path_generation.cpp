@@ -3,7 +3,6 @@
 #include <godel_surface_detection/detection/surface_detection.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/PointIndices.h>
-#include <pcl/io/pcd_io.h>
 
 // Temporary constants for storing blending path `planning parameters
 // Will be replaced by loadable, savable parameters
@@ -220,7 +219,6 @@ void computeBoundaries(const godel_surface_detection::detection::Cloud::Ptr surf
                        surfaceSegmentation& SS,
                        std::vector< pcl::IndicesPtr>& sorted_boundaries)
 {
-  pcl::io::savePCDFile("/home/ros-industrial/Pictures/test_cloud.pcd", *surface_cloud);
   pcl::PointCloud<pcl::Boundary>::Ptr boundary_ptr = SS.getBoundaryCloud();
   pcl::PointCloud<pcl::PointXYZ>::Ptr boundary_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
   int k=0;
@@ -239,7 +237,6 @@ void computeBoundaries(const godel_surface_detection::detection::Cloud::Ptr surf
   ROS_INFO_STREAM("Cloud has " + std::to_string(boundary_cloud_ptr->points.size()) + " boundary points\n");
   boundary_cloud_ptr->width = 1;
   boundary_cloud_ptr->height = boundary_cloud_ptr->points.size();
-  pcl::io::savePCDFile("/home/ros-industrial/Pictures/test_boundary_cloud.pcd", *boundary_cloud_ptr);
 
 
   // sort the boundaries
