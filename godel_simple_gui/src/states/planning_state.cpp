@@ -9,7 +9,7 @@
 
 #include "godel_msgs/ProcessPlanning.h"
 
-#include <QtConcurrentRun>
+#include <QtConcurrent/QtConcurrentRun>
 
 const static std::string PROCESS_PATH_SERVICE = "process_path";
 

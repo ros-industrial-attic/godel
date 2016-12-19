@@ -15,6 +15,7 @@
 */
 
 #include <godel_surface_detection/detection/surface_detection.h>
+#include <godel_surface_detection/detection/surface_segmentation.h>
 #include <pcl_ros/transforms.h>
 #include <tf/transform_listener.h>
 #include <pcl/filters/statistical_outlier_removal.h>
@@ -33,6 +34,7 @@
 #include <pcl/filters/radius_outlier_removal.h>
 #include <pcl/filters/conditional_removal.h>
 #include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/io/io.h>
 #include <tf/transform_datatypes.h>
 #include <pcl/surface/concave_hull.h>
 #include <pcl/surface/ear_clipping.h>
@@ -40,8 +42,10 @@
 #include <godel_param_helpers/godel_param_helpers.h>
 
 const static double CONCAVE_HULL_ALPHA = 0.1;
-const static double PASSTHROUGH_Z_MIN = -0.5;
-const static double PASSTHROUGH_Z_MAX = 0.5;
+const static double PASSTHROUGH_Z_MIN = -5;
+const static double PASSTHROUGH_Z_MAX = 5;
+const static int DOWNSAMPLE_NUMBER = 3;
+const static std::string PCD_DEBUG_DIR = "/home/ros-industrial/Documents/godel_debug/pcd/";
 
 namespace godel_surface_detection
 {
@@ -268,7 +272,108 @@ void SurfaceDetection::get_region_colored_cloud(sensor_msgs::PointCloud2& cloud_
   cloud_msg.header.frame_id = params_.frame_id;
 }
 
+
 bool SurfaceDetection::find_surfaces()
+{
+  ROS_INFO_STREAM("Find Surfaces Call");
+
+  // Reset members
+  surface_clouds_.clear();
+  mesh_markers_.markers.clear();
+  meshes_.clear();
+
+  // Ensure cloud ptr is not empty
+  if (full_cloud_ptr_->empty())
+    return false;
+
+  // Create Processing Cloud
+  pcl::PointCloud<pcl::PointXYZ>::Ptr process_cloud_ptr (new pcl::PointCloud<pcl::PointXYZ>());
+  process_cloud_ptr->header = full_cloud_ptr_->header;
+
+  // Subsample full cloud into processing cloud
+  for(const auto& pt : full_cloud_ptr_->points)
+  {
+    int q = rand() % DOWNSAMPLE_NUMBER;
+    if (q ==0)
+    {
+      if(pt.x !=0.0 && pt.y!=0.0 && pt.z !=0.0 && pcl::isFinite(pt))
+      {
+        process_cloud_ptr->push_back(pt);
+      }
+    }
+  }
+
+  // Segment the part into surface clusters using a "region growing" scheme
+  surfaceSegmentation SS(process_cloud_ptr);
+  region_colored_cloud_ptr_ = CloudRGB::Ptr(new CloudRGB());
+  std::vector <pcl::PointIndices> clusters = SS.computeSegments(region_colored_cloud_ptr_);
+  pcl::PointIndices::Ptr inliers_ptr(new pcl::PointIndices());
+
+  // Extract points from clusters into their own point clouds
+  for (int i = 0; i < clusters.size(); i++)
+  {
+    Cloud::Ptr segment_cloud_ptr = Cloud::Ptr(new Cloud());
+    pcl::PointIndices& indices = clusters[i];
+    if (indices.indices.size() == 0)
+      continue;
+
+    if (indices.indices.size() >= params_.rg_min_cluster_size)
+    {
+      inliers_ptr->indices.insert(inliers_ptr->indices.end(), indices.indices.begin(), indices.indices.end());
+
+      pcl::copyPointCloud(*process_cloud_ptr, indices, *segment_cloud_ptr);
+      surface_clouds_.push_back(segment_cloud_ptr);
+    }
+  }
+
+  // Remove largest cluster if appropriate
+  if (params_.ignore_largest_cluster && surface_clouds_.size() > 1)
+  {
+    int largest_index = 0;
+    int largest_size = 0;
+    for (int i = 0; i < surface_clouds_.size(); i++)
+    {
+      if (surface_clouds_[i]->points.size() > largest_size)
+      {
+        largest_size = surface_clouds_[i]->points.size();
+        largest_index = i;
+      }
+    }
+    surface_clouds_.erase(surface_clouds_.begin() + largest_index);
+  }
+
+  // Compute mesh from point clouds
+  for (int i = 0; i < surface_clouds_.size(); i++)
+  {
+    pcl::PolygonMesh mesh;
+    visualization_msgs::Marker marker;
+
+    if (apply_concave_hull(*surface_clouds_[i], mesh))
+    {
+      // Create marker from mesh
+      mesh_to_marker(mesh, marker);
+
+      // saving other properties
+      marker.header.frame_id = mesh.header.frame_id = surface_clouds_[i]->header.frame_id;
+      marker.id = i;
+      marker.color.a = params_.marker_alpha;
+
+      // Push marker to mesh_markers_
+      ROS_INFO_STREAM("Adding a marker for mesh with " + std::to_string(marker.points.size()) + " points");
+      mesh_markers_.markers.push_back(marker);
+
+      // Push mesh to meshes_
+      meshes_.push_back(mesh);
+    }
+    else
+      ROS_INFO_STREAM("Apply concave hull failed");
+  }
+
+  return true;
+}
+
+
+bool SurfaceDetection::find_surfaces_old()
 {
   // main process point cloud
   Cloud::Ptr process_cloud_ptr = Cloud::Ptr(new Cloud());
@@ -428,7 +533,6 @@ bool SurfaceDetection::find_surfaces()
   // applying mls surface smoothing
   for (int i = 0; i < surface_clouds_.size(); i++)
   {
-
     Normals::Ptr segment_normal_ptr = Normals::Ptr(new Normals());
     Cloud::Ptr segment_cloud_ptr = surface_clouds_[i];
     int count = segment_cloud_ptr->size();
@@ -467,7 +571,7 @@ bool SurfaceDetection::find_surfaces()
       }
     }
 
-    ROS_INFO_STREAM("Removing larges cluster from results: cluster index [ "
+    ROS_INFO_STREAM("Removing largest cluster from results: cluster index [ "
                     << largest_index << " ], cluster size [ " << largest_size << " ]");
     surface_clouds_.erase(surface_clouds_.begin() + largest_index);
     segment_normals.erase(segment_normals.begin() + largest_index);
@@ -496,6 +600,7 @@ bool SurfaceDetection::find_surfaces()
       marker.color.a = params_.marker_alpha;
       mesh_markers_.markers.push_back(marker);
       meshes_.push_back(mesh);
+      ROS_INFO_STREAM(marker);
 
       ROS_INFO_STREAM("Triangulation for surface " << i << " completed");
     }
@@ -680,6 +785,7 @@ bool SurfaceDetection::apply_voxel_downsampling(Cloud& cloud)
 bool SurfaceDetection::apply_mls_surface_smoothing(const Cloud& cloud_in, Cloud& cloud_out,
                                                    Normals& normals)
 {
+  return false;
   pcl::search::KdTree<pcl::PointXYZ>::Ptr tree(new pcl::search::KdTree<pcl::PointXYZ>());
   pcl::PointCloud<pcl::PointNormal> mls_points;
   pcl::MovingLeastSquares<pcl::PointXYZ, pcl::PointNormal> mls;
@@ -753,6 +859,18 @@ bool SurfaceDetection::apply_planar_reprojection(const Cloud& in, Cloud& out)
   if (plane_inliers_ptr->indices.size() == 0)
   {
     ROS_WARN_STREAM(__FUNCTION__ << ": Could not segment out plane");
+    return false;
+  }
+
+  // HACK: Return false if plane is rotated too far from Z axis
+  Eigen::Vector3d plane_normal ((*coeff_ptr).values[0], (*coeff_ptr).values[1], (*coeff_ptr).values[2]);
+  Eigen::Vector3d z_dir (0, 0, 1);
+
+  double z_angle = std::abs(std::acos( plane_normal.normalized().dot(z_dir) ));
+  const double max_angle = M_PI / 3.0;
+  if (z_angle > max_angle && z_angle < (M_PI - max_angle))
+  {
+    ROS_WARN("Surface normal not close enough to Z: %f vs max of %f", z_angle, max_angle);
     return false;
   }
 

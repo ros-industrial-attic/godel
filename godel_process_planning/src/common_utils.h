@@ -25,6 +25,14 @@ Eigen::Affine3d createNominalTransform(const geometry_msgs::Pose& ref_pose,
                                        const geometry_msgs::Point& pt);
 
 /**
+   * @brief Converts a point relative to given pose into a robot tool pose (i.e. flip z)
+   * @param ref_pose Reference pose (in world frame) for 'pt'
+   * @param pt 3-dimensional offset from pose for the given point
+   * @return Tool pose corresponding to this surface point
+   */
+Eigen::Affine3d createNominalTransform(const geometry_msgs::Pose& ref_pose);
+
+/**
  * @brief Given a path and robot model, this method creates a descartes planner and attempts to
  * solve the path
  * @param in_path Trajectory to solve
@@ -122,6 +130,55 @@ trajectory_msgs::JointTrajectory planFreeMove(descartes_core::RobotModel& model,
                                               moveit::core::RobotModelConstPtr moveit_model,
                                               const std::vector<double>& start,
                                               const std::vector<double>& stop);
+
+/**
+ * @brief Given a list of possible joint solutions, remove those that end in collision. Checking via 'model'.
+ */
+std::vector<std::vector<double>> filterColliding(descartes_core::RobotModel& model,
+                                                 const std::vector<std::vector<double>>& candidates);
+
+/**
+ * @brief Given an initial position and a list of candidates, select the 'best' start position for process path.
+ * @param start The initial pose of the robot (where you are moving from)
+ * @param model The descartes RobotModel used for collision checking
+ * @param candidates The possible candidate poses
+ * @param cost_func A pointer to function of type "double(vector<double> a, vector<double> b)" used
+ *        to order the non-colliding points
+ * @return The 'best' pose or an exception if no candidates are valid
+ */
+template <typename CostFunc>
+inline std::vector<double> pickBestStartPose(const std::vector<double>& start,
+                                             descartes_core::RobotModel& model,
+                                             const std::vector<std::vector<double>>& candidates,
+                                             CostFunc cost_func)
+{
+  // step 1: Filter out candidates that are already in collision
+  auto not_colliding = godel_process_planning::filterColliding(model, candidates);
+  ROS_WARN("After filtering: %lu", not_colliding.size());
+  // step 2: sort them by "closeness" cost
+  std::sort(not_colliding.begin(), not_colliding.end(), [&start, cost_func]
+            (const std::vector<double>& a, const std::vector<double>& b) {
+    auto a_cost = cost_func(start, a);
+    auto b_cost = cost_func(start, b);
+    return a_cost < b_cost;
+  });
+
+  if (not_colliding.empty())
+  {
+    throw std::runtime_error("No valid starting poses");
+  }
+
+  return not_colliding.front();
+}
+
+/**
+ * @brief Computes a 'cost' value for a robot motion between 'source' and 'target'
+ * @param source  The joint configuration at start of motion
+ * @param target  The joint configuration at end of motion
+ * @return cost value
+ */
+ double freeSpaceCostFunction(const std::vector<double>& source,
+                              const std::vector<double>& target);
 }
 
 #endif // COMMON_UTILS_H

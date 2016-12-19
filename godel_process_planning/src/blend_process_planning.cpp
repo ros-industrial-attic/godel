@@ -52,8 +52,8 @@ static inline descartes_core::TrajectoryPtPtr toDescartesPt(const Eigen::Affine3
  * @param target  The joint configuration at end of motion
  * @return cost value
  */
-static inline double freeSpaceCostFunction(const std::vector<double>& source,
-                                           const std::vector<double>& target)
+double freeSpaceCostFunctionBlending(const std::vector<double>& source,
+                                     const std::vector<double>& target)
 {
   // The cost function here penalizes large single joint motions in an effort to
   // keep the robot from flipping a joint, even if some other joints have to move
@@ -105,6 +105,38 @@ toDescartesTraj(const geometry_msgs::Pose& ref, const std::vector<geometry_msgs:
 }
 
 /**
+ * @brief transforms an input, in the form of a pose array relative to that pose,
+ * into Descartes' native format. Also adds in associated parameters.
+ * @param poses Sequence of poses (relative to the world space of blending robot model)
+ * @param params Surface blending parameters, including info such as traversal speed
+ * @return The input trajectory encoded in Descartes points
+ */
+static godel_process_planning::DescartesTraj
+toDescartesTraj(const geometry_msgs::PoseArray& poses,
+                const godel_msgs::BlendingPlanParameters& params)
+{
+  DescartesTraj traj;
+  traj.reserve(poses.poses.size());
+  if (poses.poses.empty())
+    return traj;
+
+  Eigen::Affine3d last_pose = createNominalTransform(poses.poses.front());
+
+  for (std::size_t i = 0; i < poses.poses.size(); ++i)
+  {
+    Eigen::Affine3d this_pose = createNominalTransform(poses.poses[i]);
+    ROS_INFO_STREAM("Pose " << i << ":\n" << this_pose.matrix() << "\n");
+    // O(1) jerky - may need to revisit this time parameterization later. This at least allows
+    // Descartes to perform some optimizations in its graph serach.
+    double dt = (this_pose.translation() - last_pose.translation()).norm() / params.traverse_spd;
+    traj.push_back(toDescartesPt(this_pose, dt));
+    last_pose = this_pose;
+  }
+
+  return traj;
+}
+
+/**
  * @brief Computes a joint motion plan based on input points and the blending process; this includes
  *        motion from current position to process path and back to the starting position.
  * @param req Process plan including reference pose, points, and process parameters
@@ -115,14 +147,17 @@ bool ProcessPlanningManager::handleBlendPlanning(godel_msgs::BlendProcessPlannin
                                                  godel_msgs::BlendProcessPlanning::Response& res)
 {
   // Precondition: Input trajectory must be non-zero
-  if (req.path.points.empty())
+  if (req.path.poses.poses.empty())
   {
     ROS_WARN("%s: Cannot create blend process plan for empty trajectory", __FUNCTION__);
     return false;
   }
 
+  // Enable Collision Checks
+  blend_model_->setCheckCollisions(true);
+
   // Transform process path from geometry msgs to descartes points
-  DescartesTraj process_points = toDescartesTraj(req.path.reference, req.path.points, req.params);
+  DescartesTraj process_points = toDescartesTraj(req.path.poses, req.params);
 
   // Capture the current state of the robot
   std::vector<double> current_joints = getCurrentJointState(JOINT_TOPIC_NAME);
@@ -131,21 +166,17 @@ bool ProcessPlanningManager::handleBlendPlanning(godel_msgs::BlendProcessPlannin
   std::vector<std::vector<double> > start_joint_poses;
   process_points.front()->getJointPoses(*blend_model_, start_joint_poses);
 
-  // Search for the 'best' config from available joint poses at start of
-  // process path, relative to our fixed starting position
-  size_t best_index = 0;
-  double best_cost = std::numeric_limits<double>::max();
-  ROS_DEBUG_STREAM("Possible starting poses: " << start_joint_poses.size());
-  for (size_t i = 0; i < start_joint_poses.size(); ++i)
+  if (start_joint_poses.empty())
   {
-    double cost = freeSpaceCostFunction(start_joint_poses[i], current_joints);
-    if (cost < best_cost)
-    {
-      ROS_DEBUG_STREAM("New best cost: " << cost << " at " << i);
-      best_cost = cost;
-      best_index = i;
-    }
+    ROS_WARN_STREAM("Blend Planning Service: Could not compute any inverse kinematic solutions for "
+                    "the first point in the process path.");
+
+    return false;
   }
+
+  ROS_INFO_STREAM("Number of candidate poses: " << start_joint_poses.size());
+
+  auto start_pose = godel_process_planning::pickBestStartPose(current_joints, *blend_model_, start_joint_poses, freeSpaceCostFunctionBlending);
 
   DescartesTraj solved_path;
   // Calculate tool pose of robot starting config so that we can go back here on the
@@ -159,7 +190,7 @@ bool ProcessPlanningManager::handleBlendPlanning(godel_msgs::BlendProcessPlannin
 
   // Joint interpolate from the initial robot position to 'best' starting configuration of process
   // path
-  DescartesTraj to_process = createJointPath(current_joints, start_joint_poses[best_index]);
+  DescartesTraj to_process = createJointPath(current_joints, start_pose);
   to_process.front() =
       descartes_core::TrajectoryPtPtr(new descartes_trajectory::JointTrajectoryPt(current_joints));
 
@@ -186,37 +217,57 @@ bool ProcessPlanningManager::handleBlendPlanning(godel_msgs::BlendProcessPlannin
   //  2. Use MoveIt (RRT-Connect) if the above fails
   // This is the only portion of the trajectory that is collision checked. Note this
   // method also converts the Descartes points into ROS trajectories.
-  trajectory_msgs::JointTrajectory approach =
-      planFreeMove(*blend_model_, blend_group_name_, moveit_model_,
-                   extractJoints(*blend_model_, *solved_path[0]),
-                   extractJoints(*blend_model_, *solved_path[to_process.size()]));
+  try
+  {
+    trajectory_msgs::JointTrajectory approach =
+        planFreeMove(*blend_model_, blend_group_name_, moveit_model_,
+                     extractJoints(*blend_model_, *solved_path[0]),
+                     extractJoints(*blend_model_, *solved_path[to_process.size()]));
 
-  trajectory_msgs::JointTrajectory depart = planFreeMove(
-      *blend_model_, blend_group_name_, moveit_model_,
-      extractJoints(*blend_model_, *solved_path[to_process.size() + process_points.size() - 1]),
-      extractJoints(*blend_model_, *solved_path[seed_path.size() - 1]));
+    trajectory_msgs::JointTrajectory depart = planFreeMove(
+        *blend_model_, blend_group_name_, moveit_model_,
+        extractJoints(*blend_model_, *solved_path[to_process.size() + process_points.size() - 1]),
+        extractJoints(*blend_model_, *solved_path[seed_path.size() - 1]));
 
-  // Break out the process path from the seed path and convert to ROS messages
-  DescartesTraj process_part(solved_path.begin() + to_process.size(),
-                             solved_path.end() - from_process.size());
-  trajectory_msgs::JointTrajectory process = toROSTrajectory(process_part, *blend_model_);
+    // Break out the process path from the seed path and convert to ROS messages
+    DescartesTraj process_part(solved_path.begin() + to_process.size(),
+                               solved_path.end() - from_process.size());
+    trajectory_msgs::JointTrajectory process = toROSTrajectory(process_part, *blend_model_);
 
-  // Fill in result trajectories
-  res.plan.trajectory_process = process;
-  res.plan.trajectory_approach = approach;
-  res.plan.trajectory_depart = depart;
+    for (std::size_t i = 0; i < process.points.size(); ++i)
+    {
+      const auto& pt = process.points[i];
+      if (!blend_model_->isValid(pt.positions))
+      {
+        ROS_WARN_STREAM("Position in blending path (" << i << ") invalid: Joint limit or collision detected\n");
+        return false;
+      }
+    }
 
-  // Fill in result header information
-  const std::vector<std::string>& joint_names =
-      moveit_model_->getJointModelGroup(blend_group_name_)->getActiveJointModelNames();
 
-  godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_approach);
-  godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_depart);
-  godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_process);
+    // Fill in result trajectories
+    res.plan.trajectory_process = process;
+    res.plan.trajectory_approach = approach;
+    res.plan.trajectory_depart = depart;
 
-  // set the type to blend plan
-  res.plan.type = godel_msgs::ProcessPlan::BLEND_TYPE;
+    // Fill in result header information
+    const std::vector<std::string>& joint_names =
+        moveit_model_->getJointModelGroup(blend_group_name_)->getActiveJointModelNames();
 
-  return true;
+    godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_approach);
+    godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_depart);
+    godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_process);
+
+    // set the type to blend plan
+    res.plan.type = godel_msgs::ProcessPlan::BLEND_TYPE;
+
+    return true;
+  }
+  catch (const std::runtime_error& e)
+  {
+    ROS_ERROR_STREAM("Exception caught when planning blending path: " << e.what());
+    return false;
+  }
 }
-}
+
+} // end namespace

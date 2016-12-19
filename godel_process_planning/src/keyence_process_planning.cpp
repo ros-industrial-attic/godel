@@ -11,9 +11,40 @@
 // FILE LOCAL CONSTANTS
 const static std::string JOINT_TOPIC_NAME =
     "joint_states"; // ROS topic to subscribe to for robot state
+const double FREE_SPACE_MAX_ANGLE_DELTA =
+    M_PI_2; // The maximum angle a joint during a freespace motion
+            // from the start to end position without that motion
+            // being penalized. Avoids flips.
+const double FREE_SPACE_ANGLE_PENALTY =
+    5.0; // The factor by which a joint motion is multiplied if said
+         // motion is greater than the max.
 
 namespace godel_process_planning
 {
+
+/**
+ * @brief Computes a 'cost' value for a robot motion between 'source' and 'target'
+ * @param source  The joint configuration at start of motion
+ * @param target  The joint configuration at end of motion
+ * @return cost value
+ */
+ double freeSpaceCostFunctionScan(const std::vector<double>& source,
+                                  const std::vector<double>& target)
+{
+  // The cost function here penalizes large single joint motions in an effort to
+  // keep the robot from flipping a joint, even if some other joints have to move
+  // a bit more.
+  double cost = 0.0;
+  for (std::size_t i = 0; i < source.size(); ++i)
+  {
+    double diff = std::abs(source[i] - target[i]);
+    if (diff > FREE_SPACE_MAX_ANGLE_DELTA)
+      cost += FREE_SPACE_ANGLE_PENALTY * diff;
+    else
+      cost += diff;
+  }
+  return cost;
+}
 
 /**
  * @brief Translated an Eigen pose to a Descartes trajectory point appropriate for the scan process!
@@ -76,6 +107,36 @@ toDescartesTraj(const geometry_msgs::Pose& ref, const std::vector<geometry_msgs:
 }
 
 /**
+ * @brief transforms an input, in the form of a reference pose and points relative to that pose,
+ * into Descartes'
+ *        native format. Also adds in associated parameters.
+ * @param points Sequence of poses (relative to the world space of blending robot model)
+ * @param params Surface blending parameters, including info such as traversal speed
+ * @return The input trajectory encoded in Descartes points
+ */
+static godel_process_planning::DescartesTraj
+toDescartesTraj(const geometry_msgs::PoseArray& ref,
+                const godel_msgs::ScanPlanParameters& params)
+{
+  DescartesTraj traj;
+  traj.reserve(ref.poses.size());
+  if (ref.poses.empty())
+    return traj;
+
+  Eigen::Affine3d last_pose = createNominalTransform(ref.poses.front());
+
+  for (std::size_t i = 0; i < ref.poses.size(); ++i)
+  {
+    Eigen::Affine3d this_pose = createNominalTransform(ref.poses[i]);
+    double dt = (this_pose.translation() - last_pose.translation()).norm() / params.traverse_spd;
+    traj.push_back(toDescartesPt(this_pose, dt));
+    last_pose = this_pose;
+  }
+
+  return traj;
+}
+
+/**
  * @brief Computes a joint motion plan based on input points and the scan process; this includes
  *        motion from current position to process path and back to the starting position.
  * @param req Process plan including reference pose, points, and process parameters
@@ -87,39 +148,50 @@ bool ProcessPlanningManager::handleKeyencePlanning(
     godel_msgs::KeyenceProcessPlanning::Response& res)
 {
   // Precondition: Input trajectory must be non-zero
-  if (req.path.points.empty())
+  if (req.path.poses.poses.empty())
   {
     ROS_WARN("%s: Cannot create scan process plan for empty trajectory", __FUNCTION__);
     return false;
   }
 
   // Transform process path from geometry msgs to descartes points
-  DescartesTraj process_points = toDescartesTraj(req.path.reference, req.path.points, req.params);
-  DescartesTraj solved_path;
+  DescartesTraj process_points = toDescartesTraj(req.path.poses, req.params);
 
   // Capture the current state of the robot
   std::vector<double> current_joints = getCurrentJointState(JOINT_TOPIC_NAME);
 
-  // Current pose
+  // Compute all of the joint poses at the start of the process path
+  std::vector<std::vector<double> > start_joint_poses;
+  process_points.front()->getJointPoses(*keyence_model_, start_joint_poses);
+
+  if (start_joint_poses.empty())
+  {
+    ROS_WARN_STREAM("Keyence Planning Service: Could not compute any inverse kinematic solutions for "
+                    "the first point in the process path.");
+
+    return false;
+  }
+
+  auto start_pose = pickBestStartPose(current_joints, *keyence_model_, start_joint_poses, freeSpaceCostFunctionScan);
+
+  DescartesTraj solved_path;
+  // Calculate tool pose of robot starting config so that we can go back here on the
+  // return move
   Eigen::Affine3d init_pose;
   keyence_model_->getFK(current_joints, init_pose);
-
-  // Calculate nominal pose of initial process point
-  Eigen::Affine3d process_start_pose;
-  process_points.front()->getNominalCartPose(std::vector<double>(), *keyence_model_,
-                                             process_start_pose);
-
-  // Calculate nominal pose of final process point
+  // Compute the nominal tool pose of the final process point
   Eigen::Affine3d process_stop_pose;
   process_points.back()->getNominalCartPose(std::vector<double>(), *keyence_model_,
                                             process_stop_pose);
 
-  // Create interpolation segment from init position to process path
-  DescartesTraj to_process = createLinearPath(init_pose, process_start_pose);
+  // Joint interpolate from the initial robot position to 'best' starting configuration of process
+  // path
+  DescartesTraj to_process = createJointPath(current_joints, start_pose);
   to_process.front() =
       descartes_core::TrajectoryPtPtr(new descartes_trajectory::JointTrajectoryPt(current_joints));
 
-  // Create interpolation segment from end of process path to init position
+  // To get a rough estimate of process path cost, add a cartesian move from the final process point
+  // to the starting position again.
   DescartesTraj from_process = createLinearPath(process_stop_pose, init_pose);
   from_process.back() =
       descartes_core::TrajectoryPtPtr(new descartes_trajectory::JointTrajectoryPt(current_joints));
@@ -133,39 +205,48 @@ bool ProcessPlanningManager::handleKeyencePlanning(
   // Attempt to solve the initial path
   if (!descartesSolve(seed_path, keyence_model_, solved_path))
   {
+    ROS_ERROR_STREAM("Descartes unable to solve scanning path");
     return false;
   }
 
   // Refine the approach and depart plans by attempting joint interpolation and using MoveIt if
   // necessary
-  trajectory_msgs::JointTrajectory approach =
-      planFreeMove(*keyence_model_, keyence_group_name_, moveit_model_,
-                   extractJoints(*keyence_model_, *solved_path[0]),
-                   extractJoints(*keyence_model_, *solved_path[to_process.size()]));
+  try
+  {
+    trajectory_msgs::JointTrajectory approach =
+        planFreeMove(*keyence_model_, keyence_group_name_, moveit_model_,
+                     extractJoints(*keyence_model_, *solved_path[0]),
+                     extractJoints(*keyence_model_, *solved_path[to_process.size()]));
 
-  trajectory_msgs::JointTrajectory depart = planFreeMove(
-      *keyence_model_, keyence_group_name_, moveit_model_,
-      extractJoints(*keyence_model_, *solved_path[to_process.size() + process_points.size() - 1]),
-      extractJoints(*keyence_model_, *solved_path[seed_path.size() - 1]));
-  // Segment out process path from initial solution
-  DescartesTraj process_part(solved_path.begin() + to_process.size(),
-                             solved_path.end() - from_process.size());
-  trajectory_msgs::JointTrajectory process = toROSTrajectory(process_part, *keyence_model_);
+    trajectory_msgs::JointTrajectory depart = planFreeMove(
+        *keyence_model_, keyence_group_name_, moveit_model_,
+        extractJoints(*keyence_model_, *solved_path[to_process.size() + process_points.size() - 1]),
+        extractJoints(*keyence_model_, *solved_path[seed_path.size() - 1]));
+    // Segment out process path from initial solution
+    DescartesTraj process_part(solved_path.begin() + to_process.size(),
+                               solved_path.end() - from_process.size());
+    trajectory_msgs::JointTrajectory process = toROSTrajectory(process_part, *keyence_model_);
 
-  // Translate the Descartes trajectory into a ROS joint trajectory
-  const std::vector<std::string>& joint_names =
-      moveit_model_->getJointModelGroup(keyence_group_name_)->getActiveJointModelNames();
+    // Translate the Descartes trajectory into a ROS joint trajectory
+    const std::vector<std::string>& joint_names =
+        moveit_model_->getJointModelGroup(keyence_group_name_)->getActiveJointModelNames();
 
-  res.plan.trajectory_process = process;
-  res.plan.trajectory_approach = approach;
-  res.plan.trajectory_depart = depart;
+    res.plan.trajectory_process = process;
+    res.plan.trajectory_approach = approach;
+    res.plan.trajectory_depart = depart;
 
-  godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_approach);
-  godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_depart);
-  godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_process);
+    godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_approach);
+    godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_depart);
+    godel_process_planning::fillTrajectoryHeaders(joint_names, res.plan.trajectory_process);
 
-  res.plan.type = godel_msgs::ProcessPlan::SCAN_TYPE;
+    res.plan.type = godel_msgs::ProcessPlan::SCAN_TYPE;
 
-  return true;
+    return true;
+  }
+  catch (std::runtime_error& e)
+  {
+    ROS_ERROR_STREAM("Exception caught when planning keyence scan path: " << e.what());
+    return false;
+  }
 }
 }

@@ -51,6 +51,19 @@ Eigen::Affine3d godel_process_planning::createNominalTransform(const geometry_ms
   return eigen_pose * to_point * flip_z;
 }
 
+Eigen::Affine3d godel_process_planning::createNominalTransform(const geometry_msgs::Pose& ref_pose)
+{
+  Eigen::Affine3d eigen_pose;
+
+  tf::poseMsgToEigen(ref_pose, eigen_pose);
+
+  // Reverse the Z axis
+  Eigen::Affine3d flip_z;
+  flip_z = Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitY());
+
+  return eigen_pose * flip_z;
+}
+
 bool godel_process_planning::descartesSolve(const godel_process_planning::DescartesTraj& in_path,
                                             descartes_core::RobotModelConstPtr robot_model,
                                             godel_process_planning::DescartesTraj& out_path)
@@ -216,28 +229,6 @@ trajectory_msgs::JointTrajectory godel_process_planning::planFreeMove(
     moveit::core::RobotModelConstPtr moveit_model, const std::vector<double>& start,
     const std::vector<double>& stop)
 {
-  // Using a mutable model, turns collision checking on for just the
-  // period of this function. Functions called in this function may
-  // throw exceptions and this makes sure the system state is always
-  // valid
-  struct CollisionsGuard
-  {
-    CollisionsGuard(descartes_core::RobotModel& model) : model_(model)
-    {
-      model.setCheckCollisions(true);
-      ROS_WARN_STREAM("Enabling collision");
-    }
-    ~CollisionsGuard()
-    {
-      model_.setCheckCollisions(false);
-      ROS_WARN_STREAM("Disable collision");
-    }
-    descartes_core::RobotModel& model_;
-  };
-
-  // Create gaurd to enable collisions only for this function
-  CollisionsGuard guard(model);
-
   // Attempt joint interpolated motion
   DescartesTraj joint_approach = createJointPath(start, stop);
 
@@ -262,4 +253,18 @@ trajectory_msgs::JointTrajectory godel_process_planning::planFreeMove(
   {
     return godel_process_planning::getMoveitPlan(group_name, start, stop, moveit_model);
   }
+}
+
+std::vector<std::vector<double>>
+godel_process_planning::filterColliding(descartes_core::RobotModel& model,
+                                        const std::vector<std::vector<double>>& candidates)
+{
+  std::vector<std::vector<double>> results;
+
+  for (const auto& c : candidates)
+  {
+    if (model.isValid(c))
+      results.push_back(c);
+  }
+  return results;
 }

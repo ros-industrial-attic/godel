@@ -18,6 +18,7 @@
 
 #include <godel_surface_detection/scan/robot_scan.h>
 #include <godel_surface_detection/detection/surface_detection.h>
+#include <godel_surface_detection/detection/surface_segmentation.h>
 #include <godel_surface_detection/interactive/interactive_surface_server.h>
 
 #include <godel_msgs/SurfaceDetection.h>
@@ -55,9 +56,13 @@ const static std::string TOOL_NAMESPACE = "process_tool";
 struct ProcessPathDetails
 {
   visualization_msgs::MarkerArray process_boundaries_;
-  visualization_msgs::MarkerArray process_paths_;
+  visualization_msgs::MarkerArray process_visualization_;
+  visualization_msgs::MarkerArray edge_visualization_;
   visualization_msgs::MarkerArray tool_parts_;
-  visualization_msgs::MarkerArray scan_paths_; // profilimeter
+  visualization_msgs::MarkerArray scan_visualization_; // profilimeter
+  geometry_msgs::PoseArray process_poses_;
+  geometry_msgs::PoseArray edge_poses_;
+  geometry_msgs::PoseArray scan_poses_;
 };
 
 /**
@@ -66,7 +71,7 @@ struct ProcessPathDetails
  */
 struct ProcessPathResult
 {
-  typedef std::pair<std::string, visualization_msgs::Marker> value_type;
+  typedef std::pair<std::string, geometry_msgs::PoseArray> value_type;
   std::vector<value_type> paths;
 };
 /**
@@ -140,19 +145,30 @@ private:
   bool requestBlendPath(const godel_process_path::PolygonBoundaryCollection& boundaries,
                         const geometry_msgs::Pose& boundary_pose,
                         const godel_msgs::BlendingPlanParameters& params,
-                        visualization_msgs::Marker& path);
+                        visualization_msgs::Marker& visualization,
+                        geometry_msgs::PoseArray& path);
 
   bool requestScanPath(const godel_process_path::PolygonBoundaryCollection& boundaries,
                        const geometry_msgs::Pose& boundary_pose,
                        const godel_msgs::ScanPlanParameters& params,
-                       visualization_msgs::Marker& path);
+                       visualization_msgs::Marker& visualization,
+                       geometry_msgs::PoseArray& path);
 
-  ProcessPathResult generateProcessPath(const std::string& name, const pcl::PolygonMesh& mesh,
+
+  bool requestEdgePath(std::vector<pcl::IndicesPtr>& boundaries,
+                       int index,
+                       surfaceSegmentation& SS,
+                       visualization_msgs::Marker& visualization,
+                       geometry_msgs::PoseArray& path);
+
+  ProcessPathResult generateProcessPath(const std::string& name,
+                                        const pcl::PolygonMesh& mesh,
+                                        const godel_surface_detection::detection::Cloud::Ptr,
                                         const godel_msgs::BlendingPlanParameters& params,
                                         const godel_msgs::ScanPlanParameters& scan_params);
 
   ProcessPlanResult generateProcessPlan(const std::string& name,
-                                        const visualization_msgs::Marker& path,
+                                        const geometry_msgs::PoseArray& path,
                                         const godel_msgs::BlendingPlanParameters& params,
                                         const godel_msgs::ScanPlanParameters& scan_params);
 
@@ -196,6 +212,9 @@ private:
   ros::Publisher selected_surf_changed_pub_;
   ros::Publisher point_cloud_pub_;
   ros::Publisher tool_path_markers_pub_;
+  ros::Publisher blend_visualization_pub_;
+  ros::Publisher edge_visualization_pub_;
+
   // Timers
   bool stop_tool_animation_;
 

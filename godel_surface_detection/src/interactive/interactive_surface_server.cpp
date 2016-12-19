@@ -29,7 +29,8 @@ namespace interactive
 {
 
 InteractiveSurfaceServer::InteractiveSurfaceServer()
-    : marker_name_(defaults::MARKER_SERVER_NAME), marker_description_(defaults::MARKER_DESCRIPTION),
+    : marker_name_(defaults::MARKER_SERVER_NAME),
+      marker_description_(defaults::MARKER_DESCRIPTION),
       arrow_distance_(defaults::ARROW_DISTANCE),
       arrow_head_diameter_(defaults::ARROW_HEAD_DIAMETER),
       arrow_head_length_(defaults::ARROW_HEAD_LENGTH), arrow_length_(defaults::ARROW_LENGTH),
