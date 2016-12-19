@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(motoman_sia20d_ikfast_manipulator)
+add_definitions(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
   moveit_core

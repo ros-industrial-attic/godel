@@ -74,7 +74,7 @@ RobotScan::RobotScan()
 
 bool RobotScan::init()
 {
-  move_group_ptr_ = MoveGroupPtr(new move_group_interface::MoveGroup(params_.group_name));
+  move_group_ptr_ = MoveGroupPtr(new  moveit::planning_interface::MoveGroupInterface(params_.group_name));
   move_group_ptr_->setEndEffectorLink(params_.tcp_frame);
   move_group_ptr_->setPoseReferenceFrame(params_.world_frame);
   move_group_ptr_->setPlanningTime(PLANNING_TIME);
@@ -180,7 +180,7 @@ int RobotScan::scan(bool move_only)
   // cartesian path generation
   double eef_step = EEF_STEP; // 1*alpha_incr*params_.cam_to_obj_xoffset;
   double jump_threshold = 0.0;
-  moveit::planning_interface::MoveGroup::Plan path_plan;
+  moveit::planning_interface::MoveGroupInterface::Plan path_plan;
   geometry_msgs::PoseArray cartesian_poses;
   path_plan.planning_time_ = PLANNING_TIME;
 
@@ -211,7 +211,7 @@ int RobotScan::scan(bool move_only)
       // creating path plan structure and execute
       move_group_ptr_->setStartStateToCurrentState();
 
-      moveit::planning_interface::MoveGroup::Plan my_plan;
+      moveit::planning_interface::MoveGroupInterface::Plan my_plan;
       bool success = move_group_ptr_->plan(my_plan);
 
       if (!success)
