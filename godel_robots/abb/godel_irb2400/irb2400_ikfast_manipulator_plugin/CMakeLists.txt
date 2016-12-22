@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(irb2400_ikfast_manipulator_plugin)
+add_definitions(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
   moveit_core

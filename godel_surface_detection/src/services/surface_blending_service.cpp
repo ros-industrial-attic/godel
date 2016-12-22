@@ -327,8 +327,9 @@ void SurfaceBlendingService::remove_previous_process_plan()
 {
   // removing boundary markers
   visualization_msgs::MarkerArray& bds = process_path_results_.process_boundaries_;
-  visualization_msgs::MarkerArray& paths = process_path_results_.process_paths_;
-  visualization_msgs::MarkerArray& scans = process_path_results_.scan_paths_;
+  visualization_msgs::MarkerArray& paths = process_path_results_.process_visualization_;
+  visualization_msgs::MarkerArray& scans = process_path_results_.scan_visualization_;
+  visualization_msgs::MarkerArray& edge = process_path_results_.edge_visualization_;
 
   for (std::size_t i = 0; i < bds.markers.size(); i++)
   {
@@ -347,23 +348,30 @@ void SurfaceBlendingService::remove_previous_process_plan()
     visualization_msgs::Marker& m = scans.markers[i];
     m.action = m.DELETE;
   }
+  for (std::size_t i = 0; i < edge.markers.size(); ++i)
+  {
+    visualization_msgs::Marker& m = edge.markers[i];
+    m.action = m.DELETE;
+  }
 
   // publishing markers for deletion
   visualization_msgs::MarkerArray markers;
   markers.markers.insert(markers.markers.end(), bds.markers.begin(), bds.markers.end());
   markers.markers.insert(markers.markers.end(), paths.markers.begin(), paths.markers.end());
   markers.markers.insert(markers.markers.end(), scans.markers.begin(), scans.markers.end());
+  markers.markers.insert(markers.markers.end(), edge.markers.begin(), edge.markers.end());
 
   tool_path_markers_pub_.publish(markers);
 
   bds.markers.clear();
   paths.markers.clear();
   scans.markers.clear();
+  edge.markers.clear();
 }
 
 bool SurfaceBlendingService::animate_tool_path()
 {
-  bool succeeded = !process_path_results_.process_paths_.markers.empty();
+  bool succeeded = !process_path_results_.process_visualization_.markers.empty();
   stop_tool_animation_ = true;
 
   ROS_INFO_STREAM("Tool animation activated");
@@ -399,11 +407,11 @@ void SurfaceBlendingService::tool_animation_timer_callback()
   // Hacky thing to get it going for demo
 
   // adding markers
-  int num_path_markers = process_path_results_.process_paths_.markers.size();
+  int num_path_markers = process_path_results_.process_visualization_.markers.size();
   // Blending Paths
   process_markers.markers.insert(process_markers.markers.end(),
-                                 process_path_results_.process_paths_.markers.begin(),
-                                 process_path_results_.process_paths_.markers.end());
+                                 process_path_results_.process_visualization_.markers.begin(),
+                                 process_path_results_.process_visualization_.markers.end());
   // Surface outlines
   process_markers.markers.insert(process_markers.markers.end(),
                                  process_path_results_.process_boundaries_.markers.begin(),
@@ -412,7 +420,7 @@ void SurfaceBlendingService::tool_animation_timer_callback()
   process_markers.markers.insert(process_markers.markers.end(), tool_markers.markers.begin(),
                                  tool_markers.markers.end());
 
-  ROS_INFO_STREAM(process_path_results_.process_paths_.markers.size()
+  ROS_INFO_STREAM(process_path_results_.process_visualization_.markers.size()
                   << " path markers, " << process_path_results_.process_boundaries_.markers.size()
                   << " boundary markers, " << tool_markers.markers.size() << " tool markers.");
 
@@ -504,13 +512,15 @@ SurfaceBlendingService::create_tool_markers(const geometry_msgs::Point& pos,
 bool SurfaceBlendingService::surface_detection_server_callback(
     godel_msgs::SurfaceDetection::Request& req, godel_msgs::SurfaceDetection::Response& res)
 {
-
   res.surfaces_found = false;
   res.surfaces = visualization_msgs::MarkerArray();
   remove_previous_process_plan();
 
   switch (req.action)
   {
+  case godel_msgs::SurfaceDetection::Request::INITIALIZE_SPACE:
+    SurfaceBlendingService::remove_previous_process_plan();
+    break;
 
   case godel_msgs::SurfaceDetection::Request::PUBLISH_SCAN_PATH:
 
@@ -820,10 +830,12 @@ bool SurfaceBlendingService::renameSurfaceCallback(godel_msgs::RenameSurface::Re
 void SurfaceBlendingService::visualizePaths()
 {
   visualization_msgs::MarkerArray paths;
-  paths.markers.insert(paths.markers.end(), process_path_results_.process_paths_.markers.begin(),
-                       process_path_results_.process_paths_.markers.end());
-  paths.markers.insert(paths.markers.end(), process_path_results_.scan_paths_.markers.begin(),
-                       process_path_results_.scan_paths_.markers.end());
+  paths.markers.insert(paths.markers.end(), process_path_results_.process_visualization_.markers.begin(),
+                       process_path_results_.process_visualization_.markers.end());
+  paths.markers.insert(paths.markers.end(), process_path_results_.edge_visualization_.markers.begin(),
+                       process_path_results_.edge_visualization_.markers.end());
+  paths.markers.insert(paths.markers.end(), process_path_results_.scan_visualization_.markers.begin(),
+                       process_path_results_.scan_visualization_.markers.end());
   tool_path_markers_pub_.publish(paths);
 }
 

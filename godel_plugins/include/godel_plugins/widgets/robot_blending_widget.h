@@ -31,7 +31,7 @@
 
 #include <QWidget>
 #include <QTimer>
-#include <QtConcurrentRun>
+#include <QtConcurrent/QtConcurrentRun>
 
 #include <godel_plugins/widgets/surface_detection_configuration.h>
 #include <godel_plugins/widgets/robot_scan_configuration.h>

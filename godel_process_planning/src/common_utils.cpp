@@ -51,6 +51,19 @@ Eigen::Affine3d godel_process_planning::createNominalTransform(const geometry_ms
   return eigen_pose * to_point * flip_z;
 }
 
+Eigen::Affine3d godel_process_planning::createNominalTransform(const geometry_msgs::Pose& ref_pose)
+{
+  Eigen::Affine3d eigen_pose;
+
+  tf::poseMsgToEigen(ref_pose, eigen_pose);
+
+  // Reverse the Z axis
+  Eigen::Affine3d flip_z;
+  flip_z = Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitY());
+
+  return eigen_pose * flip_z;
+}
+
 bool godel_process_planning::descartesSolve(const godel_process_planning::DescartesTraj& in_path,
                                             descartes_core::RobotModelConstPtr robot_model,
                                             godel_process_planning::DescartesTraj& out_path)
@@ -262,4 +275,22 @@ trajectory_msgs::JointTrajectory godel_process_planning::planFreeMove(
   {
     return godel_process_planning::getMoveitPlan(group_name, start, stop, moveit_model);
   }
+}
+
+std::vector<std::vector<double>>
+godel_process_planning::filterColliding(descartes_core::RobotModel& model,
+                                        const std::vector<std::vector<double>>& candidates)
+{
+  model.setCheckCollisions(true);
+
+  std::vector<std::vector<double>> results;
+
+  for (const auto& c : candidates)
+  {
+    if (model.isValid(c))
+      results.push_back(c);
+  }
+
+  model.setCheckCollisions(false);
+  return results;
 }
