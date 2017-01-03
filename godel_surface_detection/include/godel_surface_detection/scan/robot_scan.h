@@ -48,7 +48,7 @@ public:
   static const double MIN_JOINT_VELOCITY;
 
 public:
-  typedef boost::function<void(pcl::PointCloud<pcl::PointXYZ>& cloud)> ScanCallback;
+  typedef boost::function<void(pcl::PointCloud<pcl::PointXYZRGB>& cloud)> ScanCallback;
 
 public:
   RobotScan();

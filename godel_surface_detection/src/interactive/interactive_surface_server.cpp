@@ -22,6 +22,8 @@
 #include <pcl/point_types.h>
 #include <pcl/common/common.h>
 #include <pcl_ros/transforms.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 namespace godel_surface_detection
 {
@@ -74,7 +76,7 @@ void InteractiveSurfaceServer::mesh_to_marker(const pcl::PolygonMesh& mesh,
   marker.color = color;
 
   // filling points
-  pcl::PointCloud<pcl::PointXYZ> points;
+  pcl::PointCloud<pcl::PointXYZRGB> points;
   pcl::fromPCLPointCloud2(mesh.cloud, points);
   for (int i = 0; i < mesh.polygons.size(); i++)
   {
@@ -94,7 +96,7 @@ void InteractiveSurfaceServer::mesh_to_marker(const pcl::PolygonMesh& mesh,
 void InteractiveSurfaceServer::marker_to_mesh(const visualization_msgs::Marker& marker,
                                               pcl::PolygonMesh& mesh)
 {
-  pcl::PointCloud<pcl::PointXYZ> points;
+  pcl::PointCloud<pcl::PointXYZRGB> points;
   for (int i = 0; i < marker.points.size(); i += 3)
   {
     pcl::Vertices v;
@@ -102,7 +104,7 @@ void InteractiveSurfaceServer::marker_to_mesh(const visualization_msgs::Marker& 
     {
       v.vertices.push_back(i + j);
 
-      pcl::PointXYZ p;
+      pcl::PointXYZRGB p;
       p.x = marker.points[i + j].x;
       p.y = marker.points[i + j].y;
       p.z = marker.points[i + j].z;
@@ -157,12 +159,10 @@ void InteractiveSurfaceServer::set_selection_flag(std::string marker_name, bool 
 {
 
   visualization_msgs::InteractiveMarker int_marker;
-  if (surface_selection_map_.count(marker_name) > 0 &&
-      marker_server_ptr_->get(marker_name, int_marker))
+  if (surface_selection_map_.count(marker_name) > 0 && marker_server_ptr_->get(marker_name, int_marker))
   {
     surface_selection_map_[marker_name] = selected;
-    int_marker.controls[1].markers[0].type =
-        selected ? visualization_msgs::Marker::ARROW : visualization_msgs::Marker::SPHERE;
+    int_marker.controls[1].markers[0].type = selected ? visualization_msgs::Marker::ARROW : visualization_msgs::Marker::SPHERE;
     int_marker.controls[1].markers[0].scale.x = selected ? arrow_shaft_diameter_ : 0.0001f;
     int_marker.controls[1].markers[0].scale.y = selected ? arrow_head_diameter_ : 0.0001f;
     int_marker.controls[1].markers[0].scale.z = selected ? arrow_head_length_ : 0.0001f;
@@ -336,7 +336,7 @@ void InteractiveSurfaceServer::create_arrow_marker(const visualization_msgs::Mar
                                                    visualization_msgs::Marker& arrow_marker)
 {
   // create temporary point cloud
-  pcl::PointCloud<pcl::PointXYZ> surface;
+  pcl::PointCloud<pcl::PointXYZRGB> surface;
   surface.width = surface_marker.points.size();
   surface.height = 1;
   surface.points.resize(surface_marker.points.size());
@@ -348,7 +348,7 @@ void InteractiveSurfaceServer::create_arrow_marker(const visualization_msgs::Mar
   }
 
   // finding bouding box bounds
-  pcl::PointXYZ min, max;
+  pcl::PointXYZRGB min, max;
   pcl::getMinMax3D(surface, min, max);
 
   // create arrow

@@ -60,7 +60,7 @@ class surfaceSegmentation
 
   // segmentation results
   std::vector <pcl::PointIndices> clusters_;
-  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_;
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud_;
   Mesh HEM_;
 
   // smoothing filter
@@ -75,13 +75,13 @@ class surfaceSegmentation
   surfaceSegmentation()
   {
     // initialize pointers to cloud members
-    input_cloud_= pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+    input_cloud_= pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
   }
 
   /** @brief distructor */
   ~surfaceSegmentation()
   {
-    input_cloud_ =  pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+    input_cloud_ =  pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
     normals_ =  pcl::PointCloud<pcl::Normal>::Ptr(new pcl::PointCloud<pcl::Normal>);
     input_cloud_->clear();
   }
@@ -89,9 +89,9 @@ class surfaceSegmentation
   /** @brief constructor that sets the background cloud, also initializes the KdTree for searching
   @param bg_cloud the set of points defining the background
   */
-  surfaceSegmentation(pcl::PointCloud<pcl::PointXYZ>::Ptr icloud)
+  surfaceSegmentation(pcl::PointCloud<pcl::PointXYZRGB>::Ptr icloud)
   {
-    input_cloud_ =  pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>);
+    input_cloud_ =  pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
     normals_ =  pcl::PointCloud<pcl::Normal>::Ptr(new pcl::PointCloud<pcl::Normal>);
     setInputCloud(icloud);
     removeNans();
@@ -101,7 +101,7 @@ class surfaceSegmentation
   /** @brief sets the background cloud, replaces whatever points exists if any
   @param background_cloud the cloud representing the background
   */
-  void setInputCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr icloud)
+  void setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr icloud)
   {
     input_cloud_->clear();
     for(const auto& pt : *icloud)
@@ -114,7 +114,7 @@ class surfaceSegmentation
   /** @brief adds new points to the background, and reinitializes the kd_tree for searching
   @param bg_cloud additional background points
   */
-  void addCloud(pcl::PointCloud<pcl::PointXYZ>::Ptr icloud)
+  void addCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr icloud)
   {
     // push input_cloud onto icloud and then add, this strange sequence keeps ordering of clouds
     // and does not duplicate setInputCloud code
@@ -138,12 +138,12 @@ class surfaceSegmentation
     }
     else
     {
-      pcl::BoundaryEstimation<pcl::PointXYZ, pcl::Normal, pcl::Boundary> best;
+      pcl::BoundaryEstimation<pcl::PointXYZRGB, pcl::Normal, pcl::Boundary> best;
       best.setInputCloud(input_cloud_);
       best.setInputNormals(normals_);
       best.setRadiusSearch (radius_);
       //	best.setAngleThreshold(90.0*3.14/180.0);
-      best.setSearchMethod (pcl::search::KdTree<pcl::PointXYZ>::Ptr (new pcl::search::KdTree<pcl::PointXYZ>));
+      best.setSearchMethod (pcl::search::KdTree<pcl::PointXYZRGB>::Ptr (new pcl::search::KdTree<pcl::PointXYZRGB>));
       best.compute(*bps);
     }
 
@@ -153,9 +153,9 @@ class surfaceSegmentation
   std::vector <pcl::PointIndices> computeSegments(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &colored_cloud)
   {
     // Region growing
-    pcl::search::Search<pcl::PointXYZ>::Ptr tree =
-        boost::shared_ptr<pcl::search::Search<pcl::PointXYZ>> (new pcl::search::KdTree<pcl::PointXYZ>);
-    pcl::RegionGrowing<pcl::PointXYZ, pcl::Normal> rg;
+    pcl::search::Search<pcl::PointXYZRGB>::Ptr tree =
+        boost::shared_ptr<pcl::search::Search<pcl::PointXYZRGB>> (new pcl::search::KdTree<pcl::PointXYZRGB>);
+    pcl::RegionGrowing<pcl::PointXYZRGB, pcl::Normal> rg;
 
     rg.setSmoothModeFlag (false); // Depends on the cloud being processed
     rg.setSmoothnessThreshold (10.0 / 180.0 * M_PI);
@@ -267,7 +267,7 @@ class surfaceSegmentation
       used.push_back(p);
     }
 
-    pcl::KdTreeFLANN<pcl::PointXYZ> kdtree(true);// true indicates return sorted radius search results
+    pcl::KdTreeFLANN<pcl::PointXYZRGB> kdtree(true);// true indicates return sorted radius search results
     kdtree.setInputCloud(input_cloud_, boundary_indices); // use just the boundary points for searching
 
     std::pair<int, int> n = getNextUnused(used);
@@ -280,7 +280,7 @@ class surfaceSegmentation
       // find all points within small radius of current boundary point
       std::vector<int> pt_indices;
       std::vector<float> pt_dist;
-      pcl::PointXYZ spt = input_cloud_->points[n.second];
+      pcl::PointXYZRGB spt = input_cloud_->points[n.second];
 
       while ( kdtree.radiusSearch (spt, radius_, pt_indices, pt_dist) > 1 )
       { // gives index into input_cloud_,
@@ -466,10 +466,10 @@ class surfaceSegmentation
     }
     smoothPointNormal(pts, spts);
 
-    std::vector<pcl::PointXYZ> vels;
+    std::vector<pcl::PointXYZRGB> vels;
     for(int i = 0; i < spts.size(); i++)
     {
-      pcl::PointXYZ v;
+      pcl::PointXYZRGB v;
       int next = (i + 1) % pts.size();
       v.x = spts[next].x - spts[i].x;
       v.y = spts[next].y - spts[i].y;
@@ -529,10 +529,10 @@ class surfaceSegmentation
   }
 
 
-  bool applyConcaveHull(pcl::PointCloud<pcl::PointXYZ>::Ptr& in, pcl::PolygonMesh& mesh)
+  bool applyConcaveHull(pcl::PointCloud<pcl::PointXYZRGB>::Ptr& in, pcl::PolygonMesh& mesh)
   {
     pcl::PolygonMesh::Ptr hull_mesh_ptr(new pcl::PolygonMesh);
-    pcl::ConcaveHull<pcl::PointXYZ> chull;
+    pcl::ConcaveHull<pcl::PointXYZRGB> chull;
     chull.setInputCloud(in);
     chull.setAlpha(500.0);
     chull.reconstruct(mesh);
@@ -577,7 +577,7 @@ private:
   /** @brief remove any NAN points, otherwise many algorityms fail */
   void removeNans()
   {
-    pcl::PointCloud<pcl::PointXYZ>::Ptr nonans_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr nonans_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
     nonans_cloud->is_dense = false;
     std::vector<int> indices;
     pcl::removeNaNFromPointCloud (*input_cloud_, *nonans_cloud, indices);
@@ -590,9 +590,9 @@ private:
   {
     normals_->points.clear();
     // Estimate the normals
-    pcl::NormalEstimation<pcl::PointXYZ, pcl::Normal> ne;
+    pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> ne;
     ne.setInputCloud (input_cloud_);
-    pcl::search::KdTree<pcl::PointXYZ>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZ> ());
+    pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
     ne.setSearchMethod (tree);
     //  ne.setRadiusSearch (radius_);
     ne.setKSearch (100);

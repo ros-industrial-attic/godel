@@ -33,7 +33,7 @@ namespace godel_surface_detection
 namespace detection
 {
 
-typedef pcl::PointCloud<pcl::PointXYZ> Cloud;
+//typedef pcl::PointCloud<pcl::PointXYZ> Cloud;
 typedef pcl::PointCloud<pcl::PointXYZRGB> CloudRGB;
 typedef pcl::PointCloud<pcl::Normal> Normals;
 
@@ -152,7 +152,7 @@ public:
   static void mesh_to_marker(const pcl::PolygonMesh& mesh, visualization_msgs::Marker& marker);
 
   // adds point cloud to the occupancy grid, it performs no frame transformation
-  void add_cloud(Cloud& cloud);
+  void add_cloud(CloudRGB& cloud);
   int get_acquired_clouds_count();
 
   void clear_results();
@@ -160,36 +160,36 @@ public:
   // retrieve results
   visualization_msgs::MarkerArray get_surface_markers();
   void get_meshes(std::vector<pcl::PolygonMesh>& meshes);
-  std::vector<Cloud::Ptr> get_surface_clouds();
-  void get_full_cloud(Cloud& cloud);
+  std::vector<CloudRGB::Ptr> get_surface_clouds();
+  void get_full_cloud(CloudRGB& cloud);
   void get_full_cloud(sensor_msgs::PointCloud2 cloud_msg);
   void get_region_colored_cloud(CloudRGB& cloud);
   void get_region_colored_cloud(sensor_msgs::PointCloud2& cloud_msg);
 
 protected:
-  bool apply_statistical_filter(const Cloud& in, Cloud& out);
-  bool apply_region_growing_segmentation(const Cloud& in, const Normals& normals,
+  bool apply_statistical_filter(const CloudRGB& in, CloudRGB& out);
+  bool apply_region_growing_segmentation(const CloudRGB& in, const Normals& normals,
                                          std::vector<pcl::PointIndices>& clusters,
                                          CloudRGB& colored_cloud);
-  bool apply_plane_projection_refinement(const Cloud& candidate_outliers,
-                                         const Cloud& surface_cluster, Cloud& projected_cluster);
+  bool apply_plane_projection_refinement(const CloudRGB& candidate_outliers,
+                                         const CloudRGB& surface_cluster, CloudRGB& projected_cluster);
 
-  bool apply_normal_estimation(const Cloud& cloud, Normals& normals);
+  bool apply_normal_estimation(const CloudRGB& cloud, Normals& normals);
 
-  bool apply_kdtree_radius_search(const Cloud& query_points, const Cloud& search_points,
-                                  double radius, Cloud& close_points);
+  bool apply_kdtree_radius_search(const CloudRGB& query_points, const CloudRGB& search_points,
+                                  double radius, CloudRGB& close_points);
 
-  bool apply_voxel_downsampling(Cloud& cloud);
+  bool apply_voxel_downsampling(CloudRGB& cloud);
 
-  bool apply_mls_surface_smoothing(const Cloud& cloud_in, Cloud& cloud_out, Normals& normals);
+  bool apply_mls_surface_smoothing(const CloudRGB& cloud_in, CloudRGB& cloud_out, Normals& normals);
 
-  bool apply_tabletop_segmentation(const Cloud& cloud_in, Cloud& cloud_out);
+  bool apply_tabletop_segmentation(const CloudRGB& cloud_in, CloudRGB& cloud_out);
 
   /* @brief Finds the best fit plane for the input cloud, reprojects points onto the plane,
    * and then calculates the concave hull and triangulates a mesh.
    */
-  bool apply_planar_reprojection(const Cloud& in, Cloud& out);
-  bool apply_concave_hull(const Cloud& in, pcl::PolygonMesh& mesh);
+  bool apply_planar_reprojection(const CloudRGB& in, CloudRGB& out);
+  bool apply_concave_hull(const CloudRGB& in, pcl::PolygonMesh& mesh);
 
 public:
   // parameters
@@ -200,16 +200,16 @@ protected:
   ros::Subscriber point_cloud_subs_;
 
   // pcl members
-  pcl::PointCloud<pcl::PointXYZ>::Ptr full_cloud_ptr_;
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr full_cloud_ptr_;
   CloudRGB::Ptr region_colored_cloud_ptr_;
-  std::vector<Cloud::Ptr> surface_clouds_;
+  std::vector<CloudRGB::Ptr> surface_clouds_;
   visualization_msgs::MarkerArray mesh_markers_;
   std::vector<pcl::PolygonMesh> meshes_;
 
   // counter
   int acquired_clouds_counter_;
 };
-}
+} /* end namespace detection */
 } /* namespace godel_surface_detection */
 
 #endif /* SURFACE_DETECTION_H_ */
