@@ -161,7 +161,13 @@ private:
                        visualization_msgs::Marker& visualization,
                        geometry_msgs::PoseArray& path);
 
-  ProcessPathResult generateProcessPath(const std::string& name,
+
+  ProcessPathResult generateProcessPath(const int& id, const godel_msgs::BlendingPlanParameters& blend_params,
+                                        const godel_msgs::ScanPlanParameters& scan_params);
+
+
+  ProcessPathResult generateProcessPath(const int& id,
+                                        const std::string& name,
                                         const pcl::PolygonMesh& mesh,
                                         const godel_surface_detection::detection::CloudRGB::Ptr,
                                         const godel_msgs::BlendingPlanParameters& params,

@@ -288,7 +288,27 @@ inline static bool isScanPath(const std::string& name)
 }
 
 ProcessPathResult
-SurfaceBlendingService::generateProcessPath(const std::string& name,
+SurfaceBlendingService::generateProcessPath(const int& id,
+                                            const godel_msgs::BlendingPlanParameters& blend_params,
+                                            const godel_msgs::ScanPlanParameters& scan_params)
+{
+  using godel_surface_detection::detection::CloudRGB;
+
+  std::string name;
+  pcl::PolygonMesh mesh;
+  CloudRGB::Ptr surface_ptr (new CloudRGB);
+
+  data_coordinator_.getSurfaceName(id, name);
+  data_coordinator_.getSurfaceMesh(id, mesh);
+  data_coordinator_.getCloud(godel_surface_detection::data::SURFACE_CLOUD_TYPE, id, *surface_ptr);
+
+  return generateProcessPath(id, name, mesh, surface_ptr, blend_params, scan_params);
+}
+
+
+ProcessPathResult
+SurfaceBlendingService::generateProcessPath(const int& id,
+                                            const std::string& name,
                                             const pcl::PolygonMesh& mesh,
                                             godel_surface_detection::detection::CloudRGB::Ptr surface,
                                             const godel_msgs::BlendingPlanParameters& blend_params,
@@ -343,6 +363,7 @@ SurfaceBlendingService::generateProcessPath(const std::string& name,
     blend_visualization.color = color;
 
     process_path_results_.process_visualization_.markers.push_back(blend_visualization);
+    data_coordinator_.setPoses(godel_surface_detection::data::BLEND_POSE_TYPE, id, blend_poses);
   }
   else
   {
@@ -398,10 +419,14 @@ SurfaceBlendingService::generateProcessPath(const std::string& name,
         p.orientation = boundary_pose.orientation;
 
       edge_path_result.second = edge_poses;
-
       result.paths.push_back(edge_path_result);
 
-      all_edge_poses.poses.insert(std::end(all_edge_poses.poses), std::begin(edge_poses.poses), std::end(edge_poses.poses));
+      // Add poses to visualization
+      all_edge_poses.poses.insert(std::end(all_edge_poses.poses), std::begin(edge_poses.poses),
+                                  std::end(edge_poses.poses));
+
+      // Add edge to data coordinator
+      data_coordinator_.addEdge(id, edge_path_result.first, edge_poses);
     }
     else
     {
@@ -439,6 +464,7 @@ SurfaceBlendingService::generateProcessPath(const std::string& name,
     scan_visualization.color = color;
 
     process_path_results_.scan_visualization_.markers.push_back(scan_visualization);
+    data_coordinator_.setPoses(godel_surface_detection::data::SCAN_POSE_TYPE, id, scan_poses);
   }
   else
   {
@@ -452,22 +478,13 @@ godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotio
     const godel_msgs::BlendingPlanParameters& blend_params,
     const godel_msgs::ScanPlanParameters& scan_params)
 {
-  std::vector<pcl::PolygonMesh> meshes;
-  surface_server_.get_selected_surfaces(meshes);
-  std::vector<std::string> names;
-  surface_server_.get_selected_list(names);
-  std::vector<godel_surface_detection::detection::CloudRGB::Ptr> surface_clouds = surface_detection_.get_surface_clouds();
-  std::vector<godel_surface_detection::detection::CloudRGB::Ptr> selected_clouds;
-  int ind;
-  for(const auto& s : names)
-  {
-    std::string t = s;
-    t.erase(0, SURFACE_DESIGNATION.size());
-    ind = std::stoi(t) - 1;
-    selected_clouds.push_back(surface_clouds.at(ind));
-  }
+  std::vector<int> selected_ids;
+  surface_server_.getSelectedIds(selected_ids);
+  std::stringstream ss;
+  for (const auto& id : selected_ids)
+    ss << id << " ";
 
-  ROS_ASSERT(names.size() == meshes.size());
+  ROS_INFO_STREAM("Selected surface ids " << ss.str());
 
   // Marker stuff
   process_path_results_.process_visualization_.markers.clear();
@@ -477,10 +494,10 @@ godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotio
 
   godel_surface_detection::TrajectoryLibrary lib;
   geometry_msgs::PoseArray blend_poses, edge_poses;
-  for (std::size_t i = 0; i < meshes.size(); ++i)
+  for (const auto& id : selected_ids)
   {
     // Generate motion plan
-    ProcessPathResult paths = generateProcessPath(names[i], meshes[i], selected_clouds[i], blend_params, scan_params);
+    ProcessPathResult paths = generateProcessPath(id, blend_params, scan_params);
 
     // Add poses to visualization stack
     for(const auto& vt: paths.paths)
@@ -498,7 +515,9 @@ godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotio
     // Generate trajectory plans from motion plan
     for (std::size_t j = 0; j < paths.paths.size(); ++j)
     {
-      ProcessPlanResult plan = generateProcessPlan(paths.paths[j].first, paths.paths[j].second, blend_params, scan_params);
+      ProcessPlanResult plan = generateProcessPlan(paths.paths[j].first, paths.paths[j].second, blend_params,
+                                                   scan_params);
+
       for (std::size_t k = 0; k < plan.plans.size(); ++k)
         lib.get()[plan.plans[k].first] = plan.plans[k].second;
     }

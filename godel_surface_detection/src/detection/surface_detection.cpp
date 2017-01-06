@@ -213,7 +213,10 @@ namespace godel_surface_detection
     }
 
 
-    std::vector<CloudRGB::Ptr> SurfaceDetection::get_surface_clouds() { return surface_clouds_; }
+    void SurfaceDetection::get_surface_clouds(std::vector<CloudRGB::Ptr>& surfaces)
+    {
+      surfaces.insert(surfaces.end(), surface_clouds_.begin(), surface_clouds_.end());
+    }
 
 
     std::string SurfaceDetection::get_results_summary()

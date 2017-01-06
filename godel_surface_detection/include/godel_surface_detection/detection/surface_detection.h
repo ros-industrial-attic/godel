@@ -160,7 +160,7 @@ public:
   // retrieve results
   visualization_msgs::MarkerArray get_surface_markers();
   void get_meshes(std::vector<pcl::PolygonMesh>& meshes);
-  std::vector<CloudRGB::Ptr> get_surface_clouds();
+  void get_surface_clouds(std::vector<CloudRGB::Ptr>& surfaces);
   void get_full_cloud(CloudRGB& cloud);
   void get_full_cloud(sensor_msgs::PointCloud2 cloud_msg);
   void get_region_colored_cloud(CloudRGB& cloud);

@@ -1,5 +1,6 @@
 #include <godel_surface_detection/services/surface_blending_service.h>
 #include <godel_surface_detection/detection/surface_segmentation.h>
+#include <godel_surface_detection/detection/surface_detection.h>
 #include <godel_msgs/TrajectoryExecution.h>
 
 // Process Execution
@@ -37,6 +38,8 @@ const static std::string ROBOT_SCAN_PATH_PREVIEW_TOPIC = "robot_scan_path_previe
 const static std::string PUBLISH_REGION_POINT_CLOUD = "publish_region_point_cloud";
 const static std::string REGION_POINT_CLOUD_TOPIC = "region_colored_cloud";
 
+const static std::string EDGE_IDENTIFIER = "_edge_";
+
 //  tool visual properties
 const static float TOOL_DIA = .050;
 const static float TOOL_THK = .005;
@@ -46,11 +49,8 @@ const static std::string TOOL_FRAME_ID = "process_tool";
 
 // Default filepaths and namespaces for caching stored parameters
 const static std::string BLEND_PARAMS_FILE = "godel_blending_parameters.msg";
-
 const static std::string SCAN_PARAMS_FILE = "godel_scan_parameters.msg";
-
 const static std::string ROBOT_SCAN_PARAMS_FILE = "godel_robot_scan_parameters.msg";
-
 const static std::string SURFACE_DETECTION_PARAMS_FILE = "godel_surface_detection_parameters.msg";
 
 SurfaceBlendingService::SurfaceBlendingService()
@@ -68,26 +68,20 @@ bool SurfaceBlendingService::init()
 
   // loading parameters
   ph.getParam(PUBLISH_REGION_POINT_CLOUD, publish_region_point_cloud_);
-  // Load the 'prefix' that will be combined with parameters msg base names
-  // to save to disk
+  // Load the 'prefix' that will be combined with parameters msg base names to save to disk
   ph.param<std::string>("param_cache_prefix", param_cache_prefix_, "");
 
   if (!this->load_blend_parameters(param_cache_prefix_ + BLEND_PARAMS_FILE))
-  {
     ROS_WARN("Unable to load blending process parameters.");
-  }
+
   if (!this->load_scan_parameters(param_cache_prefix_ + SCAN_PARAMS_FILE))
-  {
     ROS_WARN("Unable to load scan process parameters.");
-  }
+
   if (!robot_scan_.load_parameters(param_cache_prefix_ + ROBOT_SCAN_PARAMS_FILE))
-  {
     ROS_WARN("Unable to load robot macro scan parameters.");
-  }
+
   if (!surface_detection_.load_parameters(param_cache_prefix_ + SURFACE_DETECTION_PARAMS_FILE))
-  {
     ROS_WARN("Unable to load surface detection parameters.");
-  }
 
   // save default parameters
   default_robot_scan_params__ = robot_scan_.params_;
@@ -95,7 +89,7 @@ bool SurfaceBlendingService::init()
   default_blending_plan_params_ = blending_plan_params_;
   default_scan_params_ = scan_plan_params_;
 
-  if (surface_detection_.init() && robot_scan_.init() && surface_server_.init())
+  if (surface_detection_.init() && robot_scan_.init() && surface_server_.init() && data_coordinator_.init())
   {
     // adding callbacks
     scan::RobotScan::ScanCallback cb =
@@ -301,10 +295,22 @@ bool SurfaceBlendingService::find_surfaces(visualization_msgs::MarkerArray& surf
 
     // adding meshes to server
     std::vector<pcl::PolygonMesh> meshes;
+    std::vector<godel_surface_detection::detection::CloudRGB::Ptr> surface_clouds;
+    godel_surface_detection::detection::CloudRGB input_cloud;
     surface_detection_.get_meshes(meshes);
+    surface_detection_.get_full_cloud(input_cloud);
+    surface_detection_.get_surface_clouds(surface_clouds);
+
+    // Meshes and Surface Clouds should be organized identically (e.g. Mesh0 corresponds to Surface0)
+    ROS_ASSERT(meshes.size == surface_clouds.size);
     for (std::size_t i = 0; i < meshes.size(); i++)
     {
-      surface_server_.add_surface(meshes[i]);
+      pcl::PolygonMesh surface_mesh = meshes[i];
+      int id = data_coordinator_.addRecord(input_cloud, *(surface_clouds[i]));
+      ROS_INFO_STREAM("Created record with id: " << id);
+      std::string name = surface_server_.add_surface(id, surface_mesh);
+      data_coordinator_.setSurfaceMesh(id, surface_mesh);
+      data_coordinator_.setSurfaceName(id, name);
     }
 
     // copying surface markers to output argument
@@ -526,96 +532,134 @@ SurfaceBlendingService::create_tool_markers(const geometry_msgs::Point& pos,
 bool SurfaceBlendingService::surface_detection_server_callback(
     godel_msgs::SurfaceDetection::Request& req, godel_msgs::SurfaceDetection::Response& res)
 {
-  res.surfaces_found = false;
-  res.surfaces = visualization_msgs::MarkerArray();
-  remove_previous_process_plan();
-
   switch (req.action)
   {
-  case godel_msgs::SurfaceDetection::Request::INITIALIZE_SPACE:
-    SurfaceBlendingService::remove_previous_process_plan();
-    break;
-
-  case godel_msgs::SurfaceDetection::Request::PUBLISH_SCAN_PATH:
-
-    if (req.use_default_parameters)
+    case godel_msgs::SurfaceDetection::Request::INITIALIZE_SPACE:
     {
-      robot_scan_.params_ = default_robot_scan_params__;
-    }
-    else
-    {
-      robot_scan_.params_ = req.robot_scan;
+      SurfaceBlendingService::remove_previous_process_plan();
+      data_coordinator_.init();
+      res.surfaces_found = false;
+      res.surfaces = visualization_msgs::MarkerArray();
+      break;
     }
 
-    robot_scan_.publish_scan_poses(ROBOT_SCAN_PATH_PREVIEW_TOPIC);
-    break;
-
-  case godel_msgs::SurfaceDetection::Request::SCAN_AND_FIND_ONLY:
-
-    if (req.use_default_parameters)
+    case godel_msgs::SurfaceDetection::Request::PUBLISH_SCAN_PATH:
     {
-      robot_scan_.params_ = default_robot_scan_params__;
-      surface_detection_.params_ = default_surf_detection_params_;
-    }
-    else
-    {
-      robot_scan_.params_ = req.robot_scan;
-      surface_detection_.params_ = req.surface_detection;
-    }
+      if (req.use_default_parameters)
+      {
+        robot_scan_.params_ = default_robot_scan_params__;
+      }
+      else
+      {
+        robot_scan_.params_ = req.robot_scan;
+      }
 
-    res.surfaces_found = run_robot_scan(res.surfaces);
-    res.surfaces.markers.clear();
-    break;
-
-  case godel_msgs::SurfaceDetection::Request::SCAN_FIND_AND_RETURN:
-
-    if (req.use_default_parameters)
-    {
-      robot_scan_.params_ = default_robot_scan_params__;
-      surface_detection_.params_ = default_surf_detection_params_;
-    }
-    else
-    {
-      robot_scan_.params_ = req.robot_scan;
-      surface_detection_.params_ = req.surface_detection;
+      robot_scan_.publish_scan_poses(ROBOT_SCAN_PATH_PREVIEW_TOPIC);
+      break;
     }
 
-    res.surfaces_found = run_robot_scan(res.surfaces);
-    break;
-
-  case godel_msgs::SurfaceDetection::Request::FIND_ONLY:
-
-    if (req.use_default_parameters)
+    case godel_msgs::SurfaceDetection::Request::SCAN_AND_FIND_ONLY:
     {
-      surface_detection_.params_ = default_surf_detection_params_;
-    }
-    else
-    {
-      surface_detection_.params_ = req.surface_detection;
-    }
+      res.surfaces_found = false;
+      res.surfaces = visualization_msgs::MarkerArray();
+      SurfaceBlendingService::remove_previous_process_plan();
+      data_coordinator_.init();
 
-    res.surfaces_found = find_surfaces(res.surfaces);
-    res.surfaces.markers.clear();
-    break;
+      if (req.use_default_parameters)
+      {
+        robot_scan_.params_ = default_robot_scan_params__;
+        surface_detection_.params_ = default_surf_detection_params_;
+      }
+      else
+      {
+        robot_scan_.params_ = req.robot_scan;
+        surface_detection_.params_ = req.surface_detection;
+      }
 
-  case godel_msgs::SurfaceDetection::Request::FIND_AND_RETURN:
-
-    if (req.use_default_parameters)
-    {
-      surface_detection_.params_ = default_surf_detection_params_;
-    }
-    else
-    {
-      surface_detection_.params_ = req.surface_detection;
+      res.surfaces_found = run_robot_scan(res.surfaces);
+      res.surfaces.markers.clear();
+      break;
     }
 
-    res.surfaces_found = find_surfaces(res.surfaces);
-    break;
+    case godel_msgs::SurfaceDetection::Request::SCAN_FIND_AND_RETURN:
+    {
+      res.surfaces_found = false;
+      res.surfaces = visualization_msgs::MarkerArray();
+      SurfaceBlendingService::remove_previous_process_plan();
+      data_coordinator_.init();
 
-  case godel_msgs::SurfaceDetection::Request::RETURN_LATEST_RESULTS:
+      if (req.use_default_parameters)
+      {
+        robot_scan_.params_ = default_robot_scan_params__;
+        surface_detection_.params_ = default_surf_detection_params_;
+      }
+      else
+      {
+        robot_scan_.params_ = req.robot_scan;
+        surface_detection_.params_ = req.surface_detection;
+      }
 
-    res = latest_surface_detection_results_;
-    break;
+      res.surfaces_found = run_robot_scan(res.surfaces);
+      break;
+    }
+
+    case godel_msgs::SurfaceDetection::Request::FIND_ONLY:
+    {
+      res.surfaces_found = false;
+      res.surfaces = visualization_msgs::MarkerArray();
+      SurfaceBlendingService::remove_previous_process_plan();
+      data_coordinator_.init();
+
+      if (req.use_default_parameters)
+      {
+        surface_detection_.params_ = default_surf_detection_params_;
+      }
+      else
+      {
+        surface_detection_.params_ = req.surface_detection;
+      }
+
+      res.surfaces_found = find_surfaces(res.surfaces);
+      res.surfaces.markers.clear();
+      break;
+    }
+
+    case godel_msgs::SurfaceDetection::Request::FIND_AND_RETURN:
+    {
+      res.surfaces_found = false;
+      res.surfaces = visualization_msgs::MarkerArray();
+      SurfaceBlendingService::remove_previous_process_plan();
+      data_coordinator_.init();
+
+      if (req.use_default_parameters)
+      {
+        surface_detection_.params_ = default_surf_detection_params_;
+      }
+      else
+      {
+        surface_detection_.params_ = req.surface_detection;
+      }
+
+      res.surfaces_found = find_surfaces(res.surfaces);
+      break;
+    }
+
+    case godel_msgs::SurfaceDetection::Request::RETURN_LATEST_RESULTS:
+    {
+      res = latest_surface_detection_results_;
+      break;
+    }
+
+    case godel_msgs::SurfaceDetection::Request::VISUALIZATION_REQUEST:
+    {
+      // TODO: Identify edge requested
+      // TODO: Pull requested edge from ???
+      // TODO: Publish selected edge from edge_visualization_pub_
+      break;
+    }
+
+    default:
+      ROS_ERROR_STREAM("Unrecognized surface detection request");
   }
 
   return true;
@@ -630,7 +674,7 @@ bool SurfaceBlendingService::select_surface_server_callback(godel_msgs::SelectSu
 
     for (std::size_t i = 0; req.select_surfaces.size(); i++)
     {
-      surface_server_.set_selection_flag(req.select_surfaces[i], true);
+      surface_server_.set_selection_flag(std::stoi(req.select_surfaces[i]), true);
     }
     break;
 
@@ -638,7 +682,7 @@ bool SurfaceBlendingService::select_surface_server_callback(godel_msgs::SelectSu
 
     for (std::size_t i = 0; req.select_surfaces.size(); i++)
     {
-      surface_server_.set_selection_flag(req.select_surfaces[i], false);
+      surface_server_.set_selection_flag(std::stoi(req.select_surfaces[i]), false);
     }
     break;
 
@@ -829,16 +873,17 @@ bool SurfaceBlendingService::loadSaveMotionPlanCallback(
 bool SurfaceBlendingService::renameSurfaceCallback(godel_msgs::RenameSurface::Request& req,
                                                    godel_msgs::RenameSurface::Response& res)
 {
-  if (surface_server_.rename_surface(req.old_name, req.new_name))
+  int id;
+  if (surface_server_.getIdFromName(req.old_name, id))
   {
-    ROS_INFO_STREAM("Surface re-name successful");
-    return true;
+    if (surface_server_.rename_surface(id, req.new_name))
+    {
+      return true;
+    }
   }
-  else
-  {
-    ROS_WARN_STREAM("Surface rename failed");
-    return false;
-  }
+
+  ROS_WARN_STREAM("Surface rename failed");
+  return false;
 }
 
 void SurfaceBlendingService::visualizePaths()
