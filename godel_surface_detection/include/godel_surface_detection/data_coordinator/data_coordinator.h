@@ -306,6 +306,31 @@ namespace data
 
 
     /**
+     * @brief getEdgePosesByName Obtains PoseArray for edge with name edge_name
+     * @param edge_name
+     * @param edge_poses Destination for PoseArray
+     * @return true if record is found and an edge with edge_name exists within the record, false otherwise
+     */
+    bool getEdgePosesByName(const std::string& edge_name, geometry_msgs::PoseArray& edge_poses)
+    {
+      for(auto& rec : records_)
+      {
+        for (auto& edge_pair : rec.edge_pairs_)
+        {
+          if(edge_name.compare(edge_pair.first) == 0)
+          {
+            edge_poses = edge_pair.second;
+            return true;
+          }
+        }
+      }
+
+      ROS_WARN_STREAM("Unable to find edge path with name: " << edge_name);
+      return false;
+    }
+
+
+    /**
      * @brief setPoses Add/change poses in a record
      * @param type Type of pose to add (currently implemented: blend, scan)
      * @param id ID of the desired record

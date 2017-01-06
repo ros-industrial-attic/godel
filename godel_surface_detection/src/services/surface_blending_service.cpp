@@ -652,9 +652,15 @@ bool SurfaceBlendingService::surface_detection_server_callback(
 
     case godel_msgs::SurfaceDetection::Request::VISUALIZATION_REQUEST:
     {
-      // TODO: Identify edge requested
-      // TODO: Pull requested edge from ???
-      // TODO: Publish selected edge from edge_visualization_pub_
+      // Currently only selective edge visualization is implemented. This request may be expanded in the future
+      geometry_msgs::PoseArray edge;
+      data_coordinator_.getEdgePosesByName(req.name, edge);
+      if(edge.poses.size() > 0)
+      {
+        edge.header.stamp = ros::Time::now();
+        edge.header.frame_id = "world_frame";
+        edge_visualization_pub_.publish(edge);
+      }
       break;
     }
 
