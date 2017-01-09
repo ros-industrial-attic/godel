@@ -15,7 +15,7 @@
 */
 
 #include <ros/ros.h>
-#include <moveit/move_group_interface/move_group.h>
+#include <moveit/move_group_interface/move_group_interface.h>
 #include <moveit/robot_trajectory/robot_trajectory.h>
 #include <moveit_msgs/DisplayTrajectory.h>
 #include <boost/function.hpp>
@@ -35,7 +35,7 @@ namespace godel_surface_detection
 namespace scan
 {
 
-typedef boost::shared_ptr<move_group_interface::MoveGroup> MoveGroupPtr;
+typedef boost::shared_ptr<moveit::planning_interface::MoveGroupInterface> MoveGroupPtr;
 typedef boost::shared_ptr<tf::TransformListener> TransformListenerPtr;
 
 class RobotScan

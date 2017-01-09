@@ -1,100 +1,154 @@
 <?xml version="1.0" ?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
-  
-  <xacro:include filename="$(find godel_robot_resources)/urdf/kinect2_sensor_macro.xacro"/>
-  <xacro:include filename="$(find godel_robot_resources)/urdf/calib_kinect2_sensor_macro.xacro"/>
+  <xacro:property name="ensenso_optical_x" value="0"/>
+  <xacro:property name="ensenso_optical_y" value="0.0909"/>
+  <xacro:property name="ensenso_optical_z" value="0.1255"/>
 
-  <!-- parameter list -->
-  <xacro:property name="blend_tcp_x" value="-0.18415"/> 
-  <xacro:property name="blend_tcp_y" value="-0.088502"/>
-  <xacro:property name="blend_tcp_z" value="0.056356"/>
+  <xacro:property name="keyence_optical_x" value="0"/>
+  <xacro:property name="keyence_optical_y" value="0.216"/> <!--To the face of the sensor: y = 0.216-->
+  <xacro:property name="keyence_optical_z" value="0.12192"/>
 
-  <xacro:property name="keyence_optical_x" value="0.287"/>
-  <xacro:property name="keyence_optical_y" value="-0.057"/>
-  <xacro:property name="keyence_optical_z" value="0.088502"/>
+  <xacro:property name="keyence_tcp_x" value="0"/>
+  <xacro:property name="keyence_tcp_y" value="0.2863"/>
+  <xacro:property name="keyence_tcp_z" value="0.12192"/>
 
   <xacro:property name="kinect_mount_x" value="0.09"/>
   <xacro:property name="kinect_mount_y" value="-0.065"/>
   <xacro:property name="kinect_mount_z" value="0.15"/>
 
-  <xacro:macro name="blending_eff_definition" params="prefix calibration">
-    <!-- Base link - attach your robot to this link -->
+  <xacro:property name="blend_tcp_x" value="0"/>
+  <xacro:property name="blend_tcp_y" value="0"/>
+  <xacro:property name="blend_tcp_z" value="0.040"/> <!-- TBD -->
+
+  <xacro:property name="chuck_tcp_x" value="-0.2483"/>
+  <xacro:property name="chuck_tcp_y" value="0"/>
+  <xacro:property name="chuck_tcp_z" value="0.12192"/>
+
+
+  <xacro:property name="half_pi" value="1.5707963267948966"/>
+
+
+  <xacro:macro name="blending_eff_definition" params="prefix">
+    <!-- eff_frame is Base Link -->
     <link name="${prefix}eff_frame"/>
 
-    <link name="${prefix}tcp_frame"/>
-
-    <link name="${prefix}keyence_sensor_optical_frame"/>
-    <link name="${prefix}keyence_tcp_frame" />
-
+    <!-- End Effector "Body" Geometry -->
     <link name="${prefix}gripper_body">
       <visual>
         <geometry>
-          <mesh filename="package://godel_robot_resources/meshes/visual/blending_eff.stl" />
+          <mesh filename="package://godel_irb2400_support/meshes/visual/Bracket.STL"/>
+          <!--<mesh filename="package://godel_irb2400_support/meshes/visual/ensenso_blending_eff.stl"/>-->
         </geometry>
         <material name="grey">
           <color rgba="0.5 0.5 0.5 1.0"/>
         </material>
       </visual>
       <collision>
-       <geometry>
-          <mesh filename="package://godel_robot_resources/meshes/collision/blending_eff.stl" />
+        <geometry>
+          <mesh filename="package://godel_irb2400_support/meshes/collision/ensenso_blending_eff.stl"/>
         </geometry>
       </collision>
     </link>
 
-    <!-- Adjust these values after calibration -->
-    <link name="${prefix}kinect2_mount"/>
-    
-    <!-- Conditionally include the 'calibratable' camera definition -->
-    <xacro:if value="${calibration}">
-      <xacro:calib_kinect2_sensor_definitions prefix="${prefix}" parent_link="${prefix}kinect2_mount"/>
-    </xacro:if>
-    
-    <xacro:unless value="${calibration}">
-      <xacro:kinect2_sensor_definitions prefix="${prefix}" parent_link="${prefix}kinect2_mount" 
-        x_val="-0.05490207720545535" 
-        y_val="-0.1108059263096891" 
-        z_val="-0.01737111616208457" 
-        roll="1.591199900154373" 
-        pitch="0.009672124637678808" 
-        yaw="-1.573233882247353"/>
-    </xacro:unless>
-
-    <joint name="${prefix}gripper_to_keyence_optical" type="fixed">
-      <parent link="${prefix}gripper_body"/>
-      <child link="${prefix}keyence_sensor_optical_frame"/>
-      <origin xyz="${keyence_optical_x} ${keyence_optical_y} ${keyence_optical_z}" rpy="0 -1.5707963267948966 0"/>
-    </joint>
-
-    <joint name="${prefix}keyence_optical_to_keyence_tcp" type="fixed">
-      <parent link="${prefix}keyence_sensor_optical_frame"/>
-      <child link="${prefix}keyence_tcp_frame"/>
-      <origin rpy="0 3.141592653589793 0"/>
-    </joint>
-
-    <joint name="${prefix}gripper_to_palm" type="fixed">
+    <joint name="${prefix}eff_frame_to_eff_body" type="fixed">
       <parent link="${prefix}eff_frame"/>
       <child link="${prefix}gripper_body"/>
     </joint>
 
-    <joint name="${prefix}gripper_to_kinect2_mount" type="fixed">
-      <parent link="${prefix}gripper_body"/>
-      <child link="${prefix}kinect2_mount"/>
-      <origin xyz="${kinect_mount_x} ${kinect_mount_y} ${kinect_mount_z}" rpy="0 3.141592653589793 -1.5707963267948966"/>
+    <link name="${prefix}blending_tool">
+        <visual>
+            <geometry>
+                <mesh filename="package://godel_irb2400_support/meshes/visual/Blending_Tool.STL"/>
+            </geometry>
+            <material name="red">
+                <color rgba="1 0 0 1"/>
+            </material>
+        </visual>
+    </link>
+
+    <joint name="${prefix}bracket_to_blending_tool" type="fixed">
+        <parent link="${prefix}gripper_body"/>
+        <child link="${prefix}blending_tool"/>
     </joint>
 
-    <joint name="${prefix}gripper_to_tcp" type="fixed">
-      <parent link="${prefix}gripper_body"/>
-      <child link="${prefix}tcp_frame"/>
-      <origin xyz="${blend_tcp_x} ${blend_tcp_y} ${blend_tcp_z}" rpy="0 -1.5707963267948966 0"/>
+    <link name="${prefix}ensenso">
+        <visual>
+            <geometry>
+                <mesh filename="package://godel_irb2400_support/meshes/visual/Ensenso.STL"/>
+            </geometry>
+            <material name="blue">
+                <color rgba="0 0 1 1"/>
+            </material>
+        </visual>
+    </link>
+
+    <joint name="${prefix}bracket_to_ensenso" type="fixed">
+        <parent link="${prefix}gripper_body"/>
+        <child link="${prefix}ensenso"/>
     </joint>
 
-    <link name="${prefix}kinect2_move_frame" />
+    <link name="${prefix}keyence">
+        <visual>
+            <geometry>
+                <mesh filename="package://godel_irb2400_support/meshes/visual/Laser_Sensor.STL"/>
+            </geometry>
+            <material name="yellow">
+                <color rgba="1 1 0 1"/>
+            </material>
+        </visual>
+    </link>
 
-    <joint name="${prefix}kinect2_move_frame_joint" type="fixed">
-      <parent link="${prefix}kinect2_mount"/>
+    <joint name="${prefix}bracket_to_keyence" type="fixed">
+        <parent link="${prefix}gripper_body"/>
+        <child link="${prefix}keyence"/>
+    </joint>
+
+    <!-- Frames for the motorized spindle on the end-->
+    <link name="${prefix}chuck_tip_frame"/> <!--The tip of the chuck-->
+    <link name="${prefix}tcp_frame"/> <!--The actual 'useful' work frame-->
+
+    <joint name="${prefix}gripper_body_to_chuck" type="fixed">
+        <parent link="${prefix}gripper_body"/>
+        <child link="${prefix}chuck_tip_frame"/>
+        <origin xyz="${chuck_tcp_x} ${chuck_tcp_y} ${chuck_tcp_z}" rpy="0 -${half_pi} 0"/>
+    </joint>
+
+    <joint name="${prefix}chuck_to_blend_tcp_frame" type="fixed">
+        <parent link="${prefix}chuck_tip_frame"/>
+        <child link="${prefix}tcp_frame"/>
+        <origin xyz="${blend_tcp_x} ${blend_tcp_y} ${blend_tcp_z}" rpy="0 0 0"/>
+    </joint>
+
+    <!--Frames for the keyence profilometer-->
+    <link name="${prefix}keyence_sensor_optical_frame"/>  <!--The emitter lens-->
+    <link name="${prefix}keyence_tcp_frame"/> <!--The nominal scan location (8cm forward of emitter)-->
+
+    <joint name="${prefix}gripper_body_to_keyence_sof" type="fixed">
+        <parent link="${prefix}gripper_body"/>
+        <child link="${prefix}keyence_sensor_optical_frame"/>
+        <origin xyz="${keyence_tcp_x} ${keyence_tcp_y} ${keyence_tcp_z}" rpy="${half_pi} -${half_pi} 0 "/>
+    </joint>
+
+    <joint name="${prefix}gripper_body_to_keyence_tcp_f" type="fixed">
+        <parent link="${prefix}gripper_body"/>
+        <child link="${prefix}keyence_tcp_frame"/>
+        <origin xyz="${keyence_tcp_x} ${keyence_tcp_y} ${keyence_tcp_z}" rpy="-${half_pi} ${half_pi} 0"/>
+    </joint>
+
+    <!--Frames related to the motion of the camera-->
+    <link name="${prefix}ensenso_sensor_optical_frame"/>
+    <link name="${prefix}kinect2_move_frame"/>
+
+    <joint name="${prefix}gripper_body_to_ensenso_sof" type="fixed">
+        <parent link="${prefix}gripper_body"/>
+        <child link="${prefix}ensenso_sensor_optical_frame"/>
+        <origin xyz="${ensenso_optical_x} ${ensenso_optical_y} ${ensenso_optical_z}" rpy="0 0 0"/>
+    </joint>
+
+    <joint name="${prefix}ensenso_move_frame_join" type="fixed">
+      <parent link="${prefix}ensenso_sensor_optical_frame"/>
       <child link="${prefix}kinect2_move_frame"/>
-      <origin rpy="3.14159 0 3.14159" xyz="0 0 0"/>
+      <origin rpy="0 -${half_pi} 0"/>
     </joint>
 
   </xacro:macro>

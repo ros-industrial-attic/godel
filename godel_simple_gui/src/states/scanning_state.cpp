@@ -5,7 +5,7 @@
 
 #include <ros/console.h>
 
-#include <QtConcurrentRun>
+#include <QtConcurrent/QtConcurrentRun>
 
 // Scan params
 #include "godel_msgs/SurfaceDetection.h"
