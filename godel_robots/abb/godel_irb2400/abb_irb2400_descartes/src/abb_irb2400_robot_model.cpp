@@ -85,28 +85,9 @@ bool AbbIrb2400RobotModel::getAllIK(const Eigen::Affine3d& pose,
       ROS_DEBUG_STREAM("Original solution size: " << sol.size()
                                                   << ", number of joints: " << num_joints_);
 
-      bool obeys_limits = true;
-      for (unsigned int i = 0; i < sol.size(); i++)
-      {
-        // Add tolerance to limit check
-        if (joint_has_limits_vector_[i] &&
-            ((sol[i] < (joint_min_vector_[i] - JOINT_LIMIT_TOLERANCE)) ||
-             (sol[i] > (joint_max_vector_[i] + JOINT_LIMIT_TOLERANCE))))
-        {
-          // One element of solution is not within limits
-          obeys_limits = false;
-          ROS_DEBUG_STREAM("Not in limits! " << i << " value " << sol[i]
-                                             << " has limit: " << joint_has_limits_vector_[i]
-                                             << "  being  " << joint_min_vector_[i] << " to "
-                                             << joint_max_vector_[i]);
-          break;
-        }
-      }
-
-      if (obeys_limits)
-      {
+      if (isValid(sol))
         joint_poses.push_back(sol);
-      }
+
     }
   }
 

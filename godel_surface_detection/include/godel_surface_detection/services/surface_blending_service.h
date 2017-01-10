@@ -18,6 +18,7 @@
 
 #include <godel_surface_detection/scan/robot_scan.h>
 #include <godel_surface_detection/detection/surface_detection.h>
+#include <godel_surface_detection/detection/surface_segmentation.h>
 #include <godel_surface_detection/interactive/interactive_surface_server.h>
 
 #include <godel_msgs/SurfaceDetection.h>
@@ -153,13 +154,16 @@ private:
                        visualization_msgs::Marker& visualization,
                        geometry_msgs::PoseArray& path);
 
-  bool requestEdgePath(const godel_process_path::PolygonBoundaryCollection& boundaries,
-                       const geometry_msgs::Pose& boundary_pose,
-                       const double z_ref,
+
+  bool requestEdgePath(std::vector<pcl::IndicesPtr>& boundaries,
+                       int index,
+                       surfaceSegmentation& SS,
                        visualization_msgs::Marker& visualization,
                        geometry_msgs::PoseArray& path);
 
-  ProcessPathResult generateProcessPath(const std::string& name, const pcl::PolygonMesh& mesh,
+  ProcessPathResult generateProcessPath(const std::string& name,
+                                        const pcl::PolygonMesh& mesh,
+                                        const godel_surface_detection::detection::Cloud::Ptr,
                                         const godel_msgs::BlendingPlanParameters& params,
                                         const godel_msgs::ScanPlanParameters& scan_params);
 
@@ -208,6 +212,9 @@ private:
   ros::Publisher selected_surf_changed_pub_;
   ros::Publisher point_cloud_pub_;
   ros::Publisher tool_path_markers_pub_;
+  ros::Publisher blend_visualization_pub_;
+  ros::Publisher edge_visualization_pub_;
+
   // Timers
   bool stop_tool_animation_;
 

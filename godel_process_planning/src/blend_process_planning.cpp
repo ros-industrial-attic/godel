@@ -153,6 +153,9 @@ bool ProcessPlanningManager::handleBlendPlanning(godel_msgs::BlendProcessPlannin
     return false;
   }
 
+  // Enable Collision Checks
+  blend_model_->setCheckCollisions(true);
+
   // Transform process path from geometry msgs to descartes points
   DescartesTraj process_points = toDescartesTraj(req.path.poses, req.params);
 
@@ -230,6 +233,17 @@ bool ProcessPlanningManager::handleBlendPlanning(godel_msgs::BlendProcessPlannin
     DescartesTraj process_part(solved_path.begin() + to_process.size(),
                                solved_path.end() - from_process.size());
     trajectory_msgs::JointTrajectory process = toROSTrajectory(process_part, *blend_model_);
+
+    for (std::size_t i = 0; i < process.points.size(); ++i)
+    {
+      const auto& pt = process.points[i];
+      if (!blend_model_->isValid(pt.positions))
+      {
+        ROS_WARN_STREAM("Position in blending path (" << i << ") invalid: Joint limit or collision detected\n");
+        return false;
+      }
+    }
+
 
     // Fill in result trajectories
     res.plan.trajectory_process = process;

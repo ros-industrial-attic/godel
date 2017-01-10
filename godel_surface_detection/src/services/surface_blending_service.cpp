@@ -1,5 +1,5 @@
 #include <godel_surface_detection/services/surface_blending_service.h>
-
+#include <godel_surface_detection/detection/surface_segmentation.h>
 #include <godel_msgs/TrajectoryExecution.h>
 
 // Process Execution
@@ -30,6 +30,8 @@ const static std::string BLEND_PROCESS_PLANNING_SERVICE = "blend_process_plannin
 const static std::string SCAN_PROCESS_PLANNING_SERVICE = "keyence_process_planning";
 
 const static std::string TOOL_PATH_PREVIEW_TOPIC = "tool_path_preview";
+const static std::string EDGE_VISUALIZATION_TOPIC = "edge_visualization";
+const static std::string BLEND_VISUALIZATION_TOPIC = "blend_visualization";
 const static std::string SELECTED_SURFACES_CHANGED_TOPIC = "selected_surfaces_changed";
 const static std::string ROBOT_SCAN_PATH_PREVIEW_TOPIC = "robot_scan_path_preview";
 const static std::string PUBLISH_REGION_POINT_CLOUD = "publish_region_point_cloud";
@@ -165,6 +167,12 @@ bool SurfaceBlendingService::init()
   tool_path_markers_pub_ =
       nh.advertise<visualization_msgs::MarkerArray>(TOOL_PATH_PREVIEW_TOPIC, 1, true);
 
+  blend_visualization_pub_ =
+      nh.advertise<geometry_msgs::PoseArray>(BLEND_VISUALIZATION_TOPIC, 1, true);
+
+  edge_visualization_pub_ =
+      nh.advertise<geometry_msgs::PoseArray>(EDGE_VISUALIZATION_TOPIC, 1, true);
+
   return true;
 }
 
@@ -299,7 +307,7 @@ bool SurfaceBlendingService::find_surfaces(visualization_msgs::MarkerArray& surf
       surface_server_.add_surface(meshes[i]);
     }
 
-    // copying to surface markers to output argument
+    // copying surface markers to output argument
     visualization_msgs::MarkerArray markers_msg = surface_detection_.get_surface_markers();
     surfaces.markers.insert(surfaces.markers.begin(), markers_msg.markers.begin(),
                             markers_msg.markers.end());
@@ -361,7 +369,13 @@ void SurfaceBlendingService::remove_previous_process_plan()
   markers.markers.insert(markers.markers.end(), scans.markers.begin(), scans.markers.end());
   markers.markers.insert(markers.markers.end(), edge.markers.begin(), edge.markers.end());
 
+  geometry_msgs::PoseArray empty_poses;
+  empty_poses.header.frame_id = "world_frame";
+  empty_poses.header.stamp = ros::Time::now();
+
   tool_path_markers_pub_.publish(markers);
+  edge_visualization_pub_.publish(empty_poses);
+  blend_visualization_pub_.publish(empty_poses);
 
   bds.markers.clear();
   paths.markers.clear();
