@@ -246,6 +246,7 @@ private:
   // results
   godel_msgs::SurfaceDetection::Response latest_surface_detection_results_;
   ProcessPathDetails process_path_results_;
+  std::vector<ProcessPlanResult::value_type> process_poses_;
   std::vector<std::vector<ros::Duration> >
       duration_results_; // returned by visualize plan service, needed by trajectory planner
 

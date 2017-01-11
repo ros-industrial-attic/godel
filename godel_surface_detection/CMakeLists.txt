@@ -52,6 +52,7 @@ include_directories(
 ## Declare a cpp library
 add_library(${PROJECT_NAME} 
   src/detection/surface_detection.cpp
+  src/detection/surface_segmentation_utils.cpp
   src/scan/robot_scan.cpp
   src/interactive/interactive_surface_server.cpp
   src/scan/profilimeter_scan.cpp
