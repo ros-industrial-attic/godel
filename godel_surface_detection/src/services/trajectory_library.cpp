@@ -1,4 +1,4 @@
-#include "godel_surface_detection/services/trajectory_library.h"
+#include "services/trajectory_library.h"
 
 #include <rosbag/bag.h>
 #include <rosbag/view.h>

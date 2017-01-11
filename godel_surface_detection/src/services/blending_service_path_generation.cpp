@@ -1,6 +1,6 @@
-#include <godel_surface_detection/services/surface_blending_service.h>
-#include <godel_surface_detection/detection/surface_segmentation.h>
-#include <godel_surface_detection/detection/surface_detection.h>
+#include <services/surface_blending_service.h>
+#include <segmentation/surface_segmentation.h>
+#include <detection/surface_detection.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/PointIndices.h>
 #include <pcl/point_types.h>
@@ -77,7 +77,7 @@ filterPolygonBoundaries(const godel_process_path::PolygonBoundaryCollection& bou
 
 bool SurfaceBlendingService::requestEdgePath(std::vector<pcl::IndicesPtr> &boundaries,
                                              int index,
-                                             surfaceSegmentation& SS,
+                                             SurfaceSegmentation& SS,
                                              visualization_msgs::Marker& visualization,
                                              geometry_msgs::PoseArray& path)
 {
@@ -222,7 +222,7 @@ bool SurfaceBlendingService::requestScanPath(
 }
 
 void computeBoundaries(const godel_surface_detection::detection::CloudRGB::Ptr surface_cloud,
-                       surfaceSegmentation& SS,
+                       SurfaceSegmentation& SS,
                        std::vector< pcl::IndicesPtr>& sorted_boundaries)
 {
   pcl::PointCloud<pcl::Boundary>::Ptr boundary_ptr = SS.getBoundaryCloud();
@@ -379,7 +379,7 @@ SurfaceBlendingService::generateProcessPath(const int& id,
 
   ROS_INFO_STREAM("Surface has " + std::to_string(surface->points.size()) + "points");
   // Compute the boundary
-  surfaceSegmentation SS(surface);
+  SurfaceSegmentation SS(surface);
 
   SS.setSearchRadius(SEGMENTATION_SEARCH_RADIUS);
   std::vector<double> filt_coef;

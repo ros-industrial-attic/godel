@@ -1,6 +1,6 @@
-#include <godel_surface_detection/services/surface_blending_service.h>
-#include <godel_surface_detection/detection/surface_segmentation.h>
-#include <godel_surface_detection/detection/surface_detection.h>
+#include <services/surface_blending_service.h>
+#include <segmentation/surface_segmentation.h>
+#include <detection/surface_detection.h>
 #include <godel_msgs/TrajectoryExecution.h>
 
 // Process Execution

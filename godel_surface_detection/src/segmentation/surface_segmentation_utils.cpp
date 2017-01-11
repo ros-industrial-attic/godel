@@ -1,5 +1,5 @@
-#include <godel_surface_detection/detection/surface_detection.h>
-#include <godel_surface_detection/detection/surface_segmentation.h>
+#include <detection/surface_detection.h>
+#include <segmentation/surface_segmentation.h>
 #include <pcl/filters/statistical_outlier_removal.h>
 #include <pcl/segmentation/sac_segmentation.h>
 #include <pcl/sample_consensus/method_types.h>

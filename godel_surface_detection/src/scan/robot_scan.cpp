@@ -14,7 +14,7 @@
         limitations under the License.
 */
 
-#include <godel_surface_detection/scan/robot_scan.h>
+#include <scan/robot_scan.h>
 #include <pcl_ros/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/common/common.h>

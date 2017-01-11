@@ -16,10 +16,10 @@
 #ifndef SURFACE_BLENDING_SERVICE_H
 #define SURFACE_BLENDING_SERVICE_H
 
-#include <godel_surface_detection/scan/robot_scan.h>
-#include <godel_surface_detection/detection/surface_detection.h>
-#include <godel_surface_detection/detection/surface_segmentation.h>
-#include <godel_surface_detection/interactive/interactive_surface_server.h>
+#include <scan/robot_scan.h>
+#include <detection/surface_detection.h>
+#include <segmentation/surface_segmentation.h>
+#include <interactive/interactive_surface_server.h>
 
 #include <godel_msgs/SurfaceDetection.h>
 #include <godel_msgs/SelectSurface.h>
@@ -41,9 +41,9 @@
 #include <godel_process_path_generation/utils.h>
 #include <godel_process_path_generation/polygon_utils.h>
 
-#include <godel_surface_detection/scan/profilimeter_scan.h>
-#include <godel_surface_detection/services/trajectory_library.h>
-#include <godel_surface_detection/data_coordinator/data_coordinator.h>
+#include <scan/profilimeter_scan.h>
+#include <services/trajectory_library.h>
+#include <coordination/data_coordinator.h>
 
 #include <pcl/console/parse.h>
 #include <rosbag/bag.h>
@@ -157,7 +157,7 @@ private:
 
   bool requestEdgePath(std::vector<pcl::IndicesPtr>& boundaries,
                        int index,
-                       surfaceSegmentation& SS,
+                       SurfaceSegmentation& SS,
                        visualization_msgs::Marker& visualization,
                        geometry_msgs::PoseArray& path);
 

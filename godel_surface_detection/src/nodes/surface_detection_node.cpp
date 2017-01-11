@@ -15,8 +15,8 @@
 */
 
 #include <ros/ros.h>
-#include <godel_surface_detection/detection/surface_detection.h>
-#include <godel_surface_detection/interactive/interactive_surface_server.h>
+#include <detection/surface_detection.h>
+#include <interactive/interactive_surface_server.h>
 #include <pcl_ros/transforms.h>
 #include <pcl/common/common.h>
 #include <pcl/filters/filter.h>

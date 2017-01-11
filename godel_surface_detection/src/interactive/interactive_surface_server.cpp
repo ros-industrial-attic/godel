@@ -14,7 +14,7 @@
         limitations under the License.
 */
 
-#include <godel_surface_detection/interactive/interactive_surface_server.h>
+#include <interactive/interactive_surface_server.h>
 #include <tf/transform_datatypes.h>
 #include <tf/tf.h>
 #include <sstream>

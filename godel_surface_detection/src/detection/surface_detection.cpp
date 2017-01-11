@@ -14,9 +14,9 @@
         limitations under the License.
 */
 
-#include <godel_surface_detection/detection/surface_detection.h>
-#include <godel_surface_detection/detection/surface_segmentation.h>
-#include <godel_surface_detection/data_coordinator/data_coordinator.h>
+#include <detection/surface_detection.h>
+#include <coordination//data_coordinator.h>
+#include <segmentation/surface_segmentation.h>
 #include <godel_param_helpers/godel_param_helpers.h>
 #include <tf/transform_datatypes.h>
 
@@ -296,7 +296,7 @@ namespace godel_surface_detection
       }
 
       // Segment the part into surface clusters using a "region growing" scheme
-      surfaceSegmentation SS(process_cloud_ptr);
+      SurfaceSegmentation SS(process_cloud_ptr);
       region_colored_cloud_ptr_ = CloudRGB::Ptr(new CloudRGB());
       std::vector <pcl::PointIndices> clusters = SS.computeSegments(region_colored_cloud_ptr_);
       pcl::PointIndices::Ptr inliers_ptr(new pcl::PointIndices());
