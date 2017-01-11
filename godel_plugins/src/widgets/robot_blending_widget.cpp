@@ -51,105 +51,106 @@ void RobotBlendingWidget::init()
 
   // initializing ros comm interface
   ros::NodeHandle nh("");
-  surface_detection_client_ =
-      nh.serviceClient<godel_msgs::SurfaceDetection>(SURFACE_DETECTION_SERVICE);
-  surface_blending_parameters_client_ =
-      nh.serviceClient<godel_msgs::SurfaceBlendingParameters>(SURFACE_BLENDING_PARAMETERS_SERVICE);
+  surface_detection_client_ = nh.serviceClient<godel_msgs::SurfaceDetection>(SURFACE_DETECTION_SERVICE);
   select_surface_client_ = nh.serviceClient<godel_msgs::SelectSurface>(SELECT_SURFACE_SERVICE);
   process_plan_client_ = nh.serviceClient<godel_msgs::ProcessPlanning>(PROCESS_PATH_SERVICE);
-  get_motion_plans_client_ =
-      nh.serviceClient<godel_msgs::GetAvailableMotionPlans>(GET_AVAILABLE_MOTION_PLANS_SERVICE);
-  select_motion_plan_client_ =
-      nh.serviceClient<godel_msgs::SelectMotionPlan>(SELECT_MOTION_PLAN_SERVICE);
-  load_save_motion_plan_client_ =
-      nh.serviceClient<godel_msgs::LoadSaveMotionPlan>(LOAD_SAVE_MOTION_PLAN_SERVICE);
+  get_motion_plans_client_ = nh.serviceClient<godel_msgs::GetAvailableMotionPlans>(GET_AVAILABLE_MOTION_PLANS_SERVICE);
+  select_motion_plan_client_ = nh.serviceClient<godel_msgs::SelectMotionPlan>(SELECT_MOTION_PLAN_SERVICE);
+  load_save_motion_plan_client_ = nh.serviceClient<godel_msgs::LoadSaveMotionPlan>(LOAD_SAVE_MOTION_PLAN_SERVICE);
   rename_surface_client_ = nh.serviceClient<godel_msgs::RenameSurface>(RENAME_SURFACE_SERVICE);
 
-  selected_surfaces_subs_ =
-      nh.subscribe(SELECTED_SURFACES_CHANGED_TOPIC, 1,
-                   &RobotBlendingWidget::selected_surface_changed_callback, this);
+  surface_blending_parameters_client_ =
+      nh.serviceClient<godel_msgs::SurfaceBlendingParameters>(SURFACE_BLENDING_PARAMETERS_SERVICE);
 
-  // initializing gui
+  selected_surfaces_subs_ =
+      nh.subscribe(SELECTED_SURFACES_CHANGED_TOPIC, 1, &RobotBlendingWidget::selected_surface_changed_callback, this);
+
+  // Initialize UI
   ui_.setupUi(this);
 
-  // initializing config windows
+  // Initialize config windows
   robot_scan_config_window_ = new RobotScanConfigWidget(robot_scan_parameters_);
   surface_detect_config_window_ = new SurfaceDetectionConfigWidget(surf_detect_parameters_);
-
   robot_blend_config_window_ = new BlendingPlanConfigWidget(blending_plan_parameters_);
   scan_plan_config_window_ = new ScanPlanConfigWidget(scan_plan_parameters_);
 
-  // setting signals and slots
-  connect(robot_scan_config_window_, SIGNAL(parameters_changed()), this,
-          SLOT(robot_scan_params_changed_handler()));
-  connect(surface_detect_config_window_, SIGNAL(parameters_changed()), this,
-          SLOT(surface_detect_params_changed_handler()));
-  connect(ui_.PushButtonMoreOptions, SIGNAL(clicked()), this, SLOT(scan_options_click_handler()));
 
+  /* Setting signals and slots */
+
+  // Options Handlers
   connect(ui_.PushButtonBlendOptions, SIGNAL(clicked()), this, SLOT(blend_options_click_handler()));
-  connect(ui_.pushButtonProfileOptions, SIGNAL(clicked()), this,
-          SLOT(scan_plan_options_click_handler()));
+  connect(ui_.pushButtonProfileOptions, SIGNAL(clicked()), this, SLOT(scan_plan_options_click_handler()));
 
-  connect(ui_.PushButtonSurfaceOptions, SIGNAL(clicked()), this,
-          SLOT(surface_options_click_handler()));
-  connect(ui_.PushButtonScan, SIGNAL(clicked()), this, SLOT(scan_button_handler()));
-  connect(ui_.PushButtonFindSurface, SIGNAL(clicked()), this, SLOT(find_surface_button_handler()));
+  // General Navigation Buttons
   connect(ui_.PushButtonNext, SIGNAL(clicked()), this, SLOT(increase_tab_index_handler()));
   connect(ui_.PushButtonBack, SIGNAL(clicked()), this, SLOT(decrease_tab_index_handler()));
+
+  // Scan and Find Buttons
+  connect(ui_.PushButtonMoreOptions, SIGNAL(clicked()), this, SLOT(scan_options_click_handler()));
+  connect(ui_.PushButtonSurfaceOptions, SIGNAL(clicked()), this,
+          SLOT(surface_options_click_handler()));
+  connect(ui_.PushButtonPreviewPath, SIGNAL(clicked()), this, SLOT(preview_path_handler()));
+  connect(ui_.PushButtonScan, SIGNAL(clicked()), this, SLOT(scan_button_handler()));
+  connect(ui_.PushButtonFindSurface, SIGNAL(clicked()), this, SLOT(find_surface_button_handler()));
+
+  // Select Surface Buttons
   connect(ui_.PushButtonSelectAllSurfaces, SIGNAL(clicked()), this, SLOT(select_all_handler()));
   connect(ui_.PushButtonDeselectAllSurfaces, SIGNAL(clicked()), this, SLOT(deselect_all_handler()));
   connect(ui_.PushButtonHideAllSurfaces, SIGNAL(clicked()), this, SLOT(hide_all_handler()));
   connect(ui_.PushButtonShowAllSurfaces, SIGNAL(clicked()), this, SLOT(show_all_handler()));
-  connect(ui_.PushButtonPreviewPath, SIGNAL(clicked()), this, SLOT(preview_path_handler()));
-  connect(ui_.PushButtonGeneratePaths, SIGNAL(clicked()), this,
-          SLOT(generate_process_path_handler()));
-  connect(this, SIGNAL(selection_changed()), this, SLOT(selection_changed_handler()));
-  connect(this, SIGNAL(surface_detection_started()), this,
-          SLOT(surface_detection_started_handler()));
-  connect(this, SIGNAL(surface_detection_completed()), this,
-          SLOT(surface_detection_completed_handler()));
-  connect(this, SIGNAL(connect_started()), this, SLOT(connect_started_handler()));
-  connect(this, SIGNAL(connect_completed()), this, SLOT(connect_completed_handler()));
 
+  // Path Generation
+  connect(ui_.PushButtonGeneratePaths, SIGNAL(clicked()), this, SLOT(generate_process_path_handler()));
+
+  // Path Simulation, Execution, and Saving
+  connect(ui_.pushButtonExecutePath, SIGNAL(clicked()), this, SLOT(execute_motion_plan_handler()));
+  connect(ui_.pushButtonSimulatePath, SIGNAL(clicked(bool)), this, SLOT(simulate_motion_plan_handler()));
   connect(ui_.pushButtonSavePlan, SIGNAL(clicked(bool)), this, SLOT(save_motion_plan_handler()));
   connect(ui_.PushButtonOpenFile, SIGNAL(clicked(bool)), this, SLOT(load_motion_plan_handler()));
 
-  connect(ui_.pushButtonExecutePath, SIGNAL(clicked()), this, SLOT(execute_motion_plan_handler()));
-  connect(ui_.pushButtonSimulatePath, SIGNAL(clicked(bool)), this,
-          SLOT(simulate_motion_plan_handler()));
+  // Intermediate Signals (Generated by other UI actions)
+  connect(this, SIGNAL(selection_changed()), this, SLOT(selected_surfaces_changed_handler()));
+  connect(this, SIGNAL(surface_detection_started()), this, SLOT(surface_detection_started_handler()));
+  connect(this, SIGNAL(surface_detection_completed()), this, SLOT(surface_detection_completed_handler()));
+  connect(this, SIGNAL(connect_started()), this, SLOT(connect_started_handler()));
+  connect(this, SIGNAL(connect_completed()), this, SLOT(connect_completed_handler()));
 
-  connect(robot_scan_config_window_, SIGNAL(parameters_save_requested()), this,
-          SLOT(request_save_parameters()));
-  connect(surface_detect_config_window_, SIGNAL(parameters_save_requested()), this,
-          SLOT(request_save_parameters()));
-  connect(robot_blend_config_window_, SIGNAL(parameters_save_requested()), this,
-          SLOT(request_save_parameters()));
+
+  // Configuration Windows
+  connect(surface_detect_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
+  connect(robot_scan_config_window_, SIGNAL(parameters_changed()), this, SLOT(robot_scan_params_changed_handler()));
+  connect(robot_scan_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
+  connect(robot_blend_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
+  connect(scan_plan_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
+  connect(surface_detect_config_window_, SIGNAL(parameters_changed()), this,
+          SLOT(surface_detect_params_changed_handler()));
+
+  // Selection Changes for List Widgets
   connect(ui_.ListWidgetSelectedSurfs, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this,
           SLOT(handle_surface_rename(QListWidgetItem*)));
-  connect(scan_plan_config_window_, SIGNAL(parameters_save_requested()), this,
-          SLOT(request_save_parameters()));
 
-  // moving to first tab
+
+  // Move to first tab
   ui_.TabWidgetCreateLib->setCurrentIndex(0);
   ROS_INFO_STREAM("Current Index " << ui_.TabWidgetCreateLib->currentIndex());
   
-  // setting up timer
+  // Setup timer
   QTimer* timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(update_handler()));
   timer->start(4000);
 
-  // connect from a separate thread
-  QFuture<void> future = QtConcurrent::run(this, &RobotBlendingWidget::connect_to_services);
+  // Connect to services from a separate thread
+  QtConcurrent::run(this, &RobotBlendingWidget::connect_to_services);
 }
+
 
 void RobotBlendingWidget::connect_to_services()
 {
   // call services to get parameters
-  godel_msgs::SurfaceBlendingParameters::Request req;
-  godel_msgs::SurfaceBlendingParameters::Response res;
-  req.action = req.GET_CURRENT_PARAMETERS;
+  godel_msgs::SurfaceBlendingParameters msg;
+  msg.request.action = msg.request.GET_CURRENT_PARAMETERS;
 
-  // disable gui
+  // disable gui interaction
   Q_EMIT connect_started();
 
   // wait for services to connect
@@ -166,15 +167,15 @@ void RobotBlendingWidget::connect_to_services()
                       << select_surface_client_.getService() << "'");
 
       // requesting parameters
-      if (surface_blending_parameters_client_.call(req, res))
+      if (surface_blending_parameters_client_.call(msg.request, msg.response))
       {
-        robot_scan_config_window_->params() = res.robot_scan;
-        surface_detect_config_window_->params() = res.surface_detection;
-        robot_scan_parameters_ = res.robot_scan;
-        surf_detect_parameters_ = res.surface_detection;
-        blending_plan_parameters_ = res.blending_plan;
-        robot_blend_config_window_->params() = res.blending_plan;
-        scan_plan_config_window_->params() = res.scan_plan;
+        robot_scan_config_window_->params() = msg.response.robot_scan;
+        surface_detect_config_window_->params() = msg.response.surface_detection;
+        robot_scan_parameters_ = msg.response.robot_scan;
+        surf_detect_parameters_ = msg.response.surface_detection;
+        blending_plan_parameters_ = msg.response.blending_plan;
+        robot_blend_config_window_->params() = msg.response.blending_plan;
+        scan_plan_config_window_->params() = msg.response.scan_plan;
 
         // update gui elements for robot scan
         robot_scan_params_changed_handler();
@@ -200,32 +201,6 @@ void RobotBlendingWidget::connect_to_services()
   }
 }
 
-bool RobotBlendingWidget::call_select_surface_service(godel_msgs::SelectSurface::Request& req)
-{
-  godel_msgs::SelectSurface::Response res;
-  bool succeeded = select_surface_client_.call(req, res);
-  if (succeeded)
-  {
-  }
-  else
-  {
-  }
-
-  return succeeded;
-}
-
-bool RobotBlendingWidget::call_surface_detection_service(godel_msgs::SurfaceDetection& s)
-{
-  bool succeeded = surface_detection_client_.call(s.request, s.response);
-  if (succeeded)
-  {
-  }
-  else
-  {
-  }
-
-  return succeeded;
-}
 
 void RobotBlendingWidget::selected_surface_changed_callback(
     godel_msgs::SelectedSurfacesChangedConstPtr msg)
@@ -234,33 +209,38 @@ void RobotBlendingWidget::selected_surface_changed_callback(
   emit_signal_selection_change();
 }
 
+
 void RobotBlendingWidget::select_all_handler()
 {
-  godel_msgs::SelectSurface::Request req;
-  req.action = req.SELECT_ALL;
-  call_select_surface_service(req);
+  godel_msgs::SelectSurface msg;
+  msg.request.action = msg.request.SELECT_ALL;
+  select_surface_client_.call(msg.request, msg.response);
 }
+
 
 void RobotBlendingWidget::deselect_all_handler()
 {
-  godel_msgs::SelectSurface::Request req;
-  req.action = req.DESELECT_ALL;
-  call_select_surface_service(req);
+  godel_msgs::SelectSurface msg;
+  msg.request.action = msg.request.DESELECT_ALL;
+  select_surface_client_.call(msg.request, msg.response);
 }
+
 
 void RobotBlendingWidget::hide_all_handler()
 {
-  godel_msgs::SelectSurface::Request req;
-  req.action = req.HIDE_ALL;
-  call_select_surface_service(req);
+  godel_msgs::SelectSurface msg;
+  msg.request.action = msg.request.HIDE_ALL;
+  select_surface_client_.call(msg.request, msg.response);
 }
+
 
 void RobotBlendingWidget::show_all_handler()
 {
-  godel_msgs::SelectSurface::Request req;
-  req.action = req.SHOW_ALL;
-  call_select_surface_service(req);
+  godel_msgs::SelectSurface msg;
+  msg.request.action = msg.request.SHOW_ALL;
+  select_surface_client_.call(msg.request, msg.response);
 }
+
 
 void RobotBlendingWidget::robot_scan_params_changed_handler()
 {
@@ -269,39 +249,39 @@ void RobotBlendingWidget::robot_scan_params_changed_handler()
   // updating entries in gui
   ui_.LineEditSensorTopic->setText(QString::fromStdString(robot_scan_parameters_.scan_topic));
   ui_.SpinBoxNumScans->setValue(static_cast<int>(robot_scan_parameters_.num_scan_points));
-  ui_.LineEditCamTilt->setText(
-      QString::number(RAD_TO_DEGREES * robot_scan_parameters_.cam_tilt_angle));
-  ui_.LineEditSweepAngleStart->setText(
-      QString::number(RAD_TO_DEGREES * robot_scan_parameters_.sweep_angle_start));
-  ui_.LineEditSweepAngleEnd->setText(
-      QString::number(RAD_TO_DEGREES * robot_scan_parameters_.sweep_angle_end));
+  ui_.LineEditCamTilt->setText(QString::number(RAD_TO_DEGREES * robot_scan_parameters_.cam_tilt_angle));
+  ui_.LineEditSweepAngleStart->setText(QString::number(RAD_TO_DEGREES * robot_scan_parameters_.sweep_angle_start));
+  ui_.LineEditSweepAngleEnd->setText(QString::number(RAD_TO_DEGREES * robot_scan_parameters_.sweep_angle_end));
 
   // request publish scan path
-  godel_msgs::SurfaceDetection s;
-  s.request.action = s.request.PUBLISH_SCAN_PATH;
-  s.request.use_default_parameters = false;
-  s.request.robot_scan = robot_scan_parameters_;
-  s.request.surface_detection = surf_detect_parameters_;
-  call_surface_detection_service(s);
+  godel_msgs::SurfaceDetection msg;
+  msg.request.action = msg.request.PUBLISH_SCAN_PATH;
+  msg.request.use_default_parameters = false;
+  msg.request.robot_scan = robot_scan_parameters_;
+  msg.request.surface_detection = surf_detect_parameters_;
+  surface_detection_client_.call(msg.request, msg.response);
 }
+
 
 void RobotBlendingWidget::surface_detect_params_changed_handler()
 {
   surf_detect_parameters_ = surface_detect_config_window_->params();
 }
 
+
 void RobotBlendingWidget::preview_path_handler()
 {
   save_robot_scan_parameters();
 
   // request publish scan path
-  godel_msgs::SurfaceDetection s;
-  s.request.action = s.request.PUBLISH_SCAN_PATH;
-  s.request.use_default_parameters = false;
-  s.request.robot_scan = robot_scan_parameters_;
-  s.request.surface_detection = surf_detect_parameters_;
-  call_surface_detection_service(s);
+  godel_msgs::SurfaceDetection msg;
+  msg.request.action = msg.request.PUBLISH_SCAN_PATH;
+  msg.request.use_default_parameters = false;
+  msg.request.robot_scan = robot_scan_parameters_;
+  msg.request.surface_detection = surf_detect_parameters_;
+  surface_detection_client_.call(msg.request, msg.response);
 }
+
 
 void RobotBlendingWidget::scan_options_click_handler()
 {
@@ -310,9 +290,17 @@ void RobotBlendingWidget::scan_options_click_handler()
   robot_scan_config_window_->show();
 }
 
-void RobotBlendingWidget::blend_options_click_handler() { robot_blend_config_window_->show(); }
+void RobotBlendingWidget::blend_options_click_handler()
+{
+  robot_blend_config_window_->show();
+}
 
-void RobotBlendingWidget::scan_plan_options_click_handler() { scan_plan_config_window_->show(); }
+
+void RobotBlendingWidget::scan_plan_options_click_handler()
+{
+  scan_plan_config_window_->show();
+}
+
 
 void RobotBlendingWidget::surface_options_click_handler()
 {
@@ -320,9 +308,8 @@ void RobotBlendingWidget::surface_options_click_handler()
   surface_detect_config_window_->show();
 }
 
-void RobotBlendingWidget::update_handler() {}
 
-void RobotBlendingWidget::selection_changed_handler()
+void RobotBlendingWidget::selected_surfaces_changed_handler()
 {
   std::vector<std::string> list = selected_surfaces_msg_.selected_surfaces;
 
@@ -338,33 +325,32 @@ void RobotBlendingWidget::selection_changed_handler()
   }
 }
 
+
 void RobotBlendingWidget::increase_tab_index_handler()
 {
     if (ui_.TabWidgetCreateLib->currentIndex() < 2)
-    {
         ui_.TabWidgetCreateLib->setCurrentIndex(ui_.TabWidgetCreateLib->currentIndex() + 1);
-        //ROS_INFO_STREAM("Current Index " << ui_.TabWidgetCreateLib->currentIndex());
-    }
 }
+
 
 void RobotBlendingWidget::decrease_tab_index_handler()
 {
     if (ui_.TabWidgetCreateLib->currentIndex() > 0)
-    {
         ui_.TabWidgetCreateLib->setCurrentIndex(ui_.TabWidgetCreateLib->currentIndex() - 1);
-        //ROS_INFO_STREAM("Current Index " << ui_.TabWidgetCreateLib->currentIndex());
-    }
 }
+
 
 void RobotBlendingWidget::scan_button_handler()
 {
-  QFuture<void> future = QtConcurrent::run(this, &RobotBlendingWidget::send_scan_and_find_request);
+  QtConcurrent::run(this, &RobotBlendingWidget::send_scan_and_find_request);
 }
+
 
 void RobotBlendingWidget::find_surface_button_handler()
 {
-  QFuture<void> future = QtConcurrent::run(this, &RobotBlendingWidget::send_find_surface_request);
+  QtConcurrent::run(this, &RobotBlendingWidget::send_find_surface_request);
 }
+
 
 void RobotBlendingWidget::send_find_surface_request()
 {
@@ -374,15 +360,15 @@ void RobotBlendingWidget::send_find_surface_request()
   Q_EMIT surface_detection_started();
 
   // creating surface detection request
-  godel_msgs::SurfaceDetection s;
-  s.request.action = s.request.FIND_ONLY;
-  s.request.use_default_parameters = false;
-  s.request.robot_scan = robot_scan_parameters_;
-  s.request.surface_detection = surf_detect_parameters_;
+  godel_msgs::SurfaceDetection msg;
+  msg.request.action = msg.request.FIND_ONLY;
+  msg.request.use_default_parameters = false;
+  msg.request.robot_scan = robot_scan_parameters_;
+  msg.request.surface_detection = surf_detect_parameters_;
 
-  if (call_surface_detection_service(s))
+  if (surface_detection_client_.call(msg.request, msg.response))
   {
-    if (s.response.surfaces_found)
+    if (msg.response.surfaces_found)
     {
       surface_detection_op_succeeded_ = true;
       surface_detection_op_message_ = "FIND COMPLETED";
@@ -403,6 +389,7 @@ void RobotBlendingWidget::send_find_surface_request()
   Q_EMIT surface_detection_completed();
 }
 
+
 void RobotBlendingWidget::send_scan_and_find_request()
 {
   surface_detection_op_message_ = "SCAN & FIND IN PROGRESS";
@@ -414,15 +401,15 @@ void RobotBlendingWidget::send_scan_and_find_request()
   save_robot_scan_parameters();
 
   // creating surface detection request
-  godel_msgs::SurfaceDetection s;
-  s.request.action = s.request.SCAN_AND_FIND_ONLY;
-  s.request.use_default_parameters = false;
-  s.request.robot_scan = robot_scan_parameters_;
-  s.request.surface_detection = surf_detect_parameters_;
+  godel_msgs::SurfaceDetection msg;
+  msg.request.action = msg.request.SCAN_AND_FIND_ONLY;
+  msg.request.use_default_parameters = false;
+  msg.request.robot_scan = robot_scan_parameters_;
+  msg.request.surface_detection = surf_detect_parameters_;
 
-  if (call_surface_detection_service(s))
+  if (surface_detection_client_.call(msg.request, msg.response))
   {
-    if (s.response.surfaces_found)
+    if (msg.response.surfaces_found)
     {
       surface_detection_op_succeeded_ = true;
       surface_detection_op_message_ = "SCAN & FIND COMPLETED";
@@ -442,11 +429,13 @@ void RobotBlendingWidget::send_scan_and_find_request()
   Q_EMIT surface_detection_completed();
 }
 
+
 void RobotBlendingWidget::surface_detection_started_handler()
 {
   ui_.LineEditOperationStatus->setText(QString::fromStdString(surface_detection_op_message_));
   ui_.TabWidget->setEnabled(false);
 }
+
 
 void RobotBlendingWidget::surface_detection_completed_handler()
 {
@@ -459,17 +448,20 @@ void RobotBlendingWidget::surface_detection_completed_handler()
   ui_.TabWidget->setEnabled(true);
 }
 
+
 void RobotBlendingWidget::connect_started_handler()
 {
   ui_.LineEditOperationStatus->setText("CONNECTING TO SERVICE");
   ui_.TabWidget->setEnabled(false);
 }
 
+
 void RobotBlendingWidget::connect_completed_handler()
 {
   ui_.LineEditOperationStatus->setText("READY");
   ui_.TabWidget->setEnabled(true);
 }
+
 
 void RobotBlendingWidget::generate_process_path_handler()
 {
@@ -486,9 +478,9 @@ void RobotBlendingWidget::generate_process_path_handler()
     update_motion_plan_list(plan_names);
 
     ui_.TabWidgetCreateLib->setCurrentIndex(2);
-    //ROS_INFO_STREAM("Current Index " << ui_.TabWidgetCreateLib->currentIndex());
   }
 }
+
 
 void RobotBlendingWidget::update_motion_plan_list(const std::vector<std::string>& names)
 {
@@ -501,6 +493,7 @@ void RobotBlendingWidget::update_motion_plan_list(const std::vector<std::string>
   }
 }
 
+
 void RobotBlendingWidget::save_robot_scan_parameters()
 {
   robot_scan_parameters_.num_scan_points = ui_.SpinBoxNumScans->value();
@@ -511,6 +504,7 @@ void RobotBlendingWidget::save_robot_scan_parameters()
       ui_.LineEditSweepAngleEnd->text().toDouble() * DEGREES_TO_RAD;
   robot_scan_parameters_.scan_topic = ui_.LineEditSensorTopic->text().toStdString();
 }
+
 
 void RobotBlendingWidget::request_available_motions(std::vector<std::string>& plans)
 {
@@ -525,6 +519,7 @@ void RobotBlendingWidget::request_available_motions(std::vector<std::string>& pl
   }
 }
 
+
 void RobotBlendingWidget::select_motion_plan(const std::string& name, bool simulate)
 {
   godel_msgs::SelectMotionPlan srv;
@@ -532,6 +527,7 @@ void RobotBlendingWidget::select_motion_plan(const std::string& name, bool simul
   srv.request.simulate = simulate;
   select_motion_plan_client_.call(srv);
 }
+
 
 void RobotBlendingWidget::simulate_motion_plan_handler()
 {
@@ -543,6 +539,7 @@ void RobotBlendingWidget::simulate_motion_plan_handler()
     select_motion_plan(name, true);
 }
 
+
 void RobotBlendingWidget::execute_motion_plan_handler()
 {
   if (ui_.ListPathResults->currentItem() == NULL)
@@ -552,6 +549,7 @@ void RobotBlendingWidget::execute_motion_plan_handler()
   if (!name.empty())
     select_motion_plan(name, false);
 }
+
 
 void RobotBlendingWidget::save_motion_plan_handler()
 {
@@ -564,6 +562,7 @@ void RobotBlendingWidget::save_motion_plan_handler()
   }
 }
 
+
 void RobotBlendingWidget::load_motion_plan_handler()
 {
   QString filepath = QFileDialog::getOpenFileName(this, "Load Motion Plan");
@@ -574,6 +573,7 @@ void RobotBlendingWidget::load_motion_plan_handler()
     request_load_save_motions(path, true);
   }
 }
+
 
 void RobotBlendingWidget::request_load_save_motions(const std::string& path, bool isLoad)
 {
@@ -609,6 +609,7 @@ void RobotBlendingWidget::request_load_save_motions(const std::string& path, boo
   }
 }
 
+
 void RobotBlendingWidget::request_save_parameters()
 {
   godel_msgs::SurfaceBlendingParameters::Request req;
@@ -624,6 +625,7 @@ void RobotBlendingWidget::request_save_parameters()
     ROS_WARN_STREAM("Could not complete service call to save your parameters!");
   }
 }
+
 
 void RobotBlendingWidget::handle_surface_rename(QListWidgetItem* item)
 {
@@ -651,5 +653,23 @@ void RobotBlendingWidget::handle_surface_rename(QListWidgetItem* item)
   }
 }
 
+
+void RobotBlendingWidget::on_ListPathResults_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous)
+{
+  if(current != NULL)
+  {
+    QString new_selection = current->text();
+    godel_msgs::SurfaceDetectionRequest req;
+    req.action = godel_msgs::SurfaceDetection::Request::VISUALIZATION_REQUEST;
+    req.name = new_selection.toStdString();
+    godel_msgs::SurfaceDetection::Response res;
+    if(!surface_detection_client_.call(req,res))
+      ROS_WARN_STREAM("Could not complete service call to visualize: " << req.name);
+  }
+}
+
+
 } /* namespace widgets */
 }
+
+
