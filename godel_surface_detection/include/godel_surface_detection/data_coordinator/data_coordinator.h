@@ -112,7 +112,6 @@ namespace data
       rec.input_cloud_ = input_cloud;
       rec.surface_cloud_ = surface_cloud;
       records_.push_back(rec);
-      ROS_INFO_STREAM("addRecord called with id: " << rec.id_);
       return rec.id_;
     }
 
@@ -126,7 +125,6 @@ namespace data
      */
     bool getCloud(int type, int id, pcl::PointCloud<pcl::PointXYZRGB>& cloud)
     {
-      ROS_INFO_STREAM("In data_coordinator getCloud");
       for(auto& rec : records_)
       {
         if(id == rec.id_)
@@ -167,12 +165,10 @@ namespace data
      */
     bool setSurfaceName(int id, const std::string& name)
     {
-      ROS_INFO_STREAM("In data_coordinator setSurfaceName");
       for(auto& rec : records_)
       {
         if(id == rec.id_)
         {
-          ROS_INFO_STREAM("Setting surface name to: " << name);
           rec.surface_name_ = name;
           return true;
         }
@@ -190,7 +186,6 @@ namespace data
      */
     void getSurfaceName(int id, std::string& name)
     {
-      ROS_INFO_STREAM("In data_coordinator getSurfaceName");
       for(auto& rec : records_)
       {
         if(id == rec.id_)
@@ -210,8 +205,6 @@ namespace data
      */
     bool setSurfaceMesh(int id, pcl::PolygonMesh mesh)
     {
-      ROS_INFO_STREAM("In data_coordinator setSurfaceMesh");
-      ROS_INFO_STREAM("Attempting to add mesh for record with id: " << id << " from " << printIds());
       for(auto& rec : records_)
       {
         if(id == rec.id_)
@@ -233,7 +226,6 @@ namespace data
      */
     void getSurfaceMesh(int id, pcl::PolygonMesh& mesh)
     {
-      ROS_INFO_STREAM("In data_coordinator getSurfaceMesh");
       for(auto& rec : records_)
       {
         if(id == rec.id_)
@@ -254,7 +246,6 @@ namespace data
      */
     bool addEdge(int id, std::string name, geometry_msgs::PoseArray edge_poses)
     {
-      ROS_INFO_STREAM("In data_coordinator addEdge");
       for(auto& rec : records_)
       {
         if(id == rec.id_)
@@ -281,7 +272,6 @@ namespace data
      */
     bool renameEdge(int id, std::string old_name, std::string new_name)
     {
-      ROS_INFO_STREAM("In data_coordinator renameEdge");
       for(auto& rec : records_)
       {
         if(id == rec.id_)
@@ -339,7 +329,6 @@ namespace data
      */
     bool setPoses(int type, int id, geometry_msgs::PoseArray poses)
     {
-      ROS_INFO_STREAM("In data_coordinator setPoses");
       for(auto& rec : records_)
       {
         if(id == rec.id_)
@@ -375,7 +364,6 @@ namespace data
      */
     bool getPoses(int type, int id, geometry_msgs::PoseArray& poses)
     {
-      ROS_INFO_STREAM("In data_coordinator getPoses");
       for(auto& rec : records_)
       {
         if(id == rec.id_)

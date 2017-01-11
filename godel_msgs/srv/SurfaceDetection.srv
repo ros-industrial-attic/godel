@@ -5,10 +5,12 @@ int32 RETURN_LATEST_RESULTS=5
 int32 FIND_ONLY=6
 int32 FIND_AND_RETURN=7
 int32 INITIALIZE_SPACE=8
+int32 VISUALIZATION_REQUEST=9
 int32 action
 bool use_default_parameters
 godel_msgs/RobotScanParameters robot_scan
 godel_msgs/SurfaceDetectionParameters surface_detection
+string name
 
 ---
 bool surfaces_found

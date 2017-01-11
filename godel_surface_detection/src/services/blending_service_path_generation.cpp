@@ -287,6 +287,7 @@ inline static bool isScanPath(const std::string& name)
   return name.find(suffix) != std::string::npos;
 }
 
+
 ProcessPathResult
 SurfaceBlendingService::generateProcessPath(const int& id,
                                             const godel_msgs::BlendingPlanParameters& blend_params,
