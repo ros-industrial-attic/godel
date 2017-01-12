@@ -80,21 +80,21 @@ namespace data
    * @param cloud Destination for cloud
    * @return true if record is found and type is valid, false otherwise
    */
-  bool DataCoordinator::getCloud(int type, int id, pcl::PointCloud<pcl::PointXYZRGB>& cloud)
+  bool DataCoordinator::getCloud(CloudTypes cloud_type, int id, pcl::PointCloud<pcl::PointXYZRGB>& cloud)
   {
     for(auto& rec : records_)
     {
       if(id == rec.id_)
       {
-        switch(type)
+        switch(cloud_type)
         {
-          case INPUT_CLOUD_TYPE:
+          case input_cloud:
           {
             cloud = rec.input_cloud_;
             return true;
           }
 
-          case SURFACE_CLOUD_TYPE:
+          case surface_cloud:
           {
             cloud = rec.surface_cloud_;
             return true;
@@ -140,17 +140,21 @@ namespace data
    * @brief getSurfaceName Returns the surface name from a record
    * @param id ID of the desired record
    * @param name Destination variable for surface name
+   * @return ture if record is found, false otherwise
    */
-  void DataCoordinator::getSurfaceName(int id, std::string& name)
+  bool DataCoordinator::getSurfaceName(int id, std::string& name)
   {
     for(auto& rec : records_)
     {
       if(id == rec.id_)
       {
         name = rec.surface_name_;
-        break;
+        return true;
       }
     }
+
+    ROS_ERROR_STREAM(UNABLE_TO_FIND_RECORD_ERROR << " " << id);
+    return false;
   }
 
 
@@ -180,17 +184,21 @@ namespace data
    * @brief getSurfaceMesh
    * @param id ID of the desired record
    * @param mesh Destination for the mesh
+   * @return true if record is found, false otherwise
    */
-  void DataCoordinator::getSurfaceMesh(int id, pcl::PolygonMesh& mesh)
+  bool DataCoordinator::getSurfaceMesh(int id, pcl::PolygonMesh& mesh)
   {
     for(auto& rec : records_)
     {
       if(id == rec.id_)
       {
         mesh = rec.surface_mesh_;
-        break;
+        return true;
       }
     }
+
+    ROS_ERROR_STREAM(UNABLE_TO_FIND_RECORD_ERROR << " " << id);
+    return false;
   }
 
 
@@ -284,26 +292,31 @@ namespace data
    * @param poses PoseArray containing pose data
    * @return true if record is found, false otherwise
    */
-  bool DataCoordinator::setPoses(int type, int id, geometry_msgs::PoseArray poses)
+  bool DataCoordinator::setPoses(PoseTypes pose_type, int id, geometry_msgs::PoseArray poses)
   {
     for(auto& rec : records_)
     {
       if(id == rec.id_)
       {
-        if(type == BLEND_POSE_TYPE)
+        switch(pose_type)
         {
-          rec.blend_poses_ = poses;
-          return true;
-        }
-        else if(type == SCAN_POSE_TYPE)
-        {
-          rec.scan_poses_ = poses;
-          return true;
-        }
-        else
-        {
-          ROS_WARN_STREAM("Unknown type for setPoses: " << type);
-          return false;
+          case blend_pose:
+          {
+            rec.blend_poses_ = poses;
+            return true;
+          }
+
+          case scan_pose:
+          {
+            rec.scan_poses_ = poses;
+            return true;
+          }
+
+          default:
+          {
+            ROS_WARN_STREAM("Unknown type for setPoses: " << pose_type);
+            return false;
+          }
         }
       }
 
@@ -319,23 +332,35 @@ namespace data
    * @param poses
    * @return
    */
-  bool DataCoordinator::getPoses(int type, int id, geometry_msgs::PoseArray& poses)
+  bool DataCoordinator::getPoses(PoseTypes pose_type, int id, geometry_msgs::PoseArray& poses)
   {
     for(auto& rec : records_)
     {
       if(id == rec.id_)
       {
-        switch(type)
+        switch(pose_type)
         {
-        case BLEND_POSE_TYPE:
-          poses = rec.blend_poses_;
-          return true;
-        case SCAN_POSE_TYPE:
-          poses = rec.scan_poses_;
-          return true;
+          case blend_pose:
+          {
+            poses = rec.blend_poses_;
+            return true;
+          }
+
+          case scan_pose:
+          {
+            poses = rec.scan_poses_;
+            return true;
+          }
+
+          default:
+          {
+            ROS_WARN_STREAM("Unrecognized pose type");
+            return false;
+          }
         }
       }
     }
+
     ROS_WARN_STREAM(UNABLE_TO_FIND_RECORD_ERROR << " " << id);
     return false;
   }

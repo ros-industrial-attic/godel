@@ -301,7 +301,7 @@ SurfaceBlendingService::generateProcessPath(const int& id,
 
   data_coordinator_.getSurfaceName(id, name);
   data_coordinator_.getSurfaceMesh(id, mesh);
-  data_coordinator_.getCloud(godel_surface_detection::data::SURFACE_CLOUD_TYPE, id, *surface_ptr);
+  data_coordinator_.getCloud(godel_surface_detection::data::CloudTypes::surface_cloud, id, *surface_ptr);
 
   return generateProcessPath(id, name, mesh, surface_ptr, blend_params, scan_params);
 }
@@ -364,7 +364,7 @@ SurfaceBlendingService::generateProcessPath(const int& id,
     blend_visualization.color = color;
 
     process_path_results_.process_visualization_.markers.push_back(blend_visualization);
-    data_coordinator_.setPoses(godel_surface_detection::data::BLEND_POSE_TYPE, id, blend_poses);
+    data_coordinator_.setPoses(godel_surface_detection::data::PoseTypes::blend_pose, id, blend_poses);
   }
   else
   {
@@ -465,7 +465,7 @@ SurfaceBlendingService::generateProcessPath(const int& id,
     scan_visualization.color = color;
 
     process_path_results_.scan_visualization_.markers.push_back(scan_visualization);
-    data_coordinator_.setPoses(godel_surface_detection::data::SCAN_POSE_TYPE, id, scan_poses);
+    data_coordinator_.setPoses(godel_surface_detection::data::PoseTypes::scan_pose, id, scan_poses);
   }
   else
   {

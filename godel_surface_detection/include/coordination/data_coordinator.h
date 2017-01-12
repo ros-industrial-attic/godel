@@ -40,12 +40,24 @@ namespace data
 
 
   /**
+   * @brief The CloudTypes enum for safety access to get/set cloud function
+   */
+  enum CloudTypes {input_cloud, surface_cloud, boundary_cloud};
+
+
+  /**
+   * @brief The PoseTypes enum for safe access to get/set poses function
+   */
+  enum PoseTypes {blend_pose, scan_pose, edge_pose};
+
+
+  /**
    * @brief Class to handle acquiring and diseminating data relevant to surface detection features
    */
   class DataCoordinator
   {
   private:
-    int id_counter_ = 0;
+    int id_counter_;
     std::vector<SurfaceDetectionRecord> records_;
 
     int getNextID();
@@ -55,16 +67,16 @@ namespace data
     DataCoordinator();
     bool init();
     int addRecord(pcl::PointCloud<pcl::PointXYZRGB> input_cloud, pcl::PointCloud<pcl::PointXYZRGB> surface_cloud);
-    bool getCloud(int type, int id, pcl::PointCloud<pcl::PointXYZRGB>& cloud);
+    bool getCloud(CloudTypes cloud_type, int id, pcl::PointCloud<pcl::PointXYZRGB>& cloud);
     bool setSurfaceName(int id, const std::string& name);
-    void getSurfaceName(int id, std::string& name);
+    bool getSurfaceName(int id, std::string& name);
     bool setSurfaceMesh(int id, pcl::PolygonMesh mesh);
-    void getSurfaceMesh(int id, pcl::PolygonMesh& mesh);
+    bool getSurfaceMesh(int id, pcl::PolygonMesh& mesh);
     bool addEdge(int id, std::string name, geometry_msgs::PoseArray edge_poses);
     bool renameEdge(int id, std::string old_name, std::string new_name);
     bool getEdgePosesByName(const std::string& edge_name, geometry_msgs::PoseArray& edge_poses);
-    bool setPoses(int type, int id, geometry_msgs::PoseArray poses);
-    bool getPoses(int type, int id, geometry_msgs::PoseArray& poses);
+    bool setPoses(PoseTypes pose_type, int id, geometry_msgs::PoseArray poses);
+    bool getPoses(PoseTypes pose_type, int id, geometry_msgs::PoseArray& poses);
   };
 } /* end namespace data */
 } /* end namespace godel_surface_detection */
