@@ -302,7 +302,7 @@ bool SurfaceBlendingService::find_surfaces(visualization_msgs::MarkerArray& surf
     surface_detection_.get_surface_clouds(surface_clouds);
 
     // Meshes and Surface Clouds should be organized identically (e.g. Mesh0 corresponds to Surface0)
-    ROS_ASSERT(meshes.size == surface_clouds.size);
+    ROS_ASSERT(meshes.size() == surface_clouds.size());
     for (std::size_t i = 0; i < meshes.size(); i++)
     {
       pcl::PolygonMesh surface_mesh = meshes[i];
