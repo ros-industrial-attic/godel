@@ -101,11 +101,10 @@ protected Q_SLOTS:
 
   void scan_button_handler();
   void find_surface_button_handler();
-  void update_handler();
   void connect_to_services();
   void increase_tab_index_handler();
   void decrease_tab_index_handler();
-  void selection_changed_handler();
+  void selected_surfaces_changed_handler();
   void select_all_handler();
   void deselect_all_handler();
   void hide_all_handler();
@@ -133,6 +132,7 @@ protected Q_SLOTS:
   void load_motion_plan_handler();
 
   void handle_surface_rename(QListWidgetItem* item);
+  void on_ListPathResults_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
 
 protected:
   Ui::RobotBlendingWidget ui_;

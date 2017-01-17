@@ -14,7 +14,7 @@
         limitations under the License.
 */
 
-#include <godel_surface_detection/interactive/interactive_surface_server.h>
+#include <interactive/interactive_surface_server.h>
 #include <tf/transform_datatypes.h>
 #include <tf/tf.h>
 #include <sstream>
@@ -22,6 +22,10 @@
 #include <pcl/point_types.h>
 #include <pcl/common/common.h>
 #include <pcl_ros/transforms.h>
+#include <pcl_ros/point_cloud.h>
+#include <pcl_conversions/pcl_conversions.h>
+
+const int RAND_MARKER_ID = -1;
 
 namespace godel_surface_detection
 {
@@ -74,7 +78,7 @@ void InteractiveSurfaceServer::mesh_to_marker(const pcl::PolygonMesh& mesh,
   marker.color = color;
 
   // filling points
-  pcl::PointCloud<pcl::PointXYZ> points;
+  pcl::PointCloud<pcl::PointXYZRGB> points;
   pcl::fromPCLPointCloud2(mesh.cloud, points);
   for (int i = 0; i < mesh.polygons.size(); i++)
   {
@@ -94,7 +98,7 @@ void InteractiveSurfaceServer::mesh_to_marker(const pcl::PolygonMesh& mesh,
 void InteractiveSurfaceServer::marker_to_mesh(const visualization_msgs::Marker& marker,
                                               pcl::PolygonMesh& mesh)
 {
-  pcl::PointCloud<pcl::PointXYZ> points;
+  pcl::PointCloud<pcl::PointXYZRGB> points;
   for (int i = 0; i < marker.points.size(); i += 3)
   {
     pcl::Vertices v;
@@ -102,7 +106,7 @@ void InteractiveSurfaceServer::marker_to_mesh(const visualization_msgs::Marker& 
     {
       v.vertices.push_back(i + j);
 
-      pcl::PointXYZ p;
+      pcl::PointXYZRGB p;
       p.x = marker.points[i + j].x;
       p.y = marker.points[i + j].y;
       p.z = marker.points[i + j].z;
@@ -153,16 +157,14 @@ void InteractiveSurfaceServer::stop()
   surface_selection_map_.clear();
 }
 
-void InteractiveSurfaceServer::set_selection_flag(std::string marker_name, bool selected)
+void InteractiveSurfaceServer::set_selection_flag(int id, bool selected)
 {
 
   visualization_msgs::InteractiveMarker int_marker;
-  if (surface_selection_map_.count(marker_name) > 0 &&
-      marker_server_ptr_->get(marker_name, int_marker))
+  if (surface_selection_map_.count(id) > 0 && marker_server_ptr_->get(std::to_string(id), int_marker))
   {
-    surface_selection_map_[marker_name] = selected;
-    int_marker.controls[1].markers[0].type =
-        selected ? visualization_msgs::Marker::ARROW : visualization_msgs::Marker::SPHERE;
+    surface_selection_map_[id].selected = selected;
+    int_marker.controls[1].markers[0].type = selected ? visualization_msgs::Marker::ARROW : visualization_msgs::Marker::SPHERE;
     int_marker.controls[1].markers[0].scale.x = selected ? arrow_shaft_diameter_ : 0.0001f;
     int_marker.controls[1].markers[0].scale.y = selected ? arrow_head_diameter_ : 0.0001f;
     int_marker.controls[1].markers[0].scale.z = selected ? arrow_head_length_ : 0.0001f;
@@ -173,37 +175,31 @@ void InteractiveSurfaceServer::set_selection_flag(std::string marker_name, bool 
   }
 }
 
-void InteractiveSurfaceServer::show(std::string marker_name, bool show)
+void InteractiveSurfaceServer::show(int id, bool show)
 {
   visualization_msgs::InteractiveMarker int_marker;
-  if (surface_selection_map_.count(marker_name) > 0 &&
-      marker_server_ptr_->get(marker_name, int_marker))
+  if (surface_selection_map_.count(id) > 0 &&
+      marker_server_ptr_->get(std::to_string(id), int_marker))
   {
 
     int_marker.controls[0].markers[0].scale.x = show ? 1 : 0.0001f;
     int_marker.controls[0].markers[0].scale.y = show ? 1 : 0.0001f;
     int_marker.controls[0].markers[0].scale.z = show ? 1 : 0.0001f;
     marker_server_ptr_->insert(int_marker);
-    set_selection_flag(marker_name, show && surface_selection_map_[marker_name]);
+    set_selection_flag(id, show && surface_selection_map_[id].selected);
   }
 }
 
 void InteractiveSurfaceServer::select_all(bool select)
 {
-  typedef std::map<std::string, bool>::iterator SelectionIterator;
-  for (SelectionIterator i = surface_selection_map_.begin(); i != surface_selection_map_.end(); i++)
-  {
-    set_selection_flag(i->first, select);
-  }
+  for(auto& entry : surface_selection_map_)
+    set_selection_flag(entry.first, select);
 }
 
 void InteractiveSurfaceServer::show_all(bool show_surf)
 {
-  typedef std::map<std::string, bool>::iterator SelectionIterator;
-  for (SelectionIterator i = surface_selection_map_.begin(); i != surface_selection_map_.end(); i++)
-  {
-    show(i->first, show_surf);
-  }
+  for(auto& entry : surface_selection_map_)
+    show(entry.first, show_surf);
 }
 
 void InteractiveSurfaceServer::invoke_callbacks()
@@ -214,50 +210,54 @@ void InteractiveSurfaceServer::invoke_callbacks()
   }
 }
 
+
+void InteractiveSurfaceServer::getSelectedIds(std::vector<int>& ids)
+{
+  for (const auto& entry : surface_selection_map_)
+  {
+    if(entry.second.selected)
+      ids.push_back(entry.first);
+  }
+}
+
+
 void InteractiveSurfaceServer::get_selected_list(std::vector<std::string>& list)
 {
-  std::map<std::string, bool>::iterator i;
-  for (i = surface_selection_map_.begin(); i != surface_selection_map_.end(); i++)
+  for (const auto& entry : surface_selection_map_)
   {
-    if (i->second)
-    {
-      list.push_back(i->first);
-    }
+    if(entry.second.selected)
+      list.push_back(entry.second.name);
   }
 }
 
 void InteractiveSurfaceServer::get_selected_surfaces(visualization_msgs::MarkerArray& surfaces)
-{
-  std::map<std::string, bool>::iterator i;
-  for (i = surface_selection_map_.begin(); i != surface_selection_map_.end(); i++)
+{  
+  for (const auto& entry : surface_selection_map_)
   {
-    if (i->second)
+    if(entry.second.selected)
     {
       visualization_msgs::InteractiveMarker int_marker;
-      const std::string& marker_name = i->first;
-      marker_server_ptr_->get(marker_name, int_marker);
+      const std::string& id_string = std::to_string(entry.first);
+      marker_server_ptr_->get(id_string, int_marker);
       surfaces.markers.push_back(int_marker.controls[0].markers[0]);
     }
   }
 }
 
 void InteractiveSurfaceServer::get_selected_surfaces(std::vector<pcl::PolygonMesh>& meshes)
-{
-  std::map<std::string, bool>::iterator i;
-  for (i = surface_selection_map_.begin(); i != surface_selection_map_.end(); i++)
+{  
+  for (const auto& entry : surface_selection_map_)
   {
-    if (i->second)
-    {
-      meshes.push_back(meshes_map_[i->first]);
-    }
+    if(entry.second.selected)
+      meshes.push_back(meshes_map_[entry.first]);
   }
 }
 
-void InteractiveSurfaceServer::toggle_selection_flag(std::string marker_name)
+void InteractiveSurfaceServer::toggle_selection_flag(int id)
 {
-  if (surface_selection_map_.count(marker_name) > 0)
+  if (surface_selection_map_.count(id) > 0)
   {
-    set_selection_flag(marker_name, !surface_selection_map_[marker_name]);
+    set_selection_flag(id, !surface_selection_map_[id].selected);
   }
 }
 
@@ -268,7 +268,8 @@ void InteractiveSurfaceServer::button_marker_callback(
   {
   case visualization_msgs::InteractiveMarkerFeedback::BUTTON_CLICK:
     // ROS_INFO_STREAM("marker "<<feedback->marker_name <<" button control was clicked");
-    toggle_selection_flag(feedback->marker_name);
+    ROS_INFO_STREAM("button marker click callback");
+    toggle_selection_flag(std::stoi(feedback->marker_name));
     break;
 
   case visualization_msgs::InteractiveMarkerFeedback::MENU_SELECT:
@@ -284,22 +285,23 @@ void InteractiveSurfaceServer::menu_marker_callback(
   {
   case visualization_msgs::InteractiveMarkerFeedback::BUTTON_CLICK:
     //		ROS_INFO_STREAM("marker "<<feedback->marker_name <<" button control was clicked");
-    toggle_selection_flag(feedback->marker_name);
+    ROS_INFO_STREAM("menu marker click callback");
+    toggle_selection_flag(std::stoi(feedback->marker_name));
     break;
 
   case visualization_msgs::InteractiveMarkerFeedback::MENU_SELECT:
     //		ROS_INFO_STREAM("marker: "<<feedback->marker_name <<", entry_id: "<<
     //feedback->menu_entry_id
     //				<<", menu control was clicked");
-
+    ROS_INFO_STREAM("menu select callback");
     if (feedback->menu_entry_id == select_entry_id_)
     {
-      set_selection_flag(feedback->marker_name, true);
+      set_selection_flag(std::stoi(feedback->marker_name), true);
       return;
     }
     else if (feedback->menu_entry_id == unselect_entry_id_)
     {
-      set_selection_flag(feedback->marker_name, false);
+      set_selection_flag(std::stoi(feedback->marker_name), false);
       return;
     }
     else if (feedback->menu_entry_id == clear_all_entry_id_)
@@ -317,7 +319,7 @@ void InteractiveSurfaceServer::menu_marker_callback(
     {
       // ROS_WARN_STREAM("'Hide' menu option has not been implemented yet");
 
-      show(feedback->marker_name, false);
+      show(std::stoi(feedback->marker_name), false);
       return;
     }
     else if (feedback->menu_entry_id == show_all_entry_id_)
@@ -336,7 +338,7 @@ void InteractiveSurfaceServer::create_arrow_marker(const visualization_msgs::Mar
                                                    visualization_msgs::Marker& arrow_marker)
 {
   // create temporary point cloud
-  pcl::PointCloud<pcl::PointXYZ> surface;
+  pcl::PointCloud<pcl::PointXYZRGB> surface;
   surface.width = surface_marker.points.size();
   surface.height = 1;
   surface.points.resize(surface_marker.points.size());
@@ -348,7 +350,7 @@ void InteractiveSurfaceServer::create_arrow_marker(const visualization_msgs::Mar
   }
 
   // finding bouding box bounds
-  pcl::PointXYZ min, max;
+  pcl::PointXYZRGB min, max;
   pcl::getMinMax3D(surface, min, max);
 
   // create arrow
@@ -371,20 +373,33 @@ void InteractiveSurfaceServer::create_arrow_marker(const visualization_msgs::Mar
   arrow_marker.points[0].z = arrow_marker.points[1].z + arrow_length_;
 }
 
-void InteractiveSurfaceServer::add_surface(const pcl::PolygonMesh& mesh,
-                                           const geometry_msgs::Pose& pose)
+
+void InteractiveSurfaceServer::remove_all_surfaces()
+{
+  surface_selection_map_.clear();
+  marker_server_ptr_->clear();
+  meshes_map_.clear();
+  invoke_callbacks();
+  marker_server_ptr_->applyChanges();
+}
+
+
+std::string InteractiveSurfaceServer::add_surface(const int id, const pcl::PolygonMesh& mesh,
+                                                  const geometry_msgs::Pose& pose)
 {
   // convert polygon mesh to marker
   visualization_msgs::Marker marker;
   mesh_to_marker(mesh, marker);
-  marker.id = meshes_map_.size();
+  marker.id = id;
   marker.color.a = defaults::MARKER_ALPHA;
 
   // create interactive marker
   std::stringstream ss;
   ss << marker_name_ << "_" << surface_selection_map_.size() + 1;
+  std::string surface_name = ss.str();
+
   visualization_msgs::InteractiveMarker int_marker;
-  int_marker.name = ss.str();
+  int_marker.name = std::to_string(id);
   int_marker.pose = pose;
 
   // create button control
@@ -415,44 +430,44 @@ void InteractiveSurfaceServer::add_surface(const pcl::PolygonMesh& mesh,
   menu_handler_.apply(*marker_server_ptr_, int_marker.name);
 
   // save mesh
-  surface_selection_map_.insert(std::make_pair(int_marker.name, false));
-  meshes_map_.insert(std::make_pair(int_marker.name, mesh));
-  set_selection_flag(int_marker.name, false);
+  SurfaceSelectionMapEntry entry {int_marker.name, false};
+  surface_selection_map_.insert(std::pair<int, SurfaceSelectionMapEntry> (id, entry));
+  meshes_map_.insert(std::make_pair(id, mesh));
+  set_selection_flag(id, false);
 
   // apply changes
   marker_server_ptr_->applyChanges();
+  return int_marker.name;
 }
 
-void InteractiveSurfaceServer::remove_all_surfaces()
-{
-  surface_selection_map_.clear();
-  marker_server_ptr_->clear();
-  meshes_map_.clear();
-  invoke_callbacks();
-  marker_server_ptr_->applyChanges();
-}
 
-void InteractiveSurfaceServer::add_surface(const pcl::PolygonMesh& mesh)
+std::string InteractiveSurfaceServer::add_surface(const int id, const pcl::PolygonMesh& mesh)
 {
   geometry_msgs::Pose pose;
   tf::poseTFToMsg(tf::Transform::getIdentity(), pose);
-  add_surface(mesh, pose);
+  std::string name = add_surface(id, mesh, pose);
+  return name;
 }
 
-void InteractiveSurfaceServer::add_surface(const visualization_msgs::Marker& marker)
+
+std::string InteractiveSurfaceServer::add_surface(const int id, const visualization_msgs::Marker& marker)
 {
   pcl::PolygonMesh mesh;
   marker_to_mesh(marker, mesh);
-  add_surface(mesh);
+  std::string name = add_surface(id, mesh);
+  return name;
 }
 
-void InteractiveSurfaceServer::add_surface(const visualization_msgs::Marker& marker,
+
+std::string InteractiveSurfaceServer::add_surface(const int id, const visualization_msgs::Marker& marker,
                                            const geometry_msgs::Pose& pose)
 {
   pcl::PolygonMesh mesh;
   marker_to_mesh(marker, mesh);
-  add_surface(mesh, pose);
+  std::string name = add_surface(id, mesh, pose);
+  return name;
 }
+
 
 void InteractiveSurfaceServer::add_selection_callback(SelectionCallback& f)
 {
@@ -481,7 +496,7 @@ void InteractiveSurfaceServer::add_random_surface_marker()
   visualization_msgs::Marker marker;
   create_polygon_marker(marker, rand() % defaults::MAX_TRIANGLES + 1);
 
-  add_surface(marker, pose);
+  add_surface(RAND_MARKER_ID, marker, pose);
 }
 
 void InteractiveSurfaceServer::create_polygon_marker(visualization_msgs::Marker& marker,
@@ -491,6 +506,7 @@ void InteractiveSurfaceServer::create_polygon_marker(visualization_msgs::Marker&
   ROS_INFO_STREAM("Creating polygon of " << triangles << " triangles");
 
   // setting marker properties
+  marker.id = RAND_MARKER_ID;
   marker.type = marker.TRIANGLE_LIST;
   marker.scale.x = marker.scale.y = marker.scale.z = 1;
   marker.pose.position.x = marker.pose.position.y = marker.pose.position.z = 0;
@@ -542,27 +558,31 @@ void InteractiveSurfaceServer::create_polygon_marker(visualization_msgs::Marker&
   }
 }
 
-bool InteractiveSurfaceServer::rename_surface(const std::string& old_name,
-                                              const std::string& new_name)
+bool InteractiveSurfaceServer::rename_surface(const int& id, const std::string& new_name)
 {
-  std::map<std::string, bool>::iterator select_iter = surface_selection_map_.find(old_name);
-  std::map<std::string, pcl::PolygonMesh>::iterator mesh_iter = meshes_map_.find(old_name);
+  std::map<int, SurfaceSelectionMapEntry>::iterator select_iter = surface_selection_map_.find(id);
+  std::map<int, pcl::PolygonMesh>::iterator mesh_iter = meshes_map_.find(id);
   if (select_iter != surface_selection_map_.end() && mesh_iter != meshes_map_.end())
   {
-    // The surface exists
-    bool cache_is_selected = select_iter->second;
-    pcl::PolygonMesh cache_mesh = mesh_iter->second;
-    // Insert new item
-    surface_selection_map_[new_name] = cache_is_selected;
-    meshes_map_[new_name] = cache_mesh;
-    // Remove old item
-    meshes_map_.erase(mesh_iter);
-    surface_selection_map_.erase(select_iter);
+    select_iter->second.name = new_name;
+    return true;
   }
-  else
+
+  return false;
+}
+
+bool InteractiveSurfaceServer::getIdFromName(const std::string& name, int& id)
+{
+  for(const auto& entry : surface_selection_map_)
   {
-    return false;
+    if(name.compare(entry.second.name) == 0)
+    {
+      id = entry.first;
+      return true;
+    }
   }
+  ROS_ERROR_STREAM("Unable to find entry with name " << name);
+  return false;
 }
 
 } /* namespace interactive */

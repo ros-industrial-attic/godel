@@ -9,7 +9,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>398</width>
+    <width>563</width>
     <height>564</height>
    </rect>
   </property>
@@ -55,7 +55,7 @@
         <rect>
          <x>10</x>
          <y>10</y>
-         <width>361</width>
+         <width>521</width>
          <height>81</height>
         </rect>
        </property>
@@ -66,53 +66,17 @@
         <string>Use the controls in the window to identify and select surfaces on a part.  Then generate blending path on selected part surfaces and save blending data into a library file.</string>
        </property>
       </widget>
-      <widget class="QPushButton" name="PushButtonBack">
-       <property name="geometry">
-        <rect>
-         <x>10</x>
-         <y>396</y>
-         <width>61</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>14</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>Back</string>
-       </property>
-      </widget>
-      <widget class="QPushButton" name="PushButtonNext">
-       <property name="geometry">
-        <rect>
-         <x>310</x>
-         <y>396</y>
-         <width>61</width>
-         <height>31</height>
-        </rect>
-       </property>
-       <property name="font">
-        <font>
-         <pointsize>14</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>Next</string>
-       </property>
-      </widget>
       <widget class="QTabWidget" name="TabWidgetCreateLib">
        <property name="geometry">
         <rect>
          <x>10</x>
          <y>90</y>
-         <width>371</width>
+         <width>521</width>
          <height>301</height>
         </rect>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="tab_1">
         <attribute name="title">
@@ -123,7 +87,7 @@
           <rect>
            <x>0</x>
            <y>10</y>
-           <width>361</width>
+           <width>511</width>
            <height>261</height>
           </rect>
          </property>
@@ -135,7 +99,7 @@
            <rect>
             <x>0</x>
             <y>40</y>
-            <width>234</width>
+            <width>381</width>
             <height>161</height>
            </rect>
           </property>
@@ -235,7 +199,7 @@
          <widget class="QPushButton" name="PushButtonScan">
           <property name="geometry">
            <rect>
-            <x>240</x>
+            <x>390</x>
             <y>140</y>
             <width>111</width>
             <height>31</height>
@@ -248,7 +212,7 @@
          <widget class="QPushButton" name="PushButtonMoreOptions">
           <property name="geometry">
            <rect>
-            <x>240</x>
+            <x>390</x>
             <y>20</y>
             <width>111</width>
             <height>31</height>
@@ -261,7 +225,7 @@
          <widget class="QPushButton" name="PushButtonPreviewPath">
           <property name="geometry">
            <rect>
-            <x>240</x>
+            <x>390</x>
             <y>100</y>
             <width>111</width>
             <height>31</height>
@@ -274,7 +238,7 @@
          <widget class="QPushButton" name="PushButtonSurfaceOptions">
           <property name="geometry">
            <rect>
-            <x>240</x>
+            <x>390</x>
             <y>60</y>
             <width>111</width>
             <height>31</height>
@@ -287,7 +251,7 @@
          <widget class="QPushButton" name="PushButtonFindSurface">
           <property name="geometry">
            <rect>
-            <x>240</x>
+            <x>390</x>
             <y>180</y>
             <width>111</width>
             <height>31</height>
@@ -302,7 +266,7 @@
            <rect>
             <x>10</x>
             <y>220</y>
-            <width>341</width>
+            <width>491</width>
             <height>31</height>
            </rect>
           </property>
@@ -324,7 +288,7 @@
           <rect>
            <x>10</x>
            <y>10</y>
-           <width>341</width>
+           <width>491</width>
            <height>241</height>
           </rect>
          </property>
@@ -334,7 +298,7 @@
          <widget class="QLabel" name="label_6">
           <property name="geometry">
            <rect>
-            <x>20</x>
+            <x>10</x>
             <y>30</y>
             <width>71</width>
             <height>17</height>
@@ -344,85 +308,20 @@
            <string>Selected</string>
           </property>
          </widget>
-         <widget class="QPushButton" name="PushButtonDeselectAllSurfaces">
-          <property name="geometry">
-           <rect>
-            <x>240</x>
-            <y>90</y>
-            <width>91</width>
-            <height>27</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Deselect All</string>
-          </property>
-         </widget>
-         <widget class="QPushButton" name="PushButtonSelectAllSurfaces">
-          <property name="geometry">
-           <rect>
-            <x>240</x>
-            <y>60</y>
-            <width>91</width>
-            <height>27</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Select All</string>
-          </property>
-         </widget>
          <widget class="QListWidget" name="ListWidgetSelectedSurfs">
           <property name="geometry">
            <rect>
-            <x>20</x>
+            <x>10</x>
             <y>50</y>
-            <width>211</width>
+            <width>371</width>
             <height>141</height>
            </rect>
           </property>
-         </widget>
-         <widget class="QPushButton" name="PushButtonHideAllSurfaces">
-          <property name="geometry">
-           <rect>
-            <x>240</x>
-            <y>120</y>
-            <width>91</width>
-            <height>27</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Hide All</string>
-          </property>
-         </widget>
-         <widget class="QPushButton" name="PushButtonShowAllSurfaces">
-          <property name="geometry">
-           <rect>
-            <x>240</x>
-            <y>150</y>
-            <width>91</width>
-            <height>27</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Show All</string>
-          </property>
-         </widget>
-         <widget class="QPushButton" name="PushButtonGeneratePaths">
-          <property name="geometry">
-           <rect>
-            <x>240</x>
-            <y>190</y>
-            <width>91</width>
-            <height>51</height>
-           </rect>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>12</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Generate
- Paths</string>
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
           </property>
          </widget>
          <widget class="QWidget" name="layoutWidget">
@@ -430,7 +329,7 @@
            <rect>
             <x>10</x>
             <y>196</y>
-            <width>221</width>
+            <width>371</width>
             <height>41</height>
            </rect>
           </property>
@@ -464,14 +363,93 @@
            </item>
           </layout>
          </widget>
+         <widget class="QWidget" name="layoutWidget">
+          <property name="geometry">
+           <rect>
+            <x>400</x>
+            <y>50</y>
+            <width>85</width>
+            <height>191</height>
+           </rect>
+          </property>
+          <layout class="QVBoxLayout" name="verticalLayout_2">
+           <item>
+            <widget class="QPushButton" name="PushButtonSelectAllSurfaces">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Select All</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="PushButtonDeselectAllSurfaces">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Deselect All</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="PushButtonHideAllSurfaces">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Hide All</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="PushButtonShowAllSurfaces">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="text">
+              <string>Show All</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="PushButtonGeneratePaths">
+             <property name="sizePolicy">
+              <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+               <horstretch>0</horstretch>
+               <verstretch>0</verstretch>
+              </sizepolicy>
+             </property>
+             <property name="font">
+              <font>
+               <pointsize>12</pointsize>
+              </font>
+             </property>
+             <property name="text">
+              <string>Generate
+ Paths</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </widget>
+         <zorder>layoutWidget</zorder>
          <zorder>layoutWidget</zorder>
          <zorder>label_6</zorder>
-         <zorder>PushButtonDeselectAllSurfaces</zorder>
-         <zorder>PushButtonSelectAllSurfaces</zorder>
          <zorder>ListWidgetSelectedSurfs</zorder>
-         <zorder>PushButtonHideAllSurfaces</zorder>
-         <zorder>PushButtonShowAllSurfaces</zorder>
-         <zorder>PushButtonGeneratePaths</zorder>
         </widget>
        </widget>
        <widget class="QWidget" name="tab_3">
@@ -483,7 +461,7 @@
           <rect>
            <x>10</x>
            <y>10</y>
-           <width>341</width>
+           <width>491</width>
            <height>231</height>
           </rect>
          </property>
@@ -493,14 +471,17 @@
          <widget class="QLabel" name="label_4">
           <property name="geometry">
            <rect>
-            <x>210</x>
+            <x>130</x>
             <y>30</y>
-            <width>66</width>
-            <height>17</height>
+            <width>351</width>
+            <height>20</height>
            </rect>
           </property>
           <property name="text">
            <string>Results</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignCenter</set>
           </property>
          </widget>
          <widget class="QListWidget" name="ListPathResults">
@@ -508,7 +489,7 @@
            <rect>
             <x>130</x>
             <y>50</y>
-            <width>201</width>
+            <width>351</width>
             <height>171</height>
            </rect>
           </property>
@@ -548,6 +529,67 @@
          </widget>
         </widget>
        </widget>
+      </widget>
+      <widget class="QWidget" name="layoutWidget">
+       <property name="geometry">
+        <rect>
+         <x>10</x>
+         <y>395</y>
+         <width>521</width>
+         <height>32</height>
+        </rect>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QPushButton" name="PushButtonBack">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>14</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Back</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_2">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="QPushButton" name="PushButtonNext">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>14</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Next</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </widget>
      </widget>
     </widget>

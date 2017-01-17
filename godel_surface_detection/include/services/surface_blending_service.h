@@ -16,10 +16,10 @@
 #ifndef SURFACE_BLENDING_SERVICE_H
 #define SURFACE_BLENDING_SERVICE_H
 
-#include <godel_surface_detection/scan/robot_scan.h>
-#include <godel_surface_detection/detection/surface_detection.h>
-#include <godel_surface_detection/detection/surface_segmentation.h>
-#include <godel_surface_detection/interactive/interactive_surface_server.h>
+#include <scan/robot_scan.h>
+#include <detection/surface_detection.h>
+#include <segmentation/surface_segmentation.h>
+#include <interactive/interactive_surface_server.h>
 
 #include <godel_msgs/SurfaceDetection.h>
 #include <godel_msgs/SelectSurface.h>
@@ -41,9 +41,9 @@
 #include <godel_process_path_generation/utils.h>
 #include <godel_process_path_generation/polygon_utils.h>
 
-#include <godel_surface_detection/scan/profilimeter_scan.h>
-
-#include <godel_surface_detection/services/trajectory_library.h>
+#include <scan/profilimeter_scan.h>
+#include <services/trajectory_library.h>
+#include <coordination/data_coordinator.h>
 
 #include <pcl/console/parse.h>
 #include <rosbag/bag.h>
@@ -157,13 +157,19 @@ private:
 
   bool requestEdgePath(std::vector<pcl::IndicesPtr>& boundaries,
                        int index,
-                       surfaceSegmentation& SS,
+                       SurfaceSegmentation& SS,
                        visualization_msgs::Marker& visualization,
                        geometry_msgs::PoseArray& path);
 
-  ProcessPathResult generateProcessPath(const std::string& name,
+
+  ProcessPathResult generateProcessPath(const int& id, const godel_msgs::BlendingPlanParameters& blend_params,
+                                        const godel_msgs::ScanPlanParameters& scan_params);
+
+
+  ProcessPathResult generateProcessPath(const int& id,
+                                        const std::string& name,
                                         const pcl::PolygonMesh& mesh,
-                                        const godel_surface_detection::detection::Cloud::Ptr,
+                                        const godel_surface_detection::detection::CloudRGB::Ptr,
                                         const godel_msgs::BlendingPlanParameters& params,
                                         const godel_msgs::ScanPlanParameters& scan_params);
 
@@ -226,6 +232,8 @@ private:
   godel_surface_detection::interactive::InteractiveSurfaceServer surface_server_;
   // mesh importer for generating surface boundaries
   godel_process_path::MeshImporter mesh_importer_;
+  // data coordinator
+  godel_surface_detection::data::DataCoordinator data_coordinator_;
 
   // parameters
   godel_msgs::RobotScanParameters default_robot_scan_params__;
@@ -238,6 +246,7 @@ private:
   // results
   godel_msgs::SurfaceDetection::Response latest_surface_detection_results_;
   ProcessPathDetails process_path_results_;
+  std::vector<ProcessPlanResult::value_type> process_poses_;
   std::vector<std::vector<ros::Duration> >
       duration_results_; // returned by visualize plan service, needed by trajectory planner
 

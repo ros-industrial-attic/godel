@@ -1,4 +1,4 @@
-#include "godel_surface_detection/scan/profilimeter_scan.h"
+#include "scan/profilimeter_scan.h"
 #include <ros/ros.h>
 
 using namespace godel_process_path;

@@ -1,8 +1,10 @@
-#include <godel_surface_detection/services/surface_blending_service.h>
-#include <godel_surface_detection/detection/surface_segmentation.h>
-#include <godel_surface_detection/detection/surface_detection.h>
+#include <services/surface_blending_service.h>
+#include <segmentation/surface_segmentation.h>
+#include <detection/surface_detection.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/PointIndices.h>
+#include <pcl/point_types.h>
+#include <pcl_ros/point_cloud.h>
 
 // Temporary constants for storing blending path `planning parameters
 // Will be replaced by loadable, savable parameters
@@ -19,6 +21,10 @@ const static std::string SCAN_TRAJECTORY_GROUP_NAME = "manipulator_keyence";
 const static std::string SCAN_TRAJECTORY_TOOL_FRAME = "keyence_tcp_frame";
 const static std::string SCAN_TRAJECTORY_WORLD_FRAME = "world_frame";
 const static double SCAN_TRAJECTORY_ANGLE_DISC = 0.2;
+
+const static std::string BLEND_TYPE = "blend";
+const static std::string EDGE_TYPE = "edge";
+const static std::string SCAN_TYPE = "scan";
 
 // Together these constants define a 5cm approach and departure path for the
 // laser scans
@@ -71,7 +77,7 @@ filterPolygonBoundaries(const godel_process_path::PolygonBoundaryCollection& bou
 
 bool SurfaceBlendingService::requestEdgePath(std::vector<pcl::IndicesPtr> &boundaries,
                                              int index,
-                                             surfaceSegmentation& SS,
+                                             SurfaceSegmentation& SS,
                                              visualization_msgs::Marker& visualization,
                                              geometry_msgs::PoseArray& path)
 {
@@ -215,12 +221,12 @@ bool SurfaceBlendingService::requestScanPath(
   return true;
 }
 
-void computeBoundaries(const godel_surface_detection::detection::Cloud::Ptr surface_cloud,
-                       surfaceSegmentation& SS,
+void computeBoundaries(const godel_surface_detection::detection::CloudRGB::Ptr surface_cloud,
+                       SurfaceSegmentation& SS,
                        std::vector< pcl::IndicesPtr>& sorted_boundaries)
 {
   pcl::PointCloud<pcl::Boundary>::Ptr boundary_ptr = SS.getBoundaryCloud();
-  pcl::PointCloud<pcl::PointXYZ>::Ptr boundary_cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr boundary_cloud_ptr(new pcl::PointCloud<pcl::PointXYZRGB>());
   int k=0;
 
   pcl::IndicesPtr boundary_idx(new std::vector<int>());
@@ -256,22 +262,56 @@ void computeBoundaries(const godel_surface_detection::detection::Cloud::Ptr surf
   }
 }
 
-void extractBoundaryCloud(const godel_surface_detection::detection::Cloud::Ptr surface_cloud,
-                          const pcl::IndicesPtr boundary_indices,
-                          godel_surface_detection::detection::Cloud::Ptr& boundary_cloud)
+inline static bool isBlendingPath(const std::string& name)
 {
-  // Create the filtering object
-  pcl::ExtractIndices<pcl::PointXYZ> extract;
-  extract.setInputCloud(surface_cloud);
-  extract.setIndices(boundary_indices);
-  extract.setNegative(false);
-  extract.filter(*boundary_cloud);
+  const static std::string suffix("_blend");
+  if (name.size() < suffix.size())
+    return false;
+  return name.find(suffix, name.size() - suffix.length()) != std::string::npos;
 }
 
+
+inline static bool isEdgePath(const std::string& name)
+{
+  const static std::string suffix("_edge");
+  if (name.size() < suffix.size())
+    return false;
+  return name.find(suffix) != std::string::npos;
+}
+
+inline static bool isScanPath(const std::string& name)
+{
+  const static std::string suffix("_scan");
+  if (name.size() < suffix.size())
+    return false;
+  return name.find(suffix) != std::string::npos;
+}
+
+
 ProcessPathResult
-SurfaceBlendingService::generateProcessPath(const std::string& name,
+SurfaceBlendingService::generateProcessPath(const int& id,
+                                            const godel_msgs::BlendingPlanParameters& blend_params,
+                                            const godel_msgs::ScanPlanParameters& scan_params)
+{
+  using godel_surface_detection::detection::CloudRGB;
+
+  std::string name;
+  pcl::PolygonMesh mesh;
+  CloudRGB::Ptr surface_ptr (new CloudRGB);
+
+  data_coordinator_.getSurfaceName(id, name);
+  data_coordinator_.getSurfaceMesh(id, mesh);
+  data_coordinator_.getCloud(godel_surface_detection::data::CloudTypes::surface_cloud, id, *surface_ptr);
+
+  return generateProcessPath(id, name, mesh, surface_ptr, blend_params, scan_params);
+}
+
+
+ProcessPathResult
+SurfaceBlendingService::generateProcessPath(const int& id,
+                                            const std::string& name,
                                             const pcl::PolygonMesh& mesh,
-                                            godel_surface_detection::detection::Cloud::Ptr surface,
+                                            godel_surface_detection::detection::CloudRGB::Ptr surface,
                                             const godel_msgs::BlendingPlanParameters& blend_params,
                                             const godel_msgs::ScanPlanParameters& scan_params)
 {
@@ -324,17 +364,13 @@ SurfaceBlendingService::generateProcessPath(const std::string& name,
     blend_visualization.color = color;
 
     process_path_results_.process_visualization_.markers.push_back(blend_visualization);
+    data_coordinator_.setPoses(godel_surface_detection::data::PoseTypes::blend_pose, id, blend_poses);
   }
   else
   {
     // Blend path request failed
     ROS_WARN_STREAM("Could not calculate blend path for surface: " << name);
   }
-
-  // Publish all poses for all boundaries
-  blend_poses.header.frame_id = "world_frame";
-  blend_poses.header.stamp = ros::Time::now();
-  blend_visualization_pub_.publish(blend_poses);
 
   ROS_INFO_STREAM("Blend Path Generation Complete");
 
@@ -343,7 +379,7 @@ SurfaceBlendingService::generateProcessPath(const std::string& name,
 
   ROS_INFO_STREAM("Surface has " + std::to_string(surface->points.size()) + "points");
   // Compute the boundary
-  surfaceSegmentation SS(surface);
+  SurfaceSegmentation SS(surface);
 
   SS.setSearchRadius(SEGMENTATION_SEARCH_RADIUS);
   std::vector<double> filt_coef;
@@ -384,10 +420,14 @@ SurfaceBlendingService::generateProcessPath(const std::string& name,
         p.orientation = boundary_pose.orientation;
 
       edge_path_result.second = edge_poses;
-
       result.paths.push_back(edge_path_result);
 
-      all_edge_poses.poses.insert(std::end(all_edge_poses.poses), std::begin(edge_poses.poses), std::end(edge_poses.poses));
+      // Add poses to visualization
+      all_edge_poses.poses.insert(std::end(all_edge_poses.poses), std::begin(edge_poses.poses),
+                                  std::end(edge_poses.poses));
+
+      // Add edge to data coordinator
+      data_coordinator_.addEdge(id, edge_path_result.first, edge_poses);
     }
     else
     {
@@ -395,12 +435,6 @@ SurfaceBlendingService::generateProcessPath(const std::string& name,
       ROS_WARN_STREAM("Could not calculate blend path for surface: " << name);
     }
   }
-
-  // Publish all poses for all boundaries
-  all_edge_poses.header.frame_id = "world_frame";
-  all_edge_poses.header.stamp = ros::Time::now();
-  edge_visualization_pub_.publish(all_edge_poses);
-
 
   // Request laser scan paths
   visualization_msgs::Marker scan_visualization;
@@ -431,6 +465,7 @@ SurfaceBlendingService::generateProcessPath(const std::string& name,
     scan_visualization.color = color;
 
     process_path_results_.scan_visualization_.markers.push_back(scan_visualization);
+    data_coordinator_.setPoses(godel_surface_detection::data::PoseTypes::scan_pose, id, scan_poses);
   }
   else
   {
@@ -444,23 +479,13 @@ godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotio
     const godel_msgs::BlendingPlanParameters& blend_params,
     const godel_msgs::ScanPlanParameters& scan_params)
 {
-  std::vector<pcl::PolygonMesh> meshes;
-  surface_server_.get_selected_surfaces(meshes);
-  std::vector<std::string> names;
-  surface_server_.get_selected_list(names);
-  std::vector<godel_surface_detection::detection::Cloud::Ptr> surface_clouds = surface_detection_.get_surface_clouds();
-  std::vector<godel_surface_detection::detection::Cloud::Ptr> selected_clouds;
-  int ind;
-  for(const auto& s : names)
-  {
-    std::string t = s;
-    t.erase(0, SURFACE_DESIGNATION.size());
-    ind = std::stoi(t) - 1;
-    selected_clouds.push_back(surface_clouds.at(ind));
-  }
+  std::vector<int> selected_ids;
+  surface_server_.getSelectedIds(selected_ids);
+  std::stringstream ss;
+  for (const auto& id : selected_ids)
+    ss << id << " ";
 
-
-  ROS_ASSERT(names.size() == meshes.size());
+  ROS_INFO_STREAM("Selected surface ids " << ss.str());
 
   // Marker stuff
   process_path_results_.process_visualization_.markers.clear();
@@ -469,37 +494,45 @@ godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotio
   marker_counter_ = 0;
 
   godel_surface_detection::TrajectoryLibrary lib;
-  for (std::size_t i = 0; i < meshes.size(); ++i)
+  geometry_msgs::PoseArray blend_poses, edge_poses;
+  for (const auto& id : selected_ids)
   {
-    ProcessPathResult paths = generateProcessPath(names[i], meshes[i], selected_clouds[i], blend_params, scan_params);
+    // Generate motion plan
+    ProcessPathResult paths = generateProcessPath(id, blend_params, scan_params);
+
+    // Add poses to visualization stack
+    for(const auto& vt: paths.paths)
+    {
+      if(isBlendingPath(vt.first))
+        blend_poses.poses.insert(blend_poses.poses.end(), vt.second.poses.begin(), vt.second.poses.end());
+      else if(isEdgePath(vt.first))
+        edge_poses.poses.insert(edge_poses.poses.end(), vt.second.poses.begin(), vt.second.poses.end());
+      else if(isScanPath(vt.first))
+        ;
+      else
+        ROS_ERROR_STREAM("Tried to visualize an unrecognized path type: " << vt.first);
+    }
+
+    // Generate trajectory plans from motion plan
     for (std::size_t j = 0; j < paths.paths.size(); ++j)
     {
-      ProcessPlanResult plan = generateProcessPlan(paths.paths[j].first, paths.paths[j].second,
-                                                   blend_params, scan_params);
+      ProcessPlanResult plan = generateProcessPlan(paths.paths[j].first, paths.paths[j].second, blend_params,
+                                                   scan_params);
+
       for (std::size_t k = 0; k < plan.plans.size(); ++k)
-      {
         lib.get()[plan.plans[k].first] = plan.plans[k].second;
-      }
     }
+
+    // Publish poses
+    blend_poses.header.frame_id = edge_poses.header.frame_id = "world_frame";
+    blend_poses.header.stamp = edge_poses.header.stamp =ros::Time::now();
+    blend_visualization_pub_.publish(blend_poses);
+    edge_visualization_pub_.publish(edge_poses);
   }
+
   return lib;
 }
 
-static inline bool isBlendingPath(const std::string& name)
-{
-  const static std::string suffix("_blend");
-  if (name.size() < suffix.size())
-    return false;
-  return name.find(suffix, name.size() - suffix.length()) != std::string::npos;
-}
-
-static inline bool isEdgePath(const std::string& name)
-{
-  const static std::string suffix("_edge");
-  if (name.size() < suffix.size())
-    return false;
-  return name.find(suffix) != std::string::npos;
-}
 
 ProcessPlanResult
 SurfaceBlendingService::generateProcessPlan(const std::string& name,

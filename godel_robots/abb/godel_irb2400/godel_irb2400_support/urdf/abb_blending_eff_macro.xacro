@@ -50,6 +50,7 @@
       </collision>
     </link>
 
+
     <joint name="${prefix}eff_frame_to_eff_body" type="fixed">
       <parent link="${prefix}eff_frame"/>
       <child link="${prefix}gripper_body"/>

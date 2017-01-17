@@ -14,9 +14,9 @@
         limitations under the License.
 */
 
-#include <godel_surface_detection/scan/robot_scan.h>
-#include <godel_surface_detection/detection/surface_detection.h>
-#include <godel_surface_detection/interactive/interactive_surface_server.h>
+#include <scan/robot_scan.h>
+#include <detection/surface_detection.h>
+#include <interactive/interactive_surface_server.h>
 #include <pcl/console/parse.h>
 
 using namespace godel_surface_detection;

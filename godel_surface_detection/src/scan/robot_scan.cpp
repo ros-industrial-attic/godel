@@ -14,7 +14,7 @@
         limitations under the License.
 */
 
-#include <godel_surface_detection/scan/robot_scan.h>
+#include <scan/robot_scan.h>
 #include <pcl_ros/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
 #include <pcl/common/common.h>
@@ -252,7 +252,7 @@ int RobotScan::scan(bool move_only)
         ros::Duration(1.0).sleep();
         sensor_msgs::PointCloud2ConstPtr msg = ros::topic::waitForMessage<sensor_msgs::PointCloud2>(
             params_.scan_topic, ros::Duration(WAIT_MSG_DURATION));
-        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZ>());
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZRGB>());
         tf::StampedTransform source_to_target_tf;
         if (msg)
         {
@@ -260,7 +260,7 @@ int RobotScan::scan(bool move_only)
                           << params_.scan_target_frame << "'");
 
           // convert to message to point cloud
-          pcl::fromROSMsg<pcl::PointXYZ>(*msg, *cloud_ptr);
+          pcl::fromROSMsg<pcl::PointXYZRGB>(*msg, *cloud_ptr);
 
           // removed nans
           std::vector<int> index;

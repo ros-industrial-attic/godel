@@ -125,7 +125,6 @@ toDescartesTraj(const geometry_msgs::PoseArray& poses,
   for (std::size_t i = 0; i < poses.poses.size(); ++i)
   {
     Eigen::Affine3d this_pose = createNominalTransform(poses.poses[i]);
-    ROS_INFO_STREAM("Pose " << i << ":\n" << this_pose.matrix() << "\n");
     // O(1) jerky - may need to revisit this time parameterization later. This at least allows
     // Descartes to perform some optimizations in its graph serach.
     double dt = (this_pose.translation() - last_pose.translation()).norm() / params.traverse_spd;
