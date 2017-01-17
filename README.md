@@ -8,17 +8,22 @@ Godel: Austrian logician and mathematician http://en.wikipedia.org/wiki/Kurt_G%C
 
 - Install [wstool](http://wiki.ros.org/wstool) in order manage the repos inside the workspace
   ```
-  sudo apt-get install python-wstool
+  sudo apt install python-wstool
   ```
 
 - Cd into the 'src' directory of your catkin workspace and run the following:
   ```
   wstool init . 
-  wstool merge https://github.com/ros-industrial-consortium/godel/raw/indigo-devel/godel.rosinstall
+  wstool merge https://github.com/ros-industrial-consortium/godel/raw/kinetic-devel/godel.rosinstall
   wstool update
   rosdep install --from-paths . --ignore-src
   cd ..
   catkin_make
+  ```
+
+- If you have issues regarding a missing `QD` library, then:
+  ```
+  sudo apt install libqd-dev
   ```
 
 ### Applications
