@@ -442,11 +442,11 @@ void SurfaceSegmentation::computeNormals()
 void SurfaceSegmentation::getSurfaceClouds(std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> &surface_clouds)
 {
   surface_clouds.clear();
-  pcl::PointCloud<pcl::PointXYZ>::Ptr segment_cloud_ptr =
-      pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>());
+  pcl::PointCloud<pcl::PointXYZ>::Ptr segment_cloud_ptr;
 
   for (const auto& cluster : clusters_)
   {
+    segment_cloud_ptr = pcl::PointCloud<pcl::PointXYZ>::Ptr(new pcl::PointCloud<pcl::PointXYZ>());
     pcl::PointIndices indices = cluster;
     if (indices.indices.size() == 0)
       continue;
