@@ -11,7 +11,7 @@
 using godel_process_path::ProcessPathGenerator;
 using godel_process_path::PolygonPt;
 
-TEST(ProcessPathGeneratorTest, init)
+TEST(ProcessPathGeneratorTest, DISABLED_init)
 {
   ProcessPathGenerator ppg;
   ppg.setTraverseHeight(.05);
