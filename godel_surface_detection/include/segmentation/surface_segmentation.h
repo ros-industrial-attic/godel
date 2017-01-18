@@ -76,7 +76,7 @@ public:
   void setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr icloud);
   void addCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr icloud);
   void getBoundaryCloud(pcl::PointCloud<pcl::Boundary>::Ptr &boundary_cloud);
-  void getSurfaceClouds(std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> &surface_clouds);
+  void getSurfaceClouds(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &surface_clouds);
 
   // Computations
   std::vector <pcl::PointIndices> computeSegments(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &colored_cloud);
