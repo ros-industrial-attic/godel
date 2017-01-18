@@ -1,7 +1,7 @@
 - git: {local-name: descartes, uri: 'https://github.com/ros-industrial-consortium/descartes.git',
     version: indigo-devel}
 - git: {local-name: godel_openvoronoi, uri: 'https://github.com/Jmeyer1292/godel_openvoronoi',
-    version: feature/remove_symlink}
+    version: fix/alternate_symlinks}
 - git: {local-name: godel, uri: 'https://github.com/ros-industrial-consortium/godel.git',
     version: kinetic-devel}
 - git: {local-name: motoman, uri: 'https://github.com/ros-industrial/motoman.git',
