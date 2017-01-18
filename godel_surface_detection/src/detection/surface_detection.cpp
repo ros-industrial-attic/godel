@@ -298,25 +298,8 @@ namespace godel_surface_detection
       // Segment the part into surface clusters using a "region growing" scheme
       SurfaceSegmentation SS(process_cloud_ptr);
       region_colored_cloud_ptr_ = CloudRGB::Ptr(new CloudRGB());
-      std::vector <pcl::PointIndices> clusters = SS.computeSegments(region_colored_cloud_ptr_);
-      pcl::PointIndices::Ptr inliers_ptr(new pcl::PointIndices());
-
-      // Extract points from clusters into their own point clouds
-      for (int i = 0; i < clusters.size(); i++)
-      {
-        CloudRGB::Ptr segment_cloud_ptr = CloudRGB::Ptr(new CloudRGB());
-        pcl::PointIndices& indices = clusters[i];
-        if (indices.indices.size() == 0)
-          continue;
-
-        if (indices.indices.size() >= params_.rg_min_cluster_size)
-        {
-          inliers_ptr->indices.insert(inliers_ptr->indices.end(), indices.indices.begin(), indices.indices.end());
-
-          pcl::copyPointCloud(*process_cloud_ptr, indices, *segment_cloud_ptr);
-          surface_clouds_.push_back(segment_cloud_ptr);
-        }
-      }
+      SS.computeSegments(region_colored_cloud_ptr_);
+      SS.getSurfaceClouds(surface_clouds_);
 
       // Remove largest cluster if appropriate
       if (params_.ignore_largest_cluster && surface_clouds_.size() > 1)
