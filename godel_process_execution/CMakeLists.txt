@@ -6,6 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   godel_msgs
   industrial_robot_simulator_service
   trajectory_msgs
+  keyence_experimental
 )
 
 catkin_package(
@@ -16,6 +17,7 @@ catkin_package(
     godel_msgs
     industrial_robot_simulator_service
     trajectory_msgs
+    keyence_experimental
 )
 
 include_directories(
@@ -41,14 +43,11 @@ add_executable(keyence_process_service_node
   src/process_utils.cpp
 )
 
-add_dependencies(abb_blend_process_service_node godel_msgs_generate_messages_cpp)
-add_dependencies(abb_blend_process_service_node industrial_robot_simulator_service_generate_messages_cpp)
+add_dependencies(abb_blend_process_service_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_dependencies(blend_process_service_node godel_msgs_generate_messages_cpp)
-add_dependencies(blend_process_service_node industrial_robot_simulator_service_generate_messages_cpp)
+add_dependencies(blend_process_service_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_dependencies(keyence_process_service_node godel_msgs_generate_messages_cpp)
-add_dependencies(keyence_process_service_node industrial_robot_simulator_service_generate_messages_cpp)
+add_dependencies(keyence_process_service_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 target_link_libraries(abb_blend_process_service_node
