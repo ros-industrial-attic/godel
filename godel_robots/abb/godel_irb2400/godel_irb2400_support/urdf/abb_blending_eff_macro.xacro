@@ -127,7 +127,7 @@
     <joint name="${prefix}gripper_body_to_keyence_sof" type="fixed">
         <parent link="${prefix}gripper_body"/>
         <child link="${prefix}keyence_sensor_optical_frame"/>
-        <origin xyz="${keyence_tcp_x} ${keyence_tcp_y} ${keyence_tcp_z}" rpy="${half_pi} -${half_pi} 0 "/>
+        <origin xyz="${keyence_tcp_x} ${keyence_tcp_y} ${keyence_tcp_z}" rpy="${half_pi} ${half_pi} 0 "/>
     </joint>
 
     <joint name="${prefix}gripper_body_to_keyence_tcp_f" type="fixed">
