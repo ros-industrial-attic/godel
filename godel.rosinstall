@@ -1,5 +1,5 @@
 - git: {local-name: descartes, uri: 'https://github.com/ros-industrial-consortium/descartes.git',
-    version: indigo-devel}
+    version: kinetic-devel}
 - git: {local-name: godel_openvoronoi, uri: 'https://github.com/ros-industrial-consortium/godel_openvoronoi.git',
     version: hydro-devel}
 - git: {local-name: godel, uri: 'https://github.com/ros-industrial-consortium/godel.git',
