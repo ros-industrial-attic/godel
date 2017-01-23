@@ -43,6 +43,18 @@ catkin_package(
     path_planning_plugins_base
 )
 
+# OpenMP
+find_package(OpenMP REQUIRED)
+if(OPENMP_FOUND)
+  message(STATUS "OPENMP FOUND")
+  set(OpenMP_FLAGS ${OpenMP_CXX_FLAGS})  # or if you use C: ${OpenMP_C_FLAGS}
+  set(OpenMP_LIBS gomp)
+endif()
+
+catkin_package(
+  DEPENDS
+    OpenMP
+)
 
 ###########
 ## Build ##
