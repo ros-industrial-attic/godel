@@ -54,6 +54,7 @@ add_library(${PROJECT_NAME}
   src/detection/surface_detection.cpp
   src/segmentation/surface_segmentation_utils.cpp
   src/segmentation/surface_segmentation.cpp
+  src/segmentation/edge_refinement.cpp
   src/coordination/data_coordinator.cpp
   src/scan/robot_scan.cpp
   src/interactive/interactive_surface_server.cpp
