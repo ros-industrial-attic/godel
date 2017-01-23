@@ -36,6 +36,8 @@ const static std::string SCAN_TYPE = "scan";
 // Edge Processing constants
 const static double SEGMENTATION_SEARCH_RADIUS = 0.03; // 3cm
 const static int BOUNDARY_THRESHOLD = 10;
+const static double EDGE_REFINEMENT_SEARCH_RADIUS = 0.01;
+const static int EDGE_REFINEMENT_NUMBER_OF_NEIGHBORS = 2500;
 
 // Variables to select path type
 const static int PATH_TYPE_BLENDING = 0;
@@ -58,6 +60,158 @@ const static std::string WINDOW_WIDTH_PARAM = PARAM_BASE + SCAN_PARAM_BASE + "wi
 const static std::string MIN_QA_VALUE_PARAM = PARAM_BASE + SCAN_PARAM_BASE + "min_qa_value";
 const static std::string MAX_QA_VALUE_PARAM = PARAM_BASE + SCAN_PARAM_BASE + "max_qa_value";
 
+bool SurfaceBlendingService::requestEdgePath(std::vector<pcl::IndicesPtr> &boundaries,
+                                             int index,
+                                             SurfaceSegmentation& SS,
+                                             visualization_msgs::Marker& visualization,
+                                             geometry_msgs::PoseArray& path)
+{
+  geometry_msgs::Pose geo_pose;
+  std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>> poses;
+  std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>> refined_poses;
+
+  // Get boundary trajectory and trim last two poses (last poses are susceptible to large velocity changes)
+  SS.getBoundaryTrajectory(boundaries, index, poses);
+  poses.resize(poses.size() - 2);
+
+  // Edge Refinement
+  // godel_scan_tools::EdgeRefinement ER();
+  // ER.setNumberOfNeighbors(EDGE_REFINEMENT_NUMBER_OF_NEIGHBORS);
+  // ER.setBoundarySearchRadius(EDGE_REFINEMENT_SEARCH_RADIUS);
+  // ER.refineBoundary(poses, refined_poses);
+
+  // Convert eigen poses to geometry poses for messaging and visualization
+  for(const auto& p : poses)
+  {
+    Eigen::Affine3d pose(p.matrix());
+    tf::poseEigenToMsg(pose, geo_pose);
+    path.poses.push_back(geo_pose);
+  }
+
+  return true;
+}
+
+bool SurfaceBlendingService::requestBlendPath(
+    const godel_process_path::PolygonBoundaryCollection& boundaries,
+    const geometry_msgs::Pose& boundary_pose,
+    const godel_msgs::BlendingPlanParameters& params,
+    visualization_msgs::Marker&  visualization,
+    geometry_msgs::PoseArray& path)
+{
+  godel_process_path_generation::VisualizeBlendingPlan srv;
+  srv.request.params = params;
+  godel_process_path::utils::translations::godelToGeometryMsgs(srv.request.surface.boundaries,
+                                                               boundaries);
+  tf::poseTFToMsg(tf::Transform::getIdentity(), srv.request.surface.pose);
+
+  if (!visualize_process_path_client_.call(srv))
+  {
+    return false;
+  }
+
+  // blend process path calculations suceeded. Save data into results.
+  visualization = srv.response.path;
+  geometry_msgs::Pose p;
+  p.orientation.x = 0.0;
+  p.orientation.y = 0.0;
+  p.orientation.z = 0.0;
+  p.orientation.w = 1.0;
+
+  // Transform points to world frame and generate pose
+  Eigen::Affine3d boundary_pose_eigen;
+  Eigen::Affine3d eigen_p;
+  Eigen::Affine3d result;
+
+  tf::poseMsgToEigen(boundary_pose, boundary_pose_eigen);
+
+  for (int i = 0; i < visualization.points.size(); i++)
+  {
+    p.position.x = visualization.points[i].x;
+    p.position.y = visualization.points[i].y;
+    p.position.z = visualization.points[i].z;
+
+    tf::poseMsgToEigen(p, eigen_p);
+    result = boundary_pose_eigen*eigen_p;
+    tf::poseEigenToMsg(result, p);
+    p.orientation = boundary_pose.orientation;
+    path.poses.push_back(p);
+  }
+
+  visualization.ns = PATH_NAMESPACE;
+  visualization.pose = boundary_pose;
+
+  return true;
+}
+
+bool SurfaceBlendingService::requestScanPath(
+    const godel_process_path::PolygonBoundaryCollection& boundaries,
+    const geometry_msgs::Pose& boundary_pose,
+    const godel_msgs::ScanPlanParameters& params,
+    visualization_msgs::Marker& visualization,
+    geometry_msgs::PoseArray& path)
+{
+  using namespace godel_process_path;
+  using godel_process_path::utils::translations::godelToVisualizationMsgs;
+
+  if (boundaries.empty())
+    return false;
+
+  PolygonBoundary scan =
+      godel_surface_detection::generateProfilimeterScanPath(boundaries.front(), params);
+  utils::translations::godelToVisualizationMsgs(visualization, scan, std_msgs::ColorRGBA());
+  // Add in an approach and depart vector
+  const geometry_msgs::Point& start_pt = visualization.points.front();
+  const geometry_msgs::Point& end_pt = visualization.points.back();
+  // Approach vector
+  std::vector<geometry_msgs::Point> approach_points;
+  for (std::size_t i = 0; i < SCAN_APPROACH_STEP_COUNT; ++i)
+  {
+    geometry_msgs::Point pt = start_pt;
+    pt.z += (SCAN_APPROACH_STEP_COUNT - i) * SCAN_APPROACH_STEP_DISTANCE;
+    approach_points.push_back(pt);
+  }
+  // Depart vector
+  std::vector<geometry_msgs::Point> depart_points;
+  for (std::size_t i = 0; i < SCAN_APPROACH_STEP_COUNT; ++i)
+  {
+    geometry_msgs::Point pt = end_pt;
+    pt.z += i * SCAN_APPROACH_STEP_DISTANCE;
+    depart_points.push_back(pt);
+  }
+  // Insert into path
+  visualization.points.insert(visualization.points.end(), depart_points.begin(), depart_points.end());
+  visualization.points.insert(visualization.points.begin(), approach_points.begin(), approach_points.end());
+
+  geometry_msgs::Pose p;
+  p.orientation.x = boundary_pose.orientation.x;
+  p.orientation.y = boundary_pose.orientation.y;
+  p.orientation.z = boundary_pose.orientation.z;
+  p.orientation.w = boundary_pose.orientation.w;
+
+  // Transform points to world frame and generate pose
+  Eigen::Affine3d boundary_pose_eigen;
+  Eigen::Affine3d eigen_p;
+  Eigen::Affine3d result;
+
+  tf::poseMsgToEigen(boundary_pose, boundary_pose_eigen);
+
+  for(int i = 0; i < visualization.points.size(); i++)
+  {
+    p.position.x = visualization.points[i].x;
+    p.position.y = visualization.points[i].y;
+    p.position.z = visualization.points[i].z;
+
+    tf::poseMsgToEigen(p, eigen_p);
+    result = boundary_pose_eigen*eigen_p;
+    tf::poseEigenToMsg(result, p);
+    path.poses.push_back(p);
+  }
+
+  visualization.ns = PATH_NAMESPACE;
+  visualization.pose = boundary_pose;
+
+  return true;
+}
 
 void computeBoundaries(const godel_surface_detection::detection::CloudRGB::Ptr surface_cloud,
                        SurfaceSegmentation& SS,
