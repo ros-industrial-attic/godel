@@ -35,6 +35,8 @@ const static double SCAN_APPROACH_STEP_DISTANCE = 0.01; // 5cm
 // Edge Processing constants
 const static double SEGMENTATION_SEARCH_RADIUS = 0.030; // 3cm
 const static int BOUNDARY_THRESHOLD = 10;
+const static double EDGE_REFINEMENT_SEARCH_RADIUS = 0.01;
+const static int EDGE_REFINEMENT_NUMBER_OF_NEIGHBORS = 2500;
 
 // Variables to select path type
 const static int PATH_TYPE_BLENDING = 0;
@@ -84,10 +86,17 @@ bool SurfaceBlendingService::requestEdgePath(std::vector<pcl::IndicesPtr> &bound
 {
   geometry_msgs::Pose geo_pose;
   std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>> poses;
+  std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>> refined_poses;
 
   // Get boundary trajectory and trim last two poses (last poses are susceptible to large velocity changes)
   SS.getBoundaryTrajectory(boundaries, index, poses);
   poses.resize(poses.size() - 2);
+
+  // Edge Refinement
+  // godel_scan_tools::EdgeRefinement ER();
+  // ER.setNumberOfNeighbors(EDGE_REFINEMENT_NUMBER_OF_NEIGHBORS);
+  // ER.setBoundarySearchRadius(EDGE_REFINEMENT_SEARCH_RADIUS);
+  // ER.refineBoundary(poses, refined_poses);
 
   // Convert eigen poses to geometry poses for messaging and visualization
   for(const auto& p : poses)

@@ -28,7 +28,8 @@ namespace godel_scan_tools
 {
 typedef std::vector<pcl::PointCloud<pcl::PointXYZ>, Eigen::aligned_allocator<pcl::PointXYZ>> PointCloudVector;
 typedef std::vector<pcl::PointCloud<pcl::Boundary>, Eigen::aligned_allocator<pcl::Boundary>> PointCloudBoundaryVector;
-typedef std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> EigenPoseMatrix;
+typedef std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>> EigenPoseMatrixVectorf;
+typedef std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4f>> EigenPoseMatrixVectord;
 typedef std::vector<pcl::PointXYZ> PointVector;
 typedef Eigen::Matrix<float, 1, 3> NormalVector;
 typedef Eigen::Matrix<float, 1, 3> PoseOrigin;
@@ -53,7 +54,7 @@ struct DebugDisplayData
    */
   DebugDisplayData(const std::size_t current_pose_index, const std::size_t num_poses, 
                    pcl::visualization::PCLVisualizer *viewer,
-                   const EigenPoseMatrix boundary_poses, 
+                   const EigenPoseMatrixVectorf boundary_poses, 
                    const PointCloudVector boundary_pose_neighbor, 
                    const PointCloudVector refined_boundary_pose_neighbor, 
                    const PointCloudVector neighbor_boundary_points,
@@ -66,7 +67,7 @@ struct DebugDisplayData
   std::size_t num_poses_;
   pcl::visualization::PCLVisualizer *viewer_;
 
-  EigenPoseMatrix boundary_poses_;
+  EigenPoseMatrixVectorf boundary_poses_;
   PointCloudVector boundary_pose_neighbor_;
   PointCloudVector refined_boundary_pose_neighbor_;
   PointCloudVector neighbor_boundary_points_;
@@ -111,7 +112,7 @@ public:
    * @param[in]  original_boundary_poses  The original boundary poses
    * @param      refined_poses            The refined poses
    */
-  void refineBoundary(const EigenPoseMatrix &original_boundary_poses, EigenPoseMatrix &refined_poses);
+  void refineBoundary(const EigenPoseMatrixVectord &original_boundary_poses, EigenPoseMatrixVectord &refined_poses);
 
   /**
    * @brief      Sets the search radius for the boundary search.
@@ -160,6 +161,23 @@ public:
   }
   
 private:
+
+  /**
+   * @brief      Converts 4x4 Eigen Float Matrix to 4x4 Eigen Double Matrix
+   *
+   * @param[in]  float_matrix   The float matrix
+   * @param      double_matrix  The double matrix
+   */
+  static Eigen::Matrix4d convertEigen4fTo4d(const Eigen::Matrix4f &float_matrix);
+
+  /**
+   * @brief      Converts 4x4 Eigen Double Matrix to 4x4 Eigen Float Matrix
+   *
+   * @param[in]  double_matrix  The double matrix
+   * @param      float_matrix   The float matrix
+   */
+  static Eigen::Matrix4f convertEigen4dTo4f(const Eigen::Matrix4d &double_matrix);
+
   /**
    * @brief      Determines if it an Eigen Matrix4f contains any NaNs
    *
@@ -175,8 +193,8 @@ private:
    * @param[in]  original_boundary_poses  The original boundary poses
    * @param      boundary_poses_no_nan    The boundary poses without NaN's
    */
-  static void removeNaNFromPoseTrajectory(const EigenPoseMatrix &original_boundary_poses,
-                                          EigenPoseMatrix &boundary_poses_no_nan);
+  static void removeNaNFromPoseTrajectory(const EigenPoseMatrixVectorf &original_boundary_poses,
+                                          EigenPoseMatrixVectorf &boundary_poses_no_nan);
 
   /**
    * @brief      Iterates through a vector of boundary poses and creates a point cloud at each pose 
@@ -188,7 +206,7 @@ private:
    * @param      boundary_pose_neighbor  Vector of point clouds containing neighbor points for every pose
    */
   static void nearestNNeighborSearch(const pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud,
-                                     const EigenPoseMatrix &boundary_poses,
+                                     const EigenPoseMatrixVectorf &boundary_poses,
                                      const int &number_of_neighbors,
                                      PointCloudVector &boundary_pose_neighbor);
 
@@ -203,7 +221,7 @@ private:
    * @param      boundary_pose_neighbors  Vector of point clouds containing neighbor points for every pose
    */
   static void nearestNeighborRadiusSearch(const pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud,
-                                          const EigenPoseMatrix &boundary_poses,
+                                          const EigenPoseMatrixVectorf &boundary_poses,
                                           const float &search_radius,
                                           PointCloudVector &boundary_pose_neighbors);
 
@@ -258,7 +276,7 @@ private:
    * @param[in]  boundary_pose_neighbor          The vector of point clouds within N neighbors
    * @param      refined_boundary_pose_neighbor  The vector of point clouds within plane
    */
-  static void refineNeighborPoints(const EigenPoseMatrix &boundary_poses,
+  static void refineNeighborPoints(const EigenPoseMatrixVectorf &boundary_poses,
                                    const PointCloudVector &boundary_pose_neighbor,
                                    PointCloudVector &refined_boundary_pose_neighbor);
 
@@ -361,7 +379,7 @@ private:
    * @param[in]  extracted_boundary_points  The extracted boundary points
    * @param      new_pose_points            The new pose points
    */
-  static void calculateClosestPointInBoundaryToPose(const EigenPoseMatrix &boundary_poses,
+  static void calculateClosestPointInBoundaryToPose(const EigenPoseMatrixVectorf &boundary_poses,
                                                     const PointCloudVector &extracted_boundary_points,
                                                     PointVector &new_pose_points);
 
@@ -373,9 +391,9 @@ private:
    * @param[in]  new_boundary_points  The vector of closest the closest boundary point to the corresponding pose
    * @param      refined_poses        The refined poses
    */
-  static void movePoseToNewPoint(const EigenPoseMatrix &boundary_poses,
+  static void movePoseToNewPoint(const EigenPoseMatrixVectorf &boundary_poses,
                                  const PointVector &new_boundary_points,
-                                 EigenPoseMatrix &refined_poses);
+                                 EigenPoseMatrixVectorf &refined_poses);
 
   /**
    * @brief      Calculates the index of the refined poses where there is a jump larger than some
@@ -466,9 +484,9 @@ private:
    * @param[in]  additional_poses  The additional poses
    * @param      refined_poses     The refined poses
    */
-  static void addAdditionalPosesToRefinedPoses(const EigenPoseMatrix &boundary_poses,
+  static void addAdditionalPosesToRefinedPoses(const EigenPoseMatrixVectorf &boundary_poses,
                                                const std::map<int, PointVector> &additional_poses,
-                                               EigenPoseMatrix &refined_poses);
+                                               EigenPoseMatrixVectorf &refined_poses);
   
   /**
    * @brief      Converts a point into an eigen pose matrix.
@@ -479,7 +497,7 @@ private:
    *
    * @return     An eigen pose matrix at that point.
    */
-  static EigenPoseMatrix convertPointsToEigenMatrix(const EigenPoseMatrix &boundary_poses,
+  static EigenPoseMatrixVectorf convertPointsToEigenMatrix(const EigenPoseMatrixVectorf &boundary_poses,
                                                     const PointVector &points,
                                                     const int &index);
 
@@ -513,12 +531,12 @@ private:
    * @param[in]  refined_poses                   The refined poses
    * @param[in]  additional_poses                The additional poses
    */
-  void debugDisplay(const EigenPoseMatrix &boundary_poses,
+  void debugDisplay(const EigenPoseMatrixVectorf &boundary_poses,
                     const PointCloudVector &boundary_pose_neighbor,
                     const PointCloudVector &refined_boundary_pose_neighbor,
                     const PointCloudVector &neighbor_boundary_points,
                     const PointVector &new_pose_points,
-                    const EigenPoseMatrix &refined_poses,
+                    const EigenPoseMatrixVectorf &refined_poses,
                     const std::map<int, PointVector> &additional_poses);
 
 private:
