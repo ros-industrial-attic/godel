@@ -1,3 +1,6 @@
+#include <services/surface_blending_service.h>
+#include <segmentation/surface_segmentation.h>
+#include <segmentation/edge_refinement.h>
 #include <detection/surface_detection.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/PointIndices.h>
