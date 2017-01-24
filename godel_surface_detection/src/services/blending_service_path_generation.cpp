@@ -82,7 +82,8 @@ bool SurfaceBlendingService::requestEdgePath(std::vector<pcl::IndicesPtr> &bound
                                              int index,
                                              SurfaceSegmentation& SS,
                                              visualization_msgs::Marker& visualization,
-                                             geometry_msgs::PoseArray& path)
+                                             geometry_msgs::PoseArray& path,
+                                             const godel_surface_detection::detection::CloudRGB::Ptr input_cloud)
 {
   geometry_msgs::Pose geo_pose;
   std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>> poses;
@@ -93,13 +94,15 @@ bool SurfaceBlendingService::requestEdgePath(std::vector<pcl::IndicesPtr> &bound
   poses.resize(poses.size() - 2);
 
   // Edge Refinement
-  // godel_scan_tools::EdgeRefinement ER();
-  // ER.setNumberOfNeighbors(EDGE_REFINEMENT_NUMBER_OF_NEIGHBORS);
-  // ER.setBoundarySearchRadius(EDGE_REFINEMENT_SEARCH_RADIUS);
-  // ER.refineBoundary(poses, refined_poses);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_non_rgb(new pcl::PointCloud<pcl::PointXYZ>());
+  pcl::copyPointCloud(*input_cloud, *input_cloud_non_rgb);
+  godel_scan_tools::EdgeRefinement ER(input_cloud_non_rgb);
+  ER.setNumberOfNeighbors(EDGE_REFINEMENT_NUMBER_OF_NEIGHBORS);
+  ER.setBoundarySearchRadius(EDGE_REFINEMENT_SEARCH_RADIUS);
+  ER.refineBoundary(poses, refined_poses);
 
   // Convert eigen poses to geometry poses for messaging and visualization
-  for(const auto& p : poses)
+  for(const auto& p : refined_poses)
   {
     Eigen::Affine3d pose(p.matrix());
     tf::poseEigenToMsg(pose, geo_pose);
@@ -307,12 +310,14 @@ SurfaceBlendingService::generateProcessPath(const int& id,
   std::string name;
   pcl::PolygonMesh mesh;
   CloudRGB::Ptr surface_ptr (new CloudRGB);
+  CloudRGB::Ptr input_ptr (new CloudRGB);
 
   data_coordinator_.getSurfaceName(id, name);
   data_coordinator_.getSurfaceMesh(id, mesh);
   data_coordinator_.getCloud(godel_surface_detection::data::CloudTypes::surface_cloud, id, *surface_ptr);
+  data_coordinator_.getCloud(godel_surface_detection::data::CloudTypes::input_cloud, id, *input_ptr);
 
-  return generateProcessPath(id, name, mesh, surface_ptr, blend_params, scan_params);
+  return generateProcessPath(id, name, mesh, surface_ptr, input_ptr, blend_params, scan_params);
 }
 
 
@@ -321,6 +326,7 @@ SurfaceBlendingService::generateProcessPath(const int& id,
                                             const std::string& name,
                                             const pcl::PolygonMesh& mesh,
                                             godel_surface_detection::detection::CloudRGB::Ptr surface,
+                                            godel_surface_detection::detection::CloudRGB::Ptr input_cloud,
                                             const godel_msgs::BlendingPlanParameters& blend_params,
                                             const godel_msgs::ScanPlanParameters& scan_params)
 {
@@ -415,7 +421,7 @@ SurfaceBlendingService::generateProcessPath(const int& id,
     geometry_msgs::PoseArray edge_poses;
     visualization_msgs::Marker edge_visualization;
 
-    if(requestEdgePath(sorted_boundaries, i, SS, edge_visualization, edge_poses))
+    if(requestEdgePath(sorted_boundaries, i, SS, edge_visualization, edge_poses, input_cloud))
     {
       ProcessPathResult::value_type edge_path_result; // pair<string, geometry_msgs::PoseArray>
       edge_path_result.first = name + "_edge_" + std::to_string(i);

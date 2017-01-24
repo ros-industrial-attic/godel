@@ -159,7 +159,8 @@ private:
                        int index,
                        SurfaceSegmentation& SS,
                        visualization_msgs::Marker& visualization,
-                       geometry_msgs::PoseArray& path);
+                       geometry_msgs::PoseArray& path,
+                       const godel_surface_detection::detection::CloudRGB::Ptr);
 
 
   ProcessPathResult generateProcessPath(const int& id, const godel_msgs::BlendingPlanParameters& blend_params,
@@ -169,6 +170,7 @@ private:
   ProcessPathResult generateProcessPath(const int& id,
                                         const std::string& name,
                                         const pcl::PolygonMesh& mesh,
+                                        const godel_surface_detection::detection::CloudRGB::Ptr,
                                         const godel_surface_detection::detection::CloudRGB::Ptr,
                                         const godel_msgs::BlendingPlanParameters& params,
                                         const godel_msgs::ScanPlanParameters& scan_params);
