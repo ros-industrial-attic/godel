@@ -549,9 +549,11 @@ EdgeRefinement::calculateOutliersInNewPosePoints(const PointVector &neighbor_new
   float mean = sum / difference_between_poses.size();
   float standard_deviation = calculateAllowedDeviation(difference_between_poses);
 
+  #if 0
   std::cout << "Mean: " << mean << std::endl;
   std::cout << "Deviation: " << standard_deviation << std::endl;
   std::cout << "Max Deviation: " << maxValueOfVector(difference_between_poses) << std::endl;
+  #endif
 
   for (std::size_t i = 1; i < neighbor_new_pose_points.size(); i++)
   {
@@ -565,10 +567,12 @@ EdgeRefinement::calculateOutliersInNewPosePoints(const PointVector &neighbor_new
   }
 
   // Debug check
+  #if 0
   for (std::map<int, int>::const_iterator it = outlier_index.begin(); it != outlier_index.end(); it++)
   {
     std::cout << "Pose: " << it->first << " requires " << it->second << " points." << std::endl;
   }
+  #endif
 }
 
 float
@@ -615,12 +619,13 @@ EdgeRefinement::calculateAdditionalPosesRequiredToFillGaps(const PointCloudVecto
   {
     int index = it->first;
     int num_poses_required = it->second;
-    std::cout << "Index #: " << index << std::endl;
+    //std::cout << "Index #: " << index << std::endl;
     additional_poses[it->first] = calculateClosestBoundaryPointToNextPose(boundary_points, 
                                     neighbor_new_pose_points, index, num_poses_required);
   }
 
   // Debug check
+  #if 0
   for (std::map<int, PointVector>::const_iterator it = additional_poses.begin(); it != additional_poses.end(); it++)
   {
     std::cout << "Pose: " << it->first << " requires the following additional points:" << std::endl;
@@ -629,6 +634,7 @@ EdgeRefinement::calculateAdditionalPosesRequiredToFillGaps(const PointCloudVecto
       std::cout << it->second[i] << std::endl;
     }
   }
+  #endif
 }
 
 // Note: Debug statements have been left in since this is still in development.
@@ -651,13 +657,13 @@ EdgeRefinement::calculateClosestBoundaryPointToNextPose(const PointCloudVector &
   if (kdtree.nearestKSearch(neighbor_new_pose_points[index], K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0)
   {
     pose_index = pointIdxNKNSearch[0];
-    std::cout << "Pose Index: " << pose_index << std::endl;
+    //std::cout << "Pose Index: " << pose_index << std::endl;
   }
 
   if (kdtree.nearestKSearch(neighbor_new_pose_points[index+1], K, pointIdxNKNSearch, pointNKNSquaredDistance) > 0)
   {
     closest_pose_index = pointIdxNKNSearch[0];
-    std::cout << "Closest Pose Index: " << closest_pose_index << std::endl;
+    //std::cout << "Closest Pose Index: " << closest_pose_index << std::endl;
   }
   
   if (pose_index == 0 && closest_pose_index > 0)
@@ -665,10 +671,10 @@ EdgeRefinement::calculateClosestBoundaryPointToNextPose(const PointCloudVector &
     // This means the shortest way to the other pose is to move to the next pose in the boundary.
     if ((closest_pose_index - pose_index) < ((boundary_points[index].width / 2)))
     {
-      std::cout << "The closest way to get to closest_pose_index is to add" << std::endl;
+      //std::cout << "The closest way to get to closest_pose_index is to add" << std::endl;
       if (closest_pose_index > num_poses_required)
       {
-        std::cout << "Skipping Points" << std::endl;
+        //std::cout << "Skipping Points" << std::endl;
         int skip_point = (int)floor(closest_pose_index / num_poses_required);
         for (std::size_t i = pose_index; i < closest_pose_index; i += skip_point)
         {
@@ -677,7 +683,7 @@ EdgeRefinement::calculateClosestBoundaryPointToNextPose(const PointCloudVector &
       }
       else
       {
-        std::cout << "Not Skipping Points" << std::endl;
+        //std::cout << "Not Skipping Points" << std::endl;
         for (std::size_t i = pose_index; i < closest_pose_index; i++)
         {
           additional_points.push_back(boundary_points[index].points[i]);
@@ -688,10 +694,10 @@ EdgeRefinement::calculateClosestBoundaryPointToNextPose(const PointCloudVector &
     // This means the shortest way to the other pose is to move backwards in the boundary.
     else
     {
-      std::cout << "The closest way to get to the closest_pose_index is to subtract" << std::endl;
+      //std::cout << "The closest way to get to the closest_pose_index is to subtract" << std::endl;
       if ((boundary_points[index].width - 1 - closest_pose_index) > num_poses_required)
       {
-        std::cout << "Skipping Points" << std::endl;
+        //std::cout << "Skipping Points" << std::endl;
 
         int skip_point = (int)floor((boundary_points[index].width - 1 - closest_pose_index) / num_poses_required);
 
@@ -703,7 +709,7 @@ EdgeRefinement::calculateClosestBoundaryPointToNextPose(const PointCloudVector &
       }
       else
       {
-        std::cout << "Not Skipping Points" << std::endl;
+        //std::cout << "Not Skipping Points" << std::endl;
 
         for (std::size_t i = closest_pose_index; i < (boundary_points[index].width - 1); i++)
         {
@@ -766,12 +772,14 @@ EdgeRefinement::addAdditionalPosesToRefinedPoses(const EigenPoseMatrixVectorf &b
   }
 
   // Debug Check
+  #if 0
   std::cout << "Size of Refined Pose Matrix: " << refined_poses.size() << std::endl;
   for (std::size_t i = 0; i < new_indices.size(); i++)
   {
     std::cout << "Old Index: " << additional_pose_indices[i] <<
     " Points Added: " << additional_pose_points[i].size() << " New Index: " << new_indices[i] << std::endl;
   }
+  #endif
 }
 
 EigenPoseMatrixVectorf
