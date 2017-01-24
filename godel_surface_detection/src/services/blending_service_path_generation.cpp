@@ -64,7 +64,8 @@ bool SurfaceBlendingService::requestEdgePath(std::vector<pcl::IndicesPtr> &bound
                                              int index,
                                              SurfaceSegmentation& SS,
                                              visualization_msgs::Marker& visualization,
-                                             geometry_msgs::PoseArray& path)
+                                             geometry_msgs::PoseArray& path,
+                                             const godel_surface_detection::detection::CloudRGB::Ptr input_cloud)
 {
   geometry_msgs::Pose geo_pose;
   std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>> poses;
@@ -75,13 +76,15 @@ bool SurfaceBlendingService::requestEdgePath(std::vector<pcl::IndicesPtr> &bound
   poses.resize(poses.size() - 2);
 
   // Edge Refinement
-  // godel_scan_tools::EdgeRefinement ER();
-  // ER.setNumberOfNeighbors(EDGE_REFINEMENT_NUMBER_OF_NEIGHBORS);
-  // ER.setBoundarySearchRadius(EDGE_REFINEMENT_SEARCH_RADIUS);
-  // ER.refineBoundary(poses, refined_poses);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_non_rgb(new pcl::PointCloud<pcl::PointXYZ>());
+  pcl::copyPointCloud(*input_cloud, *input_cloud_non_rgb);
+  godel_scan_tools::EdgeRefinement ER(input_cloud_non_rgb);
+  ER.setNumberOfNeighbors(EDGE_REFINEMENT_NUMBER_OF_NEIGHBORS);
+  ER.setBoundarySearchRadius(EDGE_REFINEMENT_SEARCH_RADIUS);
+  ER.refineBoundary(poses, refined_poses);
 
   // Convert eigen poses to geometry poses for messaging and visualization
-  for(const auto& p : poses)
+  for(const auto& p : refined_poses)
   {
     Eigen::Affine3d pose(p.matrix());
     tf::poseEigenToMsg(pose, geo_pose);
@@ -282,6 +285,91 @@ inline static bool isScanPath(const std::string& name)
 bool SurfaceBlendingService::generateEdgePath(godel_surface_detection::detection::CloudRGB::Ptr surface,
                                               std::vector<geometry_msgs::PoseArray>& result)
 {
+  using godel_surface_detection::detection::CloudRGB;
+
+  std::string name;
+  pcl::PolygonMesh mesh;
+  CloudRGB::Ptr surface_ptr (new CloudRGB);
+  CloudRGB::Ptr input_ptr (new CloudRGB);
+
+  data_coordinator_.getSurfaceName(id, name);
+  data_coordinator_.getSurfaceMesh(id, mesh);
+  data_coordinator_.getCloud(godel_surface_detection::data::CloudTypes::surface_cloud, id, *surface_ptr);
+  data_coordinator_.getCloud(godel_surface_detection::data::CloudTypes::input_cloud, id, *input_ptr);
+
+  return generateProcessPath(id, name, mesh, surface_ptr, input_ptr, blend_params, scan_params);
+}
+
+
+ProcessPathResult
+SurfaceBlendingService::generateProcessPath(const int& id,
+                                            const std::string& name,
+                                            const pcl::PolygonMesh& mesh,
+                                            godel_surface_detection::detection::CloudRGB::Ptr surface,
+                                            godel_surface_detection::detection::CloudRGB::Ptr input_cloud,
+                                            const godel_msgs::BlendingPlanParameters& blend_params,
+                                            const godel_msgs::ScanPlanParameters& scan_params)
+{
+  using godel_process_path::PolygonBoundaryCollection;
+  using godel_process_path::PolygonBoundary;
+
+  ProcessPathResult result;
+
+  // Calculate boundaries for a surface
+  if (!mesh_importer_.calculateSimpleBoundary(mesh))
+  {
+    ROS_WARN_STREAM("Could not calculate boundary for mesh associated with name: " << name);
+    return result;
+  }
+
+  // Read & filter boundaries that are ill-formed or too small
+  PolygonBoundaryCollection filtered_boundaries =
+      filterPolygonBoundaries(mesh_importer_.getBoundaries(), blend_params);
+
+  // Read pose
+  geometry_msgs::Pose boundary_pose;
+  mesh_importer_.getPose(boundary_pose);
+
+  // Send request to blend path generation service
+  visualization_msgs::Marker blend_visualization;
+  geometry_msgs::PoseArray blend_poses;
+  if (requestBlendPath(filtered_boundaries, boundary_pose, blend_params, blend_visualization, blend_poses))
+  {
+    ProcessPathResult::value_type blend_path_result; // pair<string, geometry_msgs::PoseArray>
+    blend_path_result.first = name + "_blend";
+    blend_path_result.second = blend_poses;
+    result.paths.push_back(blend_path_result);
+
+    // Hack for visualization sake
+    blend_visualization.header.frame_id = "world_frame";
+    blend_visualization.id = marker_counter_++;
+    blend_visualization.header.stamp = ros::Time::now();
+    blend_visualization.lifetime = ros::Duration(0.0);
+    blend_visualization.ns = "blend_paths";
+    blend_visualization.pose = boundary_pose;
+    blend_visualization.action = visualization_msgs::Marker::ADD;
+    blend_visualization.type = visualization_msgs::Marker::LINE_STRIP;
+    blend_visualization.scale.x = 0.004;
+    std_msgs::ColorRGBA color;
+    color.r = 1.0;
+    color.b = 0.0;
+    color.g = 0.0;
+    color.a = 1.0;
+    blend_visualization.colors.clear();
+    blend_visualization.color = color;
+
+    process_path_results_.process_visualization_.markers.push_back(blend_visualization);
+    data_coordinator_.setPoses(godel_surface_detection::data::PoseTypes::blend_pose, id, blend_poses);
+  }
+  else
+  {
+    // Blend path request failed
+    ROS_WARN_STREAM("Could not calculate blend path for surface: " << name);
+  }
+
+  ROS_INFO_STREAM("Blend Path Generation Complete");
+
+>>>>>>> Integrated edge refinement
   // Send request to edge path generation service
   std::vector<pcl::IndicesPtr> sorted_boundaries;
 
@@ -366,6 +454,9 @@ bool SurfaceBlendingService::generateBlendPath(const godel_msgs::PathPlanningPar
   try
   {
     if (!generateToolPaths(params, mesh, getBlendToolPlanningPluginName(), result))
+=======
+    if(requestEdgePath(sorted_boundaries, i, SS, edge_visualization, edge_poses, input_cloud))
+>>>>>>> Integrated edge refinement
     {
       ROS_ERROR("Failed to generate tool paths for blend process");
       return false;
