@@ -359,7 +359,7 @@ SurfaceBlendingService::generateProcessPlan(const std::string& name,
   if (isBlendingPath(name))
   {
     godel_msgs::BlendProcessPlanning srv;
-    srv.request.path.poses = poses;
+    srv.request.path.segments.push_back(poses);
     srv.request.params = params;
 
     success = blend_planning_client_.call(srv);
@@ -368,7 +368,7 @@ SurfaceBlendingService::generateProcessPlan(const std::string& name,
   else if (isEdgePath(name))
   {
     godel_msgs::BlendProcessPlanning srv;
-    srv.request.path.poses = poses;
+    srv.request.path.segments.push_back(poses);
     srv.request.params = params;
 
     success = blend_planning_client_.call(srv);
@@ -377,7 +377,7 @@ SurfaceBlendingService::generateProcessPlan(const std::string& name,
   else
   {
     godel_msgs::KeyenceProcessPlanning srv;
-    srv.request.path.poses = poses;
+    srv.request.path.segments.push_back(poses);
     srv.request.params = scan_params;
 
     success = keyence_planning_client_.call(srv);

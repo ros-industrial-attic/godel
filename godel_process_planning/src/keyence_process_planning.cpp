@@ -148,14 +148,14 @@ bool ProcessPlanningManager::handleKeyencePlanning(
     godel_msgs::KeyenceProcessPlanning::Response& res)
 {
   // Precondition: Input trajectory must be non-zero
-  if (req.path.poses.poses.empty())
+  if (req.path.segments.empty())
   {
     ROS_WARN("%s: Cannot create scan process plan for empty trajectory", __FUNCTION__);
     return false;
   }
 
   // Transform process path from geometry msgs to descartes points
-  DescartesTraj process_points = toDescartesTraj(req.path.poses, req.params);
+  DescartesTraj process_points = toDescartesTraj(req.path.segments[0], req.params);
 
   // Capture the current state of the robot
   std::vector<double> current_joints = getCurrentJointState(JOINT_TOPIC_NAME);
