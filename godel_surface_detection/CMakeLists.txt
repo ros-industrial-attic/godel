@@ -78,6 +78,8 @@ add_library(${PROJECT_NAME}
   src/services/trajectory_library.cpp
   src/utils/mesh_conversions.cpp)
 
+target_compile_options(${PROJECT_NAME} PRIVATE ${OpenMP_FLAGS})
+
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} yaml-cpp)
 add_dependencies(${PROJECT_NAME} godel_msgs_generate_messages_cpp)
 
@@ -94,6 +96,7 @@ add_executable(surface_blending_service  src/services/surface_blending_service.c
                                          src/services/blending_service_path_generation.cpp)
 target_link_libraries(surface_blending_service ${PROJECT_NAME})
 add_dependencies(surface_blending_service godel_msgs_generate_messages_cpp)
+target_compile_options(surface_blending_service PRIVATE ${OpenMP_FLAGS})
 
 install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
