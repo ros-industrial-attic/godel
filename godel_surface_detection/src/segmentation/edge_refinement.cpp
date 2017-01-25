@@ -121,7 +121,7 @@ EdgeRefinement::refineBoundary(const EigenPoseMatrixVectord &original_boundary_p
   }
 
   // 8) Determine the indices at whcih to add the additional poses and add in additional poses to the refined poses
-  addAdditionalPosesToRefinedPoses(boundary_poses, additional_poses, refined_poses);
+  //addAdditionalPosesToRefinedPoses(boundary_poses, additional_poses, refined_poses);
 
   refined_poses_d.reserve(refined_poses.size());
 
