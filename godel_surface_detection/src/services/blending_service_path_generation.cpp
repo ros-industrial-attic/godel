@@ -36,7 +36,7 @@ const static double SCAN_APPROACH_STEP_DISTANCE = 0.01; // 5cm
 const static double SEGMENTATION_SEARCH_RADIUS = 0.030; // 3cm
 const static int BOUNDARY_THRESHOLD = 10;
 const static double EDGE_REFINEMENT_SEARCH_RADIUS = 0.01;
-const static int EDGE_REFINEMENT_NUMBER_OF_NEIGHBORS = 2500;
+const static int EDGE_REFINEMENT_NUMBER_OF_NEIGHBORS = 1000;
 
 // Variables to select path type
 const static int PATH_TYPE_BLENDING = 0;
@@ -103,6 +103,7 @@ bool SurfaceBlendingService::requestEdgePath(std::vector<pcl::IndicesPtr> &bound
 
   // Convert eigen poses to geometry poses for messaging and visualization
   for(const auto& p : refined_poses)
+  //for(const auto& p : poses)
   {
     Eigen::Affine3d pose(p.matrix());
     tf::poseEigenToMsg(pose, geo_pose);
