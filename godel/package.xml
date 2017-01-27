@@ -13,8 +13,6 @@
   <run_depend>godel_path_planning</run_depend>
   <run_depend>godel_process_path_generation</run_depend>
   <run_depend>godel_msgs</run_depend>
-  <run_depend>godel_keyence_ljv_driver</run_depend>
-  <run_depend>keyence_ljv_description</run_depend>
   <run_depend>godel_surface_detection</run_depend>
   <run_depend>godel_polygon_offset</run_depend>
 
