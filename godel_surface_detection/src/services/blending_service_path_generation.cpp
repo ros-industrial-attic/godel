@@ -225,8 +225,9 @@ void computeBoundaries(const godel_surface_detection::detection::CloudRGB::Ptr s
                        SurfaceSegmentation& SS,
                        std::vector< pcl::IndicesPtr>& sorted_boundaries)
 {
-  pcl::PointCloud<pcl::Boundary>::Ptr boundary_ptr = SS.getBoundaryCloud();
+  pcl::PointCloud<pcl::Boundary>::Ptr boundary_ptr (new pcl::PointCloud<pcl::Boundary>());
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr boundary_cloud_ptr(new pcl::PointCloud<pcl::PointXYZRGB>());
+  SS.getBoundaryCloud(boundary_ptr);
   int k=0;
 
   pcl::IndicesPtr boundary_idx(new std::vector<int>());
@@ -240,14 +241,12 @@ void computeBoundaries(const godel_surface_detection::detection::CloudRGB::Ptr s
     k++;
   }
 
-  ROS_INFO_STREAM("Cloud has " + std::to_string(boundary_cloud_ptr->points.size()) + " boundary points\n");
   boundary_cloud_ptr->width = 1;
   boundary_cloud_ptr->height = boundary_cloud_ptr->points.size();
 
 
   // sort the boundaries
-  int num_boundaries = SS.sortBoundary(boundary_idx, sorted_boundaries);
-  ROS_INFO_STREAM("Cloud has " + std::to_string(num_boundaries)  + " boundaries");
+  SS.sortBoundary(boundary_idx, sorted_boundaries);
 
   int max=0;
   int max_idx=0;

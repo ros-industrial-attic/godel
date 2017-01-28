@@ -1,4 +1,9 @@
 #include <segmentation/surface_segmentation.h>
+#include <pcl/features/normal_3d_omp.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <ros/io.h>
+#include <thread>
+
 
 /** @brief default constructor */
 SurfaceSegmentation::SurfaceSegmentation()
@@ -7,6 +12,7 @@ SurfaceSegmentation::SurfaceSegmentation()
   input_cloud_= pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
 }
 
+
 /** @brief distructor */
 SurfaceSegmentation::~SurfaceSegmentation()
 {
@@ -14,6 +20,7 @@ SurfaceSegmentation::~SurfaceSegmentation()
   normals_ =  pcl::PointCloud<pcl::Normal>::Ptr(new pcl::PointCloud<pcl::Normal>);
   input_cloud_->clear();
 }
+
 
 /** @brief constructor that sets the background cloud, also initializes the KdTree for searching
 @param bg_cloud the set of points defining the background
@@ -27,18 +34,16 @@ SurfaceSegmentation::SurfaceSegmentation(pcl::PointCloud<pcl::PointXYZRGB>::Ptr 
   computeNormals();
 }
 
+
 /** @brief sets the background cloud, replaces whatever points exists if any
 @param background_cloud the cloud representing the background
 */
 void SurfaceSegmentation::setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr icloud)
 {
   input_cloud_->clear();
-  for(const auto& pt : *icloud)
-  {
-    input_cloud_->push_back(pt);
-  }
-  computeNormals();
+  pcl::copyPointCloud(*icloud, *input_cloud_);
 }
+
 
 /** @brief adds new points to the background, and reinitializes the kd_tree for searching
 @param bg_cloud additional background points
@@ -48,22 +53,20 @@ void SurfaceSegmentation::addCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr icloud
   // push input_cloud onto icloud and then add, this strange sequence keeps ordering of clouds
   // and does not duplicate setInputCloud code
   for(const auto& pt : input_cloud_->points)
-  {
-    icloud->push_back(pt);
-  }
+      icloud->push_back(pt);
+
   setInputCloud(icloud);
 }
+
 
 /** @brief creates a cloud from every point estimated to be on the boundary of input_cloud_
 @return a boundary point cloud
 */
-pcl::PointCloud<pcl::Boundary>::Ptr SurfaceSegmentation::getBoundaryCloud()
+void SurfaceSegmentation::getBoundaryCloud(pcl::PointCloud<pcl::Boundary>::Ptr &boundary_cloud)
 {
-  pcl::PointCloud<pcl::Boundary>::Ptr bps (new pcl::PointCloud<pcl::Boundary> ());
-
   if(normals_->points.size()==0 || input_cloud_->points.size() == 0)
   {
-    ROS_INFO_STREAM("Must set input_cloud_ and comput normals_ before calling getBoundaryCloud()");
+    ROS_INFO_STREAM("Must set input_cloud_ and compute normals_ before calling getBoundaryCloud()");
   }
   else
   {
@@ -71,13 +74,11 @@ pcl::PointCloud<pcl::Boundary>::Ptr SurfaceSegmentation::getBoundaryCloud()
     best.setInputCloud(input_cloud_);
     best.setInputNormals(normals_);
     best.setRadiusSearch (radius_);
-    //	best.setAngleThreshold(90.0*3.14/180.0);
     best.setSearchMethod (pcl::search::KdTree<pcl::PointXYZRGB>::Ptr (new pcl::search::KdTree<pcl::PointXYZRGB>));
-    best.compute(*bps);
+    best.compute(*boundary_cloud);
   }
-
-  return(bps);
 }
+
 
 std::vector <pcl::PointIndices> SurfaceSegmentation::computeSegments(pcl::PointCloud<pcl::PointXYZRGB>::Ptr
                                                                      &colored_cloud)
@@ -89,18 +90,17 @@ std::vector <pcl::PointIndices> SurfaceSegmentation::computeSegments(pcl::PointC
 
   rg.setSmoothModeFlag (false); // Depends on the cloud being processed
   rg.setSmoothnessThreshold (10.0 / 180.0 * M_PI);
+  rg.setCurvatureThreshold(1.0);
+
   rg.setMaxClusterSize(MAX_CLUSTER_SIZE);
   rg.setSearchMethod (tree);
   rg.setMinClusterSize(MIN_CLUSTER_SIZE);
   rg.setNumberOfNeighbours (NUM_NEIGHBORS);
 
-  float smooth_thresh = rg.getSmoothnessThreshold();
   float resid_thresh = rg.getResidualThreshold();
 
-  // rg.setCurvatureTestFlag();
   rg.setResidualTestFlag(true);
   rg.setResidualThreshold(resid_thresh);
-  rg.setCurvatureThreshold(1.0);
   rg.setInputCloud (input_cloud_);
   rg.setInputNormals (normals_);
 
@@ -109,53 +109,6 @@ std::vector <pcl::PointIndices> SurfaceSegmentation::computeSegments(pcl::PointC
   return(clusters_);
 }
 
-
-/** @brief computes mesh on the cloud results are in triangles_, parts_, and states_ */
-Mesh SurfaceSegmentation::computeMesh()
-{
-  // use gpg3 to create a mesh, then traverse boundary of mesh to get boundaries
-  // concatenate rgb fields and normals to cloud
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_with_colors(new pcl::PointCloud<pcl::PointXYZRGB>);
-  pcl::PointCloud<pcl::PointXYZRGBNormal>::Ptr cloud_with_normals(new pcl::PointCloud<pcl::PointXYZRGBNormal>);
-
-  for(const auto& pt : input_cloud_->points)
-  {
-    pcl::PointXYZRGB npt(0,255,0);
-    npt.x = pt.x;
-    npt.y = pt.y;
-    npt.z = pt.z;
-    cloud_with_colors->push_back(npt);
-  }
-  pcl::concatenateFields (*cloud_with_colors, *normals_, *cloud_with_normals);
-
-  // Initialize objects
-  pcl::GreedyProjectionTriangulation<pcl::PointXYZRGBNormal> gp3;
-
-  // Create search tree*
-  pcl::search::KdTree<pcl::PointXYZRGBNormal>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGBNormal>);
-  tree->setInputCloud (cloud_with_normals);
-
-  // Set typical values for the parameters
-  gp3.setSearchRadius (radius_);
-  gp3.setMu (2.5);
-  gp3.setMaximumNearestNeighbors (500);
-  gp3.setMaximumSurfaceAngle(M_PI/4); // 45 degrees
-  gp3.setMinimumAngle(M_PI/18); // 10 degrees
-  gp3.setMaximumAngle(2*M_PI/3); // 120 degrees
-  gp3.setNormalConsistency(false);
-  gp3.setSearchMethod (tree);
-  gp3.setInputCloud (cloud_with_normals);
-
-  // Get results
-  gp3.reconstruct (triangles_);
-  parts_ = gp3.getPartIDs();
-  states_ = gp3.getPointStates();
-
-  pcl::console::print_highlight ("convert to half edge mesh\n");
-  pcl::geometry::toHalfEdgeMesh(triangles_, HEM_);
-
-  return(HEM_);
-}
 
 std::pair<int, int> SurfaceSegmentation::getNextUnused(std::vector< std::pair<int,int> > used)
 {
@@ -166,13 +119,15 @@ std::pair<int, int> SurfaceSegmentation::getNextUnused(std::vector< std::pair<in
   {
     if(used[i].first == 0)
     {
-    rtn = used[i];
-    used[i].first = 1;
-    break;
+      rtn = used[i];
+      used[i].first = 1;
+      break;
     }
   }
+
   return(rtn);
 }
+
 
 int SurfaceSegmentation::sortBoundary(pcl::IndicesPtr& boundary_indices,
                                       std::vector<pcl::IndicesPtr> &sorted_boundaries)
@@ -269,17 +224,20 @@ double  SurfaceSegmentation::getSearchRadius()
 
 bool SurfaceSegmentation::setSmoothCoef(std::vector<double> &coef)
 {
+  // smoothing filters must have an odd number of coefficients
   if(coef.size() % 2 == 1)
-  {		// smoothing filters must have an odd number of coefficients
+  {
     coef_.clear();
     num_coef_ = coef.size();
     double sum = 0;
-    for(int i = 0; i < num_coef_; i++)
+    for(const auto& c : coef)
     {
-      coef_.push_back(coef[i]);
-      sum += coef[i];
+      coef_.push_back(c);
+      sum += c;
     }
-    gain_ = sum;		// set gain to be the sum of the coefficients because we need unity gain
+
+    // set gain to be the sum of the coefficients because we need unity gain
+    gain_ = sum;
     return(true);
   }
   else
@@ -399,8 +357,10 @@ void SurfaceSegmentation::getBoundaryTrajectory(std::vector<pcl::IndicesPtr> &bo
     v.y = spts[next].y - spts[i].y;
     v.z = spts[next].z - spts[i].z;
     double norm = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+
     if(norm == 0)
       norm = 1.0;	/* avoid division by zero */
+
     v.x = v.x / norm;
     v.y = v.y / norm;
     v.z = v.z / norm;
@@ -423,7 +383,6 @@ void SurfaceSegmentation::getBoundaryTrajectory(std::vector<pcl::IndicesPtr> &bo
      vels[i].x = vels[i].x / norm;
      vels[i].y = vels[i].y / norm;
      vels[i].z = vels[i].z / norm;
-
   }
 
   poses.clear();
@@ -453,70 +412,49 @@ void SurfaceSegmentation::getBoundaryTrajectory(std::vector<pcl::IndicesPtr> &bo
 }
 
 
-bool SurfaceSegmentation::applyConcaveHull(pcl::PointCloud<pcl::PointXYZRGB>::Ptr& in, pcl::PolygonMesh& mesh)
-{
-  pcl::PolygonMesh::Ptr hull_mesh_ptr(new pcl::PolygonMesh);
-  pcl::ConcaveHull<pcl::PointXYZRGB> chull;
-  chull.setInputCloud(in);
-  chull.setAlpha(500.0);
-  chull.reconstruct(mesh);
-
-  return mesh.polygons.size() > 0;
-}
-
-
-void SurfaceSegmentation::getBoundBoundaryHalfEdges (const Mesh &mesh,
-                                                     std::vector <Mesh::HalfEdgeIndices>& boundary_he_collection,
-                                                     const size_t expected_size)
-{
-
-  boundary_he_collection.clear ();
-
-  HalfEdgeIndices boundary_he; boundary_he.reserve (expected_size);
-  std::vector <bool> visited (mesh.sizeEdges (), false);
-  IHEAFC circ, circ_end;
-
-  for (HalfEdgeIndex i (0); i<HalfEdgeIndex (mesh.sizeHalfEdges ()); ++i)
-  {
-    if (mesh.isBoundary (i) && !visited [pcl::geometry::toEdgeIndex (i).get ()])
-    {
-      boundary_he.clear ();
-
-      circ     = mesh.getInnerHalfEdgeAroundFaceCirculator (i);
-      circ_end = circ;
-      do
-      {
-      visited [pcl::geometry::toEdgeIndex (circ.getTargetIndex ()).get ()] = true;
-      boundary_he.push_back (circ.getTargetIndex ());
-      } while ( ++circ != circ_end);
-
-      boundary_he_collection.push_back (boundary_he);
-    }
-  }
-}
-
-
-/** @brief remove any NAN points, otherwise many algorityms fail */
+/** @brief remove any NAN points, otherwise many algorithms fail */
 void SurfaceSegmentation::removeNans()
 {
-  pcl::PointCloud<pcl::PointXYZRGB>::Ptr nonans_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-  nonans_cloud->is_dense = false;
   std::vector<int> indices;
-  pcl::removeNaNFromPointCloud (*input_cloud_, *nonans_cloud, indices);
-  setInputCloud(nonans_cloud);
+  pcl::removeNaNFromPointCloud (*input_cloud_, *input_cloud_, indices);
 }
 
 
 /** @brief compute the normals and store in normals_, this is requried for both segmentation and meshing*/
 void SurfaceSegmentation::computeNormals()
 {
-  normals_->points.clear();
-  // Estimate the normals
-  pcl::NormalEstimation<pcl::PointXYZRGB, pcl::Normal> ne;
+  // Determine the number of available cores
+  pcl::NormalEstimationOMP<pcl::PointXYZRGB, pcl::Normal> ne;
+  int nr_cores = std::thread::hardware_concurrency();
+  ne.setNumberOfThreads(nr_cores);
+
+  // Configure parameters
   ne.setInputCloud (input_cloud_);
   pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
   ne.setSearchMethod (tree);
-  //  ne.setRadiusSearch (radius_);
   ne.setKSearch (100);
+
+  // Estimate the normals
   ne.compute (*normals_);
+}
+
+
+void SurfaceSegmentation::getSurfaceClouds(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &surface_clouds)
+{
+  surface_clouds.clear();
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr segment_cloud_ptr;
+
+  for (const auto& cluster : clusters_)
+  {
+    segment_cloud_ptr = pcl::PointCloud<pcl::PointXYZRGB>::Ptr (new pcl::PointCloud<pcl::PointXYZRGB>());
+    pcl::PointIndices indices = cluster;
+    if (indices.indices.size() == 0)
+      continue;
+
+    if (indices.indices.size() >= MIN_CLUSTER_SIZE)
+    {
+      pcl::copyPointCloud(*input_cloud_, indices, *segment_cloud_ptr);
+      surface_clouds.push_back(segment_cloud_ptr);
+    }
+  }
 }

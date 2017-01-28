@@ -1,10 +1,7 @@
 #ifndef SURFACE_SEGMENTATION_H
 #define SURFACE_SEGMENTATION_H
 
-#include <pcl_ros/point_cloud.h>
 #include <pcl/point_types.h>
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/features/normal_3d.h>
 #include <pcl/surface/gp3.h>
 #include <pcl/PolygonMesh.h>
 #include <pcl/geometry/mesh_base.h>
@@ -20,7 +17,6 @@
 #include <pcl/surface/ear_clipping.h>
 #include <pcl/segmentation/region_growing.h>
 #include <pcl/filters/filter.h>
-#include <boost/foreach.hpp>
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>
 
@@ -79,7 +75,8 @@ public:
   // Clouds
   void setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr icloud);
   void addCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr icloud);
-  pcl::PointCloud<pcl::Boundary>::Ptr getBoundaryCloud();
+  void getBoundaryCloud(pcl::PointCloud<pcl::Boundary>::Ptr &boundary_cloud);
+  void getSurfaceClouds(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &surface_clouds);
 
   // Computations
   std::vector <pcl::PointIndices> computeSegments(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &colored_cloud);
@@ -95,15 +92,10 @@ public:
   void smoothPointNormal(std::vector<pcl::PointNormal> &pts_in, std::vector<pcl::PointNormal> &pts_out);
 
   // Misc
-  bool applyConcaveHull(pcl::PointCloud<pcl::PointXYZRGB>::Ptr& in, pcl::PolygonMesh& mesh);
 
   void getBoundaryTrajectory(std::vector<pcl::IndicesPtr> &boundaries,
                              int sb,
                              std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>> &poses);
-
-  void getBoundBoundaryHalfEdges (const Mesh &mesh,
-                                  std::vector <Mesh::HalfEdgeIndices>& boundary_he_collection,
-                                  const size_t  expected_size = 3);
 
 private:
   void removeNans();
