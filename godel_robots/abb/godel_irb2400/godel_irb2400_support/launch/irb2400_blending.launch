@@ -60,12 +60,12 @@
   </group>
   
   <group if="$(arg debug_mode)">
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_irb2400_support)/rviz/irb2400_blending.rviz" output="screen" launch-prefix="xterm -e gdb --args" required="true"/>
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_irb2400_support)/rviz/irb2400_blending.rviz" output="screen" launch-prefix="xterm -e gdb --args" required="true" env_loader="$(find godel_irb2400_support)/config/env-loader.sh"/>
   </group>
 
   <!-- rviz w/ specified configuration -->
   <group unless="$(arg debug_mode)">
-    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_irb2400_support)/rviz/irb2400_blending.rviz" output="screen" launch-prefix="nice" required="true"/>
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_irb2400_support)/rviz/irb2400_blending.rviz" output="screen" launch-prefix="nice" required="true" env_loader="$(find godel_irb2400_support)/config/env-loader.sh"/>
   </group>
 
   <!-- Bring up the MoveIt interface to the real or simulated robot -->
