@@ -9,8 +9,6 @@
   <license>Apache2</license>
   <buildtool_depend>catkin</buildtool_depend>
 
-  <run_depend>godel_sia20d_moveit_config</run_depend>
-  <run_depend>godel_robot_config</run_depend>
   <run_depend>godel_plugins</run_depend>
   <run_depend>godel_path_planning</run_depend>
   <run_depend>godel_process_path_generation</run_depend>

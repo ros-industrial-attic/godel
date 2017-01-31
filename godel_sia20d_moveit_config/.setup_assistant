@@ -1,8 +1,0 @@
-moveit_setup_assistant_config:
-  URDF:
-    package: godel_robot_config
-    relative_path: urdf/sia20d_workspace.urdf
-  SRDF:
-    relative_path: config/sia20d_workspace.srdf
-  CONFIG:
-    generated_timestamp: 1399307833
