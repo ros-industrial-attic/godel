@@ -43,8 +43,8 @@ typedef pcl::PointCloud<pcl::PointXYZINormal> Cloud;
 class MeshImporter
 {
 public:
-  MeshImporter(bool verbose = false) : verbose_(verbose){};
-  virtual ~MeshImporter(){};
+  MeshImporter(bool verbose = false) : verbose_(verbose){}
+  virtual ~MeshImporter(){}
 
   /**@brief Create local coordinate system and boundary data for a point cloud representing a flat
    * surface

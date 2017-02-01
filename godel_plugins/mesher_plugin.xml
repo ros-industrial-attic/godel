@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<library path="lib/libgodel_plugins">
+  <class type="mesher_plugins::ConcaveHullMesher" base_class_type="mesher_base::MesherBase">
+  <description> The default meshing algorithm. Only works on 2D surfaces </description>
+  </class>
+</library>

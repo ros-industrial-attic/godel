@@ -16,6 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
   godel_process_path_generation
   godel_param_helpers
   godel_msgs
+  godel_plugins
 )
 find_package(Boost REQUIRED COMPONENTS system)
 
@@ -35,6 +36,7 @@ catkin_package(
     godel_process_path_generation
     godel_param_helpers
     godel_msgs
+    godel_plugins
 )
 
 

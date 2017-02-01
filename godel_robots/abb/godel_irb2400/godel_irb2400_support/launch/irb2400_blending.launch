@@ -76,5 +76,7 @@
   </include>
 
   <node pkg="tf" type="static_transform_publisher" name="ensenso_static_tf" args="0 0 0 0 1.57 0 kinect2_move_frame camera_optical_frame 100" />
+  <rosparam command="load" file="$(find godel_plugins)/config/meshing.yaml" />
+  <rosparam command="load" file="$(find godel_plugins)/config/path_planning.yaml" />
   
 </launch>
