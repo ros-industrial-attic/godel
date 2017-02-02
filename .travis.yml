@@ -13,7 +13,7 @@ env:
     - UPSTREAM_WORKSPACE=file
     - ROSINSTALL_FILENAME=godel.rosinstall
     - NOT_TEST_INSTALL=true
-    - BEFORE_SCRIPT='./install-libsocket++.sh'
+    - BEFORE_SCRIPT='./.install-libsocket++.sh'
   matrix:
     - ROS_REPOSITORY_PATH=http://packages.ros.org/ros/ubuntu
     - ROS_REPOSITORY_PATH=http://packages.ros.org/ros-shadow-fixed/ubuntu
