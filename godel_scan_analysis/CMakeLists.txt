@@ -2,16 +2,14 @@ cmake_minimum_required(VERSION 2.8.3)
 project(godel_scan_analysis)
 
 find_package(catkin REQUIRED COMPONENTS
-  godel_keyence_ljv_driver
-  keyence_ljv_description
+  pcl_ros
   roscpp
 )
 
 catkin_package(
   INCLUDE_DIRS include
-  CATKIN_DEPENDS 
-    godel_keyence_ljv_driver
-    keyence_ljv_description
+  CATKIN_DEPENDS
+    pcl_ros
     roscpp
 )
 

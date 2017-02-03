@@ -2,7 +2,7 @@
 #include <industrial_robot_simulator_service/SimulateTrajectory.h>
 
 const static std::string ACTION_SERVER_NAME = "joint_trajectory_action";
-const static double ACTION_EXTRA_WAIT_RATIO = 0.2;   // 20% past end of trajectory
+const static double ACTION_EXTRA_WAIT_RATIO = 2.0;   // 20% past end of trajectory
 const static double ACTION_SERVICE_WAIT_TIME = 30.0; // seconds
 const static char* const ACTION_CONNECTION_FAILED_MSG = "Could not connect to action server.";
 

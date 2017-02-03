@@ -190,30 +190,18 @@ bool SurfaceBlendingService::requestScanPath(
   visualization.points.insert(visualization.points.end(), depart_points.begin(), depart_points.end());
   visualization.points.insert(visualization.points.begin(), approach_points.begin(), approach_points.end());
 
-  geometry_msgs::Pose p;
-  p.orientation.x = boundary_pose.orientation.x;
-  p.orientation.y = boundary_pose.orientation.y;
-  p.orientation.z = boundary_pose.orientation.z;
-  p.orientation.w = boundary_pose.orientation.w;
-
-  // Transform points to world frame and generate pose
+  // Because the output of our profilometer generation is a path of points in the boundary pose, we
+  // generate our output path by taking the boundary pose & just offset it by each point
   Eigen::Affine3d boundary_pose_eigen;
-  Eigen::Affine3d eigen_p;
-  Eigen::Affine3d result;
-
   tf::poseMsgToEigen(boundary_pose, boundary_pose_eigen);
 
-  for(int i = 0; i < visualization.points.size(); i++)
-  {
-    p.position.x = visualization.points[i].x;
-    p.position.y = visualization.points[i].y;
-    p.position.z = visualization.points[i].z;
-
-    tf::poseMsgToEigen(p, eigen_p);
-    result = boundary_pose_eigen*eigen_p;
-    tf::poseEigenToMsg(result, p);
-    path.poses.push_back(p);
-  }
+  std::transform(visualization.points.begin(), visualization.points.end(), std::back_inserter(path.poses),
+                 [boundary_pose_eigen] (const geometry_msgs::Point& point) {
+    geometry_msgs::Pose pose;
+    Eigen::Affine3d r = boundary_pose_eigen * Eigen::Translation3d(point.x, point.y, point.z);
+    tf::poseEigenToMsg(r, pose);
+    return pose;
+  });
 
   visualization.ns = PATH_NAMESPACE;
   visualization.pose = boundary_pose;

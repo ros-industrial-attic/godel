@@ -4,6 +4,7 @@
 #include <moveit_msgs/ExecuteKnownTrajectory.h>
 
 #include "godel_msgs/TrajectoryExecution.h"
+#include "keyence_experimental/ChangeProgram.h"
 
 #include "process_utils.h"
 
@@ -11,7 +12,7 @@
 
 #include <ros/topic.h>
 
-const static int KEYENCE_PROGRAM_LASER_ON = 4;
+const static int KEYENCE_PROGRAM_LASER_ON = 1;
 const static int KEYENCE_PROGRAM_LASER_OFF = 0;
 
 const static std::string KEYENCE_PROGRAM_SERVICE_NAME = "change_program";
@@ -27,11 +28,14 @@ godel_process_execution::KeyenceProcessService::KeyenceProcessService(ros::NodeH
 
   real_client_ = nh.serviceClient<godel_msgs::TrajectoryExecution>(EXECUTION_SERVICE_NAME);
 
+  keyence_client_ = nh.serviceClient<keyence_experimental::ChangeProgram>(KEYENCE_PROGRAM_SERVICE_NAME);
+
   // Create this process execution server
   server_ = nh.advertiseService<KeyenceProcessService, godel_msgs::KeyenceProcessExecution::Request,
                                 godel_msgs::KeyenceProcessExecution::Response>(
       SERVICE_SERVER_NAME, &godel_process_execution::KeyenceProcessService::executionCallback,
       this);
+
 }
 
 bool godel_process_execution::KeyenceProcessService::executionCallback(
@@ -59,14 +63,13 @@ bool godel_process_execution::KeyenceProcessService::executionCallback(
 bool godel_process_execution::KeyenceProcessService::executeProcess(
     godel_msgs::KeyenceProcessExecution::Request& req)
 {
-// #if KEYENCE_DRIVER_IMPLEMENTED
   // Check for keyence existence
-  // if (!keyence_client_.exists())
-  // {
-  //   ROS_ERROR_STREAM("Keyence ROS server is not available on service "
-  //                    << keyence_client_.getService());
-  //   return false;
-  // }
+  if (!keyence_client_.exists())
+  {
+    ROS_ERROR_STREAM("Keyence ROS server is not available on service "
+                      << keyence_client_.getService());
+    return false;
+  }
 
   godel_msgs::TrajectoryExecution srv_approach;
   srv_approach.request.wait_for_execution = true;
@@ -86,14 +89,14 @@ bool godel_process_execution::KeyenceProcessService::executeProcess(
     return false;
   }
 
-  // keyence_driver::ChangeProgram keyence_srv;
-  // keyence_srv.request.program_no = KEYENCE_PROGRAM_LASER_ON;
+  keyence_experimental::ChangeProgram keyence_srv;
+  keyence_srv.request.program_no = KEYENCE_PROGRAM_LASER_ON;
 
-  // if (!keyence_client_.call(keyence_srv))
-  // {
-  //   ROS_ERROR_STREAM("Unable to activate keyence (program " << KEYENCE_PROGRAM_LASER_ON << ").");
-  //   return false;
-  // }
+  if (!keyence_client_.call(keyence_srv))
+  {
+    ROS_ERROR_STREAM("Unable to activate keyence (program " << KEYENCE_PROGRAM_LASER_ON << ").");
+    return false;
+  }
 
   if (!real_client_.call(srv_process))
   {
@@ -102,13 +105,13 @@ bool godel_process_execution::KeyenceProcessService::executeProcess(
   }
 
   // Turn keyence off
-  // keyence_srv.request.program_no = KEYENCE_PROGRAM_LASER_OFF;
-  // if (!keyence_client_.call(keyence_srv))
-  // {
-  //   ROS_ERROR_STREAM("Unable to de-activate keyence (program " << KEYENCE_PROGRAM_LASER_OFF
-  //                                                              << ").");
-  //   return false;
-  // }
+  keyence_srv.request.program_no = KEYENCE_PROGRAM_LASER_OFF;
+  if (!keyence_client_.call(keyence_srv))
+  {
+    ROS_ERROR_STREAM("Unable to de-activate keyence (program " << KEYENCE_PROGRAM_LASER_OFF
+                                                              << ").");
+    return false;
+  }
 
   if (!real_client_.call(srv_depart))
   {
@@ -117,11 +120,6 @@ bool godel_process_execution::KeyenceProcessService::executeProcess(
   }
 
   return true;
-// #else
-
-  // ROS_WARN_STREAM("Keyence Driver is not yet implemented.");
-  // return true;
-// #endif
 }
 
 bool godel_process_execution::KeyenceProcessService::simulateProcess(
