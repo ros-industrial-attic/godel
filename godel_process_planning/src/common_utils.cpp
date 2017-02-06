@@ -12,7 +12,7 @@
 
 // Constants
 const static double DEFAULT_TIME_UNDEFINED_VELOCITY =
-    0.1; // When a Descartes trajectory point has no timing info associated
+    1.0; // When a Descartes trajectory point has no timing info associated
          // with it, this value (in seconds) is used instead
 const static std::string DEFAULT_FRAME_ID =
     "world_frame"; // The default frame_id used for trajectories generated
@@ -22,6 +22,7 @@ const static double DEFAULT_ANGLE_DISCRETIZATION =
                  // in these helper functions
 const static double DEFAULT_JOINT_WAIT_TIME = 5.0; // Maximum time allowed to capture a new joint
                                                    // state message
+const static double DEFAULT_JOINT_VELOCITY = 0.3; // rad/s
 
 // MoveIt Configuration Constants
 const static int DEFAULT_MOVEIT_NUM_PLANNING_ATTEMPTS = 20;
@@ -100,6 +101,21 @@ bool godel_process_planning::descartesSolve(const godel_process_planning::Descar
   return true;
 }
 
+
+static double calcDefaultTime(const std::vector<double>& a, const std::vector<double>& b,
+                              double max_joint_vel)
+{
+  ROS_ASSERT(a.size() == b.size());
+  ROS_ASSERT(a.size() > 0);
+  std::vector<double> result (a.size());
+  std::transform(a.begin(), a.end(), b.begin(), result.begin(), [] (double a, double b)
+  {
+    return std::abs(a - b);
+  });
+
+  return *std::max_element(result.begin(), result.end()) / max_joint_vel;
+}
+
 trajectory_msgs::JointTrajectory
 godel_process_planning::toROSTrajectory(const godel_process_planning::DescartesTraj& solution,
                                         const descartes_core::RobotModel& model)
@@ -121,7 +137,20 @@ godel_process_planning::toROSTrajectory(const godel_process_planning::DescartesT
 
     double time_step = solution[i]->getTiming().upper; // request descartes timing
     if (time_step == 0.0)
-      from_start += ros::Duration(DEFAULT_TIME_UNDEFINED_VELOCITY); // default time
+    {
+      if (i == 0)
+        from_start += ros::Duration(DEFAULT_TIME_UNDEFINED_VELOCITY); // default time
+      else
+      {
+        // If we have a previous point then it makes more sense to set the time of the
+        // motion based on the largest joint motion required between two points and a
+        // default velocity.
+        const auto& prev = ros_trajectory.points.back().positions;
+        const auto& next = pt.positions;
+        const auto td = calcDefaultTime(prev, next, DEFAULT_JOINT_VELOCITY);
+        from_start += ros::Duration(td);
+      }
+    }
     else
       from_start += ros::Duration(time_step);
 
