@@ -27,6 +27,7 @@
 
 #include "godel_process_path_generation/process_pt.h"
 #include "godel_process_path_generation/process_transition.h"
+#include <geometry_msgs/PoseArray.h>
 #include <visualization_msgs/Marker.h>
 
 namespace descartes
@@ -59,6 +60,12 @@ public:
    * @return Marker populated with red lines
    */
   visualization_msgs::Marker asMarker() const;
+
+  /**
+   * @brief Convert ProcessPath to geometry_msgs::PoseArray
+   * @return PoseArray
+   */
+  geometry_msgs::PoseArray asPoseArray() const;
 
   void clear()
   {

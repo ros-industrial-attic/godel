@@ -5,6 +5,7 @@
 #include <pcl/PointIndices.h>
 #include <pcl/point_types.h>
 #include <pcl_ros/point_cloud.h>
+#include <godel_msgs/PathPlanning.h>
 
 // Temporary constants for storing blending path `planning parameters
 // Will be replaced by loadable, savable parameters
@@ -78,7 +79,6 @@ filterPolygonBoundaries(const godel_process_path::PolygonBoundaryCollection& bou
 bool SurfaceBlendingService::requestEdgePath(std::vector<pcl::IndicesPtr> &boundaries,
                                              int index,
                                              SurfaceSegmentation& SS,
-                                             visualization_msgs::Marker& visualization,
                                              geometry_msgs::PoseArray& path)
 {
   geometry_msgs::Pose geo_pose;
@@ -103,22 +103,20 @@ bool SurfaceBlendingService::requestBlendPath(
     const godel_process_path::PolygonBoundaryCollection& boundaries,
     const geometry_msgs::Pose& boundary_pose,
     const godel_msgs::BlendingPlanParameters& params,
-    visualization_msgs::Marker&  visualization,
     geometry_msgs::PoseArray& path)
 {
-  godel_process_path_generation::VisualizeBlendingPlan srv;
+  godel_msgs::PathPlanning srv;
   srv.request.params = params;
-  godel_process_path::utils::translations::godelToGeometryMsgs(srv.request.surface.boundaries,
-                                                               boundaries);
+  godel_process_path::utils::translations::godelToGeometryMsgs(srv.request.surface.boundaries, boundaries);
   tf::poseTFToMsg(tf::Transform::getIdentity(), srv.request.surface.pose);
 
-  if (!visualize_process_path_client_.call(srv))
+  if (!process_path_client_.call(srv))
   {
     return false;
   }
 
   // blend process path calculations suceeded. Save data into results.
-  visualization = srv.response.path;
+  geometry_msgs::PoseArray path_local = srv.response.poses;
   geometry_msgs::Pose p;
   p.orientation.x = 0.0;
   p.orientation.y = 0.0;
@@ -132,11 +130,11 @@ bool SurfaceBlendingService::requestBlendPath(
 
   tf::poseMsgToEigen(boundary_pose, boundary_pose_eigen);
 
-  for (int i = 0; i < visualization.points.size(); i++)
+  for (const auto& pose : path_local.poses)
   {
-    p.position.x = visualization.points[i].x;
-    p.position.y = visualization.points[i].y;
-    p.position.z = visualization.points[i].z;
+    p.position.x = pose.position.x;
+    p.position.y = pose.position.y;
+    p.position.z = pose.position.z;
 
     tf::poseMsgToEigen(p, eigen_p);
     result = boundary_pose_eigen*eigen_p;
@@ -145,9 +143,6 @@ bool SurfaceBlendingService::requestBlendPath(
     path.poses.push_back(p);
   }
 
-  visualization.ns = PATH_NAMESPACE;
-  visualization.pose = boundary_pose;
-
   return true;
 }
 
@@ -155,56 +150,40 @@ bool SurfaceBlendingService::requestScanPath(
     const godel_process_path::PolygonBoundaryCollection& boundaries,
     const geometry_msgs::Pose& boundary_pose,
     const godel_msgs::ScanPlanParameters& params,
-    visualization_msgs::Marker& visualization,
     geometry_msgs::PoseArray& path)
 {
   using namespace godel_process_path;
-  using godel_process_path::utils::translations::godelToVisualizationMsgs;
 
   if (boundaries.empty())
     return false;
 
-  PolygonBoundary scan =
-      godel_surface_detection::generateProfilimeterScanPath(boundaries.front(), params);
-  utils::translations::godelToVisualizationMsgs(visualization, scan, std_msgs::ColorRGBA());
-  // Add in an approach and depart vector
-  const geometry_msgs::Point& start_pt = visualization.points.front();
-  const geometry_msgs::Point& end_pt = visualization.points.back();
-  // Approach vector
-  std::vector<geometry_msgs::Point> approach_points;
-  for (std::size_t i = 0; i < SCAN_APPROACH_STEP_COUNT; ++i)
-  {
-    geometry_msgs::Point pt = start_pt;
-    pt.z += (SCAN_APPROACH_STEP_COUNT - i) * SCAN_APPROACH_STEP_DISTANCE;
-    approach_points.push_back(pt);
-  }
-  // Depart vector
-  std::vector<geometry_msgs::Point> depart_points;
-  for (std::size_t i = 0; i < SCAN_APPROACH_STEP_COUNT; ++i)
-  {
-    geometry_msgs::Point pt = end_pt;
-    pt.z += i * SCAN_APPROACH_STEP_DISTANCE;
-    depart_points.push_back(pt);
-  }
-  // Insert into path
-  visualization.points.insert(visualization.points.end(), depart_points.begin(), depart_points.end());
-  visualization.points.insert(visualization.points.begin(), approach_points.begin(), approach_points.end());
+  PolygonBoundary scan = godel_surface_detection::generateProfilimeterScanPath(boundaries.front(), params);
 
   // Because the output of our profilometer generation is a path of points in the boundary pose, we
   // generate our output path by taking the boundary pose & just offset it by each point
   Eigen::Affine3d boundary_pose_eigen;
   tf::poseMsgToEigen(boundary_pose, boundary_pose_eigen);
+  std::vector<geometry_msgs::Point> points;
+  for(const auto& pt : scan)
+  {
+    geometry_msgs::Point p;
+	p.x = pt.x;
+	p.y = pt.y;
+	p.z = boundary_pose.position.z;
+	points.push_back(p);
+  }
 
-  std::transform(visualization.points.begin(), visualization.points.end(), std::back_inserter(path.poses),
+  for(const auto& pt : scan)
+  {
+    geometry_msgs::Point p;
+	p.x = pt.x;	p.y = pt.y; p.z = boundary_pose.position.z;
+  std::transform(points.begin(), points.end(), std::back_inserter(path.poses),
                  [boundary_pose_eigen] (const geometry_msgs::Point& point) {
     geometry_msgs::Pose pose;
     Eigen::Affine3d r = boundary_pose_eigen * Eigen::Translation3d(point.x, point.y, point.z);
     tf::poseEigenToMsg(r, pose);
     return pose;
   });
-
-  visualization.ns = PATH_NAMESPACE;
-  visualization.pose = boundary_pose;
 
   return true;
 }
@@ -323,34 +302,14 @@ SurfaceBlendingService::generateProcessPath(const int& id,
   mesh_importer_.getPose(boundary_pose);
 
   // Send request to blend path generation service
-  visualization_msgs::Marker blend_visualization;
+  ROS_INFO_STREAM("Requesting blend path");
   geometry_msgs::PoseArray blend_poses;
-  if (requestBlendPath(filtered_boundaries, boundary_pose, blend_params, blend_visualization, blend_poses))
+  if (requestBlendPath(filtered_boundaries, boundary_pose, blend_params, blend_poses))
   {
     ProcessPathResult::value_type blend_path_result; // pair<string, geometry_msgs::PoseArray>
     blend_path_result.first = name + "_blend";
     blend_path_result.second = blend_poses;
     result.paths.push_back(blend_path_result);
-
-    // Hack for visualization sake
-    blend_visualization.header.frame_id = "world_frame";
-    blend_visualization.id = marker_counter_++;
-    blend_visualization.header.stamp = ros::Time::now();
-    blend_visualization.lifetime = ros::Duration(0.0);
-    blend_visualization.ns = "blend_paths";
-    blend_visualization.pose = boundary_pose;
-    blend_visualization.action = visualization_msgs::Marker::ADD;
-    blend_visualization.type = visualization_msgs::Marker::LINE_STRIP;
-    blend_visualization.scale.x = 0.004;
-    std_msgs::ColorRGBA color;
-    color.r = 1.0;
-    color.b = 0.0;
-    color.g = 0.0;
-    color.a = 1.0;
-    blend_visualization.colors.clear();
-    blend_visualization.color = color;
-
-    process_path_results_.process_visualization_.markers.push_back(blend_visualization);
     data_coordinator_.setPoses(godel_surface_detection::data::PoseTypes::blend_pose, id, blend_poses);
   }
   else
@@ -391,9 +350,8 @@ SurfaceBlendingService::generateProcessPath(const int& id,
       continue;
 
     geometry_msgs::PoseArray edge_poses;
-    visualization_msgs::Marker edge_visualization;
 
-    if(requestEdgePath(sorted_boundaries, i, SS, edge_visualization, edge_poses))
+    if(requestEdgePath(sorted_boundaries, i, SS, edge_poses))
     {
       ProcessPathResult::value_type edge_path_result; // pair<string, geometry_msgs::PoseArray>
       edge_path_result.first = name + "_edge_" + std::to_string(i);
@@ -426,30 +384,12 @@ SurfaceBlendingService::generateProcessPath(const int& id,
   // Request laser scan paths
   visualization_msgs::Marker scan_visualization;
   geometry_msgs::PoseArray scan_poses;
-  if (requestScanPath(filtered_boundaries, boundary_pose, scan_params, scan_visualization, scan_poses))
+  if (requestScanPath(filtered_boundaries, boundary_pose, scan_params, scan_poses))
   {
     ProcessPathResult::value_type scan_path_result;
     scan_path_result.first = name + "_scan";
     scan_path_result.second = scan_poses;
     result.paths.push_back(scan_path_result);
-
-    // Hack for visualization sake
-    scan_visualization.header.frame_id = "world_frame";
-    scan_visualization.header.stamp = ros::Time::now();
-    scan_visualization.id = marker_counter_++;
-    scan_visualization.lifetime = ros::Duration(0.0);
-    scan_visualization.ns = "scan_paths";
-    scan_visualization.pose = boundary_pose;
-    scan_visualization.action = visualization_msgs::Marker::ADD;
-    scan_visualization.type = visualization_msgs::Marker::LINE_STRIP;
-    scan_visualization.scale.x = 0.002;
-    std_msgs::ColorRGBA color;
-    color.r = 1.0;
-    color.b = 0.0;
-    color.g = 1.0;
-    color.a = 0.5;
-    scan_visualization.colors.clear();
-    scan_visualization.color = color;
 
     process_path_results_.scan_visualization_.markers.push_back(scan_visualization);
     data_coordinator_.setPoses(godel_surface_detection::data::PoseTypes::scan_pose, id, scan_poses);

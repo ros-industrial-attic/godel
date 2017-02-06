@@ -145,20 +145,17 @@ private:
   bool requestBlendPath(const godel_process_path::PolygonBoundaryCollection& boundaries,
                         const geometry_msgs::Pose& boundary_pose,
                         const godel_msgs::BlendingPlanParameters& params,
-                        visualization_msgs::Marker& visualization,
                         geometry_msgs::PoseArray& path);
 
   bool requestScanPath(const godel_process_path::PolygonBoundaryCollection& boundaries,
                        const geometry_msgs::Pose& boundary_pose,
                        const godel_msgs::ScanPlanParameters& params,
-                       visualization_msgs::Marker& visualization,
                        geometry_msgs::PoseArray& path);
 
 
   bool requestEdgePath(std::vector<pcl::IndicesPtr>& boundaries,
                        int index,
                        SurfaceSegmentation& SS,
-                       visualization_msgs::Marker& visualization,
                        geometry_msgs::PoseArray& path);
 
 
@@ -204,7 +201,7 @@ private:
   ros::ServiceServer rename_suface_server_;
 
   // Services subscribed to by this class
-  ros::ServiceClient visualize_process_path_client_;
+  ros::ServiceClient process_path_client_;
   ros::ServiceClient trajectory_planner_client_;
 
   ros::ServiceClient blend_planning_client_;

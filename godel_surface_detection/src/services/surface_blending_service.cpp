@@ -9,6 +9,7 @@
 // Process Planning
 #include <godel_msgs/BlendProcessPlanning.h>
 #include <godel_msgs/KeyenceProcessPlanning.h>
+#include <godel_msgs/PathPlanning.h>
 
 #include <godel_param_helpers/godel_param_helpers.h>
 
@@ -18,6 +19,7 @@ const static std::string SURFACE_DETECTION_SERVICE = "surface_detection";
 const static std::string SURFACE_BLENDING_PARAMETERS_SERVICE = "surface_blending_parameters";
 const static std::string SELECT_SURFACE_SERVICE = "select_surface";
 const static std::string PROCESS_PATH_SERVICE = "process_path";
+const static std::string PATH_GENERATION_SERVICE = "process_path_generator";
 const static std::string VISUALIZE_BLENDING_PATH_SERVICE = "visualize_path_generator";
 const static std::string RENAME_SURFACE_SERVICE = "rename_surface";
 const static std::string PATH_EXECUTION_SERVICE = "path_execution";
@@ -111,9 +113,8 @@ bool SurfaceBlendingService::init()
   ros::NodeHandle nh;
 
   // service clients
-  visualize_process_path_client_ =
-      nh.serviceClient<godel_process_path_generation::VisualizeBlendingPlan>(
-          VISUALIZE_BLENDING_PATH_SERVICE);
+  process_path_client_ =
+      nh.serviceClient<godel_msgs::PathPlanning>(PATH_GENERATION_SERVICE);
 
   // Process Execution Parameters
   blend_process_client_ =
