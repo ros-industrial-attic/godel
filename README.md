@@ -17,8 +17,12 @@ Godel: Austrian logician and mathematician http://en.wikipedia.org/wiki/Kurt_G%C
   wstool merge https://github.com/ros-industrial-consortium/godel/raw/kinetic-devel/godel.rosinstall
   wstool update
   rosdep install --from-paths . --ignore-src
-  cd ..
-  catkin_make
+  ```
+- Godel currently depends on [keyence_experimental](https://github.com/ros-industrial/keyence_experimental). Build the library by following the instructions [here](https://github.com/ros-industrial/keyence_experimental#build)
+
+- Finally, to build:
+  ```
+  catkin build
   ```
 
 - If you have issues regarding a missing `QD` library, then:
@@ -49,8 +53,6 @@ Godel: Austrian logician and mathematician http://en.wikipedia.org/wiki/Kurt_G%C
   sim_robot:=false robot_ip:=[robot ip]
   ```
 
-
-
 - The industrial calibration library builds against `libceres`, an optimization library, whose installation instructions are available [here](http://ceres-solver.org/building.html).
 
 ### Qt Glyph Loading Segfault (Kinetic)
@@ -59,3 +61,15 @@ Rviz on Kinetic is prone to a segmentation fault caused by internal functions in
   export QT_NO_FT_CACHE=1
   ```
 
+### Keyence Laser Scanner
+- To run the keyence laser scanner driver (replace `KEYENCE_CONTROLLER_IP` with the ip-address of your sensor):
+  ```
+  rosrun keyence_experimental keyence_driver_node _controller_ip:=KEYENCE_CONTROLLER_IP _frame_id:=keyence_sensor_optical_frame
+  ```
+  
+  - If you have issues connecting, ensure that the IP address matches that of the controller and ensure that your computer is on the same subnet.
+
+- To acquire laser scans and score them, run the following (replace `VOXEL_SIZE_IN_METERS` with your desired voxel size):
+  ```
+  roslaunch godel_scan_analysis scan_analysis.launch world_frame:=world_frame scan_frame:=keyence_sensor_optical_frame voxel_leaf_size:=VOXEL_SIZE_IN_METERS
+  ```
