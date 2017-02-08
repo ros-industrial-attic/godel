@@ -16,6 +16,7 @@ godel_msgs/RobotScanParameters robot_scan                 # Parameters associate
 godel_msgs/SurfaceDetectionParameters surface_detection   # Surface detection/extraction parameters
 godel_msgs/BlendingPlanParameters blending_plan           # Blending parameters
 godel_msgs/ScanPlanParameters scan_plan                   # Surface-scanning and QA parameters
+godel_msgs/PathPlanningParameters path_params             # Generic path planning parameters
 
 ---
 # The success of the GET/SET method. GET should always succeed. SET may fail if parameters
@@ -27,3 +28,4 @@ godel_msgs/RobotScanParameters robot_scan
 godel_msgs/SurfaceDetectionParameters surface_detection
 godel_msgs/BlendingPlanParameters blending_plan
 godel_msgs/ScanPlanParameters scan_plan
+godel_msgs/PathPlanningParameters path_params

@@ -7,8 +7,7 @@ int32 EXECUTE_MOTION_PLAN=5
 int32 action
 
 bool use_default_parameters
-godel_msgs/BlendingPlanParameters params
-godel_msgs/ScanPlanParameters scan_params
+godel_msgs/PathPlanningParameters params
 godel_msgs/SurfaceBoundaries surface
 
 ---

@@ -1,6 +1,6 @@
 # Service used to generate cartesian path of single surface.
 
-godel_msgs/BlendingPlanParameters params
+godel_msgs/PathPlanningParameters params
 godel_msgs/SurfaceBoundaries surface
 ---
 geometry_msgs/PoseArray poses

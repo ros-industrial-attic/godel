@@ -4,8 +4,7 @@
 #include "godel_simple_gui/gui_state.h"
 #include <ros/ros.h>
 
-#include "godel_msgs/BlendingPlanParameters.h"
-#include "godel_msgs/ScanPlanParameters.h"
+#include <godel_msgs/PathPlanningParameters.h>
 
 namespace godel_simple_gui
 {
@@ -24,8 +23,7 @@ public:
   virtual void onReset(BlendingWidget& gui);
 
 private:
-  void makeRequest(godel_msgs::BlendingPlanParameters blend_params,
-                   godel_msgs::ScanPlanParameters scan_params);
+  void makeRequest(godel_msgs::PathPlanningParameters);
 
   ros::ServiceClient planning_client_;
 };

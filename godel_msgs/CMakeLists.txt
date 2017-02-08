@@ -20,13 +20,14 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   BlendingPlanParameters.msg
-  RobotScanParameters.msg
-  SelectedSurfacesChanged.msg
-  SurfaceBoundaries.msg
-  SurfaceDetectionParameters.msg
   ProcessPath.msg
   ProcessPlan.msg
+  PathPlanningParameters.msg
+  RobotScanParameters.msg
+  SelectedSurfacesChanged.msg
   ScanPlanParameters.msg
+  SurfaceBoundaries.msg
+  SurfaceDetectionParameters.msg
 )
 
 ## Generate services in the 'srv' folder
