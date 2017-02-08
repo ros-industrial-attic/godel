@@ -14,12 +14,13 @@
 #include <vector>
 #include <godel_msgs/ScanPlanParameters.h>
 #include <godel_process_path_generation/polygon_pts.hpp>
+#include <godel_msgs/PathPlanningParameters.h>
 
 namespace godel_surface_detection
 {
 std::vector<godel_process_path::PolygonPt>
 generateProfilimeterScanPath(const godel_process_path::PolygonBoundary& boundary,
-                             const godel_msgs::ScanPlanParameters& params);
+                             const godel_msgs::PathPlanningParameters& params);
 
 } // end namespace godel_surface_detection
 

@@ -1,4 +1,4 @@
-#include "scan/profilimeter_scan.h"
+#include <scan/profilimeter_scan.h>
 #include <ros/ros.h>
 
 using namespace godel_process_path;
@@ -185,7 +185,7 @@ std::vector<PolygonPt> stitchAndFlatten(const std::vector<std::vector<PolygonPt>
 
 std::vector<PolygonPt>
 godel_surface_detection::generateProfilimeterScanPath(const PolygonBoundary& boundary,
-                                                      const godel_msgs::ScanPlanParameters& params)
+                                                      const godel_msgs::PathPlanningParameters& params)
 {
   std::vector<PolygonPt> pts;
   if (boundary.empty())

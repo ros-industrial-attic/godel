@@ -83,13 +83,6 @@ bool generateProcessPlan(descartes::ProcessPath& process_path,
   ppg.setToolRadius(req.params.tool_radius);
   ppg.setTraverseHeight(TRAVERSE_HEIGHT);
 
-  godel_process_path::ProcessVelocity vel;
-  vel.approach = req.params.approach_spd;
-  vel.blending = req.params.blending_spd;
-  vel.retract = req.params.retract_spd;
-  vel.traverse = req.params.traverse_spd;
-  ppg.setVelocity(vel);
-
   if (!ppg.variables_ok())
   {
     ROS_ERROR("Cannot continue path generation with current variables.");
@@ -145,11 +138,6 @@ bool pathGen(godel_msgs::PathPlanningRequest& req,
   std::vector<descartes::ProcessPt> pts;
   std::vector<descartes::ProcessTransition> transitions;
   boost::tie(pts, transitions) = process_path.data();
-  if (!pathDataToDurations(res.sleep_times, pts, transitions))
-  {
-    ROS_ERROR("Could not create sleep times.");
-    return false;
-  }
 
   res.poses = process_path.asPoseArray();
 
@@ -161,25 +149,8 @@ bool pathGenVisual(godel_process_path_generation::VisualizeBlendingPlanRequest& 
                    godel_process_path_generation::VisualizeBlendingPlanResponse& res,
                    ros::ServiceClientPtr offset_service_client)
 {
-  // Call function to generate process path.
-  godel_msgs::ProcessPlanningRequest process_planning_request;
-  process_planning_request.params = req.params;
-  process_planning_request.surface = req.surface;
-  descartes::ProcessPath process_path;
-  generateProcessPlan(process_path, process_planning_request, offset_service_client);
-
-  // Populate service response
-  std::vector<descartes::ProcessPt> pts;
-  std::vector<descartes::ProcessTransition> transitions;
-  boost::tie(pts, transitions) = process_path.data();
-  if (!pathDataToDurations(res.sleep_times, pts, transitions))
-  {
-    ROS_ERROR("Could not create sleep times.");
-    return false;
-  }
-  res.path = process_path.asMarker();
-
-  return true;
+  // Not implemented
+  return false;
 }
 
 
