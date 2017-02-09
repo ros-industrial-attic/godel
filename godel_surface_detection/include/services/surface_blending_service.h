@@ -137,22 +137,6 @@ private:
   godel_surface_detection::TrajectoryLibrary
   generateMotionLibrary(const godel_msgs::PathPlanningParameters& params);
 
-  bool requestBlendPath(const godel_process_path::PolygonBoundaryCollection& boundaries,
-                        const geometry_msgs::Pose& boundary_pose,
-                        const godel_msgs::PathPlanningParameters& params,
-                        geometry_msgs::PoseArray& path);
-
-  bool requestScanPath(const godel_process_path::PolygonBoundaryCollection& boundaries,
-                       const geometry_msgs::Pose& boundary_pose,
-                       const godel_msgs::PathPlanningParameters& params,
-                       geometry_msgs::PoseArray& path);
-
-
-  bool requestEdgePath(std::vector<pcl::IndicesPtr>& boundaries,
-                       int index,
-                       SurfaceSegmentation& SS,
-                       geometry_msgs::PoseArray& path);
-
 
   ProcessPathResult generateProcessPath(const int& id, const godel_msgs::PathPlanningParameters& params);
 
@@ -162,6 +146,21 @@ private:
                                         const pcl::PolygonMesh& mesh,
                                         const godel_surface_detection::detection::CloudRGB::Ptr,
                                         const godel_msgs::PathPlanningParameters& params);
+
+
+  bool generateBlendPath(const godel_msgs::PathPlanningParameters& params,
+                         const pcl::PolygonMesh& mesh,
+                         std::vector<geometry_msgs::PoseArray>& result);
+
+
+  bool generateScanPath(const godel_msgs::PathPlanningParameters& params,
+                         const pcl::PolygonMesh& mesh,
+                         std::vector<geometry_msgs::PoseArray>& result);
+
+
+  bool generateEdgePath(godel_surface_detection::detection::CloudRGB::Ptr surface,
+                        std::vector<geometry_msgs::PoseArray>& result);
+
 
   ProcessPlanResult generateProcessPlan(const std::string& name,
                                         const geometry_msgs::PoseArray& path,
