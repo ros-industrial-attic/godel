@@ -261,14 +261,14 @@ bool SurfaceBlendingService::generateScanPath(const godel_msgs::PathPlanningPara
     for(const auto& pt : scan)
     {
 	  geometry_msgs::Point p;
-      p.position.x = pt.x;
-      p.position.y = pt.y;
-      p.position.z = 0.0;
+      p.x = pt.x;
+      p.y = pt.y;
+      p.z = 0.0;
 
       points.push_back(p);
     }
 	
-	std::transform(points.begin(), points.end(), std::back_inserter(path.poses),
+  std::transform(points.begin(), points.end(), std::back_inserter(scan_poses.poses),
                  [boundary_pose_eigen] (const geometry_msgs::Point& point) {
     geometry_msgs::Pose pose;
     Eigen::Affine3d r = boundary_pose_eigen * Eigen::Translation3d(point.x, point.y, point.z);

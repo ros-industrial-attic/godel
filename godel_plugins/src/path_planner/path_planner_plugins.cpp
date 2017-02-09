@@ -1,22 +1,38 @@
 #include <path_planner/path_planner_plugins.h>
 #include <pluginlib/class_list_macros.h>
-#include <godel_process_path_generation/process_path_generator.h>
-#include <godel_process_path_generation/polygon_utils.h>
-#include <services/surface_blending_service.h>
 
 namespace path_planner_plugins
 {
+  // Blend Planner
 
-  void OpenveronoiPlanner::init(pcl::PolygonMesh mesh, PointCloud surface_cloud)
+  void OpenveronoiBlendPlanner::init(pcl::PolygonMesh mesh)
   {
     mesh_ = mesh;
-    surface_cloud_ = surface_cloud;
   }
 
-  bool OpenveronoiPlanner::generatePath(std::vector<geometry_msgs::PoseArray>& path)
+  bool OpenveronoiBlendPlanner::generatePath(std::vector<geometry_msgs::PoseArray>& path,
+                                             path_planner_base::PlanningParams params)
   {
-    ProcessPathResult result = SurfaceBlendingService::generateProcessPath()
+    path.clear();
+    return false;
+  }
+
+
+  // Scan Planner
+
+  void OpenveronoiScanPlanner::init(pcl::PolygonMesh mesh)
+  {
+    mesh_ = mesh;
+  }
+
+  bool OpenveronoiScanPlanner::generatePath(std::vector<geometry_msgs::PoseArray>& path,
+                                             path_planner_base::PlanningParams params)
+  {
+    path.clear();
+    return false;
   }
 } // end mesher_plugins
 
-PLUGINLIB_EXPORT_CLASS(path_planner_plugins::OpenveronoiPlanner, path_planner_base::PathPlannerBase)
+PLUGINLIB_EXPORT_CLASS(path_planner_plugins::OpenveronoiBlendPlanner, path_planner_base::PathPlannerBase)
+
+PLUGINLIB_EXPORT_CLASS(path_planner_plugins::OpenveronoiScanPlanner, path_planner_base::PathPlannerBase)
