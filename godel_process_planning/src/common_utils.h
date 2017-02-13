@@ -157,7 +157,14 @@ inline std::vector<double> pickBestStartPose(const std::vector<double>& start,
 {
   // step 1: Filter out candidates that are already in collision
   auto not_colliding = godel_process_planning::filterColliding(model, candidates);
-  ROS_WARN("After filtering: %lu", not_colliding.size());
+
+  if (not_colliding.empty())
+  {
+    ROS_WARN("After filtering %lu possible process start poses, all were found"
+             " to be in collision.", candidates.size());
+    throw std::runtime_error("No valid starting poses");
+  }
+
   // step 2: sort them by "closeness" cost
   std::sort(not_colliding.begin(), not_colliding.end(), [&start, cost_func]
             (const std::vector<double>& a, const std::vector<double>& b) {
@@ -165,11 +172,6 @@ inline std::vector<double> pickBestStartPose(const std::vector<double>& start,
     auto b_cost = cost_func(start, b);
     return a_cost < b_cost;
   });
-
-  if (not_colliding.empty())
-  {
-    throw std::runtime_error("No valid starting poses");
-  }
 
   return not_colliding.front();
 }

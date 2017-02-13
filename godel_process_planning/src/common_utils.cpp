@@ -307,3 +307,29 @@ godel_process_planning::filterColliding(descartes_core::RobotModel& model,
   return results;
 }
 
+
+double godel_process_planning::freeSpaceCostFunction(const std::vector<double> &source,
+                                                     const std::vector<double> &target)
+{
+  const double FREE_SPACE_MAX_ANGLE_DELTA =
+      M_PI_2; // The maximum angle a joint during a freespace motion
+              // from the start to end position without that motion
+              // being penalized. Avoids flips.
+  const double FREE_SPACE_ANGLE_PENALTY =
+      5.0; // The factor by which a joint motion is multiplied if said
+           // motion is greater than the max.
+
+  // The cost function here penalizes large single joint motions in an effort to
+  // keep the robot from flipping a joint, even if some other joints have to move
+  // a bit more.
+  double cost = 0.0;
+  for (std::size_t i = 0; i < source.size(); ++i)
+  {
+    double diff = std::abs(source[i] - target[i]);
+    if (diff > FREE_SPACE_MAX_ANGLE_DELTA)
+      cost += FREE_SPACE_ANGLE_PENALTY * diff;
+    else
+      cost += diff;
+  }
+  return cost;
+}
