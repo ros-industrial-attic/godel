@@ -39,11 +39,9 @@
 #include <godel_msgs/PathPlanningParameters.h>
 
 #include <godel_process_path_generation/VisualizeBlendingPlan.h>
-#include <godel_process_path_generation/mesh_importer.h>
 #include <godel_process_path_generation/utils.h>
 #include <godel_process_path_generation/polygon_utils.h>
 
-#include <scan/profilimeter_scan.h>
 #include <services/trajectory_library.h>
 #include <coordination/data_coordinator.h>
 
@@ -138,14 +136,14 @@ private:
   generateMotionLibrary(const godel_msgs::PathPlanningParameters& params);
 
 
-  ProcessPathResult generateProcessPath(const int& id, const godel_msgs::PathPlanningParameters& params);
+  bool generateProcessPath(const int& id, ProcessPathResult& result);
 
 
-  ProcessPathResult generateProcessPath(const int& id,
-                                        const std::string& name,
-                                        const pcl::PolygonMesh& mesh,
-                                        const godel_surface_detection::detection::CloudRGB::Ptr,
-                                        const godel_msgs::PathPlanningParameters& params);
+  bool generateProcessPath(const int& id,
+                           const std::string& name,
+                           const pcl::PolygonMesh& mesh,
+                           const godel_surface_detection::detection::CloudRGB::Ptr,
+                           ProcessPathResult& result);
 
 
   bool generateBlendPath(const godel_msgs::PathPlanningParameters& params,
@@ -220,8 +218,6 @@ private:
   godel_surface_detection::detection::SurfaceDetection surface_detection_;
   // marker server instance
   godel_surface_detection::interactive::InteractiveSurfaceServer surface_server_;
-  // mesh importer for generating surface boundaries
-  godel_process_path::MeshImporter mesh_importer_;
   // data coordinator
   godel_surface_detection::data::DataCoordinator data_coordinator_;
 

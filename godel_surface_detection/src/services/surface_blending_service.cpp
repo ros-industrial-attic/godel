@@ -57,12 +57,7 @@ const static std::string ROBOT_SCAN_PARAMS_FILE = "godel_robot_scan_parameters.m
 const static std::string SURFACE_DETECTION_PARAMS_FILE = "godel_surface_detection_parameters.msg";
 const static std::string PATH_PLANNING_PARAMS_FILE = "godel_path_planning_parameters.msg";
 
-SurfaceBlendingService::SurfaceBlendingService()
-    : mesh_importer_(true) /*True-turn on verbose messages*/
-      ,
-      publish_region_point_cloud_(false)
-{
-}
+SurfaceBlendingService::SurfaceBlendingService() : publish_region_point_cloud_(false) {}
 
 bool SurfaceBlendingService::init()
 {
