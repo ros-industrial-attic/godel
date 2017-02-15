@@ -17,6 +17,8 @@ find_package(catkin REQUIRED COMPONENTS
   godel_param_helpers
   godel_msgs
   godel_plugins
+  meshing_plugins
+  path_planning_plugins
 )
 find_package(Boost REQUIRED COMPONENTS system)
 
@@ -37,8 +39,9 @@ catkin_package(
     godel_param_helpers
     godel_msgs
     godel_plugins
+    meshing_plugins
+    path_planning_plugins
 )
-
 
 
 ###########
@@ -59,7 +62,6 @@ add_library(${PROJECT_NAME}
   src/coordination/data_coordinator.cpp
   src/scan/robot_scan.cpp
   src/interactive/interactive_surface_server.cpp
-  src/scan/profilimeter_scan.cpp
   src/services/trajectory_library.cpp)
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} yaml-cpp)

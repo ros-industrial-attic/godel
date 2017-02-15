@@ -8,6 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   cmake_modules
   godel_process_path_generation
   godel_openvoronoi
+  path_planning_plugins
 )
 
 find_package(Eigen REQUIRED)

@@ -1,16 +1,16 @@
-#ifndef MESHER_BASE_H_
-#define MESHER_BASE_H_
+#ifndef MESHING_BASE_H_
+#define MESHING_BASE_H_
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/PolygonMesh.h>
 
-namespace mesher_base
+namespace meshing_base
 {
   typedef pcl::PointXYZRGB Point;
   typedef pcl::PointCloud<Point> PointCloud;
 
-  class MesherBase
+  class MeshingBase
   {
   public:
     /**

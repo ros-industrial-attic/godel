@@ -1,9 +1,9 @@
-#include <mesher/mesher_plugins.h>
+#include <meshing_plugins.h>
 #include <pluginlib/class_list_macros.h>
 
-namespace mesher_plugins
+namespace meshing_plugins
 {
-  void ConcaveHullMesher::init(mesher_base::PointCloud input)
+  void ConcaveHullMesher::init(meshing_base::PointCloud input)
   {
     input_cloud_ = input;
   }
@@ -21,4 +21,4 @@ namespace mesher_plugins
   }
 } // end mesher_plugins
 
-PLUGINLIB_EXPORT_CLASS(mesher_plugins::ConcaveHullMesher, mesher_base::MesherBase)
+PLUGINLIB_EXPORT_CLASS(meshing_plugins::ConcaveHullMesher, meshing_base::MeshingBase)

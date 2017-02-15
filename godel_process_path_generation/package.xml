@@ -2,7 +2,9 @@
 <package>
   <name>godel_process_path_generation</name>
   <version>0.0.0</version>
-  <description>The godel_process_path_generation package creates the high-level process path for surface blending.</description>
+  <description>
+  The godel_process_path_generation package creates the high-level process path for surface blending.
+  </description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag --> 
   <maintainer email="dpsolomon@gmail.com">Daniel Solomon</maintainer>

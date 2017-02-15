@@ -42,6 +42,8 @@
 #define PCL_GEOMETRY_GET_BOUNDARY_H
 
 #include <vector>
+#include <pcl/geometry/mesh_indices.h>
+#include <pcl/geometry/mesh_circulators.h>
 
 namespace pcl_godel
 {

@@ -29,6 +29,8 @@
   <build_depend>godel_param_helpers</build_depend>
   <build_depend>godel_process_path_generation</build_depend>
   <build_depend>godel_plugins</build_depend>
+  <build_depend>meshing_plugins</build_depend>
+  <build_depend>path_planning_plugins</build_depend>
 
   <run_depend>pcl_msgs</run_depend>
   <run_depend>pcl_ros</run_depend>
@@ -42,4 +44,6 @@
   <run_depend>godel_process_path_generation</run_depend>
   <run_depend>godel_param_helpers</run_depend>
   <run_depend>godel_plugins</run_depend>
+  <run_depend>meshing_plugins</run_depend>
+  <run_depend>path_planning_plugins</run_depend>
 </package>

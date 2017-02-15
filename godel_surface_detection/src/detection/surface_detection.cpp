@@ -15,12 +15,12 @@
 */
 
 #include <detection/surface_detection.h>
-#include <coordination//data_coordinator.h>
+#include <coordination/data_coordinator.h>
 #include <segmentation/surface_segmentation.h>
 #include <godel_param_helpers/godel_param_helpers.h>
 #include <tf/transform_datatypes.h>
 #include <pluginlib/class_loader.h>
-#include <mesher/mesher_plugins.h>
+#include <meshing_plugins.h>
 
 const static int DOWNSAMPLE_NUMBER = 3;
 
@@ -319,12 +319,12 @@ namespace godel_surface_detection
         surface_clouds_.erase(surface_clouds_.begin() + largest_index);
       }
 
-      pluginlib::ClassLoader<mesher_base::MesherBase> poly_loader("godel_plugins", "mesher_base::MesherBase");
-      boost::shared_ptr<mesher_base::MesherBase> mesher;
+      pluginlib::ClassLoader<meshing_base::MeshingBase> poly_loader("meshing_plugins", "meshing_base::MeshingBase");
+      boost::shared_ptr<meshing_base::MeshingBase> mesher;
 
       try
       {
-        mesher = poly_loader.createInstance("mesher_plugins::ConcaveHullMesher");
+        mesher = poly_loader.createInstance("meshing_plugins::ConcaveHullMesher");
 
       }
       catch(pluginlib::PluginlibException& ex)

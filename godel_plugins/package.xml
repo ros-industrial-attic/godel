@@ -27,6 +27,5 @@
   <export>
     <rqt_gui plugin="${prefix}/plugin.xml"/>
     <rviz plugin="${prefix}/plugin.xml"/>
-    <godel_plugins plugin="${prefix}/mesher_plugin.xml"/>
   </export>
 </package>

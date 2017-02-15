@@ -24,8 +24,6 @@ set(godel_plugins_SRCS
   src/widgets/surface_detection_configuration.cpp
   src/widgets/robot_scan_configuration.cpp
   src/widgets/scan_tool_configuration_window.cpp
-  src/mesher/mesher_plugins.cpp
-  src/path_planner/path_planner_plugins.cpp
 )
 
 set(godel_plugins_HDRS
