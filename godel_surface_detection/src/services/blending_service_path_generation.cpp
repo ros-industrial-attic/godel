@@ -1,10 +1,14 @@
-#include <services/surface_blending_service.h>
-#include <segmentation/surface_segmentation.h>
 #include <detection/surface_detection.h>
 #include <pcl/filters/extract_indices.h>
 #include <pcl/PointIndices.h>
 #include <pcl/point_types.h>
 #include <pcl_ros/point_cloud.h>
+#include <pluginlib/class_loader.h>
+#include <ros/node_handle.h>
+#include <services/surface_blending_service.h>
+#include <segmentation/surface_segmentation.h>
+#include <eigen_conversions/eigen_msg.h>
+#include <path_planning_plugins.h>
 
 // Temporary constants for storing blending path `planning parameters
 // Will be replaced by loadable, savable parameters
@@ -26,15 +30,9 @@ const static std::string BLEND_TYPE = "blend";
 const static std::string EDGE_TYPE = "edge";
 const static std::string SCAN_TYPE = "scan";
 
-// Together these constants define a 5cm approach and departure path for the
-// laser scans
-const static int SCAN_APPROACH_STEP_COUNT = 5;
-const static double SCAN_APPROACH_STEP_DISTANCE = 0.01; // 1cm
-
 // Edge Processing constants
 const static double SEGMENTATION_SEARCH_RADIUS = 0.03; // 3cm
 const static int BOUNDARY_THRESHOLD = 10;
-const static double MIN_BOUNDARY_LENGTH = 0.1; // 10 cm
 
 // Variables to select path type
 const static int PATH_TYPE_BLENDING = 0;
@@ -43,50 +41,19 @@ const static int PATH_TYPE_EDGE = 2;
 
 const static std::string SURFACE_DESIGNATION = "surface_marker_server_";
 
-// Temporary hack: remove when you figure out how to populate process parameters in a better fashion
-const static double TOOL_FORCE = 0.0;
-const static double SPINDLE_SPEED = 0.0;
-const static double APPROACH_SPD = 0.005;
-const static double BLENDING_SPD = 0.3;
-const static double RETRACT_SPD = 0.02;
-const static double TRAVERSE_SPD = 0.05;
-const static double APPROACH_DISTANCE = 0.15;
-const static int QUALITY_METRIC = 0;
-const static double WINDOW_WIDTH = 0.02;
-const static double MIN_QA_VALUE = 0.05;
-const static double MAX_QA_VALUE = 0.05;
-
-/**
- * Prototype ProcessPlan refactoring - make it compatible with trajectory library and GUI
- */
-static godel_process_path::PolygonBoundaryCollection
-filterPolygonBoundaries(const godel_process_path::PolygonBoundaryCollection& boundaries,
-                        const double& min_boudnary_length)
-{
-  godel_process_path::PolygonBoundaryCollection filtered_boundaries;
-
-  for (std::size_t i = 0; i < boundaries.size(); ++i)
-  {
-    const godel_process_path::PolygonBoundary& bnd = boundaries[i];
-    double circ = godel_process_path::polygon_utils::circumference(bnd);
-
-    if (circ < min_boudnary_length)
-    {
-      ROS_WARN_STREAM("Ignoring boundary with length " << circ);
-    }
-    else if (!godel_process_path::polygon_utils::checkBoundary(bnd))
-    {
-      ROS_WARN_STREAM("Ignoring ill-formed boundary");
-    }
-    else
-    {
-      filtered_boundaries.push_back(bnd);
-      godel_process_path::polygon_utils::filter(filtered_boundaries.back(), 0.1);
-      std::reverse(filtered_boundaries.back().begin(), filtered_boundaries.back().end());
-    }
-  }
-  return filtered_boundaries;
-}
+const static std::string PARAM_BASE = "/process_planning_params/";
+const static std::string SCAN_PARAM_BASE = "scan_params/";
+const static std::string BLEND_PARAM_BASE = "blend_params/";
+const static std::string SPINDLE_SPEED_PARAM = PARAM_BASE + BLEND_PARAM_BASE + "spindle_speed";
+const static std::string APPROACH_SPD_PARAM = PARAM_BASE + BLEND_PARAM_BASE + "approach_speed";
+const static std::string BLENDING_SPD_PARAM = PARAM_BASE + BLEND_PARAM_BASE + "blending_speed";
+const static std::string RETRACT_SPD_PARAM = PARAM_BASE + BLEND_PARAM_BASE + "retract_speed";
+const static std::string TRAVERSE_SPD_PARAM = PARAM_BASE + BLEND_PARAM_BASE + "traverse_speed";
+const static std::string APPROACH_DISTANCE_PARAM = PARAM_BASE + SCAN_PARAM_BASE + "approach_distance";
+const static std::string QUALITY_METRIC_PARAM = PARAM_BASE + SCAN_PARAM_BASE + "quality_metric";
+const static std::string WINDOW_WIDTH_PARAM = PARAM_BASE + SCAN_PARAM_BASE + "window_width";
+const static std::string MIN_QA_VALUE_PARAM = PARAM_BASE + SCAN_PARAM_BASE + "min_qa_value";
+const static std::string MAX_QA_VALUE_PARAM = PARAM_BASE + SCAN_PARAM_BASE + "max_qa_value";
 
 
 void computeBoundaries(const godel_surface_detection::detection::CloudRGB::Ptr surface_cloud,
@@ -155,162 +122,6 @@ inline static bool isScanPath(const std::string& name)
 }
 
 
-bool SurfaceBlendingService::generateBlendPath(const godel_msgs::PathPlanningParameters& params,
-                                               const pcl::PolygonMesh& mesh,
-                                               std::vector<geometry_msgs::PoseArray>& blend_path)
-{
-  using godel_process_path::PolygonBoundaryCollection;
-  using godel_process_path::PolygonBoundary;
-
-  // Calculate boundaries for a surface
-  if (mesh_importer_.calculateSimpleBoundary(mesh))
-  {
-    // Read & filter boundaries that are ill-formed or too small
-    PolygonBoundaryCollection filtered_boundaries =
-        filterPolygonBoundaries(mesh_importer_.getBoundaries(), MIN_BOUNDARY_LENGTH);
-
-    // Read pose
-    geometry_msgs::Pose boundary_pose;
-    mesh_importer_.getPose(boundary_pose);
-
-    // Send request to blend path generation service
-    godel_msgs::PathPlanning srv;
-    srv.request.params = params;
-    godel_process_path::utils::translations::godelToGeometryMsgs(srv.request.surface.boundaries, filtered_boundaries);
-    tf::poseTFToMsg(tf::Transform::getIdentity(), srv.request.surface.pose);
-
-    if (!process_path_client_.call(srv))
-    {
-      ROS_ERROR_STREAM("Process path cilent failed");
-      return false;
-    }
-
-    // blend process path calculations suceeded. Save data into results.
-    geometry_msgs::PoseArray blend_poses;
-    geometry_msgs::PoseArray path_local = srv.response.poses;
-    geometry_msgs::Pose p;
-    p.orientation.x = 0.0;
-    p.orientation.y = 0.0;
-    p.orientation.z = 0.0;
-    p.orientation.w = 1.0;
-
-    // Transform points to world frame and generate pose
-    Eigen::Affine3d boundary_pose_eigen;
-    Eigen::Affine3d eigen_p;
-    Eigen::Affine3d result;
-
-    tf::poseMsgToEigen(boundary_pose, boundary_pose_eigen);
-
-    for (const auto& pose : path_local.poses)
-    {
-      p.position.x = pose.position.x;
-      p.position.y = pose.position.y;
-      p.position.z = pose.position.z;
-
-      tf::poseMsgToEigen(p, eigen_p);
-      result = boundary_pose_eigen*eigen_p;
-      tf::poseEigenToMsg(result, p);
-      p.orientation = boundary_pose.orientation;
-      blend_poses.poses.push_back(p);
-    }
-
-    blend_path.push_back(blend_poses);
-    return true;
-  }
-  else
-    ROS_WARN_STREAM("Could not calculate boundary for mesh");
-
-  return false;
-}
-
-
-bool SurfaceBlendingService::generateScanPath(const godel_msgs::PathPlanningParameters& params,
-                                               const pcl::PolygonMesh& mesh,
-                                               std::vector<geometry_msgs::PoseArray>& scan_path)
-{
-  using godel_process_path::PolygonBoundaryCollection;
-  using godel_process_path::PolygonBoundary;
-
-  // 0 - Calculate boundaries for a surface
-  if (mesh_importer_.calculateSimpleBoundary(mesh))
-  {
-    // 1 - Read & filter boundaries that are ill-formed or too small
-    PolygonBoundaryCollection filtered_boundaries =
-        filterPolygonBoundaries(mesh_importer_.getBoundaries(), MIN_BOUNDARY_LENGTH);
-
-    // 2 - Read boundary pose
-    geometry_msgs::Pose boundary_pose;
-    mesh_importer_.getPose(boundary_pose);
-
-    // 3 - Skip if boundaries are empty
-    if (filtered_boundaries.empty())
-      return false;
-
-    geometry_msgs::PoseArray scan_poses;
-
-    // 4 - Generate scan polygon boundary
-    PolygonBoundary scan = godel_surface_detection::generateProfilimeterScanPath(filtered_boundaries.front(), params);
-
-    // 5 - Get boundary pose eigen
-    Eigen::Affine3d boundary_pose_eigen;
-    tf::poseMsgToEigen(boundary_pose, boundary_pose_eigen);
-
-    // 6 - Transform points to world frame and generate pose
-	std::vector<geometry_msgs::Point> points;
-
-    for(const auto& pt : scan)
-    {
-	  geometry_msgs::Point p;
-      p.x = pt.x;
-      p.y = pt.y;
-      p.z = 0.0;
-
-      points.push_back(p);
-    }
-	
-  std::transform(points.begin(), points.end(), std::back_inserter(scan_poses.poses),
-                 [boundary_pose_eigen] (const geometry_msgs::Point& point) {
-    geometry_msgs::Pose pose;
-    Eigen::Affine3d r = boundary_pose_eigen * Eigen::Translation3d(point.x, point.y, point.z);
-    tf::poseEigenToMsg(r, pose);
-    return pose;
-  });
-
-    // 7 - Add in approach and departure
-    geometry_msgs::PoseArray approach;
-    geometry_msgs::Pose start_pose;
-    geometry_msgs::Pose end_pose;
-    start_pose = scan_poses.poses.front();
-    end_pose = scan_poses.poses.back();
-    double start_z = start_pose.position.z;
-    double end_z = end_pose.position.z;
-
-    for (std::size_t i = 0; i < SCAN_APPROACH_STEP_COUNT; ++i)
-    {
-      double z_offset = i * SCAN_APPROACH_STEP_DISTANCE;
-      geometry_msgs::Pose approach_pose;
-      geometry_msgs::Pose departure_pose;
-
-      approach_pose.orientation = start_pose.orientation;
-      approach_pose.position = start_pose.position;
-      approach_pose.position.z = start_z + z_offset;
-      scan_poses.poses.insert(scan_poses.poses.begin(), approach_pose);
-
-      departure_pose.orientation = end_pose.orientation;
-      departure_pose.position = end_pose.position;
-      departure_pose.position.z = end_z + z_offset;
-      scan_poses.poses.push_back(departure_pose);
-    }
-
-    // 8 - return result
-    scan_path.push_back(scan_poses);
-    return true;
-  }
-  else
-    ROS_WARN_STREAM("Could not calculate boundary for mesh");
-  return false;
-}
-
 bool SurfaceBlendingService::generateEdgePath(godel_surface_detection::detection::CloudRGB::Ptr surface,
                                               std::vector<geometry_msgs::PoseArray>& result)
 {
@@ -364,9 +175,9 @@ bool SurfaceBlendingService::generateEdgePath(godel_surface_detection::detection
 }
 
 
-ProcessPathResult
+bool
 SurfaceBlendingService::generateProcessPath(const int& id,
-                                            const godel_msgs::PathPlanningParameters& params)
+                                            ProcessPathResult& result)
 {
   using godel_surface_detection::detection::CloudRGB;
 
@@ -377,24 +188,59 @@ SurfaceBlendingService::generateProcessPath(const int& id,
   data_coordinator_.getSurfaceName(id, name);
   data_coordinator_.getSurfaceMesh(id, mesh);
   data_coordinator_.getCloud(godel_surface_detection::data::CloudTypes::surface_cloud, id, *surface_ptr);
-
-  return generateProcessPath(id, name, mesh, surface_ptr, params);
+  return generateProcessPath(id, name, mesh, surface_ptr, result);
 }
 
 
-ProcessPathResult
+bool
 SurfaceBlendingService::generateProcessPath(const int& id,
                                             const std::string& name,
                                             const pcl::PolygonMesh& mesh,
                                             godel_surface_detection::detection::CloudRGB::Ptr surface,
-                                            const godel_msgs::PathPlanningParameters& params)
+                                            ProcessPathResult& result)
 {
   std::vector<geometry_msgs::PoseArray> blend_result, edge_result, scan_result;
-  generateBlendPath(params, mesh, blend_result);
-  generateEdgePath(surface, edge_result);
-  generateScanPath(params, mesh, scan_result);
 
-  ProcessPathResult result;
+  pluginlib::ClassLoader<path_planning_base::PathPlanningBase> poly_loader("path_planning_plugins",
+                                                                           "path_planning_base::PathPlanningBase");
+  boost::shared_ptr<path_planning_base::PathPlanningBase> path_planner;
+
+  try
+  {
+    path_planner = poly_loader.createInstance("path_planning_plugins::Openveronoi::BlendPlanner");
+  }
+  catch(pluginlib::PluginlibException& ex)
+  {
+    ROS_ERROR("The blend plugin failed to load for some reason. Error: %s", ex.what());
+    return false;
+  }
+
+  path_planner->init(mesh);
+  if(!path_planner->generatePath(blend_result))
+  {
+    ROS_ERROR_STREAM("Could not plan blend path");
+    return false;
+  }
+
+  try
+  {
+    path_planner = poly_loader.createInstance("path_planning_plugins::Openveronoi::ScanPlanner");
+  }
+  catch(pluginlib::PluginlibException& ex)
+  {
+    ROS_ERROR("The scan plugin failed to load for some reason. Error: %s", ex.what());
+    return false;
+  }
+
+  path_planner->init(mesh);
+  if(!path_planner->generatePath(scan_result))
+  {
+    ROS_ERROR_STREAM("Could not plan scan path");
+    return false;
+  }
+
+  generateEdgePath(surface, edge_result);
+
   ProcessPathResult::value_type vt;
 
   vt.first = name + "_blend";
@@ -415,7 +261,7 @@ SurfaceBlendingService::generateProcessPath(const int& id,
     result.paths.push_back(vt);
     data_coordinator_.addEdge(id, vt.first, vt.second);
   }
-  return result;
+  return result.paths.size() > 0;
 }
 
 godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotionLibrary(
@@ -433,7 +279,12 @@ godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotio
   for (const auto& id : selected_ids)
   {
     // Generate motion plan
-    ProcessPathResult paths = generateProcessPath(id, params);
+    ProcessPathResult paths;
+    generateProcessPath(id, paths);
+
+    // If planning failed entirely, skip to next
+    if(paths.paths.size() == 0)
+      continue;
 
     // Add new path to result
     for(const auto& vt: paths.paths)
@@ -451,29 +302,31 @@ godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotio
         ROS_ERROR_STREAM("Tried to process an unrecognized path type: " << vt.first);
     }
 
+    ros::NodeHandle nh;
+
     godel_msgs::BlendingPlanParameters blend_params;
     blend_params.margin = params.margin;
     blend_params.overlap = params.overlap;
     blend_params.tool_radius = params.tool_radius;
     blend_params.discretization = params.discretization;
     blend_params.safe_traverse_height = params.traverse_height;
-    blend_params.spindle_speed = SPINDLE_SPEED;
-    blend_params.approach_spd = APPROACH_SPD;
-    blend_params.blending_spd = BLENDING_SPD;
-    blend_params.retract_spd = RETRACT_SPD;
-    blend_params.traverse_spd = TRAVERSE_SPD;
+    nh.getParam(SPINDLE_SPEED_PARAM, blend_params.spindle_speed);
+    nh.getParam(APPROACH_SPD_PARAM, blend_params.approach_spd);
+    nh.getParam(BLENDING_SPD_PARAM, blend_params.blending_spd);
+    nh.getParam(RETRACT_SPD_PARAM, blend_params.retract_spd);
+    nh.getParam(TRAVERSE_SPD_PARAM, blend_params.traverse_spd);
 
     godel_msgs::ScanPlanParameters scan_params;
     scan_params.scan_width = params.scan_width;
     scan_params.margin = params.margin;
     scan_params.overlap = params.overlap;
     scan_params.scan_width = params.scan_width;
-    scan_params.approach_distance = APPROACH_DISTANCE;
-    scan_params.traverse_spd = TRAVERSE_SPD;
-    scan_params.quality_metric = QUALITY_METRIC;
-    scan_params.window_width = WINDOW_WIDTH;
-    scan_params.min_qa_value = MIN_QA_VALUE;
-    scan_params.max_qa_value = MAX_QA_VALUE;
+    nh.getParam(APPROACH_DISTANCE_PARAM, scan_params.approach_distance);
+    nh.getParam(TRAVERSE_SPD_PARAM, scan_params.traverse_spd);
+    nh.getParam(QUALITY_METRIC_PARAM, scan_params.quality_metric);
+    nh.getParam(WINDOW_WIDTH_PARAM, scan_params.window_width);
+    nh.getParam(MIN_QA_VALUE_PARAM, scan_params.min_qa_value);
+    nh.getParam(MAX_QA_VALUE_PARAM, scan_params.min_qa_value);
 
 
     // Generate trajectory plans from motion plan

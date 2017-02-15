@@ -1,0 +1,16 @@
+---
+process_planning_params:
+  blend_params:
+    spindle_speed: 0.0
+    approach_speed: 0.005
+    blending_speed: 0.3
+    retract_speed: 0.02
+    traverse_speed: 0.05
+  scan_params:
+    approach_distance: 0.15
+    traverse_speed: 0.05
+    quality_metric: 0
+    window_width: 0.02
+    min_qa_value: 0.05
+    max_qa_value: 0.05
+...
