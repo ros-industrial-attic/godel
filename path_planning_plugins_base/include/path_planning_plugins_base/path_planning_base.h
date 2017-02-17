@@ -1,13 +1,11 @@
-#ifndef PATH_PLANNING_BASE_H_
-#define PATH_PLANNING_BASE_H_
+#ifndef PATH_PLANNING_PLUGINS_BASE_H_
+#define PATH_PLANNING_PLUGINS_BASE_H_
 
 #include <geometry_msgs/PoseArray.h>
-#include <godel_msgs/PathPlanningParameters.h>
 #include <pcl/PolygonMesh.h>
 
-namespace path_planning_base
+namespace path_planning_plugins_base
 {
-  typedef  godel_msgs::PathPlanningParameters PlanningParams;
   class PathPlanningBase
   {
   public:

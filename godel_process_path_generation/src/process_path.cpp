@@ -62,6 +62,10 @@ geometry_msgs::PoseArray ProcessPath::asPoseArray() const
   for (const auto& pt : pts_)
   {
     geometry_msgs::Pose pose;
+    pose.orientation.x = 0;
+    pose.orientation.y = 0;
+    pose.orientation.z = 0;
+    pose.orientation.w = 1;
     pose.position.x = pt.pose().translation()(0);
     pose.position.y = pt.pose().translation()(1);
     pose.position.z = pt.pose().translation()(2);

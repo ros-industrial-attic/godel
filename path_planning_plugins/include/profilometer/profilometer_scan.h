@@ -13,7 +13,8 @@
 
 #include <godel_process_path_generation/polygon_pts.hpp>
 #include <godel_msgs/PathPlanningParameters.h>
-
+namespace path_planning_plugins
+{
 namespace scan
 {
 
@@ -21,6 +22,7 @@ std::vector<godel_process_path::PolygonPt>
 generateProfilometerScanPath(const godel_process_path::PolygonBoundary& boundary,
                              const godel_msgs::PathPlanningParameters& params);
 
-} // end namespace godel_surface_detection
+} // end namespace scan
+} // end namespace path_planning_plugins
 
 #endif

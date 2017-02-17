@@ -8,7 +8,7 @@
 #include <services/surface_blending_service.h>
 #include <segmentation/surface_segmentation.h>
 #include <eigen_conversions/eigen_msg.h>
-#include <path_planning_plugins.h>
+#include <path_planning_plugins_base/path_planning_base.h>
 
 // Temporary constants for storing blending path `planning parameters
 // Will be replaced by loadable, savable parameters
@@ -201,13 +201,13 @@ SurfaceBlendingService::generateProcessPath(const int& id,
 {
   std::vector<geometry_msgs::PoseArray> blend_result, edge_result, scan_result;
 
-  pluginlib::ClassLoader<path_planning_base::PathPlanningBase> poly_loader("path_planning_plugins",
-                                                                           "path_planning_base::PathPlanningBase");
-  boost::shared_ptr<path_planning_base::PathPlanningBase> path_planner;
+  pluginlib::ClassLoader<path_planning_plugins_base::PathPlanningBase> poly_loader("path_planning_plugins_base",
+                                                                           "path_planning_plugins_base::PathPlanningBase");
+  boost::shared_ptr<path_planning_plugins_base::PathPlanningBase> path_planner;
 
   try
   {
-    path_planner = poly_loader.createInstance("path_planning_plugins::Openveronoi::BlendPlanner");
+    path_planner = poly_loader.createInstance("path_planning_plugins::openveronoi::BlendPlanner");
   }
   catch(pluginlib::PluginlibException& ex)
   {
@@ -224,7 +224,7 @@ SurfaceBlendingService::generateProcessPath(const int& id,
 
   try
   {
-    path_planner = poly_loader.createInstance("path_planning_plugins::Openveronoi::ScanPlanner");
+    path_planner = poly_loader.createInstance("path_planning_plugins::openveronoi::ScanPlanner");
   }
   catch(pluginlib::PluginlibException& ex)
   {

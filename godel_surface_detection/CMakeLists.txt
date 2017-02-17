@@ -17,8 +17,8 @@ find_package(catkin REQUIRED COMPONENTS
   godel_param_helpers
   godel_msgs
   godel_plugins
-  meshing_plugins
-  path_planning_plugins
+  meshing_plugins_base
+  path_planning_plugins_base
 )
 find_package(Boost REQUIRED COMPONENTS system)
 
@@ -39,8 +39,8 @@ catkin_package(
     godel_param_helpers
     godel_msgs
     godel_plugins
-    meshing_plugins
-    path_planning_plugins
+    meshing_plugins_base
+    path_planning_plugins_base
 )
 
 

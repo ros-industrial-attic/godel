@@ -33,7 +33,7 @@
 #include <pcl/surface/convex_hull.h>
 #include <pcl/common/impl/centroid.hpp>
 #include <pcl/filters/project_inliers.h>
-#include "mesh_importer.h"
+#include <mesh_importer/mesh_importer.h>
 #include "godel_process_path_generation/get_boundary.h"
 
 using Eigen::Vector3d;

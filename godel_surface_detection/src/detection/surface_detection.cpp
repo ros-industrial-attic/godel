@@ -20,7 +20,7 @@
 #include <godel_param_helpers/godel_param_helpers.h>
 #include <tf/transform_datatypes.h>
 #include <pluginlib/class_loader.h>
-#include <meshing_plugins.h>
+#include <meshing_plugins_base/meshing_base.h>
 
 const static int DOWNSAMPLE_NUMBER = 3;
 
@@ -319,12 +319,13 @@ namespace godel_surface_detection
         surface_clouds_.erase(surface_clouds_.begin() + largest_index);
       }
 
-      pluginlib::ClassLoader<meshing_base::MeshingBase> poly_loader("meshing_plugins", "meshing_base::MeshingBase");
-      boost::shared_ptr<meshing_base::MeshingBase> mesher;
+      pluginlib::ClassLoader<meshing_plugins_base::MeshingBase>
+          poly_loader("meshing_plugins_base", "meshing_plugins_base::MeshingBase");
+      boost::shared_ptr<meshing_plugins_base::MeshingBase> mesher;
 
       try
       {
-        mesher = poly_loader.createInstance("meshing_plugins::ConcaveHullMesher");
+        mesher = poly_loader.createInstance("concave_hull_mesher::ConcaveHullMesher");
 
       }
       catch(pluginlib::PluginlibException& ex)

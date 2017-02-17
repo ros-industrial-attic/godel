@@ -13,7 +13,6 @@ find_package(catkin REQUIRED COMPONENTS
 find_package(Qt5Widgets REQUIRED)
 find_package(Qt5Core REQUIRED)
 find_package(Qt5Gui REQUIRED)
-find_package(PCL REQUIRED)
 
 set(godel_plugins_SRCS
   src/rqt_plugins/robot_blending_plugin.cpp
@@ -72,7 +71,7 @@ qt5_wrap_ui(godel_plugins_UIS_H ${godel_plugins_UIS})
 
 include_directories(${godel_plugins_INCLUDE_DIRECTORIES}
     ${catkin_INCLUDE_DIRS}
-    ${PCL_INCLUDE_DIRS})
+    )
 
 ## Declare a cpp library
 add_library(${PROJECT_NAME}
@@ -83,7 +82,6 @@ add_library(${PROJECT_NAME}
 
 target_link_libraries(${PROJECT_NAME} 
   ${catkin_LIBRARIES} 
-  ${PCL_LIBRARIES}
   Qt5::Widgets
   Qt5::Gui
 )

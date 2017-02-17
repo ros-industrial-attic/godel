@@ -1,4 +1,4 @@
-#include "profilometer_scan.h"
+#include <profilometer/profilometer_scan.h>
 #include <ros/io.h>
 
 // Factor by which the length and width of the bounding box are
@@ -10,6 +10,8 @@ static const double GROWTH_FACTOR = 1.1;
 // in the scan trajectory
 static const double SCAN_DISCRETIZATION = 0.01; // 1 cm
 
+namespace path_planning_plugins
+{
 namespace scan
 {
 
@@ -196,21 +198,22 @@ generateProfilometerScanPath(const Boundary& boundary, const PlanningParams& par
   }
 
   // Step 1 -> compute axis-aligned bounding box; we rely on our reference pose for orientation
-  scan::RotatedRect bbox = scan::simpleBoundingBox(boundary);
+  RotatedRect bbox = simpleBoundingBox(boundary);
 
   // Step 2 -> slice bounding box into strips
-  std::vector<scan::RotatedRect> slices = scan::sliceBoundingBox(bbox, params.scan_width, params.overlap);
+  std::vector<RotatedRect> slices = sliceBoundingBox(bbox, params.scan_width, params.overlap);
 
   // Step 3 -> generate set of dense points along center of each strip
   std::vector<std::vector<Pt> > slice_points;
   slice_points.reserve(slices.size());
   for (std::size_t i = 0; i < slices.size(); ++i)
-    slice_points.push_back(scan::interpolateAlongAxis(slices[i], SCAN_DISCRETIZATION));
+    slice_points.push_back(interpolateAlongAxis(slices[i], SCAN_DISCRETIZATION));
 
   // Step 4 -> connect slices together
-  pts = scan::stitchAndFlatten(slice_points, SCAN_DISCRETIZATION);
+  pts = stitchAndFlatten(slice_points, SCAN_DISCRETIZATION);
 
   return pts;
 }
 
-} // end scan namespace
+} // end namespace scan
+} // end namespace path planning plugins

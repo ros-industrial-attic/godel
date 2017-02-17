@@ -4,18 +4,18 @@ project(meshing_plugins)
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
   godel_msgs
+  meshing_plugins_base
+  pcl_ros
+  pluginlib
   roscpp
 )
 
-find_package(PCL REQUIRED)
-
 set(meshing_plugins_SRCS
-  src/meshing_plugins.cpp
+  src/concave_hull_mesher.cpp
 )
 
 set(meshing_plugins_HDRS
-  include/meshing_base.h
-  include/meshing_plugins.h
+  include/meshing_plugins/concave_hull_plugins.h
 )
 
 set(meshing_plugins_INCLUDE_DIRECTORIES
@@ -30,6 +30,8 @@ catkin_package(
     ${PROJECT_NAME}
   CATKIN_DEPENDS
     godel_msgs
+    meshing_plugins_base
+    pcl_ros
     roscpp
 )
 

@@ -11,13 +11,21 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>roscpp</build_depend>
   <build_depend>godel_msgs</build_depend>
+  <build_depend>meshing_plugins_base</build_depend>
+  <build_depend>path_planning_plugins_base</build_depend>
+  <build_depend>pcl_ros</build_depend>
+  <build_depend>pluginlib</build_depend>
+  <build_depend>roscpp</build_depend>
 
-  <run_depend>roscpp</run_depend>
   <run_depend>godel_msgs</run_depend>
+  <run_depend>meshing_plugins_base</run_depend>
+  <run_depend>path_planning_plugins_base</run_depend>
+  <run_depend>pcl_ros</run_depend>
+  <run_depend>pluginlib</run_depend>
+  <run_depend>roscpp</run_depend>
 
   <export>
-    <meshing_plugins plugin="${prefix}/plugin.xml"/>
+    <meshing_plugins_base plugin="${prefix}/plugin.xml"/>
   </export>
 </package>
