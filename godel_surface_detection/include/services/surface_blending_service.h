@@ -38,6 +38,9 @@
 #include <godel_msgs/PathPlanning.h>
 #include <godel_msgs/PathPlanningParameters.h>
 
+#include <godel_msgs/ProcessPlanningAction.h>
+#include <actionlib/server/simple_action_server.h>
+
 #include <godel_process_path_generation/VisualizeBlendingPlan.h>
 #include <godel_process_path_generation/utils.h>
 #include <godel_process_path_generation/polygon_utils.h>
@@ -81,7 +84,13 @@ struct ProcessPlanResult
 class SurfaceBlendingService
 {
 public:
-  SurfaceBlendingService();
+  SurfaceBlendingService() : publish_region_point_cloud_(false),
+    process_planning_server_(
+      nh_,
+      "process_planning_action_server",
+      boost::bind(&SurfaceBlendingService::process_path_server_callback, this, _1),
+      false
+    ) {}
 
   bool init();
   void run();
@@ -124,8 +133,9 @@ private:
   bool select_surface_server_callback(godel_msgs::SelectSurface::Request& req,
                                       godel_msgs::SelectSurface::Response& res);
 
-  bool process_path_server_callback(godel_msgs::ProcessPlanning::Request& req,
-                                    godel_msgs::ProcessPlanning::Response& res);
+  /*bool process_path_server_callback(godel_msgs::ProcessPlanning::Request& req,
+                                    godel_msgs::ProcessPlanning::Response& res);*/
+  void process_path_server_callback(const godel_msgs::ProcessPlanningGoalConstPtr &goal);
 
   bool
   surface_blend_parameters_server_callback(godel_msgs::SurfaceBlendingParameters::Request& req,
@@ -200,6 +210,12 @@ private:
 
   ros::ServiceClient blend_planning_client_;
   ros::ServiceClient keyence_planning_client_;
+
+  // Actions offered by this class
+  ros::NodeHandle nh_;
+  actionlib::SimpleActionServer<godel_msgs::ProcessPlanningAction> process_planning_server_;
+  godel_msgs::ProcessPlanningFeedback process_planning_feedback_;
+  godel_msgs::ProcessPlanningResult process_planning_result_;
 
   // Process Execution service clients
   ros::ServiceClient blend_process_client_;

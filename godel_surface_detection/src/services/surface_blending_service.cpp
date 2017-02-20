@@ -62,8 +62,6 @@ const static std::string SCAN_TOOL_PLUGIN_PARAM = "scan_tool_planning_plugin_nam
 const static std::string MESHING_PLUGIN_PARAM = "meshing_plugin_name";
 
 
-SurfaceBlendingService::SurfaceBlendingService() : publish_region_point_cloud_(false) {}
-
 bool SurfaceBlendingService::init()
 {
   using namespace godel_surface_detection;
@@ -137,51 +135,48 @@ bool SurfaceBlendingService::init()
       boost::bind(&SurfaceBlendingService::publish_selected_surfaces_changed, this);
   surface_server_.add_selection_callback(f);
 
-  // initializing ros interface
-  ros::NodeHandle nh;
-
   // service clients
-  process_path_client_ = nh.serviceClient<godel_msgs::PathPlanning>(PATH_GENERATION_SERVICE);
+  process_path_client_ = nh_.serviceClient<godel_msgs::PathPlanning>(PATH_GENERATION_SERVICE);
 
   // Process Execution Parameters
-  blend_process_client_ = nh.serviceClient<godel_msgs::BlendProcessExecution>(BLEND_PROCESS_EXECUTION_SERVICE);
-  scan_process_client_ = nh.serviceClient<godel_msgs::KeyenceProcessExecution>(SCAN_PROCESS_EXECUTION_SERVICE);
-  blend_planning_client_ = nh.serviceClient<godel_msgs::BlendProcessPlanning>(BLEND_PROCESS_PLANNING_SERVICE);
-  keyence_planning_client_ = nh.serviceClient<godel_msgs::KeyenceProcessPlanning>(SCAN_PROCESS_PLANNING_SERVICE);
+  blend_process_client_ = nh_.serviceClient<godel_msgs::BlendProcessExecution>(BLEND_PROCESS_EXECUTION_SERVICE);
+  scan_process_client_ = nh_.serviceClient<godel_msgs::KeyenceProcessExecution>(SCAN_PROCESS_EXECUTION_SERVICE);
+  blend_planning_client_ = nh_.serviceClient<godel_msgs::BlendProcessPlanning>(BLEND_PROCESS_PLANNING_SERVICE);
+  keyence_planning_client_ = nh_.serviceClient<godel_msgs::KeyenceProcessPlanning>(SCAN_PROCESS_PLANNING_SERVICE);
 
   // service servers
   surf_blend_parameters_server_ =
-      nh.advertiseService(SURFACE_BLENDING_PARAMETERS_SERVICE,
+      nh_.advertiseService(SURFACE_BLENDING_PARAMETERS_SERVICE,
                           &SurfaceBlendingService::surface_blend_parameters_server_callback, this);
 
-  surface_detect_server_ = nh.advertiseService(
+  surface_detect_server_ = nh_.advertiseService(
       SURFACE_DETECTION_SERVICE, &SurfaceBlendingService::surface_detection_server_callback, this);
 
-  select_surface_server_ = nh.advertiseService(
+  select_surface_server_ = nh_.advertiseService(
       SELECT_SURFACE_SERVICE, &SurfaceBlendingService::select_surface_server_callback, this);
 
-  process_path_server_ = nh.advertiseService(
-      PROCESS_PATH_SERVICE, &SurfaceBlendingService::process_path_server_callback, this);
+  /*process_path_server_ = nh_.advertiseService(
+      PROCESS_PATH_SERVICE, &SurfaceBlendingService::process_path_server_callback, this);*/
 
-  get_motion_plans_server_ = nh.advertiseService(
+  get_motion_plans_server_ = nh_.advertiseService(
       GET_MOTION_PLANS_SERVICE, &SurfaceBlendingService::getMotionPlansCallback, this);
 
-  select_motion_plan_server_ = nh.advertiseService(
+  select_motion_plan_server_ = nh_.advertiseService(
       SELECT_MOTION_PLAN_SERVICE, &SurfaceBlendingService::selectMotionPlanCallback, this);
 
-  load_save_motion_plan_server_ = nh.advertiseService(
+  load_save_motion_plan_server_ = nh_.advertiseService(
       LOAD_SAVE_MOTION_PLAN_SERVICE, &SurfaceBlendingService::loadSaveMotionPlanCallback, this);
 
-  rename_suface_server_ = nh.advertiseService(RENAME_SURFACE_SERVICE,
+  rename_suface_server_ = nh_.advertiseService(RENAME_SURFACE_SERVICE,
                                               &SurfaceBlendingService::renameSurfaceCallback, this);
 
   // publishers
-  selected_surf_changed_pub_ = nh.advertise<godel_msgs::SelectedSurfacesChanged>(SELECTED_SURFACES_CHANGED_TOPIC, 1);
-  point_cloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>(REGION_POINT_CLOUD_TOPIC, 1);
-  tool_path_markers_pub_ = nh.advertise<visualization_msgs::MarkerArray>(TOOL_PATH_PREVIEW_TOPIC, 1, true);
-  blend_visualization_pub_ = nh.advertise<geometry_msgs::PoseArray>(BLEND_VISUALIZATION_TOPIC, 1, true);
-  edge_visualization_pub_ = nh.advertise<geometry_msgs::PoseArray>(EDGE_VISUALIZATION_TOPIC, 1, true);
-  scan_visualization_pub_ = nh.advertise<geometry_msgs::PoseArray>(SCAN_VISUALIZATION_TOPIC, 1, true);
+  selected_surf_changed_pub_ = nh_.advertise<godel_msgs::SelectedSurfacesChanged>(SELECTED_SURFACES_CHANGED_TOPIC, 1);
+  point_cloud_pub_ = nh_.advertise<sensor_msgs::PointCloud2>(REGION_POINT_CLOUD_TOPIC, 1);
+  tool_path_markers_pub_ = nh_.advertise<visualization_msgs::MarkerArray>(TOOL_PATH_PREVIEW_TOPIC, 1, true);
+  blend_visualization_pub_ = nh_.advertise<geometry_msgs::PoseArray>(BLEND_VISUALIZATION_TOPIC, 1, true);
+  edge_visualization_pub_ = nh_.advertise<geometry_msgs::PoseArray>(EDGE_VISUALIZATION_TOPIC, 1, true);
+  scan_visualization_pub_ = nh_.advertise<geometry_msgs::PoseArray>(SCAN_VISUALIZATION_TOPIC, 1, true);
 
   return true;
 }
@@ -607,6 +602,45 @@ bool SurfaceBlendingService::surface_detection_server_callback(
   return true;
 }
 
+void SurfaceBlendingService::process_path_server_callback(const godel_msgs::ProcessPlanningGoalConstPtr &goal)
+{
+  switch (goal->action)
+  {
+  case godel_msgs::ProcessPlanning::Request::GENERATE_MOTION_PLAN_AND_PREVIEW:
+    process_planning_feedback_.last_completed = "Recieved request to generate motion plan";
+    process_planning_server_.publishFeedback(process_planning_feedback_);
+    trajectory_library_ = generateMotionLibrary(goal->params);
+    visualizePaths();
+    break;
+
+  case godel_msgs::ProcessPlanning::Request::PREVIEW_TOOL_PATH:
+    process_planning_feedback_.last_completed = "Recieved request to preview tool path";
+    process_planning_server_.publishFeedback(process_planning_feedback_);
+    process_planning_result_.succeeded = animate_tool_path();
+    break;
+
+  case godel_msgs::ProcessPlanning::Request::PREVIEW_MOTION_PLAN:
+    process_planning_feedback_.last_completed = "Recieved request to preview motion plan (Not implemented)";
+    process_planning_server_.publishFeedback(process_planning_feedback_);
+    process_planning_result_.succeeded = false;
+    break;
+
+  case godel_msgs::ProcessPlanning::Request::EXECUTE_MOTION_PLAN:
+    process_planning_feedback_.last_completed = "Recieved request to execute motion plan (Not implemented)";
+    process_planning_server_.publishFeedback(process_planning_feedback_);
+    process_planning_result_.succeeded = false;
+    break;
+
+  default:
+
+    ROS_ERROR_STREAM("Unknown action code '" << goal->action << "' request");
+    break;
+  }
+
+  process_planning_result_.succeeded = false;
+
+}
+
 bool SurfaceBlendingService::select_surface_server_callback(godel_msgs::SelectSurface::Request& req,
                                                             godel_msgs::SelectSurface::Response&)
 {
@@ -651,43 +685,6 @@ bool SurfaceBlendingService::select_surface_server_callback(godel_msgs::SelectSu
   return true;
 }
 
-bool SurfaceBlendingService::process_path_server_callback(
-    godel_msgs::ProcessPlanning::Request& req, godel_msgs::ProcessPlanning::Response& res)
-{
-  godel_msgs::PathPlanning process_plan;
-  process_plan.request.params = req.use_default_parameters ? default_path_planning_params_ : req.params;
-  switch (req.action)
-  {
-  case godel_msgs::ProcessPlanning::Request::GENERATE_MOTION_PLAN:
-  case godel_msgs::ProcessPlanning::Request::GENERATE_MOTION_PLAN_AND_PREVIEW:
-    trajectory_library_ = generateMotionLibrary(process_plan.request.params);
-    visualizePaths();
-    break;
-
-  case godel_msgs::ProcessPlanning::Request::PREVIEW_TOOL_PATH:
-
-    res.succeeded = animate_tool_path();
-    break;
-
-  case godel_msgs::ProcessPlanning::Request::PREVIEW_MOTION_PLAN:
-
-    res.succeeded = false;
-    break;
-
-  case godel_msgs::ProcessPlanning::Request::EXECUTE_MOTION_PLAN:
-
-    res.succeeded = false;
-    break;
-
-  default:
-
-    ROS_ERROR_STREAM("Unknown action code '" << req.action << "' request");
-    break;
-  }
-
-  res.succeeded = false;
-  return true;
-}
 
 bool SurfaceBlendingService::surface_blend_parameters_server_callback(
     godel_msgs::SurfaceBlendingParameters::Request& req,
@@ -831,6 +828,9 @@ bool SurfaceBlendingService::renameSurfaceCallback(godel_msgs::RenameSurface::Re
 
 void SurfaceBlendingService::visualizePaths()
 {
+  process_planning_feedback_.last_completed = "Finished planning. Visualizing";
+  process_planning_server_.publishFeedback(process_planning_feedback_);
+
   // Publish poses
   geometry_msgs::PoseArray blend_poses, edge_poses, scan_poses;
   blend_poses.header.frame_id = edge_poses.header.frame_id = scan_poses.header.frame_id = "world_frame";
@@ -938,6 +938,8 @@ void SurfaceBlendingService::visualizePaths()
   }
 
   tool_path_markers_pub_.publish(path_visualization);
+  process_planning_result_.succeeded = true;
+  process_planning_server_.setSucceeded(process_planning_result_);
 }
 
 std::string SurfaceBlendingService::getBlendToolPlanningPluginName() const

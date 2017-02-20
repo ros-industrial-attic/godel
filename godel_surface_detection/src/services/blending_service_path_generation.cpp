@@ -219,8 +219,12 @@ SurfaceBlendingService::generateProcessPath(const int& id,
   if(!path_planner->generatePath(blend_result))
   {
     ROS_ERROR_STREAM("Could not plan blend path");
+    process_planning_feedback_.last_completed = "Failed to generate blend path for surface " + name;
+    process_planning_server_.publishFeedback(process_planning_feedback_);
     return false;
   }
+  process_planning_feedback_.last_completed = "Generated blend path for surface " + name;
+  process_planning_server_.publishFeedback(process_planning_feedback_);
 
   try
   {
@@ -236,10 +240,16 @@ SurfaceBlendingService::generateProcessPath(const int& id,
   if(!path_planner->generatePath(scan_result))
   {
     ROS_ERROR_STREAM("Could not plan scan path");
+    process_planning_feedback_.last_completed = "Failed to generate scan path for surface " + name;
+    process_planning_server_.publishFeedback(process_planning_feedback_);
     return false;
   }
+  process_planning_feedback_.last_completed = "Generated scan path for surface " + name;
+  process_planning_server_.publishFeedback(process_planning_feedback_);
 
   generateEdgePath(surface, edge_result);
+  process_planning_feedback_.last_completed = "Generated edge path(s) for surface " + name;
+  process_planning_server_.publishFeedback(process_planning_feedback_);
 
   ProcessPathResult::value_type vt;
 
