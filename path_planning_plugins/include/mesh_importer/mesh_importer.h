@@ -34,17 +34,21 @@
 #include <Eigen/Geometry>
 #include <eigen_conversions/eigen_msg.h>
 #include "godel_process_path_generation/polygon_pts.hpp"
+#include "godel_process_path_generation/polygon_utils.h"
+#include "godel_process_path_generation/utils.h"
 
-namespace godel_process_path
+namespace mesh_importer
 {
 
 typedef pcl::PointCloud<pcl::PointXYZINormal> Cloud;
+typedef godel_process_path::PolygonBoundary PolygonBoundary;
+typedef godel_process_path::PolygonBoundaryCollection PolygonBoundaryCollection;
 
 class MeshImporter
 {
 public:
-  MeshImporter(bool verbose = false) : verbose_(verbose){};
-  virtual ~MeshImporter(){};
+  MeshImporter(bool verbose = false) : verbose_(verbose){}
+  virtual ~MeshImporter(){}
 
   /**@brief Create local coordinate system and boundary data for a point cloud representing a flat
    * surface

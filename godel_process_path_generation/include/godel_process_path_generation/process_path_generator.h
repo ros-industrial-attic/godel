@@ -92,10 +92,10 @@ public:
 
 private:
   // TODO comment Does not add start/end
-  void addInterpolatedProcessPts(const ProcessPt& start, const ProcessPt& end, double vel = 0.);
+  void addInterpolatedProcessPts(const ProcessPt& start, const ProcessPt& end);
 
   // TODO comment
-  void addPolygonToProcessPath(const PolygonBoundary& bnd, double vel = 0.);
+  void addPolygonToProcessPath(const PolygonBoundary& bnd);
 
   // TODO comment
   void addTraverseToProcessPath(const PolygonPt& from, const PolygonPt& to);

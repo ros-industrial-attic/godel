@@ -8,19 +8,21 @@
  * The output is a set of dense points which, when packaged with the associated
  * pose of the surface, are suitable for trajectory planning.
  */
-#ifndef PROFILIMITER_SCAN_H
-#define PROFILIMITER_SCAN_H
+#ifndef PROFILOMETER_SCAN_H
+#define PROFILOMETER_SCAN_H
 
-#include <vector>
-#include <godel_msgs/ScanPlanParameters.h>
 #include <godel_process_path_generation/polygon_pts.hpp>
-
-namespace godel_surface_detection
+#include <godel_msgs/PathPlanningParameters.h>
+namespace path_planning_plugins
 {
-std::vector<godel_process_path::PolygonPt>
-generateProfilimeterScanPath(const godel_process_path::PolygonBoundary& boundary,
-                             const godel_msgs::ScanPlanParameters& params);
+namespace scan
+{
 
-} // end namespace godel_surface_detection
+std::vector<godel_process_path::PolygonPt>
+generateProfilometerScanPath(const godel_process_path::PolygonBoundary& boundary,
+                             const godel_msgs::PathPlanningParameters& params);
+
+} // end namespace scan
+} // end namespace path_planning_plugins
 
 #endif

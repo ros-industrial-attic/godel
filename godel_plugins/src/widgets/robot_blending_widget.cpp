@@ -42,7 +42,7 @@ RobotBlendingWidget::~RobotBlendingWidget()
 {
   delete robot_scan_config_window_;
   delete surface_detect_config_window_;
-  delete robot_blend_config_window_;
+  delete path_planning_config_window_;
   delete scan_plan_config_window_;
 }
 
@@ -71,14 +71,14 @@ void RobotBlendingWidget::init()
   // Initialize config windows
   robot_scan_config_window_ = new RobotScanConfigWidget(robot_scan_parameters_);
   surface_detect_config_window_ = new SurfaceDetectionConfigWidget(surf_detect_parameters_);
-  robot_blend_config_window_ = new BlendingPlanConfigWidget(blending_plan_parameters_);
+  path_planning_config_window_ = new PathPlanningConfigWidget(path_planning_parameters_);
   scan_plan_config_window_ = new ScanPlanConfigWidget(scan_plan_parameters_);
 
 
   /* Setting signals and slots */
 
   // Options Handlers
-  connect(ui_.PushButtonBlendOptions, SIGNAL(clicked()), this, SLOT(blend_options_click_handler()));
+  connect(ui_.PushButtonPathPlanningOptions, SIGNAL(clicked()), this, SLOT(path_planning_options_click_handler()));
   connect(ui_.pushButtonProfileOptions, SIGNAL(clicked()), this, SLOT(scan_plan_options_click_handler()));
 
   // General Navigation Buttons
@@ -120,7 +120,7 @@ void RobotBlendingWidget::init()
   connect(surface_detect_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
   connect(robot_scan_config_window_, SIGNAL(parameters_changed()), this, SLOT(robot_scan_params_changed_handler()));
   connect(robot_scan_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
-  connect(robot_blend_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
+  connect(path_planning_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
   connect(scan_plan_config_window_, SIGNAL(parameters_save_requested()), this, SLOT(request_save_parameters()));
   connect(surface_detect_config_window_, SIGNAL(parameters_changed()), this,
           SLOT(surface_detect_params_changed_handler()));
@@ -173,8 +173,9 @@ void RobotBlendingWidget::connect_to_services()
         surface_detect_config_window_->params() = msg.response.surface_detection;
         robot_scan_parameters_ = msg.response.robot_scan;
         surf_detect_parameters_ = msg.response.surface_detection;
-        blending_plan_parameters_ = msg.response.blending_plan;
-        robot_blend_config_window_->params() = msg.response.blending_plan;
+        //blending_plan_parameters_ = msg.response.blending_plan;
+        path_planning_parameters_ = msg.response.path_params;
+        path_planning_config_window_->params() = msg.response.path_params;
         scan_plan_config_window_->params() = msg.response.scan_plan;
 
         // update gui elements for robot scan
@@ -290,9 +291,9 @@ void RobotBlendingWidget::scan_options_click_handler()
   robot_scan_config_window_->show();
 }
 
-void RobotBlendingWidget::blend_options_click_handler()
+void RobotBlendingWidget::path_planning_options_click_handler()
 {
-  robot_blend_config_window_->show();
+  path_planning_config_window_->show();
 }
 
 
@@ -441,10 +442,8 @@ void RobotBlendingWidget::surface_detection_completed_handler()
 {
   ui_.LineEditOperationStatus->setText(QString::fromStdString(surface_detection_op_message_));
   if (surface_detection_op_succeeded_)
-  {
     ui_.TabWidgetCreateLib->setCurrentIndex(1);
-    //ROS_INFO_STREAM("Current Index " << ui_.TabWidgetCreateLib->currentIndex());
-  }
+
   ui_.TabWidget->setEnabled(true);
 }
 
@@ -467,8 +466,8 @@ void RobotBlendingWidget::generate_process_path_handler()
 {
   godel_msgs::ProcessPlanning process_plan;
   process_plan.request.use_default_parameters = false;
-  process_plan.request.params = robot_blend_config_window_->params();
-  process_plan.request.scan_params = this->scan_plan_config_window_->params();
+  process_plan.request.params = path_planning_config_window_->params();
+  //process_plan.request.scan_params = this->scan_plan_config_window_->params();
   process_plan.request.action = process_plan.request.GENERATE_MOTION_PLAN_AND_PREVIEW;
   ROS_INFO_STREAM("process plan request sent");
   if (process_plan_client_.call(process_plan))
@@ -615,7 +614,7 @@ void RobotBlendingWidget::request_save_parameters()
   godel_msgs::SurfaceBlendingParameters::Request req;
   req.action = godel_msgs::SurfaceBlendingParameters::Request::SAVE_PARAMETERS;
   req.surface_detection = surface_detect_config_window_->params();
-  req.blending_plan = robot_blend_config_window_->params();
+  req.path_params = path_planning_config_window_->params();
   req.robot_scan = robot_scan_config_window_->params();
   req.scan_plan = scan_plan_config_window_->params();
 

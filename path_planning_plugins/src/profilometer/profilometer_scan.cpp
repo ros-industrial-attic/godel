@@ -1,7 +1,5 @@
-#include "scan/profilimeter_scan.h"
-#include <ros/ros.h>
-
-using namespace godel_process_path;
+#include <profilometer/profilometer_scan.h>
+#include <ros/io.h>
 
 // Factor by which the length and width of the bounding box are
 // multiplied to generate a scan path that covers the entire object
@@ -12,8 +10,14 @@ static const double GROWTH_FACTOR = 1.1;
 // in the scan trajectory
 static const double SCAN_DISCRETIZATION = 0.01; // 1 cm
 
-namespace
+namespace path_planning_plugins
 {
+namespace scan
+{
+
+typedef godel_process_path::PolygonPt Pt;
+typedef godel_process_path::PolygonBoundary Boundary;
+typedef godel_msgs::PathPlanningParameters PlanningParams;
 /**
  * Rotated rectangle structure for use with striping algorithm
  * (x,y) is the center (of mass)
@@ -25,7 +29,8 @@ struct RotatedRect
   double x, y, w, h, a;
 };
 
-RotatedRect simpleBoundingBox(const PolygonBoundary& boundary)
+
+RotatedRect simpleBoundingBox(const Boundary& boundary)
 {
   double min_x = boundary[0].x;
   double min_y = boundary[0].y;
@@ -34,7 +39,7 @@ RotatedRect simpleBoundingBox(const PolygonBoundary& boundary)
 
   for (std::size_t i = 1; i < boundary.size(); ++i)
   {
-    const PolygonPt& pt = boundary[i];
+    const Pt& pt = boundary[i];
     min_x = std::min(pt.x, min_x);
     min_y = std::min(pt.y, min_y);
     max_x = std::max(pt.x, max_x);
@@ -100,9 +105,9 @@ std::vector<RotatedRect> sliceBoundingBox(const RotatedRect& bbox, double slice_
   return slices;
 }
 
-std::vector<PolygonPt> interpolateAlongAxis(const RotatedRect& rect, double ds)
+std::vector<Pt> interpolateAlongAxis(const RotatedRect& rect, double ds)
 {
-  std::vector<PolygonPt> pts;
+  std::vector<Pt> pts;
   double dx, dy; //
   float x, y;
   int n;
@@ -118,7 +123,7 @@ std::vector<PolygonPt> interpolateAlongAxis(const RotatedRect& rect, double ds)
 
   for (int i = 0; i < n; ++i)
   {
-    PolygonPt pt;
+    Pt pt;
     pt.x = x;
     pt.y = y;
     x += dx;
@@ -129,7 +134,7 @@ std::vector<PolygonPt> interpolateAlongAxis(const RotatedRect& rect, double ds)
   return pts;
 }
 
-std::vector<PolygonPt> makeStitch(const PolygonPt& a, const PolygonPt& b, double ds)
+std::vector<Pt> makeStitch(const Pt& a, const Pt& b, double ds)
 {
   double dx = b.x - a.x;
   double dy = b.y - a.y;
@@ -140,10 +145,10 @@ std::vector<PolygonPt> makeStitch(const PolygonPt& a, const PolygonPt& b, double
   dx /= s;
   dy /= s;
 
-  std::vector<PolygonPt> result;
+  std::vector<Pt> result;
   for (size_t i = 0; i < n; ++i)
   {
-    PolygonPt pt;
+    Pt pt;
     pt.x = a.x + i * dx * ds;
     pt.y = a.y + i * dy * ds;
     result.push_back(pt);
@@ -151,10 +156,9 @@ std::vector<PolygonPt> makeStitch(const PolygonPt& a, const PolygonPt& b, double
   return result;
 }
 
-std::vector<PolygonPt> stitchAndFlatten(const std::vector<std::vector<PolygonPt> >& paths,
-                                        double ds)
+std::vector<Pt> stitchAndFlatten(const std::vector<std::vector<Pt> >& paths, double ds)
 {
-  std::vector<PolygonPt> result;
+  std::vector<Pt> result;
   bool forward = true;
   for (std::size_t i = 0; i < paths.size(); ++i)
   {
@@ -174,23 +178,22 @@ std::vector<PolygonPt> stitchAndFlatten(const std::vector<std::vector<PolygonPt>
     if (i + 1 < paths.size())
     {
       // if so, stitch to the next point
-      std::vector<PolygonPt> stitch = makeStitch(
+      std::vector<Pt> stitch = makeStitch(
           *result.rbegin(), (forward ? *(paths[i + 1].begin()) : *(paths[i + 1].rbegin())), ds);
       result.insert(result.end(), stitch.begin(), stitch.end());
     }
   }
   return result;
 }
-} // end anon namespace
 
-std::vector<PolygonPt>
-godel_surface_detection::generateProfilimeterScanPath(const PolygonBoundary& boundary,
-                                                      const godel_msgs::ScanPlanParameters& params)
+
+std::vector<Pt>
+generateProfilometerScanPath(const Boundary& boundary, const PlanningParams& params)
 {
-  std::vector<PolygonPt> pts;
+  std::vector<Pt> pts;
   if (boundary.empty())
   {
-    ROS_WARN("Cannot generate profilimeter scan paths for empty boundary.");
+    ROS_WARN("Cannot generate profilometer scan paths for empty boundary.");
     return pts;
   }
 
@@ -201,7 +204,7 @@ godel_surface_detection::generateProfilimeterScanPath(const PolygonBoundary& bou
   std::vector<RotatedRect> slices = sliceBoundingBox(bbox, params.scan_width, params.overlap);
 
   // Step 3 -> generate set of dense points along center of each strip
-  std::vector<std::vector<PolygonPt> > slice_points;
+  std::vector<std::vector<Pt> > slice_points;
   slice_points.reserve(slices.size());
   for (std::size_t i = 0; i < slices.size(); ++i)
     slice_points.push_back(interpolateAlongAxis(slices[i], SCAN_DISCRETIZATION));
@@ -211,3 +214,6 @@ godel_surface_detection::generateProfilimeterScanPath(const PolygonBoundary& bou
 
   return pts;
 }
+
+} // end namespace scan
+} // end namespace path planning plugins

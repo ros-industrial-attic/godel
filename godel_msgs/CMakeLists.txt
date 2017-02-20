@@ -20,34 +20,36 @@ find_package(catkin REQUIRED COMPONENTS
 add_message_files(
   FILES
   BlendingPlanParameters.msg
-  RobotScanParameters.msg
-  SelectedSurfacesChanged.msg
-  SurfaceBoundaries.msg
-  SurfaceDetectionParameters.msg
   ProcessPath.msg
   ProcessPlan.msg
+  PathPlanningParameters.msg
+  RobotScanParameters.msg
+  SelectedSurfacesChanged.msg
   ScanPlanParameters.msg
+  SurfaceBoundaries.msg
+  SurfaceDetectionParameters.msg
 )
 
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
   BlendingPlan.srv
+  BlendProcessExecution.srv
+  BlendProcessPlanning.srv
+  GetAvailableMotionPlans.srv
+  KeyenceProcessExecution.srv
+  KeyenceProcessPlanning.srv
+  LoadSaveMotionPlan.srv
   OffsetBoundary.srv
+  PathPlanning.srv
   ProcessPlanning.srv
+  RenameSurface.srv
+  SelectMotionPlan.srv
   SelectSurface.srv
   SurfaceDetection.srv
-  TrajectoryPlanning.srv
   SurfaceBlendingParameters.srv
   TrajectoryExecution.srv
-  GetAvailableMotionPlans.srv
-  SelectMotionPlan.srv
-  LoadSaveMotionPlan.srv
-  RenameSurface.srv
-  BlendProcessExecution.srv
-  KeyenceProcessExecution.srv
-  BlendProcessPlanning.srv
-  KeyenceProcessPlanning.srv
+  TrajectoryPlanning.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

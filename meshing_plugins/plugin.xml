@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<library path="lib/libmeshing_plugins">
+  <class type="concave_hull_mesher::ConcaveHullMesher" base_class_type="meshing_plugins_base::MeshingBase">
+  <description> The default meshing algorithm. Only works on 2D surfaces </description>
+  </class>
+</library>

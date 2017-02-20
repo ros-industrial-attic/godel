@@ -15,10 +15,12 @@
 */
 
 #include <detection/surface_detection.h>
-#include <coordination//data_coordinator.h>
+#include <coordination/data_coordinator.h>
 #include <segmentation/surface_segmentation.h>
 #include <godel_param_helpers/godel_param_helpers.h>
 #include <tf/transform_datatypes.h>
+#include <pluginlib/class_loader.h>
+#include <meshing_plugins_base/meshing_base.h>
 
 const static int DOWNSAMPLE_NUMBER = 3;
 
@@ -317,13 +319,29 @@ namespace godel_surface_detection
         surface_clouds_.erase(surface_clouds_.begin() + largest_index);
       }
 
+      pluginlib::ClassLoader<meshing_plugins_base::MeshingBase>
+          poly_loader("meshing_plugins_base", "meshing_plugins_base::MeshingBase");
+      boost::shared_ptr<meshing_plugins_base::MeshingBase> mesher;
+
+      try
+      {
+        mesher = poly_loader.createInstance("concave_hull_mesher::ConcaveHullMesher");
+
+      }
+      catch(pluginlib::PluginlibException& ex)
+      {
+        ROS_ERROR("The plugin failed to load for some reason. Error: %s", ex.what());
+        return false;
+      }
+
       // Compute mesh from point clouds
       for (int i = 0; i < surface_clouds_.size(); i++)
       {
         pcl::PolygonMesh mesh;
         visualization_msgs::Marker marker;
+        mesher->init(*surface_clouds_[i]);
 
-        if (apply_concave_hull(*surface_clouds_[i], mesh))
+        if (mesher->generateMesh(mesh))
         {
           // Create marker from mesh
           mesh_to_marker(mesh, marker);

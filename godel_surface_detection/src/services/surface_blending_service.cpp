@@ -9,6 +9,7 @@
 // Process Planning
 #include <godel_msgs/BlendProcessPlanning.h>
 #include <godel_msgs/KeyenceProcessPlanning.h>
+#include <godel_msgs/PathPlanning.h>
 
 #include <godel_param_helpers/godel_param_helpers.h>
 
@@ -18,6 +19,7 @@ const static std::string SURFACE_DETECTION_SERVICE = "surface_detection";
 const static std::string SURFACE_BLENDING_PARAMETERS_SERVICE = "surface_blending_parameters";
 const static std::string SELECT_SURFACE_SERVICE = "select_surface";
 const static std::string PROCESS_PATH_SERVICE = "process_path";
+const static std::string PATH_GENERATION_SERVICE = "process_path_generator";
 const static std::string VISUALIZE_BLENDING_PATH_SERVICE = "visualize_path_generator";
 const static std::string RENAME_SURFACE_SERVICE = "rename_surface";
 const static std::string PATH_EXECUTION_SERVICE = "path_execution";
@@ -33,6 +35,7 @@ const static std::string SCAN_PROCESS_PLANNING_SERVICE = "keyence_process_planni
 const static std::string TOOL_PATH_PREVIEW_TOPIC = "tool_path_preview";
 const static std::string EDGE_VISUALIZATION_TOPIC = "edge_visualization";
 const static std::string BLEND_VISUALIZATION_TOPIC = "blend_visualization";
+const static std::string SCAN_VISUALIZATION_TOPIC = "scan_visualization";
 const static std::string SELECTED_SURFACES_CHANGED_TOPIC = "selected_surfaces_changed";
 const static std::string ROBOT_SCAN_PATH_PREVIEW_TOPIC = "robot_scan_path_preview";
 const static std::string PUBLISH_REGION_POINT_CLOUD = "publish_region_point_cloud";
@@ -52,13 +55,9 @@ const static std::string BLEND_PARAMS_FILE = "godel_blending_parameters.msg";
 const static std::string SCAN_PARAMS_FILE = "godel_scan_parameters.msg";
 const static std::string ROBOT_SCAN_PARAMS_FILE = "godel_robot_scan_parameters.msg";
 const static std::string SURFACE_DETECTION_PARAMS_FILE = "godel_surface_detection_parameters.msg";
+const static std::string PATH_PLANNING_PARAMS_FILE = "godel_path_planning_parameters.msg";
 
-SurfaceBlendingService::SurfaceBlendingService()
-    : mesh_importer_(true) /*True-turn on verbose messages*/
-      ,
-      publish_region_point_cloud_(false)
-{
-}
+SurfaceBlendingService::SurfaceBlendingService() : publish_region_point_cloud_(false) {}
 
 bool SurfaceBlendingService::init()
 {
@@ -70,6 +69,9 @@ bool SurfaceBlendingService::init()
   ph.getParam(PUBLISH_REGION_POINT_CLOUD, publish_region_point_cloud_);
   // Load the 'prefix' that will be combined with parameters msg base names to save to disk
   ph.param<std::string>("param_cache_prefix", param_cache_prefix_, "");
+
+  if (!this->load_path_planning_parameters(param_cache_prefix_ + PATH_PLANNING_PARAMS_FILE))
+    ROS_WARN("Unable to load blending process parameters.");
 
   if (!this->load_blend_parameters(param_cache_prefix_ + BLEND_PARAMS_FILE))
     ROS_WARN("Unable to load blending process parameters.");
@@ -111,20 +113,13 @@ bool SurfaceBlendingService::init()
   ros::NodeHandle nh;
 
   // service clients
-  visualize_process_path_client_ =
-      nh.serviceClient<godel_process_path_generation::VisualizeBlendingPlan>(
-          VISUALIZE_BLENDING_PATH_SERVICE);
+  process_path_client_ = nh.serviceClient<godel_msgs::PathPlanning>(PATH_GENERATION_SERVICE);
 
   // Process Execution Parameters
-  blend_process_client_ =
-      nh.serviceClient<godel_msgs::BlendProcessExecution>(BLEND_PROCESS_EXECUTION_SERVICE);
-  scan_process_client_ =
-      nh.serviceClient<godel_msgs::KeyenceProcessExecution>(SCAN_PROCESS_EXECUTION_SERVICE);
-
-  blend_planning_client_ =
-      nh.serviceClient<godel_msgs::BlendProcessPlanning>(BLEND_PROCESS_PLANNING_SERVICE);
-  keyence_planning_client_ =
-      nh.serviceClient<godel_msgs::KeyenceProcessPlanning>(SCAN_PROCESS_PLANNING_SERVICE);
+  blend_process_client_ = nh.serviceClient<godel_msgs::BlendProcessExecution>(BLEND_PROCESS_EXECUTION_SERVICE);
+  scan_process_client_ = nh.serviceClient<godel_msgs::KeyenceProcessExecution>(SCAN_PROCESS_EXECUTION_SERVICE);
+  blend_planning_client_ = nh.serviceClient<godel_msgs::BlendProcessPlanning>(BLEND_PROCESS_PLANNING_SERVICE);
+  keyence_planning_client_ = nh.serviceClient<godel_msgs::KeyenceProcessPlanning>(SCAN_PROCESS_PLANNING_SERVICE);
 
   // service servers
   surf_blend_parameters_server_ =
@@ -153,19 +148,12 @@ bool SurfaceBlendingService::init()
                                               &SurfaceBlendingService::renameSurfaceCallback, this);
 
   // publishers
-  selected_surf_changed_pub_ =
-      nh.advertise<godel_msgs::SelectedSurfacesChanged>(SELECTED_SURFACES_CHANGED_TOPIC, 1);
-
+  selected_surf_changed_pub_ = nh.advertise<godel_msgs::SelectedSurfacesChanged>(SELECTED_SURFACES_CHANGED_TOPIC, 1);
   point_cloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>(REGION_POINT_CLOUD_TOPIC, 1);
-
-  tool_path_markers_pub_ =
-      nh.advertise<visualization_msgs::MarkerArray>(TOOL_PATH_PREVIEW_TOPIC, 1, true);
-
-  blend_visualization_pub_ =
-      nh.advertise<geometry_msgs::PoseArray>(BLEND_VISUALIZATION_TOPIC, 1, true);
-
-  edge_visualization_pub_ =
-      nh.advertise<geometry_msgs::PoseArray>(EDGE_VISUALIZATION_TOPIC, 1, true);
+  tool_path_markers_pub_ = nh.advertise<visualization_msgs::MarkerArray>(TOOL_PATH_PREVIEW_TOPIC, 1, true);
+  blend_visualization_pub_ = nh.advertise<geometry_msgs::PoseArray>(BLEND_VISUALIZATION_TOPIC, 1, true);
+  edge_visualization_pub_ = nh.advertise<geometry_msgs::PoseArray>(EDGE_VISUALIZATION_TOPIC, 1, true);
+  scan_visualization_pub_ = nh.advertise<geometry_msgs::PoseArray>(SCAN_VISUALIZATION_TOPIC, 1, true);
 
   return true;
 }
@@ -210,6 +198,7 @@ bool SurfaceBlendingService::load_blend_parameters(const std::string& filename)
          loadParam(nh, "min_boundary_length", blending_plan_params_.min_boundary_length);
 }
 
+
 void SurfaceBlendingService::save_blend_parameters(const std::string& filename)
 {
   if (!godel_param_helpers::toFile(filename, blending_plan_params_))
@@ -217,6 +206,26 @@ void SurfaceBlendingService::save_blend_parameters(const std::string& filename)
     ROS_WARN_STREAM("Unable to save blending-plan parameters to: " << filename);
   }
 }
+
+
+bool SurfaceBlendingService::load_path_planning_parameters(const std::string & filename)
+{
+  if(godel_param_helpers::fromFile(filename, path_planning_params_))
+  {
+    return true;
+  }
+  return false;
+}
+
+
+void SurfaceBlendingService::save_path_planning_parameters(const std::string & filename)
+{
+  if(!godel_param_helpers::toFile(filename, path_planning_params_))
+  {
+    ROS_WARN_STREAM("Unable to save path-planning parameters to: " << filename);
+  }
+}
+
 
 // Profilimeter parameters
 bool SurfaceBlendingService::load_scan_parameters(const std::string& filename)
@@ -337,61 +346,29 @@ bool SurfaceBlendingService::find_surfaces(visualization_msgs::MarkerArray& surf
   return succeeded;
 }
 
-void SurfaceBlendingService::remove_previous_process_plan()
+void SurfaceBlendingService::clear_visualizations()
 {
-  // removing boundary markers
-  visualization_msgs::MarkerArray& bds = process_path_results_.process_boundaries_;
-  visualization_msgs::MarkerArray& paths = process_path_results_.process_visualization_;
-  visualization_msgs::MarkerArray& scans = process_path_results_.scan_visualization_;
-  visualization_msgs::MarkerArray& edge = process_path_results_.edge_visualization_;
+  // Remove line-strips
+  visualization_msgs::Marker marker;
+  visualization_msgs::MarkerArray marker_array;
+  marker.header.frame_id = "world_frame";
+  marker.header.stamp = ros::Time::now();
+  marker.action = marker.DELETEALL;
+  marker_array.markers.push_back(marker);
+  tool_path_markers_pub_.publish(marker_array);
 
-  for (std::size_t i = 0; i < bds.markers.size(); i++)
-  {
-    visualization_msgs::Marker& m = bds.markers[i];
-    m.action = m.DELETE;
-  }
-
-  for (std::size_t i = 0; i < paths.markers.size(); i++)
-  {
-    visualization_msgs::Marker& m = paths.markers[i];
-    m.action = m.DELETE;
-  }
-
-  for (std::size_t i = 0; i < scans.markers.size(); ++i)
-  {
-    visualization_msgs::Marker& m = scans.markers[i];
-    m.action = m.DELETE;
-  }
-  for (std::size_t i = 0; i < edge.markers.size(); ++i)
-  {
-    visualization_msgs::Marker& m = edge.markers[i];
-    m.action = m.DELETE;
-  }
-
-  // publishing markers for deletion
-  visualization_msgs::MarkerArray markers;
-  markers.markers.insert(markers.markers.end(), bds.markers.begin(), bds.markers.end());
-  markers.markers.insert(markers.markers.end(), paths.markers.begin(), paths.markers.end());
-  markers.markers.insert(markers.markers.end(), scans.markers.begin(), scans.markers.end());
-  markers.markers.insert(markers.markers.end(), edge.markers.begin(), edge.markers.end());
-
+  // Remove poses
   geometry_msgs::PoseArray empty_poses;
   empty_poses.header.frame_id = "world_frame";
   empty_poses.header.stamp = ros::Time::now();
-
-  tool_path_markers_pub_.publish(markers);
   edge_visualization_pub_.publish(empty_poses);
   blend_visualization_pub_.publish(empty_poses);
-
-  bds.markers.clear();
-  paths.markers.clear();
-  scans.markers.clear();
-  edge.markers.clear();
+  scan_visualization_pub_.publish(empty_poses);
 }
 
 bool SurfaceBlendingService::animate_tool_path()
 {
-  bool succeeded = !process_path_results_.process_visualization_.markers.empty();
+  bool succeeded = !process_path_results_.blend_poses_.empty();
   stop_tool_animation_ = true;
 
   ROS_INFO_STREAM("Tool animation activated");
@@ -417,8 +394,6 @@ void SurfaceBlendingService::tool_animation_timer_callback()
   green.g = 1.f;
   green.r = green.b = 0.f;
 
-  // marker array for all markers
-  visualization_msgs::MarkerArray process_markers;
 
   // tool marker at arbitrary position
   visualization_msgs::MarkerArray tool_markers =
@@ -426,23 +401,37 @@ void SurfaceBlendingService::tool_animation_timer_callback()
 
   // Hacky thing to get it going for demo
 
+  // marker array for all markers
+  visualization_msgs::MarkerArray process_markers;
+
+  // Poses -> Markers
+  for(const auto& pose_array : process_path_results_.blend_poses_)
+  {
+    visualization_msgs::Marker process_marker;
+    process_marker.action = process_marker.ADD;
+    process_marker.type = process_marker.LINE_STRIP;
+    process_marker.header.frame_id = "world_frame";
+    process_marker.color = green;
+    for(const auto& pose : pose_array.poses)
+    {
+      geometry_msgs::Point pt;
+      pt.x = pose.position.x;
+      pt.y = pose.position.y;
+      pt.z = pose.position.z;
+      process_marker.points.push_back(pt);
+    }
+
+    process_markers.markers.push_back(process_marker);
+  }
+
   // adding markers
-  int num_path_markers = process_path_results_.process_visualization_.markers.size();
-  // Blending Paths
-  process_markers.markers.insert(process_markers.markers.end(),
-                                 process_path_results_.process_visualization_.markers.begin(),
-                                 process_path_results_.process_visualization_.markers.end());
-  // Surface outlines
-  process_markers.markers.insert(process_markers.markers.end(),
-                                 process_path_results_.process_boundaries_.markers.begin(),
-                                 process_path_results_.process_boundaries_.markers.end());
+  int num_path_markers = 0;
+  for(const auto& marker : process_markers.markers)
+    num_path_markers += marker.points.size();
+
   // The 'tool'
   process_markers.markers.insert(process_markers.markers.end(), tool_markers.markers.begin(),
                                  tool_markers.markers.end());
-
-  ROS_INFO_STREAM(process_path_results_.process_visualization_.markers.size()
-                  << " path markers, " << process_path_results_.process_boundaries_.markers.size()
-                  << " boundary markers, " << tool_markers.markers.size() << " tool markers.");
 
   ros::Duration loop_pause(0.02f);
   for (int i = 0; i < num_path_markers; i++)
@@ -472,7 +461,7 @@ void SurfaceBlendingService::tool_animation_timer_callback()
                                      tool_markers.markers.end());
 
       // publish marker array
-      tool_path_markers_pub_.publish(process_markers);
+      //tool_path_markers_pub_.publish(process_markers);
 
       loop_pause.sleep();
     }
@@ -536,7 +525,7 @@ bool SurfaceBlendingService::surface_detection_server_callback(
   {
     case godel_msgs::SurfaceDetection::Request::INITIALIZE_SPACE:
     {
-      SurfaceBlendingService::remove_previous_process_plan();
+      SurfaceBlendingService::clear_visualizations();
       data_coordinator_.init();
       res.surfaces_found = false;
       res.surfaces = visualization_msgs::MarkerArray();
@@ -562,7 +551,7 @@ bool SurfaceBlendingService::surface_detection_server_callback(
     {
       res.surfaces_found = false;
       res.surfaces = visualization_msgs::MarkerArray();
-      SurfaceBlendingService::remove_previous_process_plan();
+      SurfaceBlendingService::clear_visualizations();
       data_coordinator_.init();
 
       if (req.use_default_parameters)
@@ -585,7 +574,7 @@ bool SurfaceBlendingService::surface_detection_server_callback(
     {
       res.surfaces_found = false;
       res.surfaces = visualization_msgs::MarkerArray();
-      SurfaceBlendingService::remove_previous_process_plan();
+      SurfaceBlendingService::clear_visualizations();
       data_coordinator_.init();
 
       if (req.use_default_parameters)
@@ -607,7 +596,7 @@ bool SurfaceBlendingService::surface_detection_server_callback(
     {
       res.surfaces_found = false;
       res.surfaces = visualization_msgs::MarkerArray();
-      SurfaceBlendingService::remove_previous_process_plan();
+      SurfaceBlendingService::clear_visualizations();
       data_coordinator_.init();
 
       if (req.use_default_parameters)
@@ -628,7 +617,7 @@ bool SurfaceBlendingService::surface_detection_server_callback(
     {
       res.surfaces_found = false;
       res.surfaces = visualization_msgs::MarkerArray();
-      SurfaceBlendingService::remove_previous_process_plan();
+      SurfaceBlendingService::clear_visualizations();
       data_coordinator_.init();
 
       if (req.use_default_parameters)
@@ -718,16 +707,13 @@ bool SurfaceBlendingService::select_surface_server_callback(godel_msgs::SelectSu
 bool SurfaceBlendingService::process_path_server_callback(
     godel_msgs::ProcessPlanning::Request& req, godel_msgs::ProcessPlanning::Response& res)
 {
-  godel_process_path_generation::VisualizeBlendingPlan process_plan;
-  process_plan.request.params =
-      req.use_default_parameters ? default_blending_plan_params_ : req.params;
-  godel_msgs::ScanPlanParameters scan_params =
-      req.use_default_parameters ? default_scan_params_ : req.scan_params;
+  godel_msgs::PathPlanning process_plan;
+  process_plan.request.params = req.use_default_parameters ? default_path_planning_params_ : req.params;
   switch (req.action)
   {
   case godel_msgs::ProcessPlanning::Request::GENERATE_MOTION_PLAN:
   case godel_msgs::ProcessPlanning::Request::GENERATE_MOTION_PLAN_AND_PREVIEW:
-    trajectory_library_ = generateMotionLibrary(process_plan.request.params, scan_params);
+    trajectory_library_ = generateMotionLibrary(process_plan.request.params);
     visualizePaths();
     break;
 
@@ -768,6 +754,7 @@ bool SurfaceBlendingService::surface_blend_parameters_server_callback(
     res.robot_scan = robot_scan_.params_;
     res.blending_plan = blending_plan_params_;
     res.scan_plan = scan_plan_params_;
+    res.path_params = path_planning_params_;
     break;
 
   case godel_msgs::SurfaceBlendingParameters::Request::GET_DEFAULT_PARAMETERS:
@@ -776,6 +763,7 @@ bool SurfaceBlendingService::surface_blend_parameters_server_callback(
     res.robot_scan = default_robot_scan_params__;
     res.blending_plan = default_blending_plan_params_;
     res.scan_plan = default_scan_params_;
+    res.path_params = default_path_planning_params_;
     break;
 
   // Update the current parameters in this service
@@ -785,11 +773,13 @@ bool SurfaceBlendingService::surface_blend_parameters_server_callback(
     robot_scan_.params_ = req.robot_scan;
     blending_plan_params_ = req.blending_plan;
     scan_plan_params_ = req.scan_plan;
+    path_planning_params_ = req.path_params;
 
     if (req.action == godel_msgs::SurfaceBlendingParameters::Request::SAVE_PARAMETERS)
     {
       this->save_blend_parameters(param_cache_prefix_ + BLEND_PARAMS_FILE);
       this->save_scan_parameters(param_cache_prefix_ + SCAN_PARAMS_FILE);
+      this->save_path_planning_parameters(param_cache_prefix_ + PATH_PLANNING_PARAMS_FILE);
       robot_scan_.save_parameters(param_cache_prefix_ + ROBOT_SCAN_PARAMS_FILE);
       surface_detection_.save_parameters(param_cache_prefix_ + SURFACE_DETECTION_PARAMS_FILE);
     }
@@ -894,14 +884,97 @@ bool SurfaceBlendingService::renameSurfaceCallback(godel_msgs::RenameSurface::Re
 
 void SurfaceBlendingService::visualizePaths()
 {
-  visualization_msgs::MarkerArray paths;
-  paths.markers.insert(paths.markers.end(), process_path_results_.process_visualization_.markers.begin(),
-                       process_path_results_.process_visualization_.markers.end());
-  paths.markers.insert(paths.markers.end(), process_path_results_.edge_visualization_.markers.begin(),
-                       process_path_results_.edge_visualization_.markers.end());
-  paths.markers.insert(paths.markers.end(), process_path_results_.scan_visualization_.markers.begin(),
-                       process_path_results_.scan_visualization_.markers.end());
-  tool_path_markers_pub_.publish(paths);
+  // Publish poses
+  geometry_msgs::PoseArray blend_poses, edge_poses, scan_poses;
+  blend_poses.header.frame_id = edge_poses.header.frame_id = scan_poses.header.frame_id = "world_frame";
+  blend_poses.header.stamp = edge_poses.header.stamp = scan_poses.header.stamp = ros::Time::now();
+
+  for(const auto& pose_array : process_path_results_.blend_poses_)
+    blend_poses.poses.insert(blend_poses.poses.end(), pose_array.poses.begin(), pose_array.poses.end());
+
+  for(const auto& pose_array : process_path_results_.edge_poses_)
+    edge_poses.poses.insert(edge_poses.poses.end(), pose_array.poses.begin(), pose_array.poses.end());
+
+  for(const auto& pose_array : process_path_results_.scan_poses_)
+    scan_poses.poses.insert(scan_poses.poses.end(), pose_array.poses.begin(), pose_array.poses.end());
+
+  blend_visualization_pub_.publish(blend_poses);
+  edge_visualization_pub_.publish(edge_poses);
+  scan_visualization_pub_.publish(scan_poses);
+
+  // Create identity pose
+  geometry_msgs::Pose identity_pose;
+  identity_pose.position.x = 0;
+  identity_pose.position.y = 0;
+  identity_pose.position.z = 0;
+  identity_pose.orientation.x = 0;
+  identity_pose.orientation.y = 0;
+  identity_pose.orientation.z = 0;
+  identity_pose.orientation.w = 1;
+
+  // Publish markers
+  visualization_msgs::MarkerArray path_visualization;
+  std_msgs::ColorRGBA color;
+  color.r = 1.0;
+  color.b = 0.0;
+  color.g = 0.0;
+  color.a = 1.0;
+
+  for(const auto& pose_array : process_path_results_.blend_poses_)
+  {
+    visualization_msgs::Marker blend_marker;
+    blend_marker.header.frame_id = "world_frame";
+    blend_marker.id = marker_counter_++;
+    blend_marker.ns = "blend_paths";
+    blend_marker.pose = identity_pose;
+    blend_marker.action = visualization_msgs::Marker::ADD;
+    blend_marker.type = visualization_msgs::Marker::LINE_STRIP;
+    blend_marker.scale.x = 0.004;
+    blend_marker.color = color;
+    for(const auto& pose : pose_array.poses)
+    {
+      geometry_msgs::Point pt;
+      pt.x = pose.position.x;
+      pt.y = pose.position.y;
+      pt.z = pose.position.z;
+      blend_marker.points.push_back(pt);
+    }
+    blend_marker.header.stamp = ros::Time::now();
+    blend_marker.lifetime = ros::Duration(0.0);
+    path_visualization.markers.push_back(blend_marker);
+  }
+
+  // Add line strip for scan poses
+  color.r = 1.0;
+  color.b = 0.0;
+  color.g = 1.0;
+  color.a = 0.5;
+  for(const auto& pose_array : process_path_results_.scan_poses_)
+  {
+    visualization_msgs::Marker scan_marker;
+    scan_marker.header.frame_id = "world_frame";
+    scan_marker.id = marker_counter_++;
+    scan_marker.ns = "scan_paths";
+    scan_marker.pose = identity_pose;
+    scan_marker.action = visualization_msgs::Marker::ADD;
+    scan_marker.type = visualization_msgs::Marker::LINE_STRIP;
+    scan_marker.scale.x = 0.004;
+    scan_marker.color = color;
+
+    for(const auto& pose : pose_array.poses)
+    {
+      geometry_msgs::Point pt;
+      pt.x = pose.position.x;
+      pt.y = pose.position.y;
+      pt.z = pose.position.z;
+      scan_marker.points.push_back(pt);
+    }
+    scan_marker.header.stamp = ros::Time::now();
+    scan_marker.lifetime = ros::Duration(0.0);
+    path_visualization.markers.push_back(scan_marker);
+  }
+
+  tool_path_markers_pub_.publish(path_visualization);
 }
 
 int main(int argc, char** argv)

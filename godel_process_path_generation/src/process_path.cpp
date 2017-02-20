@@ -24,6 +24,7 @@
 
 #include "godel_process_path_generation/process_path.h"
 #include <geometry_msgs/Point.h>
+#include <geometry_msgs/PoseArray.h>
 #include <eigen_conversions/eigen_msg.h>
 
 namespace descartes
@@ -53,6 +54,26 @@ visualization_msgs::Marker ProcessPath::asMarker() const
   marker.colors = std::vector<std_msgs::ColorRGBA>(marker.points.size(), red);
 
   return marker;
+}
+
+geometry_msgs::PoseArray ProcessPath::asPoseArray() const
+{
+  geometry_msgs::PoseArray poses;
+  for (const auto& pt : pts_)
+  {
+    geometry_msgs::Pose pose;
+    pose.orientation.x = 0;
+    pose.orientation.y = 0;
+    pose.orientation.z = 0;
+    pose.orientation.w = 1;
+    pose.position.x = pt.pose().translation()(0);
+    pose.position.y = pt.pose().translation()(1);
+    pose.position.z = pt.pose().translation()(2);
+
+    poses.poses.push_back(pose);
+  }
+
+  return poses;
 }
 
 } /* namespace descartes */

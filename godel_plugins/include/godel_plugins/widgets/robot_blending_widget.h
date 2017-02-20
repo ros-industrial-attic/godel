@@ -35,7 +35,7 @@
 
 #include <godel_plugins/widgets/surface_detection_configuration.h>
 #include <godel_plugins/widgets/robot_scan_configuration.h>
-#include <godel_plugins/widgets/blend_tool_param_window.h>
+#include <godel_plugins/widgets/path_planning_param_window.h>
 #include <godel_plugins/widgets/scan_tool_configuration_window.h>
 
 // macros
@@ -111,7 +111,7 @@ protected Q_SLOTS:
   void show_all_handler();
   void scan_options_click_handler();
 
-  void blend_options_click_handler();
+  void path_planning_options_click_handler();
   void scan_plan_options_click_handler();
 
   void surface_options_click_handler();
@@ -137,7 +137,7 @@ protected Q_SLOTS:
 protected:
   Ui::RobotBlendingWidget ui_;
   RobotScanConfigWidget* robot_scan_config_window_;
-  BlendingPlanConfigWidget* robot_blend_config_window_;
+  PathPlanningConfigWidget* path_planning_config_window_;
   SurfaceDetectionConfigWidget* surface_detect_config_window_;
   ScanPlanConfigWidget* scan_plan_config_window_;
 
@@ -154,7 +154,7 @@ protected:
   std::string param_ns_;
   godel_msgs::RobotScanParameters robot_scan_parameters_;
   godel_msgs::SurfaceDetectionParameters surf_detect_parameters_;
-  godel_msgs::BlendingPlanParameters blending_plan_parameters_;
+  godel_msgs::PathPlanningParameters path_planning_parameters_;
   godel_msgs::ScanPlanParameters scan_plan_parameters_;
   godel_msgs::SurfaceDetection::Response latest_result_;
   godel_msgs::SurfaceDetection::Request latest_request_;

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>BlendToolParamWindow</class>
- <widget class="QWidget" name="BlendToolParamWindow">
+ <class>PathPlanningParamWindow</class>
+ <widget class="QWidget" name="PathPlanningParamWindow">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -96,64 +96,64 @@
      <number>10</number>
     </property>
     <item row="0" column="0">
-     <widget class="QLabel" name="labelSpindleSpeed">
+     <widget class="QLabel" name="labelDiscretization">
       <property name="text">
-       <string>Spindle Speed (rpm)</string>
+       <string>Discretization (m)</string>
       </property>
      </widget>
     </item>
     <item row="0" column="1">
-     <widget class="QLineEdit" name="LineEditSpindleSpeed"/>
+     <widget class="QLineEdit" name="LineEditDiscretization"/>
     </item>
     <item row="1" column="0">
-     <widget class="QLabel" name="labelTravelSpeed">
-      <property name="text">
-       <string>Travel Speed (m/s)</string>
-      </property>
-     </widget>
-    </item>
-    <item row="1" column="1">
-     <widget class="QLineEdit" name="LineEditTravelSpeed"/>
-    </item>
-    <item row="2" column="0">
-     <widget class="QLabel" name="labelForce">
-      <property name="text">
-       <string>Force (kg)</string>
-      </property>
-     </widget>
-    </item>
-    <item row="2" column="1">
-     <widget class="QLineEdit" name="LineEditForce"/>
-    </item>
-    <item row="3" column="0">
-     <widget class="QLabel" name="labelSpindleDiameter">
-      <property name="text">
-       <string>Spindle Diameter (m)</string>
-      </property>
-     </widget>
-    </item>
-    <item row="3" column="1">
-     <widget class="QLineEdit" name="LineEditSpindleDiameter"/>
-    </item>
-    <item row="4" column="0">
      <widget class="QLabel" name="labelMargin">
       <property name="text">
        <string>Margin (m)</string>
       </property>
      </widget>
     </item>
-    <item row="4" column="1">
+    <item row="1" column="1">
      <widget class="QLineEdit" name="LineEditMargin"/>
     </item>
-    <item row="5" column="0">
+    <item row="2" column="0">
      <widget class="QLabel" name="labelOverlap">
       <property name="text">
        <string>Overlap (m)</string>
       </property>
      </widget>
     </item>
+    <item row="2" column="1">
+     <widget class="QLineEdit" name="LineEditOverlap"/>
+    </item>
+    <item row="3" column="0">
+     <widget class="QLabel" name="labelScanWidth">
+      <property name="text">
+       <string>Scan Width (m)</string>
+      </property>
+     </widget>
+    </item>
+    <item row="3" column="1">
+     <widget class="QLineEdit" name="LineEditScanWidth"/>
+    </item>
+    <item row="4" column="0">
+     <widget class="QLabel" name="labelToolRadius">
+      <property name="text">
+       <string>Tool Radius (m)</string>
+      </property>
+     </widget>
+    </item>
+    <item row="4" column="1">
+     <widget class="QLineEdit" name="LineEditToolRadius"/>
+    </item>
+    <item row="5" column="0">
+     <widget class="QLabel" name="labelTraverseHeight">
+      <property name="text">
+       <string>Traverse Height (m)</string>
+      </property>
+     </widget>
+    </item>
     <item row="5" column="1">
-     <widget class="QLineEdit" name="lineEditOverlap"/>
+     <widget class="QLineEdit" name="LineEditTraverseHeight"/>
     </item>
    </layout>
   </widget>
@@ -183,14 +183,13 @@
     </rect>
    </property>
    <property name="text">
-    <string>Blending Proccess Parameters</string>
+    <string>Path Planning Parameters</string>
    </property>
   </widget>
   <zorder>frame</zorder>
   <zorder>horizontalLayoutWidget</zorder>
   <zorder>formLayoutWidget</zorder>
   <zorder>label</zorder>
-  <zorder>labelSpindleSpeed</zorder>
  </widget>
  <resources/>
  <connections/>

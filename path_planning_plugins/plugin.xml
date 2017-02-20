@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<library path="lib/libpath_planning_plugins">
+  <class type="path_planning_plugins::openveronoi::BlendPlanner"
+  base_class_type="path_planning_plugins_base::PathPlanningBase">
+  <description> Path planning plugin based on Openveronoi which plans for blend paths </description>
+  </class>
+  <class type="path_planning_plugins::openveronoi::ScanPlanner"
+  base_class_type="path_planning_plugins_base::PathPlanningBase">
+  <description> Path planning plugin based on Openveronoi which plans for scan paths </description>
+  </class>
+</library>

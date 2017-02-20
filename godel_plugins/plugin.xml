@@ -7,7 +7,8 @@
       A panel widget that can be used in an rviz instance for surface blending path generation
     </description>
   </class>
-  <class name="godel_plugins/RobotBlendingPlugin" type="godel_plugins::rqt_plugins::RobotBlendingPlugin" 	base_class_type="rqt_gui_cpp::Plugin">
+  <class name="godel_plugins/RobotBlendingPlugin" type="godel_plugins::rqt_plugins::RobotBlendingPlugin"
+         base_class_type="rqt_gui_cpp::Plugin">
     <description>
       A GUI plugin to create and run robot paths for blending surfaces.
     </description>

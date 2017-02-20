@@ -39,8 +39,7 @@ void operator<<(ProcessPt& pr_pt, const PolygonPt& pg_pt)
   pr_pt.setPosePosition(pg_pt.x, pg_pt.y, 0.);
 }
 
-void ProcessPathGenerator::addInterpolatedProcessPts(const ProcessPt& start, const ProcessPt& end,
-                                                     double vel)
+void ProcessPathGenerator::addInterpolatedProcessPts(const ProcessPt& start, const ProcessPt& end)
 {
   const Eigen::Affine3d& p1 = start.pose();
   const Eigen::Affine3d& p2 = end.pose();
@@ -58,12 +57,11 @@ void ProcessPathGenerator::addInterpolatedProcessPts(const ProcessPt& start, con
       ProcessPt new_pt = start;
       new_pt.pose() = Eigen::Translation3d(pos) * rot;
       process_path_.addPoint(new_pt);
-      process_path_.addTransition(velToTransition(vel));
     }
   }
 }
 
-void ProcessPathGenerator::addPolygonToProcessPath(const PolygonBoundary& bnd_ref, double vel)
+void ProcessPathGenerator::addPolygonToProcessPath(const PolygonBoundary& bnd_ref)
 {
   PolygonBoundary bnd = bnd_ref;
   bnd.push_back(bnd.front());
@@ -72,7 +70,6 @@ void ProcessPathGenerator::addPolygonToProcessPath(const PolygonBoundary& bnd_re
   {
     process_pt << pg_pt;
     process_path_.addPoint(process_pt);
-    process_path_.addTransition(velToTransition(vel));
   }
 }
 
@@ -88,13 +85,11 @@ void ProcessPathGenerator::addTraverseToProcessPath(const PolygonPt& from, const
   approach.setPosePosition(to.x, to.y, safe_traverse_height_);
   end << to;
 
-  addInterpolatedProcessPts(start, retract, velocity_.retract);
+  addInterpolatedProcessPts(start, retract);
   process_path_.addPoint(retract); /*addInterpolatedPoints does not add endpoints */
-  process_path_.addTransition(velToTransition(velocity_.retract));
-  addInterpolatedProcessPts(retract, approach, velocity_.traverse);
+  addInterpolatedProcessPts(retract, approach);
   process_path_.addPoint(approach);
-  process_path_.addTransition(velToTransition(velocity_.traverse));
-  addInterpolatedProcessPts(approach, end, velocity_.approach); // TODO Moving to 1st pt of next
+  addInterpolatedProcessPts(approach, end); // TODO Moving to 1st pt of next
                                                                 // path is at vel.blending instead
                                                                 // of vel.approach
 }
@@ -138,7 +133,7 @@ bool ProcessPathGenerator::createProcessPath()
   approach.setPosePosition(first.x, first.y, safe_traverse_height_);
   start << first;
   process_path_.addPoint(approach);
-  addInterpolatedProcessPts(approach, start, velocity_.approach);
+  addInterpolatedProcessPts(approach, start);
   ROS_INFO_COND(verbose_, "Created approach path.");
 
   // Do all loops until last
@@ -148,7 +143,7 @@ bool ProcessPathGenerator::createProcessPath()
   {
     current_offset = path_offsets_->at(pgIdx);
     const PolygonBoundary& polygon = path_polygons_->at(pgIdx);
-    addPolygonToProcessPath(polygon, velocity_.blending);
+    addPolygonToProcessPath(polygon);
     ROS_INFO_COND(verbose_, "Added polygon %li to process path.", pgIdx);
 
     const PolygonPt last_pgpt = polygon.front(); // Each polygon ends where it starts
@@ -164,7 +159,7 @@ bool ProcessPathGenerator::createProcessPath()
       std::rotate(next_polygon.begin(), next_polygon.begin() + rotate_index, next_polygon.end());
       ProcessPt next_pt;
       next_pt << next_polygon.front();
-      addInterpolatedProcessPts(last_pt, next_pt, velocity_.approach);
+      addInterpolatedProcessPts(last_pt, next_pt);
       ROS_INFO_COND(verbose_, "Added connection to polygon %li.", pgIdx);
     }
     else
@@ -176,7 +171,7 @@ bool ProcessPathGenerator::createProcessPath()
 
   // Add last loop and retract
   const PolygonBoundary& polygon = path_polygons_->at(pgIdx);
-  addPolygonToProcessPath(polygon, velocity_.blending);
+  addPolygonToProcessPath(polygon);
   ROS_INFO_COND(verbose_, "Added polygon %li to process path.", pgIdx);
   const PolygonPt last_pgpt = polygon.front();
   ProcessPt last, retract;
@@ -184,7 +179,6 @@ bool ProcessPathGenerator::createProcessPath()
   retract.setPosePosition(last_pgpt.x, last_pgpt.y, safe_traverse_height_);
   addInterpolatedProcessPts(last, retract);
   process_path_.addPoint(retract);
-  process_path_.addTransition(velToTransition(velocity_.retract));
   ROS_INFO_COND(verbose_, "Added retract path.");
 
   ROS_INFO_COND(verbose_, "Successfully converted Polygons to ProcessPath.");

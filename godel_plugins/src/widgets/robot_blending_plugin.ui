@@ -76,7 +76,7 @@
         </rect>
        </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="tab_1">
         <attribute name="title">
@@ -335,9 +335,9 @@
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout">
            <item>
-            <widget class="QPushButton" name="PushButtonBlendOptions">
+            <widget class="QPushButton" name="PushButtonPathPlanningOptions">
              <property name="text">
-              <string>Blend Options</string>
+              <string>Path Planning Options</string>
              </property>
             </widget>
            </item>

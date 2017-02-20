@@ -28,7 +28,6 @@
 #include <tf/transform_datatypes.h>
 #include <visualization_msgs/MarkerArray.h>
 #include <geometry_msgs/Pose.h>
-#include "godel_process_path_generation/mesh_importer.h"
 #include "godel_process_path_generation/VisualizeBlendingPlan.h"
 #include "godel_process_path_generation/utils.h"
 

@@ -27,13 +27,12 @@ add_service_files(
    FILES VisualizeBlendingPlan.srv
 )
 
-generate_messages(DEPENDENCIES godel_msgs visualization_msgs trajectory_msgs)   # Trajectory msgs needed for building msg in Visualize...srv
+# Trajectory msgs needed for building msg in Visualize...srv
+generate_messages(DEPENDENCIES godel_msgs visualization_msgs trajectory_msgs)
 
 catkin_package(
-               INCLUDE_DIRS include
-   LIBRARIES mesh_importer polygon_utils
-#  CATKIN_DEPENDS other_catkin_pkg
-#  DEPENDS system_lib
+    INCLUDE_DIRS include
+    LIBRARIES polygon_utils
 )
 
 
@@ -49,15 +48,6 @@ include_directories(include
 
 ##_____________
 ## Libraries ##
-## MeshImporter library
-add_library(mesh_importer
-            src/mesh_importer.cpp
-)
-target_link_libraries(mesh_importer
-                      ${catkin_LIBRARIES}
-                      ${Eigen_LIBRARIES}
-                      ${PCL_LIBRARIES}
-)
 
 ## Polygon Utilities library
 add_library(polygon_utils
@@ -118,11 +108,6 @@ add_dependencies(process_visualization_node ${PROJECT_NAME}_generate_messages_cp
 
 
 ## gtest ##
-catkin_add_gtest(test_MeshImporter test/test_MeshImporter.cpp)
-target_link_libraries(test_MeshImporter
-                      mesh_importer
-)
-
 catkin_add_gtest(test_ProcessPathGenerator test/test_ProcessPathGenerator.cpp)
 target_link_libraries(test_ProcessPathGenerator
                       process_path_generator

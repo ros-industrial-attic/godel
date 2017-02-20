@@ -33,13 +33,13 @@
 #include <pcl/surface/convex_hull.h>
 #include <pcl/common/impl/centroid.hpp>
 #include <pcl/filters/project_inliers.h>
-#include "godel_process_path_generation/mesh_importer.h"
+#include <mesh_importer/mesh_importer.h>
 #include "godel_process_path_generation/get_boundary.h"
 
 using Eigen::Vector3d;
 using Eigen::Vector4d;
 
-namespace godel_process_path
+namespace mesh_importer
 {
 
 const double CONCAVE_HULL_SIDE_LENGHT = 0.01f;
@@ -156,7 +156,7 @@ bool MeshImporter::calculateSimpleBoundary(const pcl::PolygonMesh& input_mesh)
       ROS_ERROR_STREAM("Transform matrix used to project points:\n" << plane_frame_.matrix());
       return false;
     }
-    pbound.push_back(PolygonPt(plane_pt(0), plane_pt(1)));
+    pbound.push_back(godel_process_path::PolygonPt(plane_pt(0), plane_pt(1)));
   }
 
   boundaries_.push_back(pbound);
@@ -259,7 +259,7 @@ bool MeshImporter::calculateBoundaryData(const pcl::PolygonMesh& input_mesh)
         ROS_ERROR_STREAM("Transform matrix used to project points:\n" << plane_frame_.matrix());
         return false;
       }
-      pbound.push_back(PolygonPt(plane_pt(0), plane_pt(1)));
+      pbound.push_back(godel_process_path::PolygonPt(plane_pt(0), plane_pt(1)));
     }
 
     boundaries_.push_back(pbound);
