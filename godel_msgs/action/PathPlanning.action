@@ -1,0 +1,11 @@
+# Service used to generate cartesian path of single surface.
+
+# Goal
+godel_msgs/PathPlanningParameters params
+godel_msgs/SurfaceBoundaries surface
+---
+# Result
+geometry_msgs/PoseArray poses
+---
+# Feedback
+string last_completed
