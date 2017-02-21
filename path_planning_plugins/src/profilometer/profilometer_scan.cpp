@@ -108,11 +108,11 @@ std::vector<RotatedRect> sliceBoundingBox(const RotatedRect& bbox, double slice_
 std::vector<Pt> interpolateAlongAxis(const RotatedRect& rect, double ds)
 {
   std::vector<Pt> pts;
-  double dx, dy; //
+  double dx, dy;
   float x, y;
   int n;
-  n = rect.w / ds;
-  dx = std::cos(rect.a);
+  n = std::ceil(rect.w / ds); // We want to capture all of the width with ds sized steps
+  dx = std::cos(rect.a);      // so we might overshoot by up to 'ds'.
   dy = std::sin(rect.a);
   x = rect.x - dx * rect.w / 2.0;
   y = rect.y - dy * rect.w / 2.0;
