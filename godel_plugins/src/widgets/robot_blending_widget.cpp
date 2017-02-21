@@ -23,6 +23,8 @@
 #include <godel_msgs/SelectMotionPlan.h>
 #include <godel_msgs/LoadSaveMotionPlan.h>
 #include <godel_msgs/RenameSurface.h>
+#include <actionlib/client/simple_action_client.h>
+#include <godel_msgs/ProcessPlanningAction.h>
 
 const double RAD_TO_DEGREES = 180.0f / M_PI;
 const double DEGREES_TO_RAD = M_PI / 180.0f;
@@ -31,12 +33,6 @@ namespace godel_plugins
 {
 namespace widgets
 {
-
-RobotBlendingWidget::RobotBlendingWidget(std::string ns) : param_ns_(ns)
-{
-  // TODO Auto-generated constructor stub
-  init();
-}
 
 RobotBlendingWidget::~RobotBlendingWidget()
 {
@@ -464,13 +460,24 @@ void RobotBlendingWidget::connect_completed_handler()
 
 void RobotBlendingWidget::generate_process_path_handler()
 {
-  godel_msgs::ProcessPlanning process_plan;
-  process_plan.request.use_default_parameters = false;
-  process_plan.request.params = path_planning_config_window_->params();
-  //process_plan.request.scan_params = this->scan_plan_config_window_->params();
-  process_plan.request.action = process_plan.request.GENERATE_MOTION_PLAN_AND_PREVIEW;
-  ROS_INFO_STREAM("process plan request sent");
-  if (process_plan_client_.call(process_plan))
+  process_planning_action_client_.waitForServer();
+
+  godel_msgs::ProcessPlanningActionGoal goal;
+  goal.goal.use_default_parameters = false;
+  goal.goal.params = path_planning_config_window_->params();
+  goal.goal.action = goal.goal.GENERATE_MOTION_PLAN_AND_PREVIEW;
+  process_planning_action_client_.sendGoal(
+        goal.goal,
+        boost::bind(&RobotBlendingWidget::processPlanningDoneCallback, this, _1, _2),
+        boost::bind(&RobotBlendingWidget::processPlanningActiveCallback, this),
+        boost::bind(&RobotBlendingWidget::processPlanningFeedbackCallback, this, _1)
+        );
+}
+
+void RobotBlendingWidget::processPlanningDoneCallback(const actionlib::SimpleClientGoalState& state,
+            const godel_msgs::ProcessPlanningResultConstPtr& result)
+{
+  if(result->succeeded)
   {
     std::vector<std::string> plan_names;
     request_available_motions(plan_names);
@@ -478,6 +485,20 @@ void RobotBlendingWidget::generate_process_path_handler()
 
     ui_.TabWidgetCreateLib->setCurrentIndex(2);
   }
+  else
+    ROS_WARN_STREAM("Process Planning action failed");
+}
+
+// Called once when the goal becomes active
+void RobotBlendingWidget::processPlanningActiveCallback()
+{
+  ROS_INFO("Process Planning goal just went active");
+}
+
+void RobotBlendingWidget::processPlanningFeedbackCallback(
+    const godel_msgs::ProcessPlanningFeedbackConstPtr& feedback)
+{
+  ROS_INFO("Got Feedback: %s", (feedback->last_completed).c_str());
 }
 
 

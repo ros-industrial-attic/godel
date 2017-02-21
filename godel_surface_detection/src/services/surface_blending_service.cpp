@@ -155,9 +155,6 @@ bool SurfaceBlendingService::init()
   select_surface_server_ = nh_.advertiseService(
       SELECT_SURFACE_SERVICE, &SurfaceBlendingService::select_surface_server_callback, this);
 
-  /*process_path_server_ = nh_.advertiseService(
-      PROCESS_PATH_SERVICE, &SurfaceBlendingService::process_path_server_callback, this);*/
-
   get_motion_plans_server_ = nh_.advertiseService(
       GET_MOTION_PLANS_SERVICE, &SurfaceBlendingService::getMotionPlansCallback, this);
 
@@ -177,6 +174,9 @@ bool SurfaceBlendingService::init()
   blend_visualization_pub_ = nh_.advertise<geometry_msgs::PoseArray>(BLEND_VISUALIZATION_TOPIC, 1, true);
   edge_visualization_pub_ = nh_.advertise<geometry_msgs::PoseArray>(EDGE_VISUALIZATION_TOPIC, 1, true);
   scan_visualization_pub_ = nh_.advertise<geometry_msgs::PoseArray>(SCAN_VISUALIZATION_TOPIC, 1, true);
+
+  // action servers
+  process_planning_server_.start();
 
   return true;
 }
@@ -602,33 +602,21 @@ bool SurfaceBlendingService::surface_detection_server_callback(
   return true;
 }
 
-void SurfaceBlendingService::process_path_server_callback(const godel_msgs::ProcessPlanningGoalConstPtr &goal)
+void SurfaceBlendingService::process_planning_action_callback(const godel_msgs::ProcessPlanningGoalConstPtr &goal)
 {
   switch (goal->action)
   {
-  case godel_msgs::ProcessPlanning::Request::GENERATE_MOTION_PLAN_AND_PREVIEW:
+  case godel_msgs::ProcessPlanningGoal::GENERATE_MOTION_PLAN_AND_PREVIEW:
     process_planning_feedback_.last_completed = "Recieved request to generate motion plan";
     process_planning_server_.publishFeedback(process_planning_feedback_);
     trajectory_library_ = generateMotionLibrary(goal->params);
     visualizePaths();
     break;
 
-  case godel_msgs::ProcessPlanning::Request::PREVIEW_TOOL_PATH:
+  case godel_msgs::ProcessPlanningGoal::PREVIEW_TOOL_PATH:
     process_planning_feedback_.last_completed = "Recieved request to preview tool path";
     process_planning_server_.publishFeedback(process_planning_feedback_);
     process_planning_result_.succeeded = animate_tool_path();
-    break;
-
-  case godel_msgs::ProcessPlanning::Request::PREVIEW_MOTION_PLAN:
-    process_planning_feedback_.last_completed = "Recieved request to preview motion plan (Not implemented)";
-    process_planning_server_.publishFeedback(process_planning_feedback_);
-    process_planning_result_.succeeded = false;
-    break;
-
-  case godel_msgs::ProcessPlanning::Request::EXECUTE_MOTION_PLAN:
-    process_planning_feedback_.last_completed = "Recieved request to execute motion plan (Not implemented)";
-    process_planning_server_.publishFeedback(process_planning_feedback_);
-    process_planning_result_.succeeded = false;
     break;
 
   default:
@@ -640,6 +628,7 @@ void SurfaceBlendingService::process_path_server_callback(const godel_msgs::Proc
   process_planning_result_.succeeded = false;
 
 }
+
 
 bool SurfaceBlendingService::select_surface_server_callback(godel_msgs::SelectSurface::Request& req,
                                                             godel_msgs::SelectSurface::Response&)
