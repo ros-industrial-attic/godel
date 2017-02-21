@@ -68,10 +68,11 @@ namespace godel_surface_detection
     }
 
 
-    bool SurfaceDetection::init()
+    bool SurfaceDetection::init(const std::string &meshing_plugin_name)
     {
       full_cloud_ptr_->header.frame_id = params_.frame_id;
       acquired_clouds_counter_ = 0;
+      meshing_plugin_name_ = meshing_plugin_name;
       return true;
     }
 
@@ -325,7 +326,7 @@ namespace godel_surface_detection
 
       try
       {
-        mesher = poly_loader.createInstance("concave_hull_mesher::ConcaveHullMesher");
+        mesher = poly_loader.createInstance(meshing_plugin_name_);
 
       }
       catch(pluginlib::PluginlibException& ex)

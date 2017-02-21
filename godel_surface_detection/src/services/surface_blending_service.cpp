@@ -85,13 +85,39 @@ bool SurfaceBlendingService::init()
   if (!surface_detection_.load_parameters(param_cache_prefix_ + SURFACE_DETECTION_PARAMS_FILE))
     ROS_WARN("Unable to load surface detection parameters.");
 
+  // load plugins for meshing and tool planning
+  const static std::string MESHING_PLUGIN_PARAM = "meshing_plugin_name";
+  if (!ph.getParam(MESHING_PLUGIN_PARAM, meshing_plugin_name_))
+  {
+    ROS_FATAL("SurfaceBlendinService::init(): Expected private parameter '%s' not found. Aborting",
+              MESHING_PLUGIN_PARAM.c_str());
+    return false;
+  }
+
+  const static std::string BLEND_TOOL_PLUGIN_PARAM = "blend_tool_planning_plugin_name";
+  if (!ph.getParam(BLEND_TOOL_PLUGIN_PARAM, blend_tool_planning_plugin_name_))
+  {
+    ROS_FATAL("SurfaceBlendinService::init(): Expected private parameter '%s' not found. Aborting",
+              MESHING_PLUGIN_PARAM.c_str());
+    return false;
+  }
+
+  const static std::string SCAN_TOOL_PLUGIN_PARAM = "scan_tool_planning_plugin_name";
+  if (!ph.getParam(SCAN_TOOL_PLUGIN_PARAM, scan_tool_planning_plugin_name_))
+  {
+    ROS_FATAL("SurfaceBlendinService::init(): Expected private parameter '%s' not found. Aborting",
+              SCAN_TOOL_PLUGIN_PARAM.c_str());
+    return false;
+  }
+
   // save default parameters
   default_robot_scan_params__ = robot_scan_.params_;
   default_surf_detection_params_ = surface_detection_.params_;
   default_blending_plan_params_ = blending_plan_params_;
   default_scan_params_ = scan_plan_params_;
 
-  if (surface_detection_.init() && robot_scan_.init() && surface_server_.init() && data_coordinator_.init())
+  if (surface_detection_.init(meshing_plugin_name_) && robot_scan_.init() &&
+      surface_server_.init() && data_coordinator_.init())
   {
     // adding callbacks
     scan::RobotScan::ScanCallback cb =
@@ -983,10 +1009,10 @@ int main(int argc, char** argv)
   ros::AsyncSpinner spinner(4);
   spinner.start();
   SurfaceBlendingService service;
-  ROS_INFO("INIT BLENDING SERVICE");
+
   if (service.init())
   {
-    ROS_INFO("BLENDING SERVICE INIT SUCCESSFUL!");
+    ROS_INFO("Godel Surface Blending Service successfully initialized and now running");
     service.run();
   }
 

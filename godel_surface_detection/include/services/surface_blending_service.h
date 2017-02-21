@@ -249,6 +249,11 @@ private:
 
   // Parameter loading and saving
   std::string param_cache_prefix_;
+
+  // Meshing and Path planning plugin information
+  std::string meshing_plugin_name_;
+  std::string blend_tool_planning_plugin_name_;
+  std::string scan_tool_planning_plugin_name_;
 };
 
 #endif // surface blending services

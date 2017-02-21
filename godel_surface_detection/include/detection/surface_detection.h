@@ -140,7 +140,7 @@ public:
   virtual ~SurfaceDetection();
 
 public:
-  bool init();
+  bool init(const std::string& meshing_plugin_name);
 
   bool load_parameters(const std::string& filename);
   void save_parameters(const std::string& filename);
@@ -208,6 +208,8 @@ protected:
 
   // counter
   int acquired_clouds_counter_;
+  // Meshing algorithm
+  std::string meshing_plugin_name_;
 };
 } /* end namespace detection */
 } /* namespace godel_surface_detection */

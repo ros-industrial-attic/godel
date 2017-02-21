@@ -9,6 +9,7 @@
     <rosparam command="load" file="$(arg config_path)/blending_plan.yaml"/>
     <rosparam command="load" file="$(arg config_path)/surface_detection.yaml"/>
     <rosparam command="load" file="$(arg config_path)/scan_plan.yaml"/>
+    <rosparam command="load" file="$(arg config_path)/plugins.yaml"/>
     <param name="publish_region_point_cloud" value="True"/>
   </node>
 

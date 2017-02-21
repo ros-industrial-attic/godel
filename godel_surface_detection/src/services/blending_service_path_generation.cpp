@@ -207,7 +207,7 @@ SurfaceBlendingService::generateProcessPath(const int& id,
 
   try
   {
-    path_planner = poly_loader.createInstance("path_planning_plugins::openveronoi::BlendPlanner");
+    path_planner = poly_loader.createInstance(blend_tool_planning_plugin_name_);
   }
   catch(pluginlib::PluginlibException& ex)
   {
@@ -224,7 +224,7 @@ SurfaceBlendingService::generateProcessPath(const int& id,
 
   try
   {
-    path_planner = poly_loader.createInstance("path_planning_plugins::openveronoi::ScanPlanner");
+    path_planner = poly_loader.createInstance(scan_tool_planning_plugin_name_);
   }
   catch(pluginlib::PluginlibException& ex)
   {
