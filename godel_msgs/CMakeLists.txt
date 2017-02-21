@@ -23,7 +23,6 @@ add_action_files(
     DIRECTORY
     action
     FILES
-    PathPlanning.action
     ProcessPlanning.action
 )
 
@@ -54,7 +53,6 @@ add_service_files(
   LoadSaveMotionPlan.srv
   OffsetBoundary.srv
   PathPlanning.srv
-  ProcessPlanning.srv
   RenameSurface.srv
   SelectMotionPlan.srv
   SelectSurface.srv
