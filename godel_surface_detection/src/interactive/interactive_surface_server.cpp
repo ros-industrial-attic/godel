@@ -25,6 +25,8 @@
 #include <pcl_ros/point_cloud.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include "utils/mesh_conversions.h"
+
 const int RAND_MARKER_ID = -1;
 
 namespace godel_surface_detection
@@ -78,45 +80,13 @@ void InteractiveSurfaceServer::mesh_to_marker(const pcl::PolygonMesh& mesh,
   marker.color = color;
 
   // filling points
-  pcl::PointCloud<pcl::PointXYZRGB> points;
-  pcl::fromPCLPointCloud2(mesh.cloud, points);
-  for (int i = 0; i < mesh.polygons.size(); i++)
-  {
-    const pcl::Vertices& v = mesh.polygons[i];
-    for (int j = 0; j < v.vertices.size(); j++)
-    {
-      uint32_t index = v.vertices[j];
-      geometry_msgs::Point p;
-      p.x = points.points[index].x;
-      p.y = points.points[index].y;
-      p.z = points.points[index].z;
-      marker.points.push_back(p);
-    }
-  }
+  meshToTrianglePoints(mesh, marker.points);
 }
 
 void InteractiveSurfaceServer::marker_to_mesh(const visualization_msgs::Marker& marker,
                                               pcl::PolygonMesh& mesh)
 {
-  pcl::PointCloud<pcl::PointXYZRGB> points;
-  for (int i = 0; i < marker.points.size(); i += 3)
-  {
-    pcl::Vertices v;
-    for (int j = 0; j < 3; j++)
-    {
-      v.vertices.push_back(i + j);
-
-      pcl::PointXYZRGB p;
-      p.x = marker.points[i + j].x;
-      p.y = marker.points[i + j].y;
-      p.z = marker.points[i + j].z;
-      points.points.push_back(p);
-    }
-
-    mesh.polygons.push_back(v);
-  }
-
-  pcl::toPCLPointCloud2(points, mesh.cloud);
+  trianglePointsToMesh(marker.points, mesh);
   mesh.header.frame_id = marker.header.frame_id;
 }
 

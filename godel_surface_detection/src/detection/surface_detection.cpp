@@ -21,6 +21,7 @@
 #include <tf/transform_datatypes.h>
 #include <pluginlib/class_loader.h>
 #include <meshing_plugins_base/meshing_base.h>
+#include <utils/mesh_conversions.h>
 
 const static int DOWNSAMPLE_NUMBER = 3;
 
@@ -171,21 +172,7 @@ namespace godel_surface_detection
       marker.color = color;
 
       // filling points
-      CloudRGB points;
-      pcl::fromPCLPointCloud2(mesh.cloud, points);
-      for (int i = 0; i < mesh.polygons.size(); i++)
-      {
-        const pcl::Vertices& v = mesh.polygons[i];
-        for (int j = 0; j < v.vertices.size(); j++)
-        {
-          uint32_t index = v.vertices[j];
-          geometry_msgs::Point p;
-          p.x = points.points[index].x;
-          p.y = points.points[index].y;
-          p.z = points.points[index].z;
-          marker.points.push_back(p);
-        }
-      }
+      meshToTrianglePoints(mesh, marker.points);
     }
 
     void SurfaceDetection::add_cloud(CloudRGB& cloud)
