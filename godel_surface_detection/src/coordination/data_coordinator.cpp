@@ -292,7 +292,7 @@ namespace data
    * @param poses PoseArray containing pose data
    * @return true if record is found, false otherwise
    */
-  bool DataCoordinator::setPoses(PoseTypes pose_type, int id, geometry_msgs::PoseArray poses)
+  bool DataCoordinator::setPoses(PoseTypes pose_type, int id, const std::vector<geometry_msgs::PoseArray>& poses)
   {
     for(auto& rec : records_)
     {
@@ -332,7 +332,7 @@ namespace data
    * @param poses
    * @return
    */
-  bool DataCoordinator::getPoses(PoseTypes pose_type, int id, geometry_msgs::PoseArray& poses)
+  bool DataCoordinator::getPoses(PoseTypes pose_type, int id, std::vector<geometry_msgs::PoseArray>& poses)
   {
     for(auto& rec : records_)
     {

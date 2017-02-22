@@ -34,8 +34,8 @@ namespace data
       pcl::PolygonMesh surface_mesh_;
       pcl::PointCloud<pcl::PointXYZRGB> surface_cloud_;
       std::vector<std::pair<std::string, geometry_msgs::PoseArray>> edge_pairs_;
-      geometry_msgs::PoseArray blend_poses_;
-      geometry_msgs::PoseArray scan_poses_;
+      std::vector<geometry_msgs::PoseArray> blend_poses_;
+      std::vector<geometry_msgs::PoseArray> scan_poses_;
   };
 
 
@@ -75,8 +75,8 @@ namespace data
     bool addEdge(int id, std::string name, geometry_msgs::PoseArray edge_poses);
     bool renameEdge(int id, std::string old_name, std::string new_name);
     bool getEdgePosesByName(const std::string& edge_name, geometry_msgs::PoseArray& edge_poses);
-    bool setPoses(PoseTypes pose_type, int id, geometry_msgs::PoseArray poses);
-    bool getPoses(PoseTypes pose_type, int id, geometry_msgs::PoseArray& poses);
+    bool setPoses(PoseTypes pose_type, int id, const std::vector<geometry_msgs::PoseArray>& poses);
+    bool getPoses(PoseTypes pose_type, int id, std::vector<geometry_msgs::PoseArray>& poses);
   };
 } /* end namespace data */
 } /* end namespace godel_surface_detection */

@@ -414,88 +414,7 @@ static bool isBlendPath(const std::string& s)
 
 void SurfaceBlendingService::tool_animation_timer_callback()
 {
-  stop_tool_animation_ = false;
 
-  // path progress color
-  std_msgs::ColorRGBA green;
-  green.a = 1.f;
-  green.g = 1.f;
-  green.r = green.b = 0.f;
-
-
-  // tool marker at arbitrary position
-  visualization_msgs::MarkerArray tool_markers =
-      create_tool_markers(geometry_msgs::Point(), geometry_msgs::Pose(), "world_frame");
-
-  // Hacky thing to get it going for demo
-
-  // marker array for all markers
-  visualization_msgs::MarkerArray process_markers;
-
-  // Poses -> Markers
-  for(const auto& pose_array : process_path_results_.blend_poses_)
-  {
-    visualization_msgs::Marker process_marker;
-    process_marker.action = process_marker.ADD;
-    process_marker.type = process_marker.LINE_STRIP;
-    process_marker.header.frame_id = "world_frame";
-    process_marker.color = green;
-    for(const auto& pose : pose_array.poses)
-    {
-      geometry_msgs::Point pt;
-      pt.x = pose.position.x;
-      pt.y = pose.position.y;
-      pt.z = pose.position.z;
-      process_marker.points.push_back(pt);
-    }
-
-    process_markers.markers.push_back(process_marker);
-  }
-
-  // adding markers
-  int num_path_markers = 0;
-  for(const auto& marker : process_markers.markers)
-    num_path_markers += marker.points.size();
-
-  // The 'tool'
-  process_markers.markers.insert(process_markers.markers.end(), tool_markers.markers.begin(),
-                                 tool_markers.markers.end());
-
-  ros::Duration loop_pause(0.02f);
-  for (int i = 0; i < num_path_markers; i++)
-  {
-    visualization_msgs::Marker& path_marker = process_markers.markers[i];
-
-    for (std::size_t j = 0; j < path_marker.points.size(); j++)
-    {
-      if (stop_tool_animation_)
-      {
-        ROS_WARN_STREAM("tool path animation completed");
-        return;
-      }
-
-      // updating path color at current point
-      path_marker.colors[j] = green;
-
-      // updating tool markers
-      tool_markers =
-          create_tool_markers(path_marker.points[j], path_marker.pose, path_marker.header.frame_id);
-      int start_tool_marker_index = process_markers.markers.size() - tool_markers.markers.size();
-
-      process_markers.markers.erase(
-          boost::next(process_markers.markers.begin(), start_tool_marker_index),
-          process_markers.markers.end());
-      process_markers.markers.insert(process_markers.markers.end(), tool_markers.markers.begin(),
-                                     tool_markers.markers.end());
-
-      // publish marker array
-      //tool_path_markers_pub_.publish(process_markers);
-
-      loop_pause.sleep();
-    }
-  }
-
-  ROS_INFO_STREAM("tool path animation completed");
 }
 
 visualization_msgs::MarkerArray
@@ -917,14 +836,24 @@ void SurfaceBlendingService::visualizePaths()
   blend_poses.header.frame_id = edge_poses.header.frame_id = scan_poses.header.frame_id = "world_frame";
   blend_poses.header.stamp = edge_poses.header.stamp = scan_poses.header.stamp = ros::Time::now();
 
-  for(const auto& pose_array : process_path_results_.blend_poses_)
-    blend_poses.poses.insert(blend_poses.poses.end(), pose_array.poses.begin(), pose_array.poses.end());
+  for (const auto& path : process_path_results_.blend_poses_)
+  {
+    for (const auto& pose_array : path)
+    {
+      blend_poses.poses.insert(blend_poses.poses.end(), pose_array.poses.begin(), pose_array.poses.end());
+    }
+  }
 
   for(const auto& pose_array : process_path_results_.edge_poses_)
     edge_poses.poses.insert(edge_poses.poses.end(), pose_array.poses.begin(), pose_array.poses.end());
 
-  for(const auto& pose_array : process_path_results_.scan_poses_)
-    scan_poses.poses.insert(scan_poses.poses.end(), pose_array.poses.begin(), pose_array.poses.end());
+  for (const auto& path : process_path_results_.scan_poses_)
+  {
+    for(const auto& pose_array : path)
+    {
+      scan_poses.poses.insert(scan_poses.poses.end(), pose_array.poses.begin(), pose_array.poses.end());
+    }
+  }
 
   blend_visualization_pub_.publish(blend_poses);
   edge_visualization_pub_.publish(edge_poses);
@@ -948,7 +877,7 @@ void SurfaceBlendingService::visualizePaths()
   color.g = 0.0;
   color.a = 1.0;
 
-  for(const auto& pose_array : process_path_results_.blend_poses_)
+  for(const auto& path : process_path_results_.blend_poses_)
   {
     visualization_msgs::Marker blend_marker;
     blend_marker.header.frame_id = "world_frame";
@@ -959,13 +888,16 @@ void SurfaceBlendingService::visualizePaths()
     blend_marker.type = visualization_msgs::Marker::LINE_STRIP;
     blend_marker.scale.x = 0.004;
     blend_marker.color = color;
-    for(const auto& pose : pose_array.poses)
+    for(const auto& segment : path)
     {
-      geometry_msgs::Point pt;
-      pt.x = pose.position.x;
-      pt.y = pose.position.y;
-      pt.z = pose.position.z;
-      blend_marker.points.push_back(pt);
+      for (const auto& pose : segment.poses)
+      {
+        geometry_msgs::Point pt;
+        pt.x = pose.position.x;
+        pt.y = pose.position.y;
+        pt.z = pose.position.z;
+        blend_marker.points.push_back(pt);
+      }
     }
     blend_marker.header.stamp = ros::Time::now();
     blend_marker.lifetime = ros::Duration(0.0);
@@ -977,7 +909,7 @@ void SurfaceBlendingService::visualizePaths()
   color.b = 0.0;
   color.g = 1.0;
   color.a = 0.5;
-  for(const auto& pose_array : process_path_results_.scan_poses_)
+  for(const auto& path : process_path_results_.scan_poses_)
   {
     visualization_msgs::Marker scan_marker;
     scan_marker.header.frame_id = "world_frame";
@@ -989,13 +921,16 @@ void SurfaceBlendingService::visualizePaths()
     scan_marker.scale.x = 0.004;
     scan_marker.color = color;
 
-    for(const auto& pose : pose_array.poses)
+    for (const auto& segment : path)
     {
-      geometry_msgs::Point pt;
-      pt.x = pose.position.x;
-      pt.y = pose.position.y;
-      pt.z = pose.position.z;
-      scan_marker.points.push_back(pt);
+      for(const auto& pose : segment.poses)
+      {
+        geometry_msgs::Point pt;
+        pt.x = pose.position.x;
+        pt.y = pose.position.y;
+        pt.z = pose.position.z;
+        scan_marker.points.push_back(pt);
+      }
     }
     scan_marker.header.stamp = ros::Time::now();
     scan_marker.lifetime = ros::Duration(0.0);
