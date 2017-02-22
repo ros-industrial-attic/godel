@@ -23,7 +23,6 @@
 #include <godel_msgs/SurfaceBlendingParameters.h>
 #include <godel_msgs/BlendingPlanParameters.h>
 #include <godel_msgs/ScanPlanParameters.h>
-#include <godel_msgs/ProcessPlanning.h>
 #include <godel_msgs/ProcessPlanningAction.h>
 
 #include <ros/ros.h>
