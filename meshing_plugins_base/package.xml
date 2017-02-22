@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>meshing_plugins_base</name>
   <version>0.1.0</version>
   <description>
@@ -11,9 +11,7 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>pcl_ros</build_depend>
-  <build_depend>roscpp</build_depend>
+  <depend>pcl_ros</depend>
+  <depend>roscpp</depend>
 
-  <run_depend>pcl_ros</run_depend>
-  <run_depend>roscpp</run_depend>
 </package>
