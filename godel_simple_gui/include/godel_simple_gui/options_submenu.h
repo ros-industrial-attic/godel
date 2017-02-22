@@ -5,8 +5,8 @@
 
 #include "godel_simple_gui/options/robot_scan_configuration.h"
 #include "godel_simple_gui/options/surface_detection_configuration.h"
-#include "godel_simple_gui/options/blend_tool_configuration.h"
 #include "godel_simple_gui/options/scan_tool_configuration.h"
+#include "godel_simple_gui/options/path_planning_configuration.h"
 
 namespace Ui
 {
@@ -30,8 +30,8 @@ public:
   const godel_msgs::SurfaceDetectionParameters& surfaceDetectionParams() const;
   void setSurfaceDetectionParams(const godel_msgs::SurfaceDetectionParameters& params);
 
-  const godel_msgs::BlendingPlanParameters& blendingParams() const;
-  void setBlendingParams(const godel_msgs::BlendingPlanParameters& params);
+  const godel_msgs::PathPlanningParameters& pathPlanningParams() const;
+  void setPathPlanningParams(const godel_msgs::PathPlanningParameters& params);
 
   const godel_msgs::ScanPlanParameters& scanParams() const;
   void setScanParams(const godel_msgs::ScanPlanParameters& params);
@@ -45,7 +45,7 @@ private:
   // Configuration components
   RobotScanConfigWidget* robot_scan_;
   SurfaceDetectionConfigWidget* surface_detection_;
-  BlendingPlanConfigWidget* blend_params_;
+  PathPlanningConfigWidget* path_planning_params_;
   ScanPlanConfigWidget* scan_params_;
 };
 

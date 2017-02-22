@@ -15,6 +15,8 @@ void godel_simple_gui::PlanningState::onStart(BlendingWidget& gui)
 {
   gui.setText("Planning...");
   gui.setButtonsEnabled(false);
+  //planning_client_ = gui.nodeHandle().serviceClient<godel_msgs::ProcessPlanning>(PROCESS_PATH_SERVICE);
+  QtConcurrent::run(this, &PlanningState::makeRequest, gui.options().pathPlanningParams());
 }
 
 void godel_simple_gui::PlanningState::onExit(BlendingWidget& gui) { gui.setButtonsEnabled(true); }
@@ -36,6 +38,7 @@ void godel_simple_gui::PlanningState::makeRequest(godel_msgs::PathPlanningParame
         boost::bind(&godel_simple_gui::PlanningState::processPlanningDoneCallback, this, _1, _2),
         boost::bind(&godel_simple_gui::PlanningState::processPlanningActiveCallback, this),
         boost::bind(&godel_simple_gui::PlanningState::processPlanningFeedbackCallback, this, _1));
+  ROS_INFO_STREAM("Goal sent from planning state");
 }
 
 void godel_simple_gui::PlanningState::processPlanningDoneCallback(
@@ -57,6 +60,7 @@ void godel_simple_gui::PlanningState::processPlanningDoneCallback(
 void godel_simple_gui::PlanningState::processPlanningActiveCallback()
 {
   // Not implemented
+  ROS_INFO_STREAM("Goal is active");
 }
 
 void godel_simple_gui::PlanningState::processPlanningFeedbackCallback(

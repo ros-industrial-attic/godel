@@ -95,7 +95,7 @@ void godel_simple_gui::BlendingWidget::loadParameters()
   {
     this->options().setRobotScanParams(srv.response.robot_scan);
     this->options().setSurfaceDetectionParams(srv.response.surface_detection);
-    this->options().setBlendingParams(srv.response.blending_plan);
+    this->options().setPathPlanningParams(srv.response.path_params);
     this->options().setScanParams(srv.response.scan_plan);
   }
   else
