@@ -87,7 +87,13 @@ bool ProcessPlanningManager::handleKeyencePlanning(godel_msgs::KeyenceProcessPla
   if (req.path.segments.empty())
   {
     ROS_WARN("%s: Cannot create scan process plan for empty trajectory", __FUNCTION__);
-    return false;
+    return true;
+  }
+
+  if (req.path.segments.size() > 1)
+  {
+    ROS_WARN("%s: Currently we do not support scan paths w/ more than 1 segment."
+             " Planning only for the first.", __FUNCTION__);
   }
 
   // Transform process path from geometry msgs to descartes points

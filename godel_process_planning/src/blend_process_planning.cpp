@@ -52,23 +52,20 @@ static EigenSTL::vector_Affine3d linearMoveZ(const Eigen::Affine3d& origin, doub
   return result;
 }
 
-
-
-/**
- * @brief toDescartesTraj
- * @param poses
- * @param params
- * @return
- */
-static godel_process_planning::DescartesTraj
-toDescartesTraj(const std::vector<geometry_msgs::PoseArray>& segments,
-                const godel_msgs::BlendingPlanParameters& params)
+struct ConnectingPath
 {
-  std::vector<EigenSTL::vector_Affine3d> connections;
+  EigenSTL::vector_Affine3d depart;
+  EigenSTL::vector_Affine3d approach;
+};
 
-  const static double step_size = 0.02; // m
+static std::vector<ConnectingPath>
+generateTransitions(const std::vector<geometry_msgs::PoseArray>& segments,
+                    const double traverse_height)
+{
+  const static double APPROACH_STEP_SIZE = 0.02; // m
+  const int steps = std::ceil(traverse_height / APPROACH_STEP_SIZE);
 
-  int steps = std::ceil(params.safe_traverse_height / step_size);
+  std::vector<ConnectingPath> result;
 
   // Loop over every connecting edge
   for (std::size_t i = 1; i < segments.size(); ++i)
@@ -82,58 +79,87 @@ toDescartesTraj(const std::vector<geometry_msgs::PoseArray>& segments,
 
     // Each connecting segment has a retraction from 'from_pose'
     // And an approach to 'to_pose'
-    auto from = linearMoveZ(e_from, step_size, steps);
-    auto to = linearMoveZ(e_to, step_size, steps);
+    auto from = linearMoveZ(e_from, APPROACH_STEP_SIZE, steps);
+    auto to = linearMoveZ(e_to, APPROACH_STEP_SIZE, steps);
     std::reverse(to.begin(), to.end()); // we flip the 'to' path to keep the time ordering of the path
 
-    connections.push_back(from);
-    connections.push_back(to);
+    ConnectingPath c;
+    c.depart = std::move(from);
+    c.approach = std::move(to);
+    result.push_back(c);
   }
+  return result;
+}
+
+static EigenSTL::vector_Affine3d toEigenArray(const geometry_msgs::PoseArray& geom_poses)
+{
+  EigenSTL::vector_Affine3d result (geom_poses.poses.size());
+  std::transform(geom_poses.poses.begin(), geom_poses.poses.end(), result.begin(), [](const geometry_msgs::Pose& pose) {
+    Eigen::Affine3d e;
+    tf::poseMsgToEigen(pose, e);
+    return e;
+  });
+  return result;
+}
+
+static std::vector<EigenSTL::vector_Affine3d> toEigenArrays(const std::vector<geometry_msgs::PoseArray>& poses)
+{
+  std::vector<EigenSTL::vector_Affine3d> result (poses.size());
+  std::transform(poses.begin(), poses.end(), result.begin(), [](const geometry_msgs::PoseArray& p) {
+    return toEigenArray(p);
+  });
+  return result;
+}
+
+/**
+ * @brief transforms a sequence of pose-arrays, each representing a single 'segment' of a
+ * process path into a Descartes specific format. This function also adds transitions between
+ * segments.
+ * @param segments Sequence of poses (relative to the world space of blending robot model)
+ * @param params Surface blending parameters, including info such as traversal speed
+ * @return The input trajectory encoded in Descartes points
+ */
+static godel_process_planning::DescartesTraj
+toDescartesTraj(const std::vector<geometry_msgs::PoseArray>& segments,
+                const godel_msgs::BlendingPlanParameters& params)
+{
+  auto transitions = generateTransitions(segments, params.safe_traverse_height);
 
   DescartesTraj traj;
   Eigen::Affine3d last_pose = createNominalTransform(segments.front().poses.front());
 
-  for (std::size_t i = 0; i < segments.size(); ++i)
+  // Convert pose arrays to Eigen types
+  auto eigen_segments = toEigenArrays(segments);
+
+  // Inline function for adding a sequence of motions
+  auto add_segment = [&traj, &last_pose, params] (const EigenSTL::vector_Affine3d& poses, bool free_first)
   {
     // Create Descartes trajectory for the segment path
-    for (std::size_t j = 0; j < segments[i].poses.size(); ++j)
+    for (std::size_t j = 0; j < poses.size(); ++j)
     {
-      Eigen::Affine3d this_pose = createNominalTransform(segments[i].poses[j]);
+      Eigen::Affine3d this_pose = createNominalTransform(poses[j]);
       // O(1) jerky - may need to revisit this time parameterization later. This at least allows
       // Descartes to perform some optimizations in its graph serach.
       double dt = (this_pose.translation() - last_pose.translation()).norm() / params.traverse_spd;
+      if (j == 0 && free_first)
+      {
+        dt = 0.0;
+      }
       traj.push_back(toDescartesPt(this_pose, dt));
       last_pose = this_pose;
     }
+  };
 
-    // If we're not on the last segment, then we have connections to add
+  for (std::size_t i = 0; i < segments.size(); ++i)
+  {
+    add_segment(eigen_segments[i], false);
+
     if (i != segments.size() - 1)
     {
-      const auto& depart = connections[i * 2 + 0];
-      const auto& approach = connections[i * 2 + 1];
-
-      // Create Descartes trajectory for the departure path
-      for (std::size_t j = 0; j < depart.size(); ++j)
-      {
-        Eigen::Affine3d this_pose = createNominalTransform(depart[j]);
-        // O(1) jerky - may need to revisit this time parameterization later. This at least allows
-        // Descartes to perform some optimizations in its graph serach.
-        double dt = (this_pose.translation() - last_pose.translation()).norm() / params.traverse_spd;
-        traj.push_back(toDescartesPt(this_pose, dt));
-        last_pose = this_pose;
-      }
-
-      for (std::size_t j = 0; j < approach.size(); ++j)
-      {
-        Eigen::Affine3d this_pose = createNominalTransform(approach[j]);
-        // O(1) jerky - may need to revisit this time parameterization later. This at least allows
-        // Descartes to perform some optimizations in its graph serach.
-        double dt =
-            j == 0 ? 0.0 : (this_pose.translation() - last_pose.translation()).norm() / params.traverse_spd;
-        traj.push_back(toDescartesPt(this_pose, dt));
-        last_pose = this_pose;
-      }
-    } // end connections
+      add_segment(transitions[i].depart, false);
+      // we unconstrain 1st point of approach to allow configuration changes
+      add_segment(transitions[i].approach, true);
+    }
   } // end segments
 
   return traj;
@@ -156,7 +182,7 @@ bool ProcessPlanningManager::handleBlendPlanning(godel_msgs::BlendProcessPlannin
   if (req.path.segments.empty())
   {
     ROS_WARN("Planning request contained no trajectory segments. Nothing to be done.");
-    return false;
+    return true;
   }
 
   // Precondition: All input segments must have at least one pose associated with them
@@ -164,7 +190,7 @@ bool ProcessPlanningManager::handleBlendPlanning(godel_msgs::BlendProcessPlannin
   {
     if (segment.poses.empty())
     {
-      ROS_WARN("Input trajectory segment contained no poses. Invalid input.");
+      ROS_ERROR("Input trajectory segment contained no poses. Invalid input.");
       return false;
     }
   }
