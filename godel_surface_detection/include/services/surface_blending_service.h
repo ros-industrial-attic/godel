@@ -179,6 +179,10 @@ private:
 
   void visualizePaths();
 
+  std::string getBlendToolPlanningPluginName() const;
+
+  std::string getScanToolPlanningPluginName() const;
+
   // Services offered by this class
   ros::ServiceServer surface_detect_server_;
   ros::ServiceServer select_surface_server_;

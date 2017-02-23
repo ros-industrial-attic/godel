@@ -24,6 +24,7 @@
 #include <utils/mesh_conversions.h>
 
 const static int DOWNSAMPLE_NUMBER = 3;
+const static std::string MESHING_PLUGIN_PARAM = "meshing_plugin_name";
 
 namespace godel_surface_detection
 {
@@ -312,7 +313,7 @@ namespace godel_surface_detection
 
       try
       {
-        mesher = poly_loader.createInstance("concave_hull_mesher::ConcaveHullMesher");
+        mesher = poly_loader.createInstance(getMeshingPluginName());
 
       }
       catch(pluginlib::PluginlibException& ex)
@@ -350,6 +351,19 @@ namespace godel_surface_detection
       }
 
       return true;
+    }
+
+    std::string SurfaceDetection::getMeshingPluginName() const
+    {
+      ros::NodeHandle pnh ("~");
+      std::string name;
+      if (!pnh.getParam(MESHING_PLUGIN_PARAM, name))
+      {
+        ROS_WARN("Unable to load meshing plugin name from ros param '%s'",
+                 MESHING_PLUGIN_PARAM.c_str());
+      }
+
+      return name;
     }
   } /* end namespace detection */
 } /* end namespace godel_surface_detection */

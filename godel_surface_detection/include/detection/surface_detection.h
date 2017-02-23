@@ -191,6 +191,9 @@ protected:
   bool apply_planar_reprojection(const CloudRGB& in, CloudRGB& out);
   bool apply_concave_hull(const CloudRGB& in, pcl::PolygonMesh& mesh);
 
+  std::string getMeshingPluginName() const;
+
+
 public:
   // parameters
   godel_msgs::SurfaceDetectionParameters params_;
