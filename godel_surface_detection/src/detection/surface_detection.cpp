@@ -23,6 +23,7 @@
 #include <meshing_plugins_base/meshing_base.h>
 
 const static int DOWNSAMPLE_NUMBER = 3;
+const static std::string MESHING_PLUGIN_PARAM = "meshing_plugin_name";
 
 namespace godel_surface_detection
 {
@@ -68,11 +69,10 @@ namespace godel_surface_detection
     }
 
 
-    bool SurfaceDetection::init(const std::string &meshing_plugin_name)
+    bool SurfaceDetection::init()
     {
       full_cloud_ptr_->header.frame_id = params_.frame_id;
       acquired_clouds_counter_ = 0;
-      meshing_plugin_name_ = meshing_plugin_name;
       return true;
     }
 
@@ -326,7 +326,7 @@ namespace godel_surface_detection
 
       try
       {
-        mesher = poly_loader.createInstance(meshing_plugin_name_);
+        mesher = poly_loader.createInstance(getMeshingPluginName());
 
       }
       catch(pluginlib::PluginlibException& ex)
@@ -364,6 +364,19 @@ namespace godel_surface_detection
       }
 
       return true;
+    }
+
+    std::string SurfaceDetection::getMeshingPluginName() const
+    {
+      ros::NodeHandle pnh ("~");
+      std::string name;
+      if (!pnh.getParam(MESHING_PLUGIN_PARAM, name))
+      {
+        ROS_WARN("Unable to load meshing plugin name from ros param '%s'",
+                 MESHING_PLUGIN_PARAM.c_str());
+      }
+
+      return name;
     }
   } /* end namespace detection */
 } /* end namespace godel_surface_detection */

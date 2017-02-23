@@ -179,6 +179,10 @@ private:
 
   void visualizePaths();
 
+  std::string getBlendToolPlanningPluginName() const;
+
+  std::string getScanToolPlanningPluginName() const;
+
   // Services offered by this class
   ros::ServiceServer surface_detect_server_;
   ros::ServiceServer select_surface_server_;
@@ -249,11 +253,6 @@ private:
 
   // Parameter loading and saving
   std::string param_cache_prefix_;
-
-  // Meshing and Path planning plugin information
-  std::string meshing_plugin_name_;
-  std::string blend_tool_planning_plugin_name_;
-  std::string scan_tool_planning_plugin_name_;
 };
 
 #endif // surface blending services

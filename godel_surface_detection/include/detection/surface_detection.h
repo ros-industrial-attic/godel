@@ -140,7 +140,7 @@ public:
   virtual ~SurfaceDetection();
 
 public:
-  bool init(const std::string& meshing_plugin_name);
+  bool init();
 
   bool load_parameters(const std::string& filename);
   void save_parameters(const std::string& filename);
@@ -191,6 +191,9 @@ protected:
   bool apply_planar_reprojection(const CloudRGB& in, CloudRGB& out);
   bool apply_concave_hull(const CloudRGB& in, pcl::PolygonMesh& mesh);
 
+  std::string getMeshingPluginName() const;
+
+
 public:
   // parameters
   godel_msgs::SurfaceDetectionParameters params_;
@@ -208,8 +211,6 @@ protected:
 
   // counter
   int acquired_clouds_counter_;
-  // Meshing algorithm
-  std::string meshing_plugin_name_;
 };
 } /* end namespace detection */
 } /* namespace godel_surface_detection */

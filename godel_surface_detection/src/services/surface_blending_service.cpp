@@ -57,6 +57,11 @@ const static std::string ROBOT_SCAN_PARAMS_FILE = "godel_robot_scan_parameters.m
 const static std::string SURFACE_DETECTION_PARAMS_FILE = "godel_surface_detection_parameters.msg";
 const static std::string PATH_PLANNING_PARAMS_FILE = "godel_path_planning_parameters.msg";
 
+const static std::string BLEND_TOOL_PLUGIN_PARAM = "blend_tool_planning_plugin_name";
+const static std::string SCAN_TOOL_PLUGIN_PARAM = "scan_tool_planning_plugin_name";
+const static std::string MESHING_PLUGIN_PARAM = "meshing_plugin_name";
+
+
 SurfaceBlendingService::SurfaceBlendingService() : publish_region_point_cloud_(false) {}
 
 bool SurfaceBlendingService::init()
@@ -86,24 +91,21 @@ bool SurfaceBlendingService::init()
     ROS_WARN("Unable to load surface detection parameters.");
 
   // load plugins for meshing and tool planning
-  const static std::string MESHING_PLUGIN_PARAM = "meshing_plugin_name";
-  if (!ph.getParam(MESHING_PLUGIN_PARAM, meshing_plugin_name_))
+  if (!ph.hasParam(MESHING_PLUGIN_PARAM))
   {
     ROS_FATAL("SurfaceBlendinService::init(): Expected private parameter '%s' not found. Aborting",
               MESHING_PLUGIN_PARAM.c_str());
     return false;
   }
 
-  const static std::string BLEND_TOOL_PLUGIN_PARAM = "blend_tool_planning_plugin_name";
-  if (!ph.getParam(BLEND_TOOL_PLUGIN_PARAM, blend_tool_planning_plugin_name_))
+  if (!ph.hasParam(BLEND_TOOL_PLUGIN_PARAM))
   {
     ROS_FATAL("SurfaceBlendinService::init(): Expected private parameter '%s' not found. Aborting",
               MESHING_PLUGIN_PARAM.c_str());
     return false;
   }
 
-  const static std::string SCAN_TOOL_PLUGIN_PARAM = "scan_tool_planning_plugin_name";
-  if (!ph.getParam(SCAN_TOOL_PLUGIN_PARAM, scan_tool_planning_plugin_name_))
+  if (!ph.hasParam(SCAN_TOOL_PLUGIN_PARAM))
   {
     ROS_FATAL("SurfaceBlendinService::init(): Expected private parameter '%s' not found. Aborting",
               SCAN_TOOL_PLUGIN_PARAM.c_str());
@@ -116,7 +118,7 @@ bool SurfaceBlendingService::init()
   default_blending_plan_params_ = blending_plan_params_;
   default_scan_params_ = scan_plan_params_;
 
-  if (surface_detection_.init(meshing_plugin_name_) && robot_scan_.init() &&
+  if (surface_detection_.init() && robot_scan_.init() &&
       surface_server_.init() && data_coordinator_.init())
   {
     // adding callbacks
@@ -1001,6 +1003,32 @@ void SurfaceBlendingService::visualizePaths()
   }
 
   tool_path_markers_pub_.publish(path_visualization);
+}
+
+std::string SurfaceBlendingService::getBlendToolPlanningPluginName() const
+{
+  ros::NodeHandle pnh ("~");
+  std::string name;
+  if (!pnh.getParam(BLEND_TOOL_PLUGIN_PARAM, name))
+  {
+    ROS_WARN("Unable to load blend tool planning plugin from ros param '%s'",
+             BLEND_TOOL_PLUGIN_PARAM.c_str());
+  }
+
+  return name;
+}
+
+std::string SurfaceBlendingService::getScanToolPlanningPluginName() const
+{
+  ros::NodeHandle pnh ("~");
+  std::string name;
+  if (!pnh.getParam(SCAN_TOOL_PLUGIN_PARAM, name))
+  {
+    ROS_WARN("Unable to load scan tool planning plugin from ros param '%s'",
+             SCAN_TOOL_PLUGIN_PARAM.c_str());
+  }
+
+  return name;
 }
 
 int main(int argc, char** argv)
