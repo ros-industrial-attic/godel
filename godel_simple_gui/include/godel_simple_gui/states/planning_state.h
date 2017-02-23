@@ -15,6 +15,25 @@ namespace godel_simple_gui
 
 class PlanningState : public GuiState
 {
+  Q_OBJECT
+private:
+  ros::NodeHandle nh_;
+  actionlib::SimpleActionClient<godel_msgs::ProcessPlanningAction> process_planning_action_client_;
+  BlendingWidget* gui_ptr_;
+  std::string text_;
+
+  void makeRequest(godel_msgs::PathPlanningParameters params);
+  void processPlanningDoneCallback(const actionlib::SimpleClientGoalState& state,
+              const godel_msgs::ProcessPlanningResultConstPtr& result);
+  void processPlanningActiveCallback();
+  void processPlanningFeedbackCallback(const godel_msgs::ProcessPlanningFeedbackConstPtr& feedback);
+
+Q_SIGNALS:
+  void feedbackReceived(QString feedback);
+
+protected Q_SLOTS:
+  void setFeedbackText(QString feedback);
+
 public:
   PlanningState();
   // Entry and exit classes
@@ -25,16 +44,6 @@ public:
   virtual void onNext(BlendingWidget& gui);
   virtual void onBack(BlendingWidget& gui);
   virtual void onReset(BlendingWidget& gui);
-
-private:
-  Q_OBJECT
-  void makeRequest(godel_msgs::PathPlanningParameters);
-  ros::NodeHandle nh_;
-  actionlib::SimpleActionClient<godel_msgs::ProcessPlanningAction> process_planning_action_client_;
-  void processPlanningDoneCallback(const actionlib::SimpleClientGoalState& state,
-              const godel_msgs::ProcessPlanningResultConstPtr& result);
-  void processPlanningActiveCallback();
-  void processPlanningFeedbackCallback(const godel_msgs::ProcessPlanningFeedbackConstPtr& feedback);
 };
 }
 
