@@ -62,7 +62,8 @@ add_library(${PROJECT_NAME}
   src/coordination/data_coordinator.cpp
   src/scan/robot_scan.cpp
   src/interactive/interactive_surface_server.cpp
-  src/services/trajectory_library.cpp)
+  src/services/trajectory_library.cpp
+  src/utils/mesh_conversions.cpp)
 
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} yaml-cpp)
 add_dependencies(${PROJECT_NAME} godel_msgs_generate_messages_cpp)
