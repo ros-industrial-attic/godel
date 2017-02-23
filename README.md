@@ -18,7 +18,6 @@ Godel: Austrian logician and mathematician http://en.wikipedia.org/wiki/Kurt_G%C
   wstool update
   rosdep install --from-paths . --ignore-src
   ```
-- Godel currently depends on [keyence_experimental](https://github.com/ros-industrial/keyence_experimental). Build the library by following the instructions [here](https://github.com/ros-industrial/keyence_experimental#build)
 
 - Finally, to build:
   ```

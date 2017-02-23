@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>godel_path_execution</name>
   <version>0.1.0</version>
   <description>
@@ -10,19 +10,13 @@
   </description>
 
   <maintainer email="jmeyer@swri.org">Jonathan Meyer</maintainer>
-
   <license>Apache 2.0</license>
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>actionlib</build_depend>
-  <build_depend>godel_msgs</build_depend>
-  <build_depend>roscpp</build_depend>
-  <build_depend>industrial_robot_simulator_service</build_depend>
-
-  <run_depend>actionlib</run_depend
-  ><run_depend>godel_msgs</run_depend>
-  <run_depend>roscpp</run_depend>
-  <run_depend>industrial_robot_simulator_service</run_depend>
+  <depend>actionlib</depend>
+  <depend>godel_msgs</depend>
+  <depend>roscpp</depend>
+  <depend>industrial_robot_simulator_service</depend>
 
 </package>

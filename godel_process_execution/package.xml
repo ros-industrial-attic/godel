@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>godel_process_execution</name>
   <version>0.1.0</version>
   <description>
@@ -9,20 +9,14 @@
   </description>
 
   <maintainer email="jmeyer@swri.org">Jonathan Meyer</maintainer>
-
   <license>Apache 2.0</license>
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>abb_file_suite</build_depend>
-  <build_depend>godel_msgs</build_depend>
-  <build_depend>industrial_robot_simulator_service</build_depend>
-  <build_depend>trajectory_msgs</build_depend>
-  <build_depend>keyence_experimental</build_depend>
+  <depend>abb_file_suite</depend>
+  <depend>godel_msgs</depend>
+  <depend>industrial_robot_simulator_service</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>keyence_experimental</depend>
 
-  <run_depend>abb_file_suite</run_depend>
-  <run_depend>godel_msgs</run_depend>
-  <run_depend>industrial_robot_simulator_service</run_depend>
-  <run_depend>trajectory_msgs</run_depend>
-  <run_depend>keyence_experimental</run_depend>
 </package>

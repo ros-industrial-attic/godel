@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<package>
+<package format="2">
   <name>godel_plugins</name>
   <version>0.1.0</version>
   <description>
@@ -11,21 +11,16 @@
   <license>Apache 2.0</license>
 
   <buildtool_depend>catkin</buildtool_depend>
-  
-  <build_depend>roscpp</build_depend>
-  <build_depend>rqt_gui</build_depend>
-  <build_depend>rqt_gui_cpp</build_depend>
-  <build_depend>godel_msgs</build_depend>
-  <build_depend>rviz</build_depend>
 
-  <run_depend>roscpp</run_depend>
-  <run_depend>rqt_gui</run_depend>
-  <run_depend>rqt_gui_cpp</run_depend>
-  <run_depend>rviz</run_depend>
-  <run_depend>godel_msgs</run_depend>
+  <depend>roscpp</depend>
+  <depend>rqt_gui</depend>
+  <depend>rqt_gui_cpp</depend>
+  <depend>rviz</depend>
+  <depend>godel_msgs</depend>
 
   <export>
     <rqt_gui plugin="${prefix}/plugin.xml"/>
     <rviz plugin="${prefix}/plugin.xml"/>
   </export>
+
 </package>
