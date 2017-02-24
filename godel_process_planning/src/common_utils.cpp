@@ -12,7 +12,7 @@
 
 // Constants
 const static double DEFAULT_TIME_UNDEFINED_VELOCITY =
-    0.1; // When a Descartes trajectory point has no timing info associated
+    1.0; // When a Descartes trajectory point has no timing info associated
          // with it, this value (in seconds) is used instead
 const static std::string DEFAULT_FRAME_ID =
     "world_frame"; // The default frame_id used for trajectories generated
@@ -22,6 +22,7 @@ const static double DEFAULT_ANGLE_DISCRETIZATION =
                  // in these helper functions
 const static double DEFAULT_JOINT_WAIT_TIME = 5.0; // Maximum time allowed to capture a new joint
                                                    // state message
+const static double DEFAULT_JOINT_VELOCITY = 0.3; // rad/s
 
 // MoveIt Configuration Constants
 const static int DEFAULT_MOVEIT_NUM_PLANNING_ATTEMPTS = 20;
@@ -57,11 +58,16 @@ Eigen::Affine3d godel_process_planning::createNominalTransform(const geometry_ms
 
   tf::poseMsgToEigen(ref_pose, eigen_pose);
 
+  return createNominalTransform(eigen_pose);
+}
+
+Eigen::Affine3d godel_process_planning::createNominalTransform(const Eigen::Affine3d &ref_pose)
+{
   // Reverse the Z axis
   Eigen::Affine3d flip_z;
   flip_z = Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitY());
 
-  return eigen_pose * flip_z;
+  return ref_pose * flip_z;
 }
 
 bool godel_process_planning::descartesSolve(const godel_process_planning::DescartesTraj& in_path,
@@ -91,6 +97,21 @@ bool godel_process_planning::descartesSolve(const godel_process_planning::Descar
   return true;
 }
 
+
+static double calcDefaultTime(const std::vector<double>& a, const std::vector<double>& b,
+                              double max_joint_vel)
+{
+  ROS_ASSERT(a.size() == b.size());
+  ROS_ASSERT(a.size() > 0);
+  std::vector<double> result (a.size());
+  std::transform(a.begin(), a.end(), b.begin(), result.begin(), [] (double a, double b)
+  {
+    return std::abs(a - b);
+  });
+
+  return *std::max_element(result.begin(), result.end()) / max_joint_vel;
+}
+
 trajectory_msgs::JointTrajectory
 godel_process_planning::toROSTrajectory(const godel_process_planning::DescartesTraj& solution,
                                         const descartes_core::RobotModel& model)
@@ -112,7 +133,20 @@ godel_process_planning::toROSTrajectory(const godel_process_planning::DescartesT
 
     double time_step = solution[i]->getTiming().upper; // request descartes timing
     if (time_step == 0.0)
-      from_start += ros::Duration(DEFAULT_TIME_UNDEFINED_VELOCITY); // default time
+    {
+      if (i == 0)
+        from_start += ros::Duration(DEFAULT_TIME_UNDEFINED_VELOCITY); // default time
+      else
+      {
+        // If we have a previous point then it makes more sense to set the time of the
+        // motion based on the largest joint motion required between two points and a
+        // default velocity.
+        const auto& prev = ros_trajectory.points.back().positions;
+        const auto& next = pt.positions;
+        const auto td = calcDefaultTime(prev, next, DEFAULT_JOINT_VELOCITY);
+        from_start += ros::Duration(td);
+      }
+    }
     else
       from_start += ros::Duration(time_step);
 
@@ -267,4 +301,31 @@ godel_process_planning::filterColliding(descartes_core::RobotModel& model,
       results.push_back(c);
   }
   return results;
+}
+
+
+double godel_process_planning::freeSpaceCostFunction(const std::vector<double> &source,
+                                                     const std::vector<double> &target)
+{
+  const double FREE_SPACE_MAX_ANGLE_DELTA =
+      M_PI_2; // The maximum angle a joint during a freespace motion
+              // from the start to end position without that motion
+              // being penalized. Avoids flips.
+  const double FREE_SPACE_ANGLE_PENALTY =
+      5.0; // The factor by which a joint motion is multiplied if said
+           // motion is greater than the max.
+
+  // The cost function here penalizes large single joint motions in an effort to
+  // keep the robot from flipping a joint, even if some other joints have to move
+  // a bit more.
+  double cost = 0.0;
+  for (std::size_t i = 0; i < source.size(); ++i)
+  {
+    double diff = std::abs(source[i] - target[i]);
+    if (diff > FREE_SPACE_MAX_ANGLE_DELTA)
+      cost += FREE_SPACE_ANGLE_PENALTY * diff;
+    else
+      cost += diff;
+  }
+  return cost;
 }

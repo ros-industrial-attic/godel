@@ -55,9 +55,9 @@ const static std::string TOOL_NAMESPACE = "process_tool";
 
 struct ProcessPathDetails
 {
-  std::vector<geometry_msgs::PoseArray> blend_poses_;
+  std::vector<std::vector<geometry_msgs::PoseArray>> blend_poses_;
   std::vector<geometry_msgs::PoseArray> edge_poses_;
-  std::vector<geometry_msgs::PoseArray> scan_poses_;
+  std::vector<std::vector<geometry_msgs::PoseArray>> scan_poses_;
 };
 
 /**
@@ -66,7 +66,7 @@ struct ProcessPathDetails
  */
 struct ProcessPathResult
 {
-  typedef std::pair<std::string, geometry_msgs::PoseArray> value_type;
+  typedef std::pair<std::string, std::vector<geometry_msgs::PoseArray>> value_type;
   std::vector<value_type> paths;
 };
 /**
@@ -161,7 +161,7 @@ private:
 
 
   ProcessPlanResult generateProcessPlan(const std::string& name,
-                                        const geometry_msgs::PoseArray& path,
+                                        const std::vector<geometry_msgs::PoseArray> &path,
                                         const godel_msgs::BlendingPlanParameters& params,
                                         const godel_msgs::ScanPlanParameters& scan_params);
 
