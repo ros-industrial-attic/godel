@@ -11,7 +11,7 @@ godel_simple_gui::PlanningState::PlanningState()
   : process_planning_action_client_(PROCESS_PLANNING_ACTION_SERVER_NAME, true) {}
 void godel_simple_gui::PlanningState::onStart(BlendingWidget& gui)
 {
-  gui.setText("Planning...\n");
+  gui.setText("Planning...");
   gui.setButtonsEnabled(false);
   gui_ptr_ = &gui;
   QObject::connect(this, SIGNAL(feedbackReceived(QString)), this, SLOT(setFeedbackText(QString)));
@@ -43,7 +43,7 @@ void godel_simple_gui::PlanningState::makeRequest(godel_msgs::PathPlanningParame
 
 void godel_simple_gui::PlanningState::setFeedbackText(QString feedback)
 {
-  gui_ptr_->setText(feedback.toStdString());
+  gui_ptr_->appendText("\n" + feedback.toStdString());
 }
 
 
@@ -66,9 +66,6 @@ void godel_simple_gui::PlanningState::processPlanningActiveCallback()
 void godel_simple_gui::PlanningState::processPlanningFeedbackCallback(
     const godel_msgs::ProcessPlanningFeedbackConstPtr& feedback)
 {
-  text_.append((feedback->last_completed).c_str());
-  text_.append("\n");
-  QString qtext(text_.c_str());
-  Q_EMIT feedbackReceived(qtext);
+  Q_EMIT feedbackReceived(QString::fromStdString((feedback->last_completed).c_str()));
 }
 

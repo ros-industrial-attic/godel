@@ -25,6 +25,7 @@ public:
 
   // Interface for the states to interact with
   void setText(const std::string& txt);
+  void appendText(const std::string& txt);
   void setButtonsEnabled(bool enabled);
 
   ros::NodeHandle& nodeHandle() { return nh_; }

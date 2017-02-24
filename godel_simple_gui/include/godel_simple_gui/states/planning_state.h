@@ -20,7 +20,6 @@ private:
   ros::NodeHandle nh_;
   actionlib::SimpleActionClient<godel_msgs::ProcessPlanningAction> process_planning_action_client_;
   BlendingWidget* gui_ptr_;
-  std::string text_;
 
   void makeRequest(godel_msgs::PathPlanningParameters params);
   void processPlanningDoneCallback(const actionlib::SimpleClientGoalState& state,
