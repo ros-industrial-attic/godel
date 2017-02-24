@@ -256,7 +256,7 @@ SurfaceBlendingService::generateProcessPath(const int& id,
   int i = 0;
   for(const auto& pose_array : edge_result)
   {
-    vt.first = name + "_edge_" + std::to_string(i);
+    vt.first = name + "_edge_" + std::to_string(i++);
     std::vector<geometry_msgs::PoseArray> temp;
     temp.push_back(pose_array);
     vt.second = std::move(temp);
