@@ -11,11 +11,13 @@
 
 const static std::string PROCESS_PATH_SERVICE = "process_path";
 
+godel_simple_gui::PlanningState::PlanningState()
+  : process_planning_action_client_(PROCESS_PLANNING_ACTION_SERVER_NAME, true) {}
+
 void godel_simple_gui::PlanningState::onStart(BlendingWidget& gui)
 {
   gui.setText("Planning...");
   gui.setButtonsEnabled(false);
-  //planning_client_ = gui.nodeHandle().serviceClient<godel_msgs::ProcessPlanning>(PROCESS_PATH_SERVICE);
   QtConcurrent::run(this, &PlanningState::makeRequest, gui.options().pathPlanningParams());
 }
 

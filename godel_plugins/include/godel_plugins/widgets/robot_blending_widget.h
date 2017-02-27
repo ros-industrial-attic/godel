@@ -68,12 +68,7 @@ class RobotBlendingWidget : public QWidget
 {
   Q_OBJECT
 public:
-  RobotBlendingWidget(std::string ns = "") :
-    param_ns_(ns), process_planning_action_client_(PROCESS_PLANNING_ACTION_SERVER_NAME, true)
-  {
-    init();
-  }
-
+  RobotBlendingWidget(std::string ns = "");
   virtual ~RobotBlendingWidget();
 
   std::string get_name() { return "RobotBlending"; }

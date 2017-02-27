@@ -16,7 +16,7 @@ namespace godel_simple_gui
 class PlanningState : public GuiState
 {
 public:
-  PlanningState() : process_planning_action_client_(PROCESS_PLANNING_ACTION_SERVER_NAME, true) {}
+  PlanningState();
   // Entry and exit classes
   virtual void onStart(BlendingWidget& gui);
   virtual void onExit(BlendingWidget& gui);

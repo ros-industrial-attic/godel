@@ -602,7 +602,7 @@ bool SurfaceBlendingService::surface_detection_server_callback(
   return true;
 }
 
-void SurfaceBlendingService::process_planning_action_callback(const godel_msgs::ProcessPlanningGoalConstPtr &goal)
+void SurfaceBlendingService::processPlanningActionCallback(const godel_msgs::ProcessPlanningGoalConstPtr &goal)
 {
   switch (goal->action)
   {
@@ -611,6 +611,8 @@ void SurfaceBlendingService::process_planning_action_callback(const godel_msgs::
     process_planning_server_.publishFeedback(process_planning_feedback_);
     trajectory_library_ = generateMotionLibrary(goal->params);
     visualizePaths();
+    process_planning_result_.succeeded = true;
+    process_planning_server_.setSucceeded(process_planning_result_);
     break;
 
   case godel_msgs::ProcessPlanningGoal::PREVIEW_TOOL_PATH:
@@ -927,8 +929,6 @@ void SurfaceBlendingService::visualizePaths()
   }
 
   tool_path_markers_pub_.publish(path_visualization);
-  process_planning_result_.succeeded = true;
-  process_planning_server_.setSucceeded(process_planning_result_);
 }
 
 std::string SurfaceBlendingService::getBlendToolPlanningPluginName() const

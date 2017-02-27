@@ -34,6 +34,12 @@ namespace godel_plugins
 namespace widgets
 {
 
+RobotBlendingWidget::RobotBlendingWidget(std::string ns) :
+  param_ns_(ns), process_planning_action_client_(PROCESS_PLANNING_ACTION_SERVER_NAME, true)
+{
+  init();
+}
+
 RobotBlendingWidget::~RobotBlendingWidget()
 {
   delete robot_scan_config_window_;

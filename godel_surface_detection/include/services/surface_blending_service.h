@@ -91,7 +91,7 @@ public:
     process_planning_server_(
       nh_,
       PROCESS_PLANNING_ACTION_SERVER_NAME,
-      boost::bind(&SurfaceBlendingService::process_planning_action_callback, this, _1),
+      boost::bind(&SurfaceBlendingService::processPlanningActionCallback, this, _1),
       false
     ) {}
 
@@ -137,7 +137,7 @@ private:
                                       godel_msgs::SelectSurface::Response& res);
 
 
-  void process_planning_action_callback(const godel_msgs::ProcessPlanningGoalConstPtr &goal);
+  void processPlanningActionCallback(const godel_msgs::ProcessPlanningGoalConstPtr &goal);
 
   void processPlanningDoneCallback(const actionlib::SimpleClientGoalState& state,
               const godel_msgs::ProcessPlanningActionResultConstPtr& result);
