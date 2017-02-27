@@ -15,9 +15,9 @@ godel_simple_gui::OptionsSubmenu::OptionsSubmenu(QWidget* parent) : QWidget(pare
   //// Surface Detection
   surface_detection_ = new SurfaceDetectionConfigWidget(godel_msgs::SurfaceDetectionParameters());
   connect(ui_->pushButtonSurfaceOptions, SIGNAL(clicked()), surface_detection_, SLOT(show()));
-  //// Blending params
-  blend_params_ = new BlendingPlanConfigWidget(godel_msgs::BlendingPlanParameters());
-  connect(ui_->pushButtonBlendOptions, SIGNAL(clicked()), blend_params_, SLOT(show()));
+  //// Path Planning
+  path_planning_params_ = new PathPlanningConfigWidget(godel_msgs::PathPlanningParameters());
+  connect(ui_->pushButtonPathPlanningOptions, SIGNAL(clicked()), path_planning_params_, SLOT(show()));
   //// Scan (QA) params
   scan_params_ = new ScanPlanConfigWidget(godel_msgs::ScanPlanParameters());
   connect(ui_->pushButtonQAOptions, SIGNAL(clicked()), scan_params_, SLOT(show()));
@@ -48,16 +48,15 @@ void godel_simple_gui::OptionsSubmenu::setSurfaceDetectionParams(
   surface_detection_->update_display_fields();
 }
 
-const godel_msgs::BlendingPlanParameters& godel_simple_gui::OptionsSubmenu::blendingParams() const
+const godel_msgs::PathPlanningParameters& godel_simple_gui::OptionsSubmenu::pathPlanningParams() const
 {
-  return blend_params_->params();
+  return path_planning_params_->params();
 }
 
-void godel_simple_gui::OptionsSubmenu::setBlendingParams(
-    const godel_msgs::BlendingPlanParameters& params)
+void godel_simple_gui::OptionsSubmenu::setPathPlanningParams(const godel_msgs::PathPlanningParameters& params)
 {
-  blend_params_->params() = params;
-  blend_params_->update_display_fields();
+  path_planning_params_->params() = params;
+  path_planning_params_->update_display_fields();
 }
 
 const godel_msgs::ScanPlanParameters& godel_simple_gui::OptionsSubmenu::scanParams() const

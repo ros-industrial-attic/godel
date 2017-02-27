@@ -3,6 +3,8 @@ project(godel_msgs)
 
 ## Find catkin macros and libraries
 find_package(catkin REQUIRED COMPONENTS
+             actionlib
+             actionlib_msgs
              genmsg
              geometry_msgs
              message_generation
@@ -15,6 +17,15 @@ find_package(catkin REQUIRED COMPONENTS
 #######################################
 ## Declare ROS messages and services ##
 #######################################
+
+## Generate messages in the 'action' folder
+add_action_files(
+    DIRECTORY
+    action
+    FILES
+    ProcessPlanning.action
+)
+
 
 ## Generate messages in the 'msg' folder
 add_message_files(
@@ -42,7 +53,6 @@ add_service_files(
   LoadSaveMotionPlan.srv
   OffsetBoundary.srv
   PathPlanning.srv
-  ProcessPlanning.srv
   RenameSurface.srv
   SelectMotionPlan.srv
   SelectSurface.srv
@@ -54,6 +64,7 @@ add_service_files(
 
 ## Generate added messages and services with any dependencies listed here
 generate_messages(DEPENDENCIES 
+  actionlib_msgs
   geometry_msgs
   sensor_msgs
   visualization_msgs

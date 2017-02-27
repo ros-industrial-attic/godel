@@ -23,9 +23,10 @@
 #include <godel_msgs/SurfaceBlendingParameters.h>
 #include <godel_msgs/BlendingPlanParameters.h>
 #include <godel_msgs/ScanPlanParameters.h>
-#include <godel_msgs/ProcessPlanning.h>
+#include <godel_msgs/ProcessPlanningAction.h>
 
 #include <ros/ros.h>
+#include <actionlib/client/simple_action_client.h>
 
 #include <ui_robot_blending_plugin.h>
 
@@ -61,6 +62,7 @@ const std::string GET_AVAILABLE_MOTION_PLANS_SERVICE = "get_available_motion_pla
 const std::string SELECT_MOTION_PLAN_SERVICE = "select_motion_plan";
 const std::string LOAD_SAVE_MOTION_PLAN_SERVICE = "load_save_motion_plan";
 const std::string RENAME_SURFACE_SERVICE = "rename_surface";
+const static std::string PROCESS_PLANNING_ACTION_SERVER_NAME = "process_planning_as";
 
 class RobotBlendingWidget : public QWidget
 {
@@ -134,6 +136,11 @@ protected Q_SLOTS:
   void handle_surface_rename(QListWidgetItem* item);
   void on_ListPathResults_currentItemChanged(QListWidgetItem *current, QListWidgetItem *previous);
 
+  void processPlanningFeedbackCallback(const godel_msgs::ProcessPlanningFeedbackConstPtr& feedback);
+  void processPlanningDoneCallback(const actionlib::SimpleClientGoalState& state,
+                                   const godel_msgs::ProcessPlanningResultConstPtr& result);
+  void processPlanningActiveCallback();
+
 protected:
   Ui::RobotBlendingWidget ui_;
   RobotScanConfigWidget* robot_scan_config_window_;
@@ -150,6 +157,7 @@ protected:
   ros::ServiceClient load_save_motion_plan_client_;
   ros::ServiceClient rename_surface_client_;
   ros::Subscriber selected_surfaces_subs_;
+  actionlib::SimpleActionClient<godel_msgs::ProcessPlanningAction> process_planning_action_client_;
 
   std::string param_ns_;
   godel_msgs::RobotScanParameters robot_scan_parameters_;

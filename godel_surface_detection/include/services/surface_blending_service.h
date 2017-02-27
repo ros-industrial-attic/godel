@@ -24,7 +24,6 @@
 #include <godel_msgs/SurfaceDetection.h>
 #include <godel_msgs/SelectSurface.h>
 #include <godel_msgs/SelectedSurfacesChanged.h>
-#include <godel_msgs/ProcessPlanning.h>
 #include <godel_msgs/SurfaceBlendingParameters.h>
 #include <godel_msgs/GetAvailableMotionPlans.h>
 #include <godel_msgs/SelectMotionPlan.h>
@@ -37,6 +36,10 @@
 #include <godel_msgs/KeyenceProcessPlanning.h>
 #include <godel_msgs/PathPlanning.h>
 #include <godel_msgs/PathPlanningParameters.h>
+
+#include <godel_msgs/ProcessPlanningAction.h>
+#include <actionlib/server/simple_action_server.h>
+#include <actionlib/client/simple_action_client.h>
 
 #include <godel_process_path_generation/VisualizeBlendingPlan.h>
 #include <godel_process_path_generation/utils.h>
@@ -52,6 +55,9 @@
 const static std::string BOUNDARY_NAMESPACE = "process_boundary";
 const static std::string PATH_NAMESPACE = "process_path";
 const static std::string TOOL_NAMESPACE = "process_tool";
+
+// action server name
+const static std::string PROCESS_PLANNING_ACTION_SERVER_NAME = "process_planning_as";
 
 struct ProcessPathDetails
 {
@@ -81,7 +87,13 @@ struct ProcessPlanResult
 class SurfaceBlendingService
 {
 public:
-  SurfaceBlendingService();
+  SurfaceBlendingService() : publish_region_point_cloud_(false),
+    process_planning_server_(
+      nh_,
+      PROCESS_PLANNING_ACTION_SERVER_NAME,
+      boost::bind(&SurfaceBlendingService::processPlanningActionCallback, this, _1),
+      false
+    ) {}
 
   bool init();
   void run();
@@ -124,8 +136,15 @@ private:
   bool select_surface_server_callback(godel_msgs::SelectSurface::Request& req,
                                       godel_msgs::SelectSurface::Response& res);
 
-  bool process_path_server_callback(godel_msgs::ProcessPlanning::Request& req,
-                                    godel_msgs::ProcessPlanning::Response& res);
+
+  void processPlanningActionCallback(const godel_msgs::ProcessPlanningGoalConstPtr &goal);
+
+  void processPlanningDoneCallback(const actionlib::SimpleClientGoalState& state,
+              const godel_msgs::ProcessPlanningActionResultConstPtr& result);
+
+  void processPlanningActiveCallback();
+
+  void processPlanningFeedbackCallback(const godel_msgs::ProcessPlanningActionFeedbackConstPtr& feedback);
 
   bool
   surface_blend_parameters_server_callback(godel_msgs::SurfaceBlendingParameters::Request& req,
@@ -186,7 +205,6 @@ private:
   // Services offered by this class
   ros::ServiceServer surface_detect_server_;
   ros::ServiceServer select_surface_server_;
-  ros::ServiceServer process_path_server_;
   ros::ServiceServer surf_blend_parameters_server_;
 
   ros::ServiceServer get_motion_plans_server_;
@@ -200,6 +218,12 @@ private:
 
   ros::ServiceClient blend_planning_client_;
   ros::ServiceClient keyence_planning_client_;
+
+  // Actions offered by this class
+  ros::NodeHandle nh_;
+  actionlib::SimpleActionServer<godel_msgs::ProcessPlanningAction> process_planning_server_;
+  godel_msgs::ProcessPlanningFeedback process_planning_feedback_;
+  godel_msgs::ProcessPlanningResult process_planning_result_;
 
   // Process Execution service clients
   ros::ServiceClient blend_process_client_;

@@ -1,0 +1,19 @@
+# Goal
+int32 GENERATE_MOTION_PLAN_AND_PREVIEW=1
+int32 PREVIEW_TOOL_PATH=2
+
+int32 action
+
+bool use_default_parameters
+godel_msgs/PathPlanningParameters params
+godel_msgs/SurfaceBoundaries surface
+
+---
+
+# Result
+bool succeeded
+
+---
+
+# Feedback
+string last_completed
