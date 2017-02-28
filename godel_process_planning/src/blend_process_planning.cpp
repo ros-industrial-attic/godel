@@ -68,24 +68,24 @@ generateTransitions(const std::vector<geometry_msgs::PoseArray>& segments,
   std::vector<ConnectingPath> result;
 
   // Loop over every connecting edge
-  for (std::size_t i = 1; i < segments.size(); ++i)
+  for (std::size_t i = 0; i < segments.size(); ++i)
   {
-    const auto& from_pose = segments[i - 1].poses.back(); // Where we come from...
-    const auto& to_pose = segments[i].poses.front();      // Where we want to end up
+    const auto& start_pose = segments[i].poses.front(); // First point in this segment
+    const auto& end_pose = segments[i].poses.back();    // Last point in this segment
 
-    Eigen::Affine3d e_from, e_to;
-    tf::poseMsgToEigen(from_pose, e_from);
-    tf::poseMsgToEigen(to_pose, e_to);
+    Eigen::Affine3d e_start, e_end;
+    tf::poseMsgToEigen(start_pose, e_start);
+    tf::poseMsgToEigen(end_pose, e_end);
 
     // Each connecting segment has a retraction from 'from_pose'
     // And an approach to 'to_pose'
-    auto from = linearMoveZ(e_from, APPROACH_STEP_SIZE, steps);
-    auto to = linearMoveZ(e_to, APPROACH_STEP_SIZE, steps);
-    std::reverse(to.begin(), to.end()); // we flip the 'to' path to keep the time ordering of the path
+    auto approach = linearMoveZ(e_start, APPROACH_STEP_SIZE, steps);
+    auto depart = linearMoveZ(e_end, APPROACH_STEP_SIZE, steps);
+    std::reverse(approach.begin(), approach.end()); // we flip the 'to' path to keep the time ordering of the path
 
     ConnectingPath c;
-    c.depart = std::move(from);
-    c.approach = std::move(to);
+    c.depart = std::move(depart);
+    c.approach = std::move(approach);
     result.push_back(c);
   }
   return result;
@@ -132,7 +132,7 @@ toDescartesTraj(const std::vector<geometry_msgs::PoseArray>& segments,
   auto eigen_segments = toEigenArrays(segments);
 
   // Inline function for adding a sequence of motions
-  auto add_segment = [&traj, &last_pose, params] (const EigenSTL::vector_Affine3d& poses, bool free_first)
+  auto add_segment = [&traj, &last_pose, params] (const EigenSTL::vector_Affine3d& poses, bool free_last)
   {
     // Create Descartes trajectory for the segment path
     for (std::size_t j = 0; j < poses.size(); ++j)
@@ -141,7 +141,7 @@ toDescartesTraj(const std::vector<geometry_msgs::PoseArray>& segments,
       // O(1) jerky - may need to revisit this time parameterization later. This at least allows
       // Descartes to perform some optimizations in its graph serach.
       double dt = (this_pose.translation() - last_pose.translation()).norm() / params.traverse_spd;
-      if (j == 0 && free_first)
+      if (j == poses.size() - 1 && free_last)
       {
         dt = 0.0;
       }
@@ -152,14 +152,11 @@ toDescartesTraj(const std::vector<geometry_msgs::PoseArray>& segments,
 
   for (std::size_t i = 0; i < segments.size(); ++i)
   {
+    add_segment(transitions[i].approach, true);
+
     add_segment(eigen_segments[i], false);
 
-    if (i != segments.size() - 1)
-    {
-      add_segment(transitions[i].depart, false);
-      // we unconstrain 1st point of approach to allow configuration changes
-      add_segment(transitions[i].approach, true);
-    }
+    add_segment(transitions[i].depart, false);
   } // end segments
 
   return traj;
