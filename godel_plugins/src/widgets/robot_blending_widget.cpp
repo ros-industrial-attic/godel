@@ -126,9 +126,10 @@ void RobotBlendingWidget::init()
   connect(surface_detect_config_window_, SIGNAL(parameters_changed()), this,
           SLOT(surface_detect_params_changed_handler()));
 
-  // Selection Changes for List Widgets
+  // Feedback updates
   connect(ui_.ListWidgetSelectedSurfs, SIGNAL(itemDoubleClicked(QListWidgetItem*)), this,
           SLOT(handle_surface_rename(QListWidgetItem*)));
+  connect(this, SIGNAL(feedbackReceived(QString)), this, SLOT(setFeedbackText(QString)));
 
 
   // Move to first tab
@@ -465,6 +466,8 @@ void RobotBlendingWidget::connect_completed_handler()
 
 void RobotBlendingWidget::generate_process_path_handler()
 {
+  ui_.textEditFeedback->setText(QString::fromStdString("Sending planning request"));
+  ui_.PushButtonGeneratePaths->setEnabled(false);
   process_planning_action_client_.waitForServer();
 
   godel_msgs::ProcessPlanningActionGoal goal;
@@ -487,7 +490,7 @@ void RobotBlendingWidget::processPlanningDoneCallback(const actionlib::SimpleCli
     std::vector<std::string> plan_names;
     request_available_motions(plan_names);
     update_motion_plan_list(plan_names);
-
+    ui_.PushButtonGeneratePaths->setEnabled(true);
     ui_.TabWidgetCreateLib->setCurrentIndex(2);
   }
   else
@@ -502,8 +505,16 @@ void RobotBlendingWidget::processPlanningActiveCallback()
 
 void RobotBlendingWidget::processPlanningFeedbackCallback(
     const godel_msgs::ProcessPlanningFeedbackConstPtr& feedback)
+{  
+  Q_EMIT feedbackReceived(QString::fromStdString((feedback->last_completed).c_str()));
+}
+
+
+void RobotBlendingWidget::setFeedbackText(QString feedback)
 {
-  ROS_INFO("Got Feedback: %s", (feedback->last_completed).c_str());
+  ui_.textEditFeedback->moveCursor(QTextCursor::End);
+  ui_.textEditFeedback->insertPlainText(QString::fromStdString("\n").append(feedback));
+  ui_.textEditFeedback->moveCursor(QTextCursor::End);
 }
 
 

@@ -85,6 +85,7 @@ Q_SIGNALS:
   void surface_detection_completed();
   void connect_started();
   void connect_completed();
+  void feedbackReceived(QString feedback);
 
 protected:
   void init();
@@ -140,6 +141,8 @@ protected Q_SLOTS:
   void processPlanningDoneCallback(const actionlib::SimpleClientGoalState& state,
                                    const godel_msgs::ProcessPlanningResultConstPtr& result);
   void processPlanningActiveCallback();
+  void setFeedbackText(QString feedback);
+
 
 protected:
   Ui::RobotBlendingWidget ui_;

@@ -45,6 +45,13 @@ void godel_simple_gui::BlendingWidget::setText(const std::string& txt)
   ui_->textEditStatus->setPlainText(QString::fromStdString(txt));
 }
 
+void godel_simple_gui::BlendingWidget::appendText(const std::string& txt)
+{
+  ui_->textEditStatus->moveCursor(QTextCursor::End);
+  ui_->textEditStatus->insertPlainText(QString::fromStdString(txt));
+  ui_->textEditStatus->moveCursor(QTextCursor::End);
+}
+
 void godel_simple_gui::BlendingWidget::onNextButton() { active_state_->onNext(*this); }
 
 void godel_simple_gui::BlendingWidget::onBackButton() { active_state_->onBack(*this); }

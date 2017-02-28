@@ -72,7 +72,7 @@
          <x>10</x>
          <y>90</y>
          <width>521</width>
-         <height>301</height>
+         <height>381</height>
         </rect>
        </property>
        <property name="currentIndex">
@@ -451,6 +451,19 @@
          <zorder>label_6</zorder>
          <zorder>ListWidgetSelectedSurfs</zorder>
         </widget>
+        <widget class="QTextEdit" name="textEditFeedback">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>260</y>
+           <width>491</width>
+           <height>81</height>
+          </rect>
+         </property>
+         <property name="placeholderText">
+          <string>Progress</string>
+         </property>
+        </widget>
        </widget>
        <widget class="QWidget" name="tab_3">
         <attribute name="title">
@@ -534,7 +547,7 @@
        <property name="geometry">
         <rect>
          <x>10</x>
-         <y>395</y>
+         <y>480</y>
          <width>521</width>
          <height>32</height>
         </rect>
