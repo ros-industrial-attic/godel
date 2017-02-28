@@ -21,6 +21,11 @@ godel_simple_gui::OptionsSubmenu::OptionsSubmenu(QWidget* parent) : QWidget(pare
   //// Scan (QA) params
   scan_params_ = new ScanPlanConfigWidget(godel_msgs::ScanPlanParameters());
   connect(ui_->pushButtonQAOptions, SIGNAL(clicked()), scan_params_, SLOT(show()));
+
+  connect(robot_scan_, SIGNAL(parameters_save_requested()), this, SIGNAL(saveRequested()));
+  connect(surface_detection_, SIGNAL(parameters_save_requested()), this, SIGNAL(saveRequested()));
+  connect(path_planning_params_, SIGNAL(parameters_save_requested()), this, SIGNAL(saveRequested()));
+  connect(scan_params_, SIGNAL(parameters_save_requested()), this, SIGNAL(saveRequested()));
 }
 
 const godel_msgs::RobotScanParameters& godel_simple_gui::OptionsSubmenu::robotScanParams() const

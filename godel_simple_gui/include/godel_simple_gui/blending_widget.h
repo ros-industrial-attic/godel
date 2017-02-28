@@ -59,6 +59,7 @@ protected:
 
   // Current state
   GuiState* active_state_;
+  ros::ServiceClient surface_blending_parameters_client_;
 };
 
 /**
