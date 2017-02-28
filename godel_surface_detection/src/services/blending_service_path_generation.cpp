@@ -191,6 +191,55 @@ SurfaceBlendingService::generateProcessPath(const int& id,
   return generateProcessPath(id, name, mesh, surface_ptr, result);
 }
 
+static bool generateToolPaths(const godel_msgs::PathPlanningParameters& params,
+                              const pcl::PolygonMesh& mesh,
+                              const std::string& plugin_name,
+                              std::vector<geometry_msgs::PoseArray>& result)
+{
+  pluginlib::ClassLoader<path_planning_plugins_base::PathPlanningBase>
+      loader("path_planning_plugins_base", "path_planning_plugins_base::PathPlanningBase");
+  auto planner = loader.createInstance(plugin_name);
+  planner->init(mesh);
+  return planner->generatePath(result);
+}
+
+bool SurfaceBlendingService::generateBlendPath(const godel_msgs::PathPlanningParameters &params,
+                                               const pcl::PolygonMesh &mesh, std::vector<geometry_msgs::PoseArray> &result)
+{
+  try
+  {
+    if (!generateToolPaths(params, mesh, getBlendToolPlanningPluginName(), result))
+    {
+      ROS_ERROR("Failed to generate tool paths for blend process");
+      return false;
+    }
+  }
+  catch(const pluginlib::PluginlibException& ex)
+  {
+    ROS_ERROR("Blending tool planning plugin loading failed with error: '%s'", ex.what());
+    return false;
+  }
+  return true;
+}
+
+bool SurfaceBlendingService::generateScanPath(const godel_msgs::PathPlanningParameters &params, const pcl::PolygonMesh &mesh,
+                                              std::vector<geometry_msgs::PoseArray> &result)
+{
+  try
+  {
+    if (!generateToolPaths(params, mesh, getScanToolPlanningPluginName(), result))
+    {
+      ROS_ERROR("Failed to generate tool paths for scan process");
+      return false;
+    }
+  }
+  catch(const pluginlib::PluginlibException& ex)
+  {
+    ROS_ERROR("Scan tool planning plugin loading failed with error: '%s'", ex.what());
+    return false;
+  }
+  return true;
+}
 
 bool
 SurfaceBlendingService::generateProcessPath(const int& id,
@@ -201,78 +250,70 @@ SurfaceBlendingService::generateProcessPath(const int& id,
 {
   std::vector<geometry_msgs::PoseArray> blend_result, edge_result, scan_result;
 
-  pluginlib::ClassLoader<path_planning_plugins_base::PathPlanningBase> poly_loader("path_planning_plugins_base",
-                                                                           "path_planning_plugins_base::PathPlanningBase");
-  boost::shared_ptr<path_planning_plugins_base::PathPlanningBase> path_planner;
-
-  try
+  // Step 1: Generate Blending Paths
+  godel_msgs::PathPlanningParameters params;
+  if (!generateBlendPath(params, mesh, blend_result))
   {
-    path_planner = poly_loader.createInstance(getBlendToolPlanningPluginName());
-  }
-  catch(pluginlib::PluginlibException& ex)
-  {
-    ROS_ERROR("The blend plugin failed to load for some reason. Error: %s", ex.what());
-    return false;
-  }
-
-  path_planner->init(mesh);
-  if(!path_planner->generatePath(blend_result))
-  {
-    ROS_ERROR_STREAM("Could not plan blend path");
     process_planning_feedback_.last_completed = "Failed to generate blend path for surface " + name;
     process_planning_server_.publishFeedback(process_planning_feedback_);
-    return false;
   }
-  process_planning_feedback_.last_completed = "Generated blend path for surface " + name;
-  process_planning_server_.publishFeedback(process_planning_feedback_);
+  else
+  {
+    process_planning_feedback_.last_completed = "Generated blend path for surface " + name;
+    process_planning_server_.publishFeedback(process_planning_feedback_);
 
-  try
-  {
-    path_planner = poly_loader.createInstance(getScanToolPlanningPluginName());
-  }
-  catch(pluginlib::PluginlibException& ex)
-  {
-    ROS_ERROR("The scan plugin failed to load for some reason. Error: %s", ex.what());
-    return false;
+    // Add the successful blend path to the output
+    ProcessPathResult::value_type vt;
+    vt.first = name + "_blend";
+    vt.second = blend_result;
+    result.paths.push_back(vt);
+    data_coordinator_.setPoses(godel_surface_detection::data::PoseTypes::blend_pose, id, vt.second);
   }
 
-  path_planner->init(mesh);
-  if(!path_planner->generatePath(scan_result))
+  // Step 2: Generate Laser Scan Paths
+  if (!generateScanPath(params, mesh, scan_result))
   {
-    ROS_ERROR_STREAM("Could not plan scan path");
     process_planning_feedback_.last_completed = "Failed to generate scan path for surface " + name;
     process_planning_server_.publishFeedback(process_planning_feedback_);
-    return false;
   }
-  process_planning_feedback_.last_completed = "Generated scan path for surface " + name;
-  process_planning_server_.publishFeedback(process_planning_feedback_);
-
-  generateEdgePath(surface, edge_result);
-  process_planning_feedback_.last_completed = "Generated edge path(s) for surface " + name;
-  process_planning_server_.publishFeedback(process_planning_feedback_);
-
-  ProcessPathResult::value_type vt;
-
-  vt.first = name + "_blend";
-  vt.second = blend_result;
-  result.paths.push_back(vt);
-  data_coordinator_.setPoses(godel_surface_detection::data::PoseTypes::blend_pose, id, vt.second);
-
-  vt.first = name + "_scan";
-  vt.second = scan_result;
-  result.paths.push_back(vt);
-  data_coordinator_.setPoses(godel_surface_detection::data::PoseTypes::scan_pose, id, vt.second);
-
-  int i = 0;
-  for(const auto& pose_array : edge_result)
+  else
   {
-    vt.first = name + "_edge_" + std::to_string(i++);
-    std::vector<geometry_msgs::PoseArray> temp;
-    temp.push_back(pose_array);
-    vt.second = std::move(temp);
+    process_planning_feedback_.last_completed = "Generated scan path for surface " + name;
+    process_planning_server_.publishFeedback(process_planning_feedback_);
+
+    // Add the successful scan path to the output
+    ProcessPathResult::value_type vt;
+    vt.first = name + "_scan";
+    vt.second = scan_result;
     result.paths.push_back(vt);
-    data_coordinator_.addEdge(id, vt.first, pose_array);
+    data_coordinator_.setPoses(godel_surface_detection::data::PoseTypes::scan_pose, id, vt.second);
   }
+
+  // Step 3: Generate Edge Paths for the given surface
+  if (!generateEdgePath(surface, edge_result))
+  {
+    process_planning_feedback_.last_completed = "Failed to generate generate edge path(s) for surface " + name;
+    process_planning_server_.publishFeedback(process_planning_feedback_);
+  }
+  else
+  {
+    process_planning_feedback_.last_completed = "Generated edge path(s) for surface " + name;
+    process_planning_server_.publishFeedback(process_planning_feedback_);
+
+    // Add the edge paths to the results
+    ProcessPathResult::value_type vt;
+    int i = 0;
+    for(const auto& pose_array : edge_result)
+    {
+      vt.first = name + "_edge_" + std::to_string(i++);
+      std::vector<geometry_msgs::PoseArray> temp;
+      temp.push_back(pose_array);
+      vt.second = std::move(temp);
+      result.paths.push_back(vt);
+      data_coordinator_.addEdge(id, vt.first, pose_array);
+    }
+  }
+
   return result.paths.size() > 0;
 }
 
