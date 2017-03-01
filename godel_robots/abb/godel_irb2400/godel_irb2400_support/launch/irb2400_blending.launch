@@ -4,6 +4,8 @@
   <arg name="sim_robot" default="true"/>
   <arg name="robot_ip" unless="$(arg sim_robot)" />
   <arg name="sim_sensor" default="true"/>
+  <arg name="sim_laser" default="true"/>
+  <arg name="laser_ip" unless="$(arg sim_laser)" default="192.168.32.50"/>
   <arg name="robot_model_plugin" default="abb_irb2400_descartes/AbbIrb2400RobotModel"/>
   <arg name="debug_mode" default="false"/>
 
@@ -56,6 +58,21 @@
     <node name="ensenso_publisher_node" pkg="ensenso_publisher" type="ensenso_publisher_node" output="screen" required="true">
         <param name="FlexView" type="bool" value="true" />
         <param name="FlexViewImages" type="int" value="4" />
+    </node>
+  </group>
+
+  <group unless="$(arg sim_laser)">
+    <!--Bring up scan analysis code-->
+    <include file="$(find godel_scan_analysis)/launch/scan_analysis.launch">
+      <arg name="world_frame" value="world_frame"/>
+      <arg name="scan_frame" value="keyence_sensor_optical_frame"/>
+      <arg name="voxel_leaf_size" value="0.0005"/>
+    </include>
+
+    <!--Bring up the driver hardware for the Keyence-->
+    <node name="keyence_driver" pkg="keyence_experimental" type="keyence_driver_node">
+      <param name="controller_ip" value="$(arg laser_ip)"/>
+      <param name="frame_id" value="keyence_sensor_optical_frame"/>
     </node>
   </group>
   
