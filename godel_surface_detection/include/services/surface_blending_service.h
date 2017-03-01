@@ -157,18 +157,22 @@ private:
 
   bool generateProcessPath(const int& id, ProcessPathResult& result);
 
-
   bool generateProcessPath(const int& id,
                            const std::string& name,
                            const pcl::PolygonMesh& mesh,
                            const godel_surface_detection::detection::CloudRGB::Ptr,
                            ProcessPathResult& result);
 
+  bool requestEdgePath(std::vector<pcl::IndicesPtr>& boundaries,
+                       int index,
+                       SurfaceSegmentation& SS,
+                       visualization_msgs::Marker& visualization,
+                       geometry_msgs::PoseArray& path,
+                       const godel_surface_detection::detection::CloudRGB::Ptr);
 
   bool generateBlendPath(const godel_msgs::PathPlanningParameters& params,
                          const pcl::PolygonMesh& mesh,
                          std::vector<geometry_msgs::PoseArray>& result);
-
 
   bool generateScanPath(const godel_msgs::PathPlanningParameters& params,
                          const pcl::PolygonMesh& mesh,
@@ -178,6 +182,13 @@ private:
   bool generateEdgePath(godel_surface_detection::detection::CloudRGB::Ptr surface,
                         std::vector<geometry_msgs::PoseArray>& result);
 
+  ProcessPathResult generateProcessPath(const int& id,
+                                        const std::string& name,
+                                        const pcl::PolygonMesh& mesh,
+                                        const godel_surface_detection::detection::CloudRGB::Ptr,
+                                        const godel_surface_detection::detection::CloudRGB::Ptr,
+                                        const godel_msgs::BlendingPlanParameters& params,
+                                        const godel_msgs::ScanPlanParameters& scan_params);
 
   ProcessPlanResult generateProcessPlan(const std::string& name,
                                         const std::vector<geometry_msgs::PoseArray> &path,
