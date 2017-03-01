@@ -73,11 +73,11 @@ bool openveronoi::ScanPlanner::generatePath(std::vector<geometry_msgs::PoseArray
     tf::poseMsgToEigen(boundary_pose, boundary_pose_eigen);
 
     // 6 - Transform points to world frame and generate pose
-  std::vector<geometry_msgs::Point> points;
+    std::vector<geometry_msgs::Point> points;
 
     for(const auto& pt : scan_boundary)
     {
-    geometry_msgs::Point p;
+      geometry_msgs::Point p;
       p.x = pt.x;
       p.y = pt.y;
       p.z = 0.0;
@@ -85,38 +85,13 @@ bool openveronoi::ScanPlanner::generatePath(std::vector<geometry_msgs::PoseArray
       points.push_back(p);
     }
 
-  std::transform(points.begin(), points.end(), std::back_inserter(scan_poses.poses),
-                 [boundary_pose_eigen] (const geometry_msgs::Point& point) {
-    geometry_msgs::Pose pose;
-    Eigen::Affine3d r = boundary_pose_eigen * Eigen::Translation3d(point.x, point.y, point.z);
-    tf::poseEigenToMsg(r, pose);
-    return pose;
-  });
-
-    // 7 - Add in approach and departure
-    geometry_msgs::Pose start_pose;
-    geometry_msgs::Pose end_pose;
-    start_pose = scan_poses.poses.front();
-    end_pose = scan_poses.poses.back();
-    double start_z = start_pose.position.z;
-    double end_z = end_pose.position.z;
-
-    for (std::size_t i = 0; i < SCAN_APPROACH_STEP_COUNT; ++i)
-    {
-      double z_offset = i * SCAN_APPROACH_STEP_DISTANCE;
-      geometry_msgs::Pose approach_pose;
-      geometry_msgs::Pose departure_pose;
-
-      approach_pose.orientation = start_pose.orientation;
-      approach_pose.position = start_pose.position;
-      approach_pose.position.z = start_z + z_offset;
-      scan_poses.poses.insert(scan_poses.poses.begin(), approach_pose);
-
-      departure_pose.orientation = end_pose.orientation;
-      departure_pose.position = end_pose.position;
-      departure_pose.position.z = end_z + z_offset;
-      scan_poses.poses.push_back(departure_pose);
-    }
+    std::transform(points.begin(), points.end(), std::back_inserter(scan_poses.poses),
+                   [boundary_pose_eigen] (const geometry_msgs::Point& point) {
+      geometry_msgs::Pose pose;
+      Eigen::Affine3d r = boundary_pose_eigen * Eigen::Translation3d(point.x, point.y, point.z);
+      tf::poseEigenToMsg(r, pose);
+      return pose;
+    });
 
     // 8 - return result
     path.push_back(scan_poses);

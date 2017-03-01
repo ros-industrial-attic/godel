@@ -1,7 +1,7 @@
 #ifndef COMMON_UTILS_H
 #define COMMON_UTILS_H
 
-#include <geometry_msgs/Pose.h>
+#include <geometry_msgs/PoseArray.h>
 #include <geometry_msgs/Point.h>
 
 #include <descartes_core/trajectory_pt.h>
@@ -184,6 +184,13 @@ inline std::vector<double> pickBestStartPose(const std::vector<double>& start,
  */
  double freeSpaceCostFunction(const std::vector<double>& source,
                               const std::vector<double>& target);
+
+ EigenSTL::vector_Affine3d linearMoveZ(const Eigen::Affine3d& origin, double step_size, int steps);
+
+ EigenSTL::vector_Affine3d toEigenArray(const geometry_msgs::PoseArray& geom_poses);
+
+ std::vector<EigenSTL::vector_Affine3d> toEigenArrays(const std::vector<geometry_msgs::PoseArray>& poses);
+
 }
 
 #endif // COMMON_UTILS_H

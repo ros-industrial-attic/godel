@@ -56,14 +56,33 @@ toDescartesTraj(const geometry_msgs::PoseArray& ref,
 {
   DescartesTraj traj;
   traj.reserve(ref.poses.size());
+
   if (ref.poses.empty())
     return traj;
 
-  Eigen::Affine3d last_pose = createNominalTransform(ref.poses.front());
+  // Convert to eigen
+  auto eigen_poses = toEigenArray(ref);
 
-  for (std::size_t i = 0; i < ref.poses.size(); ++i)
+  // Add approch and departure
+  const static double APPROACH_STEP_SIZE = 0.02; // m
+  const int steps = std::ceil(params.approach_distance / APPROACH_STEP_SIZE);
+
+  const auto& first_pt = eigen_poses.front();
+  const auto& last_pt = eigen_poses.back();
+
+  auto approach_path = linearMoveZ(first_pt, APPROACH_STEP_SIZE, steps);
+  auto depart_path = linearMoveZ(last_pt, APPROACH_STEP_SIZE, steps);
+  std::reverse(approach_path.begin(), approach_path.end());
+
+  // Insert approach/departure into main path
+  eigen_poses.insert(eigen_poses.begin(), approach_path.begin(), approach_path.end());
+  eigen_poses.insert(eigen_poses.end(), depart_path.begin(), depart_path.end());
+
+  Eigen::Affine3d last_pose = createNominalTransform(eigen_poses.front());
+
+  for (std::size_t i = 0; i < eigen_poses.size(); ++i)
   {
-    Eigen::Affine3d this_pose = createNominalTransform(ref.poses[i]);
+    Eigen::Affine3d this_pose = createNominalTransform(eigen_poses[i]);
     double dt = (this_pose.translation() - last_pose.translation()).norm() / params.traverse_spd;
     traj.push_back(toDescartesPt(this_pose, dt));
     last_pose = this_pose;

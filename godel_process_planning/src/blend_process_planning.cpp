@@ -40,18 +40,6 @@ static inline descartes_core::TrajectoryPtPtr toDescartesPt(const Eigen::Affine3
                                               AxialSymmetricPt::Z_AXIS, tm);
 }
 
-static EigenSTL::vector_Affine3d linearMoveZ(const Eigen::Affine3d& origin, double step_size, int steps)
-{
-  EigenSTL::vector_Affine3d result (steps);
-
-  for (int i = 0; i < steps; ++i)
-  {
-    result[i] = origin * Eigen::Translation3d(0, 0, step_size * (i + 1));
-  }
-
-  return result;
-}
-
 struct ConnectingPath
 {
   EigenSTL::vector_Affine3d depart;
@@ -88,26 +76,6 @@ generateTransitions(const std::vector<geometry_msgs::PoseArray>& segments,
     c.approach = std::move(approach);
     result.push_back(c);
   }
-  return result;
-}
-
-static EigenSTL::vector_Affine3d toEigenArray(const geometry_msgs::PoseArray& geom_poses)
-{
-  EigenSTL::vector_Affine3d result (geom_poses.poses.size());
-  std::transform(geom_poses.poses.begin(), geom_poses.poses.end(), result.begin(), [](const geometry_msgs::Pose& pose) {
-    Eigen::Affine3d e;
-    tf::poseMsgToEigen(pose, e);
-    return e;
-  });
-  return result;
-}
-
-static std::vector<EigenSTL::vector_Affine3d> toEigenArrays(const std::vector<geometry_msgs::PoseArray>& poses)
-{
-  std::vector<EigenSTL::vector_Affine3d> result (poses.size());
-  std::transform(poses.begin(), poses.end(), result.begin(), [](const geometry_msgs::PoseArray& p) {
-    return toEigenArray(p);
-  });
   return result;
 }
 

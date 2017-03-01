@@ -329,3 +329,35 @@ double godel_process_planning::freeSpaceCostFunction(const std::vector<double> &
   }
   return cost;
 }
+
+EigenSTL::vector_Affine3d godel_process_planning::linearMoveZ(const Eigen::Affine3d &origin, double step_size, int steps)
+{
+  EigenSTL::vector_Affine3d result (steps);
+
+  for (int i = 0; i < steps; ++i)
+  {
+    result[i] = origin * Eigen::Translation3d(0, 0, step_size * (i + 1));
+  }
+
+  return result;
+}
+
+EigenSTL::vector_Affine3d godel_process_planning::toEigenArray(const geometry_msgs::PoseArray &geom_poses)
+{
+  EigenSTL::vector_Affine3d result (geom_poses.poses.size());
+  std::transform(geom_poses.poses.begin(), geom_poses.poses.end(), result.begin(), [](const geometry_msgs::Pose& pose) {
+    Eigen::Affine3d e;
+    tf::poseMsgToEigen(pose, e);
+    return e;
+  });
+  return result;
+}
+
+std::vector<EigenSTL::vector_Affine3d> godel_process_planning::toEigenArrays(const std::vector<geometry_msgs::PoseArray> &poses)
+{
+  std::vector<EigenSTL::vector_Affine3d> result (poses.size());
+  std::transform(poses.begin(), poses.end(), result.begin(), [](const geometry_msgs::PoseArray& p) {
+    return toEigenArray(p);
+  });
+  return result;
+}
