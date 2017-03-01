@@ -610,6 +610,8 @@ void SurfaceBlendingService::processPlanningActionCallback(const godel_msgs::Pro
     process_planning_feedback_.last_completed = "Recieved request to generate motion plan";
     process_planning_server_.publishFeedback(process_planning_feedback_);
     trajectory_library_ = generateMotionLibrary(goal->params);
+    process_planning_feedback_.last_completed = "Finished planning. Visualizing...";
+    process_planning_server_.publishFeedback(process_planning_feedback_);
     visualizePaths();
     process_planning_result_.succeeded = true;
     process_planning_server_.setSucceeded(process_planning_result_);
@@ -819,9 +821,13 @@ bool SurfaceBlendingService::renameSurfaceCallback(godel_msgs::RenameSurface::Re
 
 void SurfaceBlendingService::visualizePaths()
 {
-  process_planning_feedback_.last_completed = "Finished planning. Visualizing";
-  process_planning_server_.publishFeedback(process_planning_feedback_);
+  visualizePathPoses();
 
+  visualizePathStrips();
+}
+
+void SurfaceBlendingService::visualizePathPoses()
+{
   // Publish poses
   geometry_msgs::PoseArray blend_poses, edge_poses, scan_poses;
   blend_poses.header.frame_id = edge_poses.header.frame_id = scan_poses.header.frame_id = "world_frame";
@@ -849,83 +855,69 @@ void SurfaceBlendingService::visualizePaths()
   blend_visualization_pub_.publish(blend_poses);
   edge_visualization_pub_.publish(edge_poses);
   scan_visualization_pub_.publish(scan_poses);
+}
 
-  // Create identity pose
-  geometry_msgs::Pose identity_pose;
-  identity_pose.position.x = 0;
-  identity_pose.position.y = 0;
-  identity_pose.position.z = 0;
-  identity_pose.orientation.x = 0;
-  identity_pose.orientation.y = 0;
-  identity_pose.orientation.z = 0;
-  identity_pose.orientation.w = 1;
+static visualization_msgs::Marker makeLineStripMarker(const std::string& ns, const int id, const std_msgs::ColorRGBA& color,
+                                                      const geometry_msgs::PoseArray& segment)
+{
+  visualization_msgs::Marker marker;
+  marker.header.frame_id = "world_frame";
+  marker.header.stamp = ros::Time::now();
+  marker.id = id;
+  marker.ns = ns;
+  marker.pose.orientation.w = 1;
+  marker.action = visualization_msgs::Marker::ADD;
+  marker.type = visualization_msgs::Marker::LINE_STRIP;
+  marker.scale.x = 0.004;
+  marker.color = color;
+  marker.lifetime = ros::Duration(0.0);
 
-  // Publish markers
+  for (const auto& pose : segment.poses)
+    marker.points.push_back(pose.position);
+
+  return marker;
+}
+
+void SurfaceBlendingService::visualizePathStrips()
+{
   visualization_msgs::MarkerArray path_visualization;
-  std_msgs::ColorRGBA color;
-  color.r = 1.0;
-  color.b = 0.0;
-  color.g = 0.0;
-  color.a = 1.0;
 
-  for(const auto& path : process_path_results_.blend_poses_)
+  // Visualize Blending Paths
+  std_msgs::ColorRGBA blend_color;
+  blend_color.r = 1.0;
+  blend_color.b = 0.0;
+  blend_color.g = 0.0;
+  blend_color.a = 0.8;
+
+  const std::string blend_ns = "blend_paths";
+
+  int blend_path_id = 0;
+
+  for (const auto& path : process_path_results_.blend_poses_) // for a given surface
   {
-    visualization_msgs::Marker blend_marker;
-    blend_marker.header.frame_id = "world_frame";
-    blend_marker.id = marker_counter_++;
-    blend_marker.ns = "blend_paths";
-    blend_marker.pose = identity_pose;
-    blend_marker.action = visualization_msgs::Marker::ADD;
-    blend_marker.type = visualization_msgs::Marker::LINE_STRIP;
-    blend_marker.scale.x = 0.004;
-    blend_marker.color = color;
-    for(const auto& segment : path)
+    for (const auto& segment : path) // for a given path segment on the surface
     {
-      for (const auto& pose : segment.poses)
-      {
-        geometry_msgs::Point pt;
-        pt.x = pose.position.x;
-        pt.y = pose.position.y;
-        pt.z = pose.position.z;
-        blend_marker.points.push_back(pt);
-      }
+      path_visualization.markers.push_back(makeLineStripMarker(blend_ns, blend_path_id++, blend_color, segment));
     }
-    blend_marker.header.stamp = ros::Time::now();
-    blend_marker.lifetime = ros::Duration(0.0);
-    path_visualization.markers.push_back(blend_marker);
   }
 
-  // Add line strip for scan poses
-  color.r = 1.0;
-  color.b = 0.0;
-  color.g = 1.0;
-  color.a = 0.5;
-  for(const auto& path : process_path_results_.scan_poses_)
-  {
-    visualization_msgs::Marker scan_marker;
-    scan_marker.header.frame_id = "world_frame";
-    scan_marker.id = marker_counter_++;
-    scan_marker.ns = "scan_paths";
-    scan_marker.pose = identity_pose;
-    scan_marker.action = visualization_msgs::Marker::ADD;
-    scan_marker.type = visualization_msgs::Marker::LINE_STRIP;
-    scan_marker.scale.x = 0.004;
-    scan_marker.color = color;
+  // Visualize scan paths
+  std_msgs::ColorRGBA scan_color;
+  scan_color.r = 1.0;
+  scan_color.b = 0.0;
+  scan_color.g = 1.0;
+  scan_color.a = 0.8;
 
-    for (const auto& segment : path)
+  const std::string scan_ns = "scan_paths";
+
+  int scan_path_id = 0;
+
+  for (const auto& path : process_path_results_.scan_poses_) // for a given surface
+  {
+    for (const auto& segment : path) // for a given path segment on the surface
     {
-      for(const auto& pose : segment.poses)
-      {
-        geometry_msgs::Point pt;
-        pt.x = pose.position.x;
-        pt.y = pose.position.y;
-        pt.z = pose.position.z;
-        scan_marker.points.push_back(pt);
-      }
+      path_visualization.markers.push_back(makeLineStripMarker(scan_ns, scan_path_id++, scan_color, segment));
     }
-    scan_marker.header.stamp = ros::Time::now();
-    scan_marker.lifetime = ros::Duration(0.0);
-    path_visualization.markers.push_back(scan_marker);
   }
 
   tool_path_markers_pub_.publish(path_visualization);

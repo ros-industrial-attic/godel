@@ -198,6 +198,10 @@ private:
 
   void visualizePaths();
 
+  void visualizePathPoses();
+
+  void visualizePathStrips();
+
   std::string getBlendToolPlanningPluginName() const;
 
   std::string getScanToolPlanningPluginName() const;
