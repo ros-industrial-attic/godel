@@ -120,10 +120,6 @@ private:
    */
   bool generate_process_plan(godel_process_path_generation::VisualizeBlendingPlan& process_plan);
 
-  bool animate_tool_path();
-
-  void tool_animation_timer_callback();
-
   visualization_msgs::MarkerArray create_tool_markers(const geometry_msgs::Point& pos,
                                                       const geometry_msgs::Pose& pose,
                                                       std::string frame_id);

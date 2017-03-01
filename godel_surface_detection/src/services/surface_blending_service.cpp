@@ -389,28 +389,12 @@ void SurfaceBlendingService::clear_visualizations()
   scan_visualization_pub_.publish(empty_poses);
 }
 
-bool SurfaceBlendingService::animate_tool_path()
-{
-  bool succeeded = !process_path_results_.blend_poses_.empty();
-  stop_tool_animation_ = true;
-
-  ROS_INFO_STREAM("Tool animation activated");
-
-  boost::thread(&SurfaceBlendingService::tool_animation_timer_callback, this);
-
-  return succeeded;
-}
-
 static bool isBlendPath(const std::string& s)
 {
   const static std::string prefix = "_blend";
   return s.find(prefix, s.size() - prefix.size()) != std::string::npos;
 }
 
-void SurfaceBlendingService::tool_animation_timer_callback()
-{
-
-}
 
 visualization_msgs::MarkerArray
 SurfaceBlendingService::create_tool_markers(const geometry_msgs::Point& pos,
@@ -620,7 +604,6 @@ void SurfaceBlendingService::processPlanningActionCallback(const godel_msgs::Pro
   case godel_msgs::ProcessPlanningGoal::PREVIEW_TOOL_PATH:
     process_planning_feedback_.last_completed = "Recieved request to preview tool path";
     process_planning_server_.publishFeedback(process_planning_feedback_);
-    process_planning_result_.succeeded = animate_tool_path();
     break;
 
   default:
