@@ -60,6 +60,11 @@ void godel_scan_analysis::ScanServer::publishCloud(const ros::TimerEvent&) const
   cloud_pub_.publish(pub_cloud);
 }
 
+void godel_scan_analysis::ScanServer::clear()
+{
+  map_->clear();
+}
+
 void godel_scan_analysis::ScanServer::transformScan(ColorCloud& cloud, const ros::Time& tm) const
 {
   tf::StampedTransform transform = findTransform(tm);
