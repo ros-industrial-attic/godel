@@ -28,6 +28,7 @@ private:
   ros::ServiceClient real_client_;
   ros::ServiceClient sim_client_;
   ros::ServiceClient keyence_client_;
+  ros::ServiceClient reset_scan_server_;
 };
 }
 
