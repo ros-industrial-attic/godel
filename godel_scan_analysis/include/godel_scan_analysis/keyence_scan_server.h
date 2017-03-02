@@ -53,6 +53,11 @@ public:
    */
   ColorCloud::ConstPtr getSurfaceQuality() const { return map_; }
 
+  /**
+   * @brief Resets accumulated clouds (map_)
+   */
+  void clear();
+
 private:
   void transformScan(ColorCloud& cloud, const ros::Time& tm) const;
   tf::StampedTransform findTransform(const ros::Time& tm) const;

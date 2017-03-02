@@ -5,6 +5,7 @@
 
 #include "godel_msgs/TrajectoryExecution.h"
 #include "keyence_experimental/ChangeProgram.h"
+#include <std_srvs/Trigger.h>
 
 #include "process_utils.h"
 
@@ -19,6 +20,7 @@ const static std::string KEYENCE_PROGRAM_SERVICE_NAME = "change_program";
 const static std::string EXECUTION_SERVICE_NAME = "path_execution";
 const static std::string SIMULATION_SERVICE_NAME = "simulate_path";
 const static std::string SERVICE_SERVER_NAME = "scan_process_execution";
+const static std::string RESET_SCANS_SERVICE = "reset_scan_server";
 
 godel_process_execution::KeyenceProcessService::KeyenceProcessService(ros::NodeHandle& nh)
 {
@@ -29,6 +31,9 @@ godel_process_execution::KeyenceProcessService::KeyenceProcessService(ros::NodeH
   real_client_ = nh.serviceClient<godel_msgs::TrajectoryExecution>(EXECUTION_SERVICE_NAME);
 
   keyence_client_ = nh.serviceClient<keyence_experimental::ChangeProgram>(KEYENCE_PROGRAM_SERVICE_NAME);
+
+  // For reseting the scan server
+  reset_scan_server_ = nh.serviceClient<std_srvs::Trigger>(RESET_SCANS_SERVICE);
 
   // Create this process execution server
   server_ = nh.advertiseService<KeyenceProcessService, godel_msgs::KeyenceProcessExecution::Request,
@@ -71,6 +76,11 @@ bool godel_process_execution::KeyenceProcessService::executeProcess(
     return false;
   }
 
+  // Reset the scans prior to execution
+  std_srvs::Trigger dummy_trigger;
+  reset_scan_server_.call(dummy_trigger);
+
+  // Prepare the trajectories to run
   godel_msgs::TrajectoryExecution srv_approach;
   srv_approach.request.wait_for_execution = true;
   srv_approach.request.trajectory = req.trajectory_approach;
