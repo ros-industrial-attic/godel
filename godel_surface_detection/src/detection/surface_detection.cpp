@@ -23,6 +23,13 @@
 #include <meshing_plugins_base/meshing_base.h>
 #include <utils/mesh_conversions.h>
 
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/features/normal_3d.h>
+#include <pcl/surface/gp3.h>
+#include <sensor_msgs/point_cloud_conversion.h>
+
+
 const static int DOWNSAMPLE_NUMBER = 3;
 const static std::string MESHING_PLUGIN_PARAM = "meshing_plugin_name";
 
@@ -30,7 +37,10 @@ namespace godel_surface_detection
 {
   namespace detection
   {
-    SurfaceDetection::SurfaceDetection() : full_cloud_ptr_(new CloudRGB()), acquired_clouds_counter_(0)
+    SurfaceDetection::SurfaceDetection()
+      : full_cloud_ptr_(new CloudRGB())
+      , acquired_clouds_counter_(0)
+      , random_engine_(0) // This is using a fixed seed for down-sampling at the moment
     {
 
       params_.frame_id = defaults::FRAME_ID;
@@ -58,9 +68,6 @@ namespace godel_surface_detection
       params_.mls_search_radius = defaults::MLS_SEARCH_RADIUS;
       params_.use_tabletop_seg = defaults::USE_TABLETOP_SEGMENTATION;
       params_.tabletop_seg_distance_threshold = defaults::TABLETOP_SEG_DISTANCE_THRESH;
-
-      srand(time(NULL));
-      clear_results();
     }
 
     bool SurfaceDetection::init()
@@ -221,6 +228,32 @@ namespace godel_surface_detection
     }
 
 
+    template <typename T>
+    static boost::shared_ptr<pcl::PointCloud<T>> downsampleCloud(const pcl::PointCloud<T>& cloud,
+                                                                 std::default_random_engine& random_engine,
+                                                                 int one_in)
+    {
+      if (one_in <= 1) // We're getting all the points, so just copy the cloud
+      {
+        return boost::make_shared<pcl::PointCloud<T>>(cloud);
+      }
+      auto new_cloud = boost::make_shared<pcl::PointCloud<T>>();
+      std::uniform_int_distribution<int> dist (1, one_in);
+
+      for (const auto& pt : cloud)
+      {
+        // Roll dice
+        auto r = dist(random_engine);
+        if (r == 1 && pt.x != 0.0 && pt.y!=0.0 && pt.z !=0.0 && pcl::isFinite(pt))
+        {
+          new_cloud->push_back(pt);
+        }
+      }
+
+      return new_cloud;
+    }
+
+
     bool SurfaceDetection::find_surfaces()
     {
       // Reset members
@@ -233,21 +266,8 @@ namespace godel_surface_detection
         return false;
 
       // Create Processing Cloud
-      pcl::PointCloud<pcl::PointXYZRGB>::Ptr process_cloud_ptr (new pcl::PointCloud<pcl::PointXYZRGB>());
+      auto process_cloud_ptr = downsampleCloud(*full_cloud_ptr_, random_engine_, DOWNSAMPLE_NUMBER);
       process_cloud_ptr->header = full_cloud_ptr_->header;
-
-      // Subsample full cloud into processing cloud
-      for(const auto& pt : full_cloud_ptr_->points)
-      {
-        int q = rand() % DOWNSAMPLE_NUMBER;
-        if (q ==0)
-        {
-          if(pt.x !=0.0 && pt.y!=0.0 && pt.z !=0.0 && pcl::isFinite(pt))
-          {
-            process_cloud_ptr->push_back(pt);
-          }
-        }
-      }
 
       // Segment the part into surface clusters using a "region growing" scheme
       SurfaceSegmentation SS(process_cloud_ptr);
@@ -311,7 +331,9 @@ namespace godel_surface_detection
           meshes_.push_back(mesh);
         }
         else
+        {
           ROS_INFO_STREAM("Apply concave hull failed");
+        }
       }
 
       return true;

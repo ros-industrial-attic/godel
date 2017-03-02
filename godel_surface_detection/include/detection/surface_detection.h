@@ -19,14 +19,13 @@
 
 #include <ros/ros.h>
 #include <sensor_msgs/PointCloud2.h>
-#include <sensor_msgs/point_cloud_conversion.h>
 #include <pcl/point_cloud.h>
-#include <pcl_conversions/pcl_conversions.h>
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/surface/gp3.h>
-#include <godel_msgs/SurfaceDetectionParameters.h>
+#include <pcl/point_types.h>
+#include <pcl/PolygonMesh.h>
 #include <visualization_msgs/MarkerArray.h>
+#include <godel_msgs/SurfaceDetectionParameters.h>
+
+#include <random>
 
 namespace godel_surface_detection
 {
@@ -172,6 +171,8 @@ public:
 private:
   // roscpp members
   ros::Subscriber point_cloud_subs_;
+
+  std::default_random_engine random_engine_;
 
   // pcl members
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr full_cloud_ptr_;
