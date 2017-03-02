@@ -43,6 +43,7 @@ add_executable(godel_process_planning_node
   src/keyence_process_planning.cpp
   src/trajectory_utils.cpp
   src/generate_motion_plan.cpp
+  src/path_transitions.cpp
 )
 
 ## Add cmake target dependencies of the executable/library
