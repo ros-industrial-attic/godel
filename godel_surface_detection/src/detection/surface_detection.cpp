@@ -63,13 +63,6 @@ namespace godel_surface_detection
       clear_results();
     }
 
-
-    SurfaceDetection::~SurfaceDetection()
-    {
-      // TODO Auto-generated destructor stub
-    }
-
-
     bool SurfaceDetection::init()
     {
       full_cloud_ptr_->header.frame_id = params_.frame_id;
@@ -178,12 +171,9 @@ namespace godel_surface_detection
 
     void SurfaceDetection::add_cloud(CloudRGB& cloud)
     {
-
       (*full_cloud_ptr_) += cloud;
-
       acquired_clouds_counter_++;
     }
-
 
     int SurfaceDetection::get_acquired_clouds_count() { return acquired_clouds_counter_; }
 
@@ -204,27 +194,6 @@ namespace godel_surface_detection
     {
       surfaces.insert(surfaces.end(), surface_clouds_.begin(), surface_clouds_.end());
     }
-
-
-    std::string SurfaceDetection::get_results_summary()
-    {
-      std::stringstream ss;
-      if (surface_clouds_.size() > 0)
-      {
-        ss << "\nNumber of surfaces identified: " << surface_clouds_.size() << "\n";
-        for (int i = 0; i < surface_clouds_.size(); i++)
-        {
-          ss << "\t-segment " << i + 1 << " {points: " << surface_clouds_[i]->size() << "}\n";
-        }
-      }
-      else
-      {
-        ss << "\nNo surfaces have been found\n";
-      }
-
-      return ss.str();
-    }
-
 
     void SurfaceDetection::get_full_cloud(CloudRGB& cloud)
     {

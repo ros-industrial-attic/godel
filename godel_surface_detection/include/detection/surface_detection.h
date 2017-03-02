@@ -33,7 +33,6 @@ namespace godel_surface_detection
 namespace detection
 {
 
-//typedef pcl::PointCloud<pcl::PointXYZ> Cloud;
 typedef pcl::PointCloud<pcl::PointXYZRGB> CloudRGB;
 typedef pcl::PointCloud<pcl::Normal> Normals;
 
@@ -137,7 +136,6 @@ class SurfaceDetection
 
 public:
   SurfaceDetection();
-  virtual ~SurfaceDetection();
 
 public:
   bool init();
@@ -146,8 +144,6 @@ public:
   void save_parameters(const std::string& filename);
 
   bool find_surfaces();
-  bool find_surfaces_old();
-  std::string get_results_summary();
 
   static void mesh_to_marker(const pcl::PolygonMesh& mesh, visualization_msgs::Marker& marker);
 
@@ -166,31 +162,6 @@ public:
   void get_region_colored_cloud(CloudRGB& cloud);
   void get_region_colored_cloud(sensor_msgs::PointCloud2& cloud_msg);
 
-protected:
-  bool apply_statistical_filter(const CloudRGB& in, CloudRGB& out);
-  bool apply_region_growing_segmentation(const CloudRGB& in, const Normals& normals,
-                                         std::vector<pcl::PointIndices>& clusters,
-                                         CloudRGB& colored_cloud);
-  bool apply_plane_projection_refinement(const CloudRGB& candidate_outliers,
-                                         const CloudRGB& surface_cluster, CloudRGB& projected_cluster);
-
-  bool apply_normal_estimation(const CloudRGB& cloud, Normals& normals);
-
-  bool apply_kdtree_radius_search(const CloudRGB& query_points, const CloudRGB& search_points,
-                                  double radius, CloudRGB& close_points);
-
-  bool apply_voxel_downsampling(CloudRGB& cloud);
-
-  bool apply_mls_surface_smoothing(const CloudRGB& cloud_in, CloudRGB& cloud_out, Normals& normals);
-
-  bool apply_tabletop_segmentation(const CloudRGB& cloud_in, CloudRGB& cloud_out);
-
-  /* @brief Finds the best fit plane for the input cloud, reprojects points onto the plane,
-   * and then calculates the concave hull and triangulates a mesh.
-   */
-  bool apply_planar_reprojection(const CloudRGB& in, CloudRGB& out);
-  bool apply_concave_hull(const CloudRGB& in, pcl::PolygonMesh& mesh);
-
   std::string getMeshingPluginName() const;
 
 
@@ -198,7 +169,7 @@ public:
   // parameters
   godel_msgs::SurfaceDetectionParameters params_;
 
-protected:
+private:
   // roscpp members
   ros::Subscriber point_cloud_subs_;
 
