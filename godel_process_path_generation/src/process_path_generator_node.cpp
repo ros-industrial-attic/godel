@@ -81,8 +81,9 @@ bool generateProcessPlan(descartes::ProcessPath& process_path,
   ppg.setMargin(req.params.margin);
   ppg.setOverlap(req.params.overlap);
   ppg.setToolRadius(req.params.tool_radius);
-  ppg.setTraverseHeight(TRAVERSE_HEIGHT);
-
+  ppg.setTraverseHeight(0.0); // Note: We added traverse height to the newer
+                              // 'process_planning' component of our system
+                              // so I set the param to zero here.
   if (!ppg.variables_ok())
   {
     ROS_ERROR("Cannot continue path generation with current variables.");
