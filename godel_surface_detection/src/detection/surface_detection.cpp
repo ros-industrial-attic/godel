@@ -16,19 +16,117 @@
 
 #include <detection/surface_detection.h>
 #include <coordination/data_coordinator.h>
-#include <segmentation/surface_segmentation.h>
 #include <godel_param_helpers/godel_param_helpers.h>
-#include <tf/transform_datatypes.h>
-#include <pluginlib/class_loader.h>
 #include <meshing_plugins_base/meshing_base.h>
-#include <utils/mesh_conversions.h>
-
 #include <pcl_conversions/pcl_conversions.h>
-#include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/features/normal_3d.h>
-#include <pcl/surface/gp3.h>
+#include <pluginlib/class_loader.h>
+#include <segmentation/surface_segmentation.h>
 #include <sensor_msgs/point_cloud_conversion.h>
+#include <tf/transform_datatypes.h>
+#include <utils/mesh_conversions.h>
+#include <utils/timing_utility.h>
 
+namespace godel_surface_detection
+{
+namespace detection
+{
+
+namespace defaults
+{
+
+// static const double ACQUISITION_TIME = 5.0f;
+static std::string FRAME_ID = "world_frame";
+
+static const int STATISTICAL_OUTLIER_MEAN = 50;
+static const double STATISTICAL_OUTLIER_STDEV_THRESHOLD = 1;
+static const int K_SEARCH = 50;
+
+static const int REGION_GROWING_MIN_CLUSTER_SIZE = 100;
+static const int REGION_GROWING_MAX_CLUSTER_SIZE = 100000;
+static const int REGION_GROWING_NEIGHBORS = 50;
+static const double REGION_GROWING_SMOOTHNESS_THRESHOLD = (M_PI / 180.0f) * 7.0f;
+static const double REGION_GROWING_CURVATURE_THRESHOLD = 1.0f;
+
+static const double TRIANGULATION_SEARCH_RADIUS = 0.01f;
+static const double TRIANGULATION_MU = 2.5f;
+static const int TRIANGULATION_MAX_NEAREST_NEIGHBORS = 100;
+static const double TRIANGULATION_MAX_SURFACE_ANGLE = M_PI / 4.0f;
+static const double TRIANGULATION_MIN_ANGLE = M_PI / 18.0f;
+static const double TRIANGULATION_MAX_ANGLE = 2.0f * M_PI / 3.0f;
+static const bool TRIANGULATION_NORMAL_CONSISTENCY = false;
+
+static const bool PLANE_APROX_REFINEMENT_ENABLED = true;
+static const int PLANE_APROX_REFINEMENT_SEG_MAX_ITERATIONS = 100;
+static const double PLANE_APROX_REFINEMENT_SEG_DIST_THRESHOLD = 0.01f;
+static const double PLANE_APROX_REFINEMENT_SAC_PLANE_DISTANCE = 0.01f;
+static const std::string PLANE_APROX_REFINEMENT_KDTREE_RADIUS = "pa_kdtree_radius";
+
+static const double VOXEL_LEAF_SIZE = 0.01f;
+
+static const double OCCUPANCY_THRESHOLD = 0.1f;
+
+// Moving least square smoothing
+static const double MLS_UPSAMPLING_RADIUS = 0.01f;
+static const double MLS_SEARCH_RADIUS = 0.01f;
+static const int MLS_POINT_DENSITY = 40;
+
+static const bool USE_TABLETOP_SEGMENTATION = true;
+static const double TABLETOP_SEG_DISTANCE_THRESH = 0.005f;
+
+static const double MARKER_ALPHA = 1.0f;
+static const bool IGNORE_LARGEST_CLUSTER = false;
+}
+
+namespace config
+{
+static const std::string POINT_COLUD_TOPIC = "sensor_point_cloud";
+}
+
+namespace params
+{
+static const std::string FRAME_ID = "frame_id";
+static const std::string USE_OCTOMAP = "use_octomap";
+
+static const std::string STOUTLIER_MEAN = "stout_mean";
+static const std::string STOUTLIER_STDEV_THRESHOLD = "stout_stdev_threshold";
+static const std::string K_SEARCH = "k_search";
+
+static const std::string REGION_GROWING_MIN_CLUSTER_SIZE = "rg_min_cluster_size";
+static const std::string REGION_GROWING_MAX_CLUSTER_SIZE = "rg_max_cluster_size";
+static const std::string REGION_GROWING_NEIGHBORS = "rg_neighbors";
+static const std::string REGION_GROWING_SMOOTHNESS_THRESHOLD = "rg_smoothness_threshold";
+static const std::string REGION_GROWING_CURVATURE_THRESHOLD = "rg_curvature_threshold";
+
+static const std::string TRIANGULATION_SEARCH_RADIUS = "tr_search_radius";
+static const std::string TRIANGULATION_MU = "tr_mu";
+static const std::string TRIANGULATION_MAX_NEAREST_NEIGHBORS = "tr_nearest_neighbors";
+static const std::string TRIANGULATION_MAX_SURFACE_ANGLE = "tr_max_surface_angle";
+static const std::string TRIANGULATION_MIN_ANGLE = "tr_min_angle";
+static const std::string TRIANGULATION_MAX_ANGLE = "tr_max_angle";
+static const std::string TRIANGULATION_NORMAL_CONSISTENCY = "tr_normal_consistency";
+
+static const std::string PLANE_APROX_REFINEMENT_ENABLED = "pa_enabled";
+static const std::string PLANE_APROX_REFINEMENT_SEG_MAX_ITERATIONS = "pa_seg_max_iterations";
+static const std::string PLANE_APROX_REFINEMENT_SEG_DIST_THRESHOLD = "pa_seg_dist_threshold";
+static const std::string PLANE_APROX_REFINEMENT_SAC_PLANE_DISTANCE = "pa_sac_plane_distance";
+static const std::string PLANE_APROX_REFINEMENT_KDTREE_RADIUS = "pa_kdtree_radius";
+
+static const std::string VOXEL_LEAF_SIZE = "voxel_leaf";
+
+static const std::string OCCUPANCY_THRESHOLD = "occupancy_threshold";
+
+static const std::string MLS_UPSAMPLING_RADIUS = "mls_upsampling_radius";
+static const std::string MLS_SEARCH_RADIUS = "mls_search_radius";
+static const std::string MLS_POINT_DENSITY = "mls_point_density";
+
+static const std::string USE_TABLETOP_SEGMENTATION = "use_tabletop_segmentation";
+static const std::string TABLETOP_SEG_DISTANCE_THRESH = "tabletop_seg_distance_thresh";
+
+static const std::string MARKER_ALPHA = "marker_alpha";
+static const std::string IGNORE_LARGEST_CLUSTER = "ignore_largest_cluster";
+}
+}
+}
 
 const static int DOWNSAMPLE_NUMBER = 3;
 const static std::string MESHING_PLUGIN_PARAM = "meshing_plugin_name";
@@ -42,7 +140,6 @@ namespace godel_surface_detection
       , acquired_clouds_counter_(0)
       , random_engine_(0) // This is using a fixed seed for down-sampling at the moment
     {
-
       params_.frame_id = defaults::FRAME_ID;
       params_.k_search = defaults::K_SEARCH;
       params_.meanK = defaults::STATISTICAL_OUTLIER_MEAN;
@@ -77,7 +174,6 @@ namespace godel_surface_detection
       return true;
     }
 
-
     void SurfaceDetection::clear_results()
     {
       acquired_clouds_counter_ = 0;
@@ -86,7 +182,6 @@ namespace godel_surface_detection
       mesh_markers_.markers.clear();
       meshes_.clear();
     }
-
 
     bool SurfaceDetection::load_parameters(const std::string& filename)
     {
@@ -135,7 +230,6 @@ namespace godel_surface_detection
              loadBoolParam(nh, params::IGNORE_LARGEST_CLUSTER, params_.ignore_largest_cluster);
     }
 
-
     void SurfaceDetection::save_parameters(const std::string& filename)
     {
       if (!godel_param_helpers::toFile(filename, params_))
@@ -144,13 +238,11 @@ namespace godel_surface_detection
       }
     }
 
-
     void SurfaceDetection::mesh_to_marker(const pcl::PolygonMesh& mesh,
-                                          visualization_msgs::Marker& marker)
+                                          visualization_msgs::Marker& marker,
+                                          std::default_random_engine& random_engine)
     {
       // color value ranges
-      static const double color_val_min = 0.5f;
-      static const double color_val_max = 1.0f;
       std_msgs::ColorRGBA color;
       color.a = 1;
 
@@ -160,16 +252,12 @@ namespace godel_surface_detection
       marker.type = marker.TRIANGLE_LIST;
       marker.action = marker.ADD;
 
-      // create color
-      color.r = color_val_min +
-                (static_cast<double>(rand()) / static_cast<double>(RAND_MAX)) *
-                    (color_val_max - color_val_min);
-      color.g = color_val_min +
-                (static_cast<double>(rand()) / static_cast<double>(RAND_MAX)) *
-                    (color_val_max - color_val_min);
-      color.b = color_val_min +
-                (static_cast<double>(rand()) / static_cast<double>(RAND_MAX)) *
-                    (color_val_max - color_val_min);
+      // create random color
+      std::uniform_real_distribution<float> color_dist(0.5f, 1.0f);
+      color.r = 0.5f + color_dist(random_engine);
+      color.g = 0.5f + color_dist(random_engine);
+      color.b = 0.5f + color_dist(random_engine);
+
       marker.color = color;
 
       // filling points
@@ -227,7 +315,15 @@ namespace godel_surface_detection
       cloud_msg.header.frame_id = params_.frame_id;
     }
 
-
+    /**
+     * @brief Downsamples a cloud by rolling a die for each point from 1 to \e one_in. If the die comes up
+     * equal to 1, then the point is included. Otherwise it is ignored.
+     * @param cloud The point cloud to be downsampled.
+     * @param random_engine The seeded random engine by which to perform the die rolls.
+     * @param one_in The number of sides on the virtual die. A '1' would mean include every point. A '2'
+     * would indicate that each point has a 1/2 chance of being in the final cloud.
+     * @return A new point cloud generated from points in \e cloud.
+     */
     template <typename T>
     static boost::shared_ptr<pcl::PointCloud<T>> downsampleCloud(const pcl::PointCloud<T>& cloud,
                                                                  std::default_random_engine& random_engine,
@@ -253,9 +349,18 @@ namespace godel_surface_detection
       return new_cloud;
     }
 
+    static auto findLargestCloud(const std::vector<CloudRGB::Ptr>& clouds) -> decltype(clouds.begin())
+    {
+      return std::max_element(clouds.begin(), clouds.end(),
+                              [] (const CloudRGB::Ptr& a, const CloudRGB::Ptr& b) {
+        return a->size() < b->size();
+      });
+    }
 
     bool SurfaceDetection::find_surfaces()
     {
+      TimingUtility time_surface_finding (__FUNCTION__); // Poor man's time profiling
+
       // Reset members
       surface_clouds_.clear();
       mesh_markers_.markers.clear();
@@ -278,19 +383,10 @@ namespace godel_surface_detection
       // Remove largest cluster if appropriate
       if (params_.ignore_largest_cluster && surface_clouds_.size() > 1)
       {
-        int largest_index = 0;
-        int largest_size = 0;
-        for (int i = 0; i < surface_clouds_.size(); i++)
-        {
-          if (surface_clouds_[i]->points.size() > largest_size)
-          {
-            largest_size = surface_clouds_[i]->points.size();
-            largest_index = i;
-          }
-        }
-        surface_clouds_.erase(surface_clouds_.begin() + largest_index);
+        surface_clouds_.erase(findLargestCloud(surface_clouds_));
       }
 
+      // Load the code to perform meshing dynamically
       pluginlib::ClassLoader<meshing_plugins_base::MeshingBase>
           poly_loader("meshing_plugins_base", "meshing_plugins_base::MeshingBase");
       boost::shared_ptr<meshing_plugins_base::MeshingBase> mesher;
@@ -298,7 +394,6 @@ namespace godel_surface_detection
       try
       {
         mesher = poly_loader.createInstance(getMeshingPluginName());
-
       }
       catch(pluginlib::PluginlibException& ex)
       {
@@ -307,7 +402,7 @@ namespace godel_surface_detection
       }
 
       // Compute mesh from point clouds
-      for (int i = 0; i < surface_clouds_.size(); i++)
+      for (std::size_t i = 0; i < surface_clouds_.size(); i++)
       {
         pcl::PolygonMesh mesh;
         visualization_msgs::Marker marker;
@@ -316,7 +411,7 @@ namespace godel_surface_detection
         if (mesher->generateMesh(mesh))
         {
           // Create marker from mesh
-          mesh_to_marker(mesh, marker);
+          mesh_to_marker(mesh, marker, random_engine_);
 
           // saving other properties
           marker.header.frame_id = mesh.header.frame_id = surface_clouds_[i]->header.frame_id;
@@ -332,7 +427,7 @@ namespace godel_surface_detection
         }
         else
         {
-          ROS_INFO_STREAM("Apply concave hull failed");
+          ROS_WARN_STREAM("Meshing of segmented surface " << i << " failed.");
         }
       }
 

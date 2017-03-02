@@ -391,55 +391,6 @@ static bool isBlendPath(const std::string& s)
   return s.find(prefix, s.size() - prefix.size()) != std::string::npos;
 }
 
-
-visualization_msgs::MarkerArray
-SurfaceBlendingService::create_tool_markers(const geometry_msgs::Point& pos,
-                                            const geometry_msgs::Pose& pose, std::string frame_id)
-{
-  visualization_msgs::MarkerArray tool;
-  tool.markers.resize(2);
-  visualization_msgs::Marker& disk = tool.markers.at(0);
-  visualization_msgs::Marker& shaft = tool.markers.at(1);
-
-  std_msgs::ColorRGBA blue;
-  blue.r = 0.;
-  blue.g = .1;
-  blue.b = 1.;
-  blue.a = 0.7;
-
-  disk.action = visualization_msgs::Marker::ADD;
-  disk.color = blue;
-  disk.frame_locked = true;
-  disk.header.frame_id = frame_id;
-  disk.header.seq = 0;
-  disk.header.stamp = ros::Time::now();
-  disk.lifetime = ros::Duration(0.);
-  disk.pose = pose;
-  disk.ns = TOOL_NAMESPACE;
-  // disk/shaft position filled out below
-  disk.type = visualization_msgs::Marker::CYLINDER;
-  shaft = disk;
-
-  tf::Transform marker_pose;
-  tf::poseMsgToTF(pose, marker_pose);
-
-  disk.id = 0;
-  tf::Vector3 marker_pos(pos.x, pos.y, pos.z + .5 * TOOL_THK);
-  marker_pos = marker_pose * marker_pos;
-  tf::pointTFToMsg(marker_pos, disk.pose.position);
-  disk.scale.x = disk.scale.y = TOOL_DIA;
-  disk.scale.z = TOOL_THK;
-
-  shaft.id = 1;
-  marker_pos = tf::Vector3(pos.x, pos.y, pos.z + TOOL_THK + 0.5 * TOOL_SHAFT_LEN);
-  marker_pos = marker_pose * marker_pos;
-  tf::pointTFToMsg(marker_pos, shaft.pose.position);
-  shaft.scale.x = shaft.scale.y = TOOL_SHAFT_DIA;
-  shaft.scale.z = TOOL_SHAFT_LEN;
-
-  return tool;
-}
-
 bool SurfaceBlendingService::surface_detection_server_callback(
     godel_msgs::SurfaceDetection::Request& req, godel_msgs::SurfaceDetection::Response& res)
 {

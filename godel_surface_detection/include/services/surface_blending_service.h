@@ -120,10 +120,6 @@ private:
    */
   bool generate_process_plan(godel_process_path_generation::VisualizeBlendingPlan& process_plan);
 
-  visualization_msgs::MarkerArray create_tool_markers(const geometry_msgs::Point& pos,
-                                                      const geometry_msgs::Pose& pose,
-                                                      std::string frame_id);
-
   // Service callbacks, these components drive this class by signalling events
   // from the user
   bool surface_detection_server_callback(godel_msgs::SurfaceDetection::Request& req,
