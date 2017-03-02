@@ -105,7 +105,10 @@ std::vector <pcl::PointIndices> SurfaceSegmentation::computeSegments(pcl::PointC
   rg.setInputNormals (normals_);
 
   rg.extract (clusters_);
-  colored_cloud = rg.getColoredCloud();
+
+  if (!clusters_.empty()) // Turns out getColoredCloud() returns a null ptr if it didn't segment any surfaces
+    colored_cloud = rg.getColoredCloud();
+
   return(clusters_);
 }
 
