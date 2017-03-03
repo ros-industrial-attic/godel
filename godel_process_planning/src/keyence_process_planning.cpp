@@ -70,10 +70,17 @@ bool ProcessPlanningManager::handleKeyencePlanning(godel_msgs::KeyenceProcessPla
 
   // Transform process path from geometry msgs to descartes points
   const static double LINEAR_DISCRETIZATION = 0.01; // meters
-  DescartesTraj process_points = toDescartesTraj(req.path.segments, req.params.approach_distance,
-                                                 req.params.traverse_spd, LINEAR_DISCRETIZATION,
-                                                 toDescartesScanPt);
+  const static double ANGULAR_DISCRETIZATION = 0.1; // radians
+  const static double RETRACT_DISTANCE = 0.05; // meters
 
+  TransitionParameters transition_params;
+  transition_params.linear_disc = LINEAR_DISCRETIZATION;
+  transition_params.angular_disc = ANGULAR_DISCRETIZATION;
+  transition_params.retract_dist = RETRACT_DISTANCE;
+  transition_params.traverse_height = req.params.approach_distance;
+
+  DescartesTraj process_points = toDescartesTraj(req.path.segments, req.params.traverse_spd, transition_params,
+                                                 toDescartesScanPt);
   // Capture the current state of the robot
   std::vector<double> current_joints = getCurrentJointState(JOINT_TOPIC_NAME);
 
