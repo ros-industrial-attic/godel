@@ -4,6 +4,8 @@
 #include <ros/io.h>
 #include <thread>
 
+// Custom boundary estimation
+#include "parallel_boundary.h"
 
 /** @brief default constructor */
 SurfaceSegmentation::SurfaceSegmentation()
@@ -70,7 +72,7 @@ void SurfaceSegmentation::getBoundaryCloud(pcl::PointCloud<pcl::Boundary>::Ptr &
   }
   else
   {
-    pcl::BoundaryEstimation<pcl::PointXYZRGB, pcl::Normal, pcl::Boundary> best;
+    pcl::ParallelBoundaryEstimation<pcl::PointXYZRGB, pcl::Normal, pcl::Boundary> best;
     best.setInputCloud(input_cloud_);
     best.setInputNormals(normals_);
     best.setRadiusSearch (radius_);
