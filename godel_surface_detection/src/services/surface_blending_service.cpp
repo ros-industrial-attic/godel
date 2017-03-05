@@ -300,13 +300,9 @@ bool SurfaceBlendingService::run_robot_scan(visualization_msgs::MarkerArray& sur
   surface_detection_.clear_results();
 
   // saving parameters used
-
-  ROS_INFO_STREAM("Starting scan");
-
   int scans_completed = robot_scan_.scan(false);
   if (scans_completed > 0)
   {
-    ROS_INFO_STREAM("Scan points reached " << scans_completed);
     succeeded = find_surfaces(surfaces);
   }
   else
