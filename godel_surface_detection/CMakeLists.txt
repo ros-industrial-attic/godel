@@ -82,6 +82,10 @@ add_executable(surface_blending_service  src/services/surface_blending_service.c
 target_link_libraries(surface_blending_service ${PROJECT_NAME})
 add_dependencies(surface_blending_service godel_msgs_generate_messages_cpp)
 
+# Surface segmentation stand alone node
+add_executable(surface_segmentation_node src/nodes/boundary_test_node.cpp)
+target_link_libraries(surface_segmentation_node ${PROJECT_NAME})
+
 install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
