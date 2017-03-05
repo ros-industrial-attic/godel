@@ -1,8 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-	<node name="rqt" pkg="rqt_gui" type="rqt_gui" args="--perspective-file $(find godel_plugins)/rqt/robot_blending.perspective" output="screen">
-		<rosparam command="load" file="$(find godel_surface_detection)/config/surface_detection.yaml"/>
-	</node>
-	<node name="point_cloud_publisher_node" pkg="godel_surface_detection" type="point_cloud_publisher_node"
-		args="-f data/milk_cartoon_all_small_clorox.pcd -r 0.5 -i world_frame" output="log"/>
-</launch>
