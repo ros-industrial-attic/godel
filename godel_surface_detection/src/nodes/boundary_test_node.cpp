@@ -1,12 +1,10 @@
 #include <segmentation/surface_segmentation.h>
 #include <ros/ros.h>
 
-
 /*
- * A stand-alone node that uses Godel's current surface segmentation algorithms
- * for the purposes of testing and profiling
+ * A stand-alone node for testing Godel's "SurfaceSegmentation" class w/o the
+ * infrastructure required for the entire system.
  */
-
 
 static pcl::PointCloud<pcl::PointXYZRGB>::Ptr
 computeBoundaryCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud)

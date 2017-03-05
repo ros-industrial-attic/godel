@@ -98,19 +98,15 @@ pcl::ParallelBoundaryEstimation<PointInT, PointNT, PointOutT>::isBoundaryPoint (
   for (size_t i = 0; i < angles.size () - 1; ++i)
   {
     dif = angles[i + 1] - angles[i];
-    if (max_dif < dif)
-      max_dif = dif;
+    if (dif > angle_threshold)
+      return true;
   }
   // Get the angle difference between the last and the first
   dif = 2 * static_cast<float> (M_PI) - angles[angles.size () - 1] + angles[0];
-  if (max_dif < dif)
-    max_dif = dif;
+  if (dif > angle_threshold)
+    return true;
 
-  // Check results
-  if (max_dif > angle_threshold)
-    return (true);
-  else
-    return (false);
+  return (false);
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////
