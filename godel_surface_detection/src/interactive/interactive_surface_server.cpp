@@ -237,8 +237,6 @@ void InteractiveSurfaceServer::button_marker_callback(
   switch (feedback->event_type)
   {
   case visualization_msgs::InteractiveMarkerFeedback::BUTTON_CLICK:
-    // ROS_INFO_STREAM("marker "<<feedback->marker_name <<" button control was clicked");
-    ROS_INFO_STREAM("button marker click callback");
     toggle_selection_flag(std::stoi(feedback->marker_name));
     break;
 
@@ -254,16 +252,10 @@ void InteractiveSurfaceServer::menu_marker_callback(
   switch (feedback->event_type)
   {
   case visualization_msgs::InteractiveMarkerFeedback::BUTTON_CLICK:
-    //		ROS_INFO_STREAM("marker "<<feedback->marker_name <<" button control was clicked");
-    ROS_INFO_STREAM("menu marker click callback");
     toggle_selection_flag(std::stoi(feedback->marker_name));
     break;
 
   case visualization_msgs::InteractiveMarkerFeedback::MENU_SELECT:
-    //		ROS_INFO_STREAM("marker: "<<feedback->marker_name <<", entry_id: "<<
-    //feedback->menu_entry_id
-    //				<<", menu control was clicked");
-    ROS_INFO_STREAM("menu select callback");
     if (feedback->menu_entry_id == select_entry_id_)
     {
       set_selection_flag(std::stoi(feedback->marker_name), true);
@@ -287,14 +279,11 @@ void InteractiveSurfaceServer::menu_marker_callback(
     }
     else if (feedback->menu_entry_id == hide_entry_id_)
     {
-      // ROS_WARN_STREAM("'Hide' menu option has not been implemented yet");
-
       show(std::stoi(feedback->marker_name), false);
       return;
     }
     else if (feedback->menu_entry_id == show_all_entry_id_)
     {
-      // ROS_WARN_STREAM("'Show All' menu option has not been implemented yet");
       show_all(true);
       marker_server_ptr_->applyChanges();
       return;
