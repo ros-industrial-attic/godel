@@ -7,7 +7,8 @@
   <arg name="sim_laser" default="true"/>
   <arg name="laser_ip" unless="$(arg sim_laser)" default="192.168.32.50"/>
   <arg name="robot_model_plugin" default="abb_irb2400_descartes/AbbIrb2400RobotModel"/>
-  <arg name="debug_mode" default="false"/>
+  <arg name="debug_rviz" default="false"/>
+  <arg name="debug_core" default="false"/> <!--Brings up the surface blending service in debug mode-->
 
   <!-- Brings up action interface for simple trajectory execution - used by laser scanner process execution -->
   <node name="path_execution_service" pkg="godel_path_execution" type="path_execution_service_node"/>
@@ -41,6 +42,7 @@
        for both the blender and the laser scanner. -->
   <include file="$(find godel_surface_detection)/launch/godel_core.launch">
     <arg name="config_path" value="$(find godel_irb2400_support)/config"/>
+    <arg name="debug" value="$(arg debug_core)"/>
   </include>
 
   <!-- If the user specifies a 'fake' sensor, publish fake data clouds -->
@@ -76,12 +78,11 @@
     </node>
   </group>
   
-  <group if="$(arg debug_mode)">
+  <!-- rviz w/ specified configuration -->
+  <group if="$(arg debug_rviz)">
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_irb2400_support)/rviz/irb2400_blending.rviz" output="screen" launch-prefix="xterm -e gdb --args" required="true"/>
   </group>
-
-  <!-- rviz w/ specified configuration -->
-  <group unless="$(arg debug_mode)">
+  <group unless="$(arg debug_rviz)">
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_irb2400_support)/rviz/irb2400_blending.rviz" output="screen" launch-prefix="nice" required="true"/>
   </group>
 
