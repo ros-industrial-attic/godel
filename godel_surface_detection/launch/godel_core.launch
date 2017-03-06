@@ -14,6 +14,7 @@
   </node>
 
   <!-- Blending Tool Path Generation Nodes -->
-  <node name="process_path_generator_node" pkg="godel_process_path_generation" type="process_path_generator_node" output="screen"/>
-  <node name="polygon_offset_node" pkg="godel_polygon_offset" type="godel_polygon_offset_node" output="screen"/>
+  <!-- Used in the default blend path generation plugin -->
+  <node name="process_path_generator_node" pkg="godel_process_path_generation" type="process_path_generator_node"/>
+  <node name="polygon_offset_node" pkg="godel_polygon_offset" type="godel_polygon_offset_node"/>
 </launch>

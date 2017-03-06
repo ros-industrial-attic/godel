@@ -180,11 +180,8 @@ namespace godel_surface_detection
     {
 
       (*full_cloud_ptr_) += cloud;
-      ROS_INFO_STREAM("Concatenated new cloud to acquired clouds");
 
       acquired_clouds_counter_++;
-      ROS_INFO_STREAM("Surface Detection is currently holding " << acquired_clouds_counter_
-                                                                << " point clouds");
     }
 
 
@@ -257,8 +254,6 @@ namespace godel_surface_detection
 
     bool SurfaceDetection::find_surfaces()
     {
-      ROS_INFO_STREAM("Find Surfaces Call");
-
       // Reset members
       surface_clouds_.clear();
       mesh_markers_.markers.clear();

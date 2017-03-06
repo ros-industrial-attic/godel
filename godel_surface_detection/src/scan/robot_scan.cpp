@@ -350,12 +350,7 @@ bool RobotScan::create_scan_trajectory(std::vector<geometry_msgs::Pose>& scan_po
     scan_poses.push_back(pose);
   }
 
-  ROS_INFO_STREAM("Computing cartesian path for a trajectory with "
-                  << params_.num_scan_points << " points, eef_step: " << eef_step);
   move_group_ptr_->setEndEffectorLink(params_.tcp_frame);
-
-  ROS_INFO_STREAM("Computing cartesian path for link '" << move_group_ptr_->getEndEffectorLink()
-                                                        << "'");
 
   return true;
 }
