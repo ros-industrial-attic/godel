@@ -1,16 +1,81 @@
 #include "path_transitions.h"
 
+static EigenSTL::vector_Affine3d interpolateCartesian(const Eigen::Affine3d& start, const Eigen::Affine3d& stop,
+                                                      const double ds, const double dt)
+{
+  // Required position change
+  Eigen::Vector3d delta_translation = (stop.translation() - start.translation());
+  Eigen::Vector3d start_pos = start.translation();
+  Eigen::Affine3d stop_prime = start.inverse()*stop; //This the stop pose represented in the start pose coordinate system
+  Eigen::AngleAxisd delta_rotation(stop_prime.rotation());
+
+  // Calculate number of steps
+  unsigned steps_translation = static_cast<unsigned>(delta_translation.norm() / ds) + 1;
+  unsigned steps_rotation = static_cast<unsigned>(delta_rotation.angle() / dt) + 1;
+  unsigned steps = std::max(steps_translation, steps_rotation);
+
+  // Step size
+  Eigen::Vector3d step = delta_translation / steps;
+
+  // Orientation interpolation
+  Eigen::Quaterniond start_q (start.rotation());
+  Eigen::Quaterniond stop_q (stop.rotation());
+  double slerp_ratio = 1.0 / steps;
+
+  std::vector<Eigen::Affine3d, Eigen::aligned_allocator<Eigen::Affine3d> > result;
+  Eigen::Vector3d trans;
+  Eigen::Quaterniond q;
+  Eigen::Affine3d pose;
+  result.reserve(steps+1);
+  for (unsigned i = 0; i <= steps; ++i)
+  {
+    trans = start_pos + step * i;
+    q = start_q.slerp(slerp_ratio * i, stop_q);
+    pose = (Eigen::Translation3d(trans) * q);
+    result.push_back(pose);
+  }
+  return result;
+}
+
+static EigenSTL::vector_Affine3d retractPath(const Eigen::Affine3d& start, double retract_dist, double traverse_height,
+                                             const double linear_disc, const double angular_disc)
+{
+
+  Eigen::Affine3d a = start * Eigen::Translation3d(0, 0, retract_dist);
+
+  if (a.translation().z() > traverse_height)
+  {
+    traverse_height = a.translation().z() + linear_disc;
+  }
+  Eigen::Affine3d b = a;
+  b.translation().z() = traverse_height;
+
+  auto segment_a = interpolateCartesian(start, a, linear_disc, angular_disc);
+  auto segment_b = interpolateCartesian(a, b, linear_disc, angular_disc);
+
+  EigenSTL::vector_Affine3d result;
+  result.insert(result.end(), segment_a.begin(), segment_a.end());
+  result.insert(result.end(), segment_b.begin() + 1, segment_b.end());
+
+  return result;
+}
+
 std::vector<godel_process_planning::ConnectingPath>
 godel_process_planning::generateTransitions(const std::vector<geometry_msgs::PoseArray> &segments,
-                                            const double traverse_height, const double linear_discretization)
+                                            const TransitionParameters& params)
 {
-  const int steps = std::ceil(traverse_height / linear_discretization);
-
+  auto traverse_height = params.traverse_height;
+  if (traverse_height < 0.1)
+  {
+    ROS_WARN("Forcing traverse height to at least 0.1m to protect against broken configurations "
+             "user requested height = %f.", traverse_height);
+    traverse_height = 0.1;
+  }
   std::vector<ConnectingPath> result;
 
-  // Loop over every connecting edge
   for (std::size_t i = 0; i < segments.size(); ++i)
   {
+    // First we extract the initial and final position of the path segment
     const auto& start_pose = segments[i].poses.front(); // First point in this segment
     const auto& end_pose = segments[i].poses.back();    // Last point in this segment
 
@@ -18,10 +83,11 @@ godel_process_planning::generateTransitions(const std::vector<geometry_msgs::Pos
     tf::poseMsgToEigen(start_pose, e_start);
     tf::poseMsgToEigen(end_pose, e_end);
 
-    // Each connecting segment has a retraction from 'from_pose'
-    // And an approach to 'to_pose'
-    auto approach = linearMoveZ(e_start, linear_discretization, steps);
-    auto depart = linearMoveZ(e_end, linear_discretization, steps);
+    // Now we want to generate our intermediate waypoints
+    auto approach = retractPath(e_start, params.retract_dist,traverse_height, params.linear_disc,
+                                params.angular_disc);
+    auto depart = retractPath(e_end, params.retract_dist, traverse_height, params.linear_disc,
+                              params.angular_disc);
     std::reverse(approach.begin(), approach.end()); // we flip the 'to' path to keep the time ordering of the path
 
     ConnectingPath c;
@@ -37,10 +103,10 @@ using DescartesConversionFunc =
 
 godel_process_planning::DescartesTraj
 godel_process_planning::toDescartesTraj(const std::vector<geometry_msgs::PoseArray> &segments,
-                                        const double traverse_height, const double process_speed,
-                                        const double linear_discretization, DescartesConversionFunc conversion_fn)
+                                        const double process_speed, const TransitionParameters& transition_params,
+                                        DescartesConversionFunc conversion_fn)
 {
-  auto transitions = generateTransitions(segments, traverse_height, linear_discretization);
+  auto transitions = generateTransitions(segments, transition_params);
 
   DescartesTraj traj;
   Eigen::Affine3d last_pose = createNominalTransform(segments.front().poses.front());
@@ -70,11 +136,18 @@ godel_process_planning::toDescartesTraj(const std::vector<geometry_msgs::PoseArr
 
   for (std::size_t i = 0; i < segments.size(); ++i)
   {
-    add_segment(transitions[i].approach, true);
+    add_segment(transitions[i].approach, false);
 
     add_segment(eigen_segments[i], false);
 
     add_segment(transitions[i].depart, false);
+
+    if (i != segments.size() - 1)
+    {
+      auto connection = interpolateCartesian(transitions[i].depart.back(), transitions[i+1].approach.front(),
+                                             transition_params.linear_disc, transition_params.angular_disc);
+      add_segment(connection, false);
+    }
   } // end segments
 
   return traj;

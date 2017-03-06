@@ -15,8 +15,16 @@ struct ConnectingPath
   EigenSTL::vector_Affine3d approach;
 };
 
+struct TransitionParameters
+{
+  double linear_disc;
+  double angular_disc;
+  double traverse_height;
+  double retract_dist;
+};
+
 std::vector<ConnectingPath> generateTransitions(const std::vector<geometry_msgs::PoseArray>& segments,
-                                                const double traverse_height, const double linear_discretization);
+                                                const TransitionParameters& params);
 
 /**
  * @brief transforms a sequence of pose-arrays, each representing a single 'segment' of a
@@ -33,8 +41,7 @@ std::vector<ConnectingPath> generateTransitions(const std::vector<geometry_msgs:
  */
 godel_process_planning::DescartesTraj
 toDescartesTraj(const std::vector<geometry_msgs::PoseArray>& segments,
-                const double traverse_height, const double process_speed,
-                const double linear_discretization,
+                const double process_speed, const TransitionParameters& transition_params,
                 boost::function<descartes_core::TrajectoryPtPtr(const Eigen::Affine3d&, const double)> conversion_fn);
 
 

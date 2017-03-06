@@ -74,9 +74,16 @@ bool ProcessPlanningManager::handleBlendPlanning(godel_msgs::BlendProcessPlannin
   std::vector<double> current_joints = getCurrentJointState(JOINT_TOPIC_NAME);
 
   const static double LINEAR_DISCRETIZATION = 0.01; // meters
+  const static double ANGULAR_DISCRETIZATION = 0.1; // radians
+  const static double RETRACT_DISTANCE = 0.05; // meters
 
-  DescartesTraj process_points = toDescartesTraj(req.path.segments, req.params.safe_traverse_height,
-                                                 req.params.traverse_spd, LINEAR_DISCRETIZATION,
+  TransitionParameters transition_params;
+  transition_params.linear_disc = LINEAR_DISCRETIZATION;
+  transition_params.angular_disc = ANGULAR_DISCRETIZATION;
+  transition_params.retract_dist = RETRACT_DISTANCE;
+  transition_params.traverse_height = req.params.safe_traverse_height;
+
+  DescartesTraj process_points = toDescartesTraj(req.path.segments, req.params.traverse_spd, transition_params,
                                                  toDescartesBlendPt);
   if (generateMotionPlan(blend_model_, process_points, moveit_model_, blend_group_name_,
                          current_joints, res.plan))
