@@ -4,12 +4,16 @@
 
 #include "godel_simple_gui/blending_widget.h"
 
+#include <QVBoxLayout>
+
 godel_simple_gui::BlendingPanel::BlendingPanel(QWidget* parent) : rviz::Panel(parent)
 {
   ROS_INFO("Loaded simple blending panel");
 
-  widget_ = new BlendingWidget(this);
-  widget_->show();
+  QVBoxLayout* layout = new QVBoxLayout(this);
+  widget_ = new BlendingWidget();
+  layout->addWidget(widget_);
+  setLayout(layout);
 }
 
 godel_simple_gui::BlendingPanel::~BlendingPanel() {}
