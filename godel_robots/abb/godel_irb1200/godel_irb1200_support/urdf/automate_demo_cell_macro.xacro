@@ -1,0 +1,42 @@
+<?xml version="1.0" ?>
+
+<!-- Automate 2017 Demo Cell "Structures" -->
+
+<!-- Exports macro: "xacro:automate_demo_cell" with 1 arg: prefix -->
+<!-- Root link: ${prefix}demo_cell_baselink -->
+<!-- Origin is at the robot (IRB 1200) mounting location -->
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:property name="demo_cell_width" value="1.778"/> <!--70 in-->
+  <xacro:property name="demo_cell_length" value="1.778"/> <!--70 in-->
+  <xacro:property name="demo_cell_height" value="1.778"/> <!--70 in-->
+
+  <xacro:property name="robot_to_corner_x" value="-64.668"/> <!-- -25.46 inches -->
+  <xacro:property name="robot_to_corner_y" value="64.668"/> <!-- 25.46 inches -->
+
+  <!--
+    The demo cell macro
+    * All uses of "left" and "right" are relative to an observer looking into the cage
+    * through the light curtains
+  -->
+  <xacro:macro name="automate_demo_cell" params="prefix">
+
+  <link name="${prefix}demo_cell_baselink"/>
+
+  <link name="${prefix}demo_cell_corner"/>
+
+  <link name="${prefix}demo_cell_back_wall"/>
+
+  <link name="${prefix}demo_cell_right_wall"/>
+
+  <link name="${prefix}demo_cell_left_wall"/>
+
+  <!-- light curtains -->
+  <link name="${prefix}demo_cell_front_wall"/>
+
+  <!--
+  <link name="${prefix}demo_cell_roof"/>
+
+  <link name="${prefix}demo_cell_floor"/>
+
+  </xacro:macro>
+</robot>
