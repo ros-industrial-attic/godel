@@ -20,7 +20,16 @@ find_package(catkin REQUIRED COMPONENTS
   meshing_plugins_base
   path_planning_plugins_base
 )
+
 find_package(Boost REQUIRED COMPONENTS system)
+
+
+find_package(OpenMP REQUIRED)
+if(OPENMP_FOUND)
+  message(STATUS "OPENMP FOUND")
+  set(OpenMP_FLAGS ${OpenMP_CXX_FLAGS})  # or if you use C: ${OpenMP_C_FLAGS}
+  set(OpenMP_LIBS gomp)
+endif()
 
 catkin_package(
   INCLUDE_DIRS 
@@ -65,6 +74,8 @@ add_library(${PROJECT_NAME}
   src/services/trajectory_library.cpp
   src/utils/mesh_conversions.cpp)
 
+target_compile_options(${PROJECT_NAME} PRIVATE ${OpenMP_FLAGS})
+
 target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} yaml-cpp)
 add_dependencies(${PROJECT_NAME} godel_msgs_generate_messages_cpp)
 
@@ -81,6 +92,11 @@ add_executable(surface_blending_service  src/services/surface_blending_service.c
                                          src/services/blending_service_path_generation.cpp)
 target_link_libraries(surface_blending_service ${PROJECT_NAME})
 add_dependencies(surface_blending_service godel_msgs_generate_messages_cpp)
+target_compile_options(surface_blending_service PRIVATE ${OpenMP_FLAGS})
+
+# Surface segmentation stand alone node
+add_executable(surface_segmentation_node src/nodes/boundary_test_node.cpp)
+target_link_libraries(surface_segmentation_node ${PROJECT_NAME})
 
 install(TARGETS ${PROJECT_NAME}
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

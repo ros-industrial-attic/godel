@@ -9,7 +9,6 @@
 #include <pcl/geometry/quad_mesh.h>
 #include <pcl/geometry/polygon_mesh.h>
 #include <pcl/geometry/mesh_conversion.h>
-#include <pcl/features/boundary.h>
 #include <pcl/io/pcd_io.h>
 #include <pcl/io/ply_io.h>
 #include <pcl/io/vtk_io.h>
