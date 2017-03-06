@@ -9,6 +9,8 @@
   <arg name="robot_model_plugin" default="abb_irb2400_descartes/AbbIrb2400RobotModel"/>
   <arg name="debug_rviz" default="false"/>
   <arg name="debug_core" default="false"/> <!--Brings up the surface blending service in debug mode-->
+  <arg name="real_pcd" default="false"/>
+  <arg name="pcd_location" default="$(env HOME)/godel_point_cloud_data/surface4.pcd"/> <!-- path to pcd file of part -->
 
   <!-- Brings up action interface for simple trajectory execution - used by laser scanner process execution -->
   <node name="path_execution_service" pkg="godel_path_execution" type="path_execution_service_node"/>
@@ -47,10 +49,16 @@
 
   <!-- If the user specifies a 'fake' sensor, publish fake data clouds -->
   <group if="$(arg sim_sensor)">
-    <remap from="generated_cloud" to="sensor_point_cloud"/>
-    <node pkg="godel_surface_detection" type="point_cloud_generator_node" name="point_cloud_generator_node">
-      <rosparam command="load" file="$(find godel_irb2400_support)/config/point_cloud_descriptions.yaml"/>
-    </node>
+    <group if="$(arg real_pcd)">
+      <remap from="cloud_pcd" to="sensor_point_cloud"/>
+      <node pkg="pcl_ros" type="pcd_to_pointcloud" name="point_cloud_generator_node" args="$(arg pcd_location) 0.5" />
+    </group>
+    <group unless="$(arg real_pcd)">
+      <remap from="generated_cloud" to="sensor_point_cloud"/>
+      <node pkg="godel_surface_detection" type="point_cloud_generator_node" name="point_cloud_generator_node">
+        <rosparam command="load" file="$(find godel_irb2400_support)/config/point_cloud_descriptions.yaml"/>
+      </node>
+    </group>
   </group>
 
   <!-- If the user uses the real sensor, launch the ensenso publisher node -->

@@ -35,6 +35,11 @@ Godel: Austrian logician and mathematician http://en.wikipedia.org/wiki/Kurt_G%C
   ```
   roslaunch godel_irb2400_support irb2400_blending.launch
   ```
+  Run the simulation with real point cloud data:
+  ```
+  roslaunch godel_irb2400_support irb2400_blending.launch real_pcd:=true
+  ```
+  Download pcd files and unzip in your HOME directory: https://s3-us-west-2.amazonaws.com/godelscanfiles/godel_point_cloud_data.zip
 
 - Run blending demo in robot simulation mode (simulated robot and real sensor data)
   ```

@@ -9,7 +9,7 @@ point_cloud_descriptions:
     l: 0.1
     w: 0.19
     h: 0.0
-    resolution: 0.002
+    resolution: 0.0005
   - x: 1.1
     y: -0.1
     z: 0.1
@@ -19,7 +19,7 @@ point_cloud_descriptions:
     l: 0.2
     w: 0.1
     h: 0.0
-    resolution: 0.002
+    resolution: 0.0005
   - x: 0.7
     y: -0.5
     z: 0.3
@@ -29,4 +29,4 @@ point_cloud_descriptions:
     l: 0.2
     w: 0.2
     h: 0.0
-    resolution: 0.002
+    resolution: 0.0005
