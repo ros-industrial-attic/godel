@@ -6,6 +6,7 @@
 #include "descartes_trajectory/cart_trajectory_pt.h"
 #include "descartes_planner/dense_planner.h"
 
+#include "path_transitions.h"
 #include "common_utils.h"
 #include "generate_motion_plan.h"
 
@@ -21,7 +22,7 @@ const static std::string JOINT_TOPIC_NAME =
  * @param dt The upper limit of time from the previous point to achieve this one
  * @return A descartes trajectory point encapsulating a move to this pose
  */
-static inline descartes_core::TrajectoryPtPtr toDescartesPt(const Eigen::Affine3d& pose, double dt)
+descartes_core::TrajectoryPtPtr toDescartesScanPt(const Eigen::Affine3d& pose, double dt)
 {
   using namespace descartes_trajectory;
   using namespace descartes_core;
@@ -42,54 +43,6 @@ static inline descartes_core::TrajectoryPtPtr toDescartesPt(const Eigen::Affine3
   return TrajectoryPtPtr(new CartTrajectoryPt(frame, 0.0, M_PI, tm));
 }
 
-/**
- * @brief transforms an input, in the form of a reference pose and points relative to that pose,
- * into Descartes'
- *        native format. Also adds in associated parameters.
- * @param points Sequence of poses (relative to the world space of blending robot model)
- * @param params Surface blending parameters, including info such as traversal speed
- * @return The input trajectory encoded in Descartes points
- */
-static godel_process_planning::DescartesTraj
-toDescartesTraj(const geometry_msgs::PoseArray& ref,
-                const godel_msgs::ScanPlanParameters& params)
-{
-  DescartesTraj traj;
-  traj.reserve(ref.poses.size());
-
-  if (ref.poses.empty())
-    return traj;
-
-  // Convert to eigen
-  auto eigen_poses = toEigenArray(ref);
-
-  // Add approch and departure
-  const static double APPROACH_STEP_SIZE = 0.02; // m
-  const int steps = std::ceil(params.approach_distance / APPROACH_STEP_SIZE);
-
-  const auto& first_pt = eigen_poses.front();
-  const auto& last_pt = eigen_poses.back();
-
-  auto approach_path = linearMoveZ(first_pt, APPROACH_STEP_SIZE, steps);
-  auto depart_path = linearMoveZ(last_pt, APPROACH_STEP_SIZE, steps);
-  std::reverse(approach_path.begin(), approach_path.end());
-
-  // Insert approach/departure into main path
-  eigen_poses.insert(eigen_poses.begin(), approach_path.begin(), approach_path.end());
-  eigen_poses.insert(eigen_poses.end(), depart_path.begin(), depart_path.end());
-
-  Eigen::Affine3d last_pose = createNominalTransform(eigen_poses.front());
-
-  for (std::size_t i = 0; i < eigen_poses.size(); ++i)
-  {
-    Eigen::Affine3d this_pose = createNominalTransform(eigen_poses[i]);
-    double dt = (this_pose.translation() - last_pose.translation()).norm() / params.traverse_spd;
-    traj.push_back(toDescartesPt(this_pose, dt));
-    last_pose = this_pose;
-  }
-
-  return traj;
-}
 
 /**
  * @brief Computes a joint motion plan based on input points and the scan process; this includes
@@ -116,7 +69,10 @@ bool ProcessPlanningManager::handleKeyencePlanning(godel_msgs::KeyenceProcessPla
   }
 
   // Transform process path from geometry msgs to descartes points
-  DescartesTraj process_points = toDescartesTraj(req.path.segments[0], req.params);
+  const static double LINEAR_DISCRETIZATION = 0.01; // meters
+  DescartesTraj process_points = toDescartesTraj(req.path.segments, req.params.approach_distance,
+                                                 req.params.traverse_spd, LINEAR_DISCRETIZATION,
+                                                 toDescartesScanPt);
 
   // Capture the current state of the robot
   std::vector<double> current_joints = getCurrentJointState(JOINT_TOPIC_NAME);
