@@ -8,6 +8,8 @@
 // States
 #include "godel_simple_gui/states/scan_teach_state.h"
 
+const std::string SURFACE_BLENDING_PARAMETERS_SERVICE = "surface_blending_parameters";
+
 godel_simple_gui::BlendingWidget::BlendingWidget(QWidget* parent)
     : QWidget(parent), active_state_(NULL)
 {
@@ -32,6 +34,11 @@ godel_simple_gui::BlendingWidget::BlendingWidget(QWidget* parent)
 
   // Connect to ROS services
   loadParameters();
+
+  // Start Service Client
+  ros::NodeHandle nh;
+  surface_blending_parameters_client_ =
+      nh.serviceClient<godel_msgs::SurfaceBlendingParameters>(SURFACE_BLENDING_PARAMETERS_SERVICE);
 }
 
 godel_simple_gui::BlendingWidget::~BlendingWidget()
@@ -60,7 +67,19 @@ void godel_simple_gui::BlendingWidget::onResetButton() { active_state_->onReset(
 
 void godel_simple_gui::BlendingWidget::onOptionsButton() { options_->show(); }
 
-void godel_simple_gui::BlendingWidget::onOptionsSave() {}
+void godel_simple_gui::BlendingWidget::onOptionsSave()
+{
+  ROS_INFO_STREAM("Save Options Called");
+  godel_msgs::SurfaceBlendingParameters msg;
+  msg.request.action = godel_msgs::SurfaceBlendingParameters::Request::SAVE_PARAMETERS;
+  msg.request.surface_detection = options_->surfaceDetectionParams();
+  msg.request.path_params = options_->pathPlanningParams();
+  msg.request.robot_scan = options_->robotScanParams();
+  msg.request.scan_plan = options_->scanParams();
+
+  if (!surface_blending_parameters_client_.call(msg.request, msg.response))
+    ROS_WARN_STREAM("Could not complete service call to save parameters!");
+}
 
 void godel_simple_gui::BlendingWidget::changeState(GuiState* new_state)
 {
