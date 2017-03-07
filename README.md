@@ -37,7 +37,7 @@ Godel: Austrian logician and mathematician http://en.wikipedia.org/wiki/Kurt_G%C
   ```
   Run the simulation with real point cloud data:
   ```
-  roslaunch godel_irb2400_support irb2400_blending.launch real_pcd:=true
+  roslaunch godel_irb2400_support irb2400_blending.launch real_pcd:=true pcd_path:=/path/to/file.pcd
   ```
   Download pcd files and unzip in your HOME directory: https://s3-us-west-2.amazonaws.com/godelscanfiles/godel_point_cloud_data.zip
 

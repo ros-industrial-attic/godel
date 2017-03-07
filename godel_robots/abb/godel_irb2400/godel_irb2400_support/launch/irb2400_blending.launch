@@ -9,8 +9,9 @@
   <arg name="robot_model_plugin" default="abb_irb2400_descartes/AbbIrb2400RobotModel"/>
   <arg name="debug_rviz" default="false"/>
   <arg name="debug_core" default="false"/> <!--Brings up the surface blending service in debug mode-->
-  <arg name="real_pcd" default="false"/>
-  <arg name="pcd_location" default="$(env HOME)/godel_point_cloud_data/surface4.pcd"/> <!-- path to pcd file of part -->
+  <arg name="real_pcd" default="false" if="$(arg sim_sensor)"/>
+  <arg name="pcd_location" if="$(arg real_pcd)"/> <!-- path to pcd file of part -->
+  <arg name="pcd_frame" default="/base_link" if="$(arg real_pcd)"/>
 
   <!-- Brings up action interface for simple trajectory execution - used by laser scanner process execution -->
   <node name="path_execution_service" pkg="godel_path_execution" type="path_execution_service_node"/>
@@ -23,12 +24,12 @@
   <!-- Process execution nodes: These monitor the state of robot's execution of the planned path. They can be, and in this case are, robot or vendor specific -->
   <group>
     <remap from="simulate_path" to="simulation/simulate_trajectory"/>
-    
+
     <!-- Choose between 'execution' handlers based on whether we're connected to a real robot -->
     <group if="$(arg sim_robot)">
       <node name="blend_process_execution" pkg="godel_process_execution" type="blend_process_service_node"/>
     </group>
-    
+
     <group unless="$(arg sim_robot)">
       <!-- This requires connection to the service port of a physical robot controller -->
       <node name="blend_process_execution" pkg="godel_process_execution" type="abb_blend_process_service_node"/>
@@ -39,7 +40,7 @@
   <!-- Bring up simulated robot that can be visualized under the tf namespace 'simulation'
        Allows for previewing paths generated before execution. -->
   <include file="$(find industrial_robot_simulator_service)/launch/start_simulation_server.launch"/>
-  
+
   <!-- Brings up the core blending service: this includes the tool path planners
        for both the blender and the laser scanner. -->
   <include file="$(find godel_surface_detection)/launch/godel_core.launch">
@@ -51,7 +52,9 @@
   <group if="$(arg sim_sensor)">
     <group if="$(arg real_pcd)">
       <remap from="cloud_pcd" to="sensor_point_cloud"/>
-      <node pkg="pcl_ros" type="pcd_to_pointcloud" name="point_cloud_generator_node" args="$(arg pcd_location) 0.5" />
+      <node pkg="pcl_ros" type="pcd_to_pointcloud" name="point_cloud_generator_node" args="$(arg pcd_location) 0.5">
+        <param name="frame_id" type="string" value="$(arg pcd_frame)"/>
+      </node>
     </group>
     <group unless="$(arg real_pcd)">
       <remap from="generated_cloud" to="sensor_point_cloud"/>
@@ -85,7 +88,7 @@
       <param name="frame_id" value="keyence_sensor_optical_frame"/>
     </node>
   </group>
-  
+
   <!-- rviz w/ specified configuration -->
   <group if="$(arg debug_rviz)">
     <node name="rviz" pkg="rviz" type="rviz" args="-d $(find godel_irb2400_support)/rviz/irb2400_blending.rviz" output="screen" launch-prefix="xterm -e gdb --args" required="true"/>
@@ -105,5 +108,5 @@
   <rosparam command="load" file="$(find meshing_plugins)/config/meshing.yaml" />
   <rosparam command="load" file="$(find path_planning_plugins)/config/path_planning.yaml" />
   <rosparam command="load" file="$(find godel_process_planning)/config/process_planning.yaml" />
-  
+
 </launch>
