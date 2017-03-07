@@ -12,7 +12,6 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <exec_depend>godel_robot_resources</exec_depend>
   <exec_depend>godel_surface_detection</exec_depend>
 
 </package>
