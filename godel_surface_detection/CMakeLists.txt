@@ -19,6 +19,7 @@ find_package(catkin REQUIRED COMPONENTS
   godel_plugins
   meshing_plugins_base
   path_planning_plugins_base
+  swri_profiler
 )
 
 find_package(Boost REQUIRED COMPONENTS system)

@@ -4,6 +4,7 @@
 - git: {local-name: industrial_core, uri: 'https://github.com/ros-industrial/industrial_core.git', version: kinetic-devel}
 - git: {local-name: keyence_experimental, uri: 'https://github.com/ros-industrial/keyence_experimental.git', version: kinetic-devel}
 - git: {local-name: libsocket, uri: 'https://github.com/dermesser/libsocket.git', version: master}
+- git: {local-name: swri_profiler, uri: 'https://github.com/swri-robotics/swri_profiler.git', version: master}
 
 # Custom abb until Kinetic release happens
 - git: {local-name: abb, uri: 'https://github.com/Jmeyer1292/abb.git', version: kinetic-devel}

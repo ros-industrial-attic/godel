@@ -24,7 +24,7 @@
 #include <sensor_msgs/point_cloud_conversion.h>
 #include <tf/transform_datatypes.h>
 #include <utils/mesh_conversions.h>
-#include <utils/timing_utility.h>
+#include <swri_profiler/profiler.h>
 
 namespace godel_surface_detection
 {
@@ -359,7 +359,7 @@ namespace godel_surface_detection
 
     bool SurfaceDetection::find_surfaces()
     {
-      TimingUtility time_surface_finding (__FUNCTION__); // Poor man's time profiling
+      SWRI_PROFILE("find-surfaces");
 
       // Reset members
       surface_clouds_.clear();
@@ -377,7 +377,10 @@ namespace godel_surface_detection
       // Segment the part into surface clusters using a "region growing" scheme
       SurfaceSegmentation SS(process_cloud_ptr);
       region_colored_cloud_ptr_ = CloudRGB::Ptr(new CloudRGB());
-      SS.computeSegments(region_colored_cloud_ptr_);
+      {
+        SWRI_PROFILE("segment-clouds");
+        SS.computeSegments(region_colored_cloud_ptr_);
+      }
       SS.getSurfaceClouds(surface_clouds_);
 
       // Remove largest cluster if appropriate
@@ -402,6 +405,7 @@ namespace godel_surface_detection
       }
 
       // Compute mesh from point clouds
+      SWRI_PROFILE("mesh-clouds");
       for (std::size_t i = 0; i < surface_clouds_.size(); i++)
       {
         pcl::PolygonMesh mesh;
