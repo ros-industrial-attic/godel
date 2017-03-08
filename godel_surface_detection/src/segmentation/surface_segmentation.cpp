@@ -2,6 +2,7 @@
 #include <pcl/features/normal_3d_omp.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <ros/io.h>
+#include <ros/node_handle.h>
 #include <thread>
 
 // Custom boundary estimation
@@ -90,8 +91,8 @@ std::vector <pcl::PointIndices> SurfaceSegmentation::computeSegments(pcl::PointC
       boost::shared_ptr<pcl::search::Search<pcl::PointXYZRGB>> (new pcl::search::KdTree<pcl::PointXYZRGB>);
   pcl::RegionGrowing<pcl::PointXYZRGB, pcl::Normal> rg;
 
-  rg.setSmoothModeFlag (false); // Depends on the cloud being processed
-  rg.setSmoothnessThreshold (10.0 / 180.0 * M_PI);
+  rg.setSmoothModeFlag (true); // Depends on the cloud being processed
+  rg.setSmoothnessThreshold (0.035);
   rg.setCurvatureThreshold(1.0);
 
   rg.setMaxClusterSize(MAX_CLUSTER_SIZE);
@@ -227,66 +228,48 @@ double  SurfaceSegmentation::getSearchRadius()
 }
 
 
-bool SurfaceSegmentation::setSmoothCoef(std::vector<double> &coef)
+void SurfaceSegmentation::smoothVector(const std::vector<double> &x_in,
+                                       std::vector<double> &x_out,
+                                       const std::vector<double> &smoothing_coef)
 {
-  // smoothing filters must have an odd number of coefficients
-  if(coef.size() % 2 == 1)
+  int num_coef = smoothing_coef.size();
+  if (num_coef == 0 || num_coef % 2 != 1 || x_in.size() == 0 || x_in.size() <= num_coef)
   {
-    coef_.clear();
-    num_coef_ = coef.size();
-    double sum = 0;
-    for(const auto& c : coef)
-    {
-      coef_.push_back(c);
-      sum += c;
-    }
+    if(num_coef % 2 == 0)
+      ROS_WARN_STREAM("Filter must have an odd number of coefficients. Vector not smoothed");
 
-    // set gain to be the sum of the coefficients because we need unity gain
-    gain_ = sum;
-    return(true);
-  }
-  else
-  {
-    return(false);
-  }
-}
-
-
-void SurfaceSegmentation::smoothVector(std::vector<double>&x_in, std::vector<double> &x_out)
-{
-  int n = x_in.size();
-  if( n <= num_coef_)
-  {
     x_out = x_in;
+    return;
   }
-  else
+
+  int gain = std::accumulate(smoothing_coef.begin(), smoothing_coef.end(), 0);
+  int n = x_in.size();
+
+  // initialize the filter using tail of x_in
+  std::vector<double> xv;
+  xv.clear();
+  for(int j = num_coef - 1; j >= 0; j--)
+    xv.push_back(x_in[n-j-1]);
+
+  // cycle through every and apply the filter
+  for(int j = 1; j < n - 1; j++)
   {
-    // initialize the filter using tail of x_in
-    std::vector<double> xv;
-    xv.clear();
-    for(int j = num_coef_ - 1; j >= 0; j--)
-      xv.push_back(x_in[n-j-1]);
+    // shift backwards
+    for(int k = 0; k < num_coef - 1; k++)
+      xv[k] = xv[k + 1];
 
-    // cycle through every and apply the filter
-    for(int j = 1; j < n - 1; j++)
-    {
-      // shift backwards
-      for(int k = 0; k < num_coef_ - 1; k++)
-        xv[k] = xv[k + 1];
+    // get next input to filter which is num_coef/2 in front of current point being smoothed
+    int idx = (j + num_coef / 2) % n;
+    xv[num_coef - 1] = x_in[idx]; // j'th point
 
-      // get next input to filter which is num_coef/2 in front of current point being smoothed
-      int idx = (j + num_coef_ / 2) % n;
-      xv[num_coef_ - 1] = x_in[idx]; // j'th point
+    // apply the filter
+    double sum = 0.0;
+    for(int k = 0; k < num_coef; k++)
+      sum += xv[k] * smoothing_coef[k];
 
-      // apply the filter
-      double sum = 0.0;
-      for(int k = 0; k < num_coef_; k++)
-        sum += xv[k] * coef_[k];
-
-      // save point
-      x_out.push_back(sum / gain_);
-    }// end for every point
-  }
+    // save point
+    x_out.push_back(sum / gain);
+  } // end for every point
 }
 
 
@@ -305,13 +288,37 @@ void SurfaceSegmentation::smoothPointNormal(std::vector<pcl::PointNormal> &pts_i
     ny_in.push_back(pts_in[i].normal_y);
     nz_in.push_back(pts_in[i].normal_z);
   }
-  smoothVector(x_in,x_out);
-  smoothVector(y_in,y_out);
-  smoothVector(z_in,z_out);
-  smoothVector(nx_in,nx_out);
-  smoothVector(ny_in,ny_out);
-  smoothVector(nz_in,nz_out);
 
+  // Smoother length. These magic values were determined through empirical testing.
+  int pos_smoother_length = 11, orientation_smoother_length = 101;
+
+  // Grab parameters from rosparam if they're available
+  const static std::string POSITION_SMOOTHING_PARAM = "/surface_segmentation/smoothing/position_smoother_length";
+  const static std::string ORIENTATION_SMOOTHING_PARAM = "/surface_segmentation/smoothing/orientation_smoother_length";
+  ros::NodeHandle nh;
+  nh.getParam(POSITION_SMOOTHING_PARAM, pos_smoother_length);
+  nh.getParam(ORIENTATION_SMOOTHING_PARAM, orientation_smoother_length);
+
+  // Initialize vectors to the proper length
+  std::vector<double> position_smoother(pos_smoother_length);
+  std::vector<double> orientation_smoother(orientation_smoother_length);
+
+  // Smoother uses a linearly weighted average for both look-ahead and look-behind
+  for(int i = 1; i < pos_smoother_length; i++)
+    position_smoother.push_back((i < pos_smoother_length/2) ? i : (pos_smoother_length - i));
+
+  for(int i = 1; i < orientation_smoother_length; i++)
+    orientation_smoother.push_back((i < orientation_smoother_length/2) ? i : orientation_smoother_length - i);
+
+  // Smooth Points
+  smoothVector(x_in, x_out, position_smoother);
+  smoothVector(y_in, y_out, position_smoother);
+  smoothVector(z_in, z_out, position_smoother);
+  smoothVector(nx_in, nx_out, orientation_smoother);
+  smoothVector(ny_in, ny_out, orientation_smoother);
+  smoothVector(nz_in, nz_out, orientation_smoother);
+
+  // Normalize and push to output vectors
   for(int i = 0; i < pts_in.size(); i++)
   {
     pcl::PointNormal pt;
@@ -351,6 +358,7 @@ void SurfaceSegmentation::getBoundaryTrajectory(std::vector<pcl::IndicesPtr> &bo
     pt.normal_z = sign_ofz * normals_->at(idx).normal_z;
     pts.push_back(pt);
   }
+
   smoothPointNormal(pts, spts);
 
   std::vector<pcl::PointXYZRGB> vels;

@@ -58,11 +58,6 @@ public:
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud_;
   Mesh HEM_;
 
-  // smoothing filter
-  int num_coef_;
-  std::vector<double> coef_;
-  double gain_;
-
   // search terms
   double radius_;
 
@@ -86,8 +81,7 @@ public:
   double getSearchRadius();
 
   // Smoothing
-  bool setSmoothCoef(std::vector<double> &coef);
-  void smoothVector(std::vector<double>&x_in, std::vector<double> &x_out);
+  void smoothVector(const std::vector<double> &x_in, std::vector<double> &x_out, const std::vector<double> &coef);
   void smoothPointNormal(std::vector<pcl::PointNormal> &pts_in, std::vector<pcl::PointNormal> &pts_out);
 
   // Misc
