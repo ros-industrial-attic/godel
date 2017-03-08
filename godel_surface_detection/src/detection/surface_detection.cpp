@@ -130,6 +130,7 @@ static const std::string IGNORE_LARGEST_CLUSTER = "ignore_largest_cluster";
 }
 }
 
+static const float INPUT_CLOUD_VOXEL_FILTER_SIZE = 0.0015;
 const static int DOWNSAMPLE_NUMBER = 3;
 const static std::string MESHING_PLUGIN_PARAM = "meshing_plugin_name";
 
@@ -344,7 +345,9 @@ namespace godel_surface_detection
       process_cloud_ptr->header = full_cloud_ptr_->header;
       pcl::VoxelGrid<pcl::PointXYZRGB> vox;
       vox.setInputCloud (full_cloud_ptr_);
-      vox.setLeafSize (0.0015f, 0.0015f, 0.0015f);
+      vox.setLeafSize (INPUT_CLOUD_VOXEL_FILTER_SIZE,
+                       INPUT_CLOUD_VOXEL_FILTER_SIZE,
+                       INPUT_CLOUD_VOXEL_FILTER_SIZE);
       vox.filter(*process_cloud_ptr);
 
       // Segment the part into surface clusters using a "region growing" scheme
