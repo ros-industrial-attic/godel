@@ -25,6 +25,8 @@
 #include <tf/transform_datatypes.h>
 #include <utils/mesh_conversions.h>
 #include <swri_profiler/profiler.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/pcl_base.h>
 
 namespace godel_surface_detection
 {
@@ -128,6 +130,7 @@ static const std::string IGNORE_LARGEST_CLUSTER = "ignore_largest_cluster";
 }
 }
 
+static const float INPUT_CLOUD_VOXEL_FILTER_SIZE = 0.0015;
 const static int DOWNSAMPLE_NUMBER = 3;
 const static std::string MESHING_PLUGIN_PARAM = "meshing_plugin_name";
 
@@ -315,40 +318,6 @@ namespace godel_surface_detection
       cloud_msg.header.frame_id = params_.frame_id;
     }
 
-    /**
-     * @brief Downsamples a cloud by rolling a die for each point from 1 to \e one_in. If the die comes up
-     * equal to 1, then the point is included. Otherwise it is ignored.
-     * @param cloud The point cloud to be downsampled.
-     * @param random_engine The seeded random engine by which to perform the die rolls.
-     * @param one_in The number of sides on the virtual die. A '1' would mean include every point. A '2'
-     * would indicate that each point has a 1/2 chance of being in the final cloud.
-     * @return A new point cloud generated from points in \e cloud.
-     */
-    template <typename T>
-    static boost::shared_ptr<pcl::PointCloud<T>> downsampleCloud(const pcl::PointCloud<T>& cloud,
-                                                                 std::default_random_engine& random_engine,
-                                                                 int one_in)
-    {
-      if (one_in <= 1) // We're getting all the points, so just copy the cloud
-      {
-        return boost::make_shared<pcl::PointCloud<T>>(cloud);
-      }
-      auto new_cloud = boost::make_shared<pcl::PointCloud<T>>();
-      std::uniform_int_distribution<int> dist (1, one_in);
-
-      for (const auto& pt : cloud)
-      {
-        // Roll dice
-        auto r = dist(random_engine);
-        if (r == 1 && pt.x != 0.0 && pt.y!=0.0 && pt.z !=0.0 && pcl::isFinite(pt))
-        {
-          new_cloud->push_back(pt);
-        }
-      }
-
-      return new_cloud;
-    }
-
     static auto findLargestCloud(const std::vector<CloudRGB::Ptr>& clouds) -> decltype(clouds.begin())
     {
       return std::max_element(clouds.begin(), clouds.end(),
@@ -371,8 +340,15 @@ namespace godel_surface_detection
         return false;
 
       // Create Processing Cloud
-      auto process_cloud_ptr = downsampleCloud(*full_cloud_ptr_, random_engine_, DOWNSAMPLE_NUMBER);
+      pcl::PointCloud<pcl::PointXYZRGB>::Ptr process_cloud_ptr (
+            new pcl::PointCloud<pcl::PointXYZRGB>());
       process_cloud_ptr->header = full_cloud_ptr_->header;
+      pcl::VoxelGrid<pcl::PointXYZRGB> vox;
+      vox.setInputCloud (full_cloud_ptr_);
+      vox.setLeafSize (INPUT_CLOUD_VOXEL_FILTER_SIZE,
+                       INPUT_CLOUD_VOXEL_FILTER_SIZE,
+                       INPUT_CLOUD_VOXEL_FILTER_SIZE);
+      vox.filter(*process_cloud_ptr);
 
       // Segment the part into surface clusters using a "region growing" scheme
       SurfaceSegmentation SS(process_cloud_ptr);
