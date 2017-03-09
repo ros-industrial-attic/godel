@@ -2,7 +2,6 @@
 #include <pcl/features/normal_3d_omp.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <ros/io.h>
-#include <ros/node_handle.h>
 #include <thread>
 
 // Custom boundary estimation
@@ -242,12 +241,11 @@ void SurfaceSegmentation::smoothVector(const std::vector<double> &x_in,
     return;
   }
 
-  int gain = std::accumulate(smoothing_coef.begin(), smoothing_coef.end(), 0);
+  double gain = std::accumulate(smoothing_coef.begin(), smoothing_coef.end(), 0);
   int n = x_in.size();
 
   // initialize the filter using tail of x_in
   std::vector<double> xv;
-  xv.clear();
   for(int j = num_coef - 1; j >= 0; j--)
     xv.push_back(x_in[n-j-1]);
 
