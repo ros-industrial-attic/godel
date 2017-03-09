@@ -1,5 +1,9 @@
-#include <coordination/data_coordinator.h>
+#include <pcl/io/pcd_io.h>
 #include <ros/io.h>
+#include <ros/time.h>
+#include <thread>
+
+#include "coordination/data_coordinator.h"
 
 namespace godel_surface_detection
 {
@@ -33,7 +37,6 @@ namespace data
     return ss.str();
   }
 
-
   //! Default Constructor
   DataCoordinator::DataCoordinator()
   {
@@ -56,7 +59,8 @@ namespace data
 
 
   /**
-   * @brief Generates an id and creates a SurfaceDetectionRecord which connects detection features
+   * @brief Generates an id and creates a SurfaceDetectionRecord which connects
+   * detection features
    * @param input_cloud source point cloud from which the surface was derived
    * @param surface_cloud point cloud which desribes the surface
    * @param id of the new record
@@ -72,6 +76,11 @@ namespace data
     return rec.id_;
   }
 
+  void DataCoordinator::setProcessCloud(pcl::PointCloud<pcl::PointXYZRGB> incloud)
+  {
+    process_cloud_ = incloud;
+  }
+
 
   /**
    * @brief getCloud Returns a cloud of interest
@@ -80,7 +89,8 @@ namespace data
    * @param cloud Destination for cloud
    * @return true if record is found and type is valid, false otherwise
    */
-  bool DataCoordinator::getCloud(CloudTypes cloud_type, int id, pcl::PointCloud<pcl::PointXYZRGB>& cloud)
+  bool DataCoordinator::getCloud(CloudTypes cloud_type, int id,
+                                 pcl::PointCloud<pcl::PointXYZRGB>& cloud)
   {
     for(auto& rec : records_)
     {
@@ -209,7 +219,8 @@ namespace data
    * @param edge_poses PoseArray of edges
    * @return true if record is found and edge is added, false otherwise
    */
-  bool DataCoordinator::addEdge(int id, std::string name, geometry_msgs::PoseArray edge_poses)
+  bool DataCoordinator::addEdge(int id, std::string name,
+                                geometry_msgs::PoseArray edge_poses)
   {
     for(auto& rec : records_)
     {
@@ -235,7 +246,8 @@ namespace data
    * @param new_name
    * @return true if both record is found and an edge with old_name exists within the record, false otherwise
    */
-  bool DataCoordinator::renameEdge(int id, std::string old_name, std::string new_name)
+  bool DataCoordinator::renameEdge(int id, std::string old_name,
+                                   std::string new_name)
   {
     for(auto& rec : records_)
     {
@@ -266,7 +278,8 @@ namespace data
    * @param edge_poses Destination for PoseArray
    * @return true if record is found and an edge with edge_name exists within the record, false otherwise
    */
-  bool DataCoordinator::getEdgePosesByName(const std::string& edge_name, geometry_msgs::PoseArray& edge_poses)
+  bool DataCoordinator::getEdgePosesByName(const std::string& edge_name,
+                                           geometry_msgs::PoseArray& edge_poses)
   {
     for(auto& rec : records_)
     {
@@ -292,7 +305,9 @@ namespace data
    * @param poses PoseArray containing pose data
    * @return true if record is found, false otherwise
    */
-  bool DataCoordinator::setPoses(PoseTypes pose_type, int id, const std::vector<geometry_msgs::PoseArray>& poses)
+  bool DataCoordinator::setPoses(PoseTypes pose_type,
+                                 int id,
+                                 const std::vector<geometry_msgs::PoseArray>& poses)
   {
     for(auto& rec : records_)
     {
@@ -332,7 +347,8 @@ namespace data
    * @param poses
    * @return
    */
-  bool DataCoordinator::getPoses(PoseTypes pose_type, int id, std::vector<geometry_msgs::PoseArray>& poses)
+  bool DataCoordinator::getPoses(PoseTypes pose_type, int id,
+                                 std::vector<geometry_msgs::PoseArray>& poses)
   {
     for(auto& rec : records_)
     {
@@ -363,6 +379,71 @@ namespace data
 
     ROS_WARN_STREAM(UNABLE_TO_FIND_RECORD_ERROR << " " << id);
     return false;
+  }
+
+  /**
+   * @brief DataCoordinator::asyncSaveRecord calls saveRecord in a detached
+   * thread
+   * @param path directory of the save location
+   */
+  void DataCoordinator::asyncSaveRecord(boost::filesystem::path path)
+  {
+    try
+    {
+      auto thd = std::thread(&DataCoordinator::saveRecord, this, path);
+      thd.detach();
+    }
+    catch (const std::exception& e){
+      ROS_WARN_STREAM("Data Save Error.");
+    }
+  }
+
+  /**
+   * @brief saveRecord writes all the data contained in SurfaceDetectionRecord
+   * to files.
+   * @param path is the filesystem location where the data will be saved.
+   * @return true if successfull and false if not.
+   */
+  void DataCoordinator::saveRecord(boost::filesystem::path path)
+  {
+    // TODO (austin.deric@gmail.com): Save all records. Fix by Milestone 4.
+    // TODO (austin.deric@gmail.com): Replace timestamp with session id.
+    //                                Fix by Milestone 4.
+
+      std::stringstream session_id;
+      session_id << ros::Time::now();
+
+      if(!boost::filesystem::is_directory(path))
+      {
+        ROS_WARN_STREAM("Invalid Save Directory");
+        return;
+      }
+
+      // write input_cloud_ to pcd files
+      for(int i=0; i<records_.size(); ++i)
+      {
+        std::stringstream save_loc;
+        save_loc << path.string() << session_id.str() << "_" << "input_cloud_"
+                 <<  records_[i].id_ << ".pcd";
+        int results;
+        results = pcl::io::savePCDFile(save_loc.str(),
+                                                   records_[i].input_cloud_);
+        if(results!=0)
+          ROS_WARN_STREAM("input_cloud_ files not saved.");
+      }
+
+    //write process_cloud_ to pcd file
+    std::stringstream save_loc;
+    save_loc << path.string() << session_id.str() << "_"
+             << "process_cloud.pcd";
+    int results;
+    results = pcl::io::savePCDFile(save_loc.str(), process_cloud_);
+    if(results!=0){
+      ROS_WARN_STREAM("process_cloud_ files not saved.");
+    }
+
+    ROS_INFO_STREAM("Data Saved.");
+
   }
 } /* end namespace data */
 } /* end namespace godel_surface_detection */
