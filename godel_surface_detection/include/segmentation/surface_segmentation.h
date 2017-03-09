@@ -82,7 +82,8 @@ public:
 
   // Smoothing
   void smoothVector(const std::vector<double> &x_in, std::vector<double> &x_out, const std::vector<double> &coef);
-  void smoothPointNormal(std::vector<pcl::PointNormal> &pts_in, std::vector<pcl::PointNormal> &pts_out);
+  void smoothPointNormal(std::vector<pcl::PointNormal> &pts_in, std::vector<pcl::PointNormal> &pts_out, int p_length,
+                         int w_length);
 
   // Misc
 

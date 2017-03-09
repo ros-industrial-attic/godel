@@ -272,9 +272,19 @@ void SurfaceSegmentation::smoothVector(const std::vector<double> &x_in,
   } // end for every point
 }
 
-
+/**
+ * @brief SurfaceSegmentation::smoothPointNormal Uses a running weighted average (look-ahead and look-behind
+ *        to smooth a vector of point normals. Default values for position and orientation smoother length were
+ *        empirically derived and should be changed to best suit the user's application.
+ * @param pts_in Input point vector
+ * @param pts_out Destination for smoothed point vector
+ * @param p_length Length of position smoother. Increasing this leads to smoother, less accurate edges.
+ * @param w_length Length of orienation smoother. Increasing leads to less variation in edge point normal vectors.
+ */
 void SurfaceSegmentation::smoothPointNormal(std::vector<pcl::PointNormal> &pts_in,
-                                            std::vector<pcl::PointNormal> &pts_out)
+                                            std::vector<pcl::PointNormal> &pts_out,
+                                            int p_length = 13,
+                                            int w_length = 31)
 {
   std::vector<double> x_in, x_out, y_in, y_out, z_in, z_out;
   std::vector<double> nx_in, nx_out, ny_in, ny_out, nz_in, nz_out;
@@ -289,26 +299,16 @@ void SurfaceSegmentation::smoothPointNormal(std::vector<pcl::PointNormal> &pts_i
     nz_in.push_back(pts_in[i].normal_z);
   }
 
-  // Smoother length. These magic values were determined through empirical testing.
-  int pos_smoother_length = 11, orientation_smoother_length = 101;
-
-  // Grab parameters from rosparam if they're available
-  const static std::string POSITION_SMOOTHING_PARAM = "/surface_segmentation/smoothing/position_smoother_length";
-  const static std::string ORIENTATION_SMOOTHING_PARAM = "/surface_segmentation/smoothing/orientation_smoother_length";
-  ros::NodeHandle nh;
-  nh.getParam(POSITION_SMOOTHING_PARAM, pos_smoother_length);
-  nh.getParam(ORIENTATION_SMOOTHING_PARAM, orientation_smoother_length);
-
   // Initialize vectors to the proper length
-  std::vector<double> position_smoother(pos_smoother_length);
-  std::vector<double> orientation_smoother(orientation_smoother_length);
+  std::vector<double> position_smoother(p_length);
+  std::vector<double> orientation_smoother(w_length);
 
   // Smoother uses a linearly weighted average for both look-ahead and look-behind
-  for(int i = 1; i < pos_smoother_length; i++)
-    position_smoother.push_back((i < pos_smoother_length/2) ? i : (pos_smoother_length - i));
+  for(int i = 1; i < p_length; i++)
+    position_smoother.push_back((i < p_length/2) ? i : (p_length - i));
 
-  for(int i = 1; i < orientation_smoother_length; i++)
-    orientation_smoother.push_back((i < orientation_smoother_length/2) ? i : orientation_smoother_length - i);
+  for(int i = 1; i < w_length; i++)
+    orientation_smoother.push_back((i < w_length/2) ? i : w_length - i);
 
   // Smooth Points
   smoothVector(x_in, x_out, position_smoother);
