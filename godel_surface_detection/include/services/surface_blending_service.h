@@ -92,11 +92,9 @@ public:
       nh_,
       PROCESS_PLANNING_ACTION_SERVER_NAME,
       boost::bind(&SurfaceBlendingService::processPlanningActionCallback, this, _1),
-      false
-    )
-  {
-   save_data_ = false;
-  }
+      false),
+    save_data_(false)
+  {}
 
   bool init();
   void run();

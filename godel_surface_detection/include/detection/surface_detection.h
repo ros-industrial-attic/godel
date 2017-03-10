@@ -64,7 +64,7 @@ public:
   void get_full_cloud(CloudRGB& cloud);
   void get_full_cloud(sensor_msgs::PointCloud2 cloud_msg);
   void get_process_cloud(CloudRGB& cloud);
-  void get_process_cloud(sensor_msgs::PointCloud2 cloud_msg);
+  void get_process_cloud(sensor_msgs::PointCloud2& cloud_msg);
   void get_region_colored_cloud(CloudRGB& cloud);
   void get_region_colored_cloud(sensor_msgs::PointCloud2& cloud_msg);
 
@@ -83,7 +83,7 @@ private:
 
   // pcl members
   CloudRGB::Ptr full_cloud_ptr_;
-  CloudRGB::Ptr process_cloud_ptr;
+  CloudRGB::Ptr process_cloud_ptr_;
   CloudRGB::Ptr region_colored_cloud_ptr_;
   std::vector<CloudRGB::Ptr> surface_clouds_;
   visualization_msgs::MarkerArray mesh_markers_;

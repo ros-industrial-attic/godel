@@ -420,14 +420,14 @@ namespace data
       }
 
       // write input_cloud_ to pcd files
-      for(int i=0; i<records_.size(); ++i)
+      for(auto& rec : records_)
       {
         std::stringstream save_loc;
         save_loc << path.string() << session_id.str() << "_" << "input_cloud_"
-                 <<  records_[i].id_ << ".pcd";
+                 <<  rec.id_ << ".pcd";
         int results;
         results = pcl::io::savePCDFile(save_loc.str(),
-                                                   records_[i].input_cloud_);
+                                                   rec.input_cloud_);
         if(results!=0)
           ROS_WARN_STREAM("input_cloud_ files not saved.");
       }
