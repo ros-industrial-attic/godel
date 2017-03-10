@@ -37,6 +37,8 @@ const static std::string SCAN_PROCESS_EXECUTION_SERVICE = "scan_process_executio
 const static std::string BLEND_PROCESS_PLANNING_SERVICE = "blend_process_planning";
 const static std::string SCAN_PROCESS_PLANNING_SERVICE = "keyence_process_planning";
 
+const static std::string ENSENSO_SERVICE = "ensenso_manager";
+
 const static std::string TOOL_PATH_PREVIEW_TOPIC = "tool_path_preview";
 const static std::string EDGE_VISUALIZATION_TOPIC = "edge_visualization";
 const static std::string BLEND_VISUALIZATION_TOPIC = "blend_visualization";
