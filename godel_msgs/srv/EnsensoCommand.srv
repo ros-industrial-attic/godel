@@ -1,0 +1,8 @@
+# EnsensoCommand
+# Called to manage the ensenso_publisher node (e.g. to start or stop the ensenso)
+int32 STOP=0
+int32 START=1
+
+int32 action
+---
+bool result
