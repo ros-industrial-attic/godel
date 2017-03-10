@@ -1,5 +1,43 @@
 #include "path_transitions.h"
 
+/**
+ * @brief Computes the angle theta required to move from \e a to \e b.
+ * http://math.stackexchange.com/questions/90081/quaternion-distance
+ * @param a Initial rotation
+ * @param b Final rotation
+ * @return Distance in radians (unsigned)
+ */
+static double quaternionDistance(const Eigen::Quaterniond& a, const Eigen::Quaterniond& b)
+{
+  return std::acos(2.0 * std::pow(a.dot(b), 2.0) - 1.0);
+}
+
+/**
+ * @brief Because we currently constrain the robot to transition linearly between points, we frequently fail on
+ * scan paths whose direction flip as the robot kinematics do not allow such a transition. This tests the next
+ * pose and sees if the rotation 180 deg about Z is "closer" in rotational space than the \e nominal_stop pose.
+ * @param start
+ * @param nominal_stop
+ * @return \e nominal_stop if its closer, else 180 about Z from \e nominal_stop
+ */
+static Eigen::Affine3d closestRotationalPose(const Eigen::Affine3d& start, const Eigen::Affine3d& nominal_stop)
+{
+  Eigen::Affine3d alt_candidate = nominal_stop * Eigen::AngleAxisd(M_PI, Eigen::Vector3d(0, 0, 1));
+
+  const auto distance1 = quaternionDistance(Eigen::Quaterniond(start.rotation()),
+                                            Eigen::Quaterniond(nominal_stop.rotation()));
+  const auto distance2 = quaternionDistance(Eigen::Quaterniond(start.rotation()),
+                                            Eigen::Quaterniond(alt_candidate.rotation()));
+  if (distance1 < distance2)
+  {
+    return nominal_stop;
+  }
+  else
+  {
+    return alt_candidate;
+  }
+}
+
 static EigenSTL::vector_Affine3d interpolateCartesian(const Eigen::Affine3d& start, const Eigen::Affine3d& stop,
                                                       const double ds, const double dt)
 {
@@ -144,7 +182,11 @@ godel_process_planning::toDescartesTraj(const std::vector<geometry_msgs::PoseArr
 
     if (i != segments.size() - 1)
     {
-      auto connection = interpolateCartesian(transitions[i].depart.back(), transitions[i+1].approach.front(),
+      // To keep the robot at a safe height while we have no model of the parts we're working on, this code enforces a
+      // linear travel between poses. The call to closestRotationalPose allows the linear interpolation to happen to the
+      // pose that is 180 degrees off (about Z) from the nominal one. The discretization in Descartes takes care of the rest.
+      auto connection = interpolateCartesian(transitions[i].depart.back(),
+                                             closestRotationalPose(transitions[i].depart.back(), transitions[i+1].approach.front()),
                                              transition_params.linear_disc, transition_params.angular_disc);
       add_segment(connection, false);
     }
