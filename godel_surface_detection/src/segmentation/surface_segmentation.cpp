@@ -7,7 +7,6 @@
 // Custom boundary estimation
 #include "parallel_boundary.h"
 
-/** @brief default constructor */
 SurfaceSegmentation::SurfaceSegmentation()
 {
   // initialize pointers to cloud members
@@ -15,7 +14,6 @@ SurfaceSegmentation::SurfaceSegmentation()
 }
 
 
-/** @brief distructor */
 SurfaceSegmentation::~SurfaceSegmentation()
 {
   input_cloud_ =  pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -24,9 +22,6 @@ SurfaceSegmentation::~SurfaceSegmentation()
 }
 
 
-/** @brief constructor that sets the background cloud, also initializes the KdTree for searching
-@param bg_cloud the set of points defining the background
-*/
 SurfaceSegmentation::SurfaceSegmentation(pcl::PointCloud<pcl::PointXYZRGB>::Ptr icloud)
 {
   input_cloud_ =  pcl::PointCloud<pcl::PointXYZRGB>::Ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -37,9 +32,6 @@ SurfaceSegmentation::SurfaceSegmentation(pcl::PointCloud<pcl::PointXYZRGB>::Ptr 
 }
 
 
-/** @brief sets the background cloud, replaces whatever points exists if any
-@param background_cloud the cloud representing the background
-*/
 void SurfaceSegmentation::setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr icloud)
 {
   input_cloud_->clear();
@@ -47,9 +39,6 @@ void SurfaceSegmentation::setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr i
 }
 
 
-/** @brief adds new points to the background, and reinitializes the kd_tree for searching
-@param bg_cloud additional background points
-*/
 void SurfaceSegmentation::addCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr icloud)
 {
   // push input_cloud onto icloud and then add, this strange sequence keeps ordering of clouds
@@ -61,9 +50,6 @@ void SurfaceSegmentation::addCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr icloud
 }
 
 
-/** @brief creates a cloud from every point estimated to be on the boundary of input_cloud_
-@return a boundary point cloud
-*/
 void SurfaceSegmentation::getBoundaryCloud(pcl::PointCloud<pcl::Boundary>::Ptr &boundary_cloud)
 {
   if(normals_->points.size()==0 || input_cloud_->points.size() == 0)
@@ -270,15 +256,7 @@ void SurfaceSegmentation::smoothVector(const std::vector<double> &x_in,
   } // end for every point
 }
 
-/**
- * @brief SurfaceSegmentation::smoothPointNormal Uses a running weighted average (look-ahead and look-behind
- *        to smooth a vector of point normals. Default values for position and orientation smoother length were
- *        empirically derived and should be changed to best suit the user's application.
- * @param pts_in Input point vector
- * @param pts_out Destination for smoothed point vector
- * @param p_length Length of position smoother. Increasing this leads to smoother, less accurate edges.
- * @param w_length Length of orienation smoother. Increasing leads to less variation in edge point normal vectors.
- */
+
 void SurfaceSegmentation::smoothPointNormal(std::vector<pcl::PointNormal> &pts_in,
                                             std::vector<pcl::PointNormal> &pts_out,
                                             int p_length = 13,
@@ -423,7 +401,6 @@ void SurfaceSegmentation::getBoundaryTrajectory(std::vector<pcl::IndicesPtr> &bo
 }
 
 
-/** @brief remove any NAN points, otherwise many algorithms fail */
 void SurfaceSegmentation::removeNans()
 {
   std::vector<int> indices;
@@ -431,7 +408,6 @@ void SurfaceSegmentation::removeNans()
 }
 
 
-/** @brief compute the normals and store in normals_, this is requried for both segmentation and meshing*/
 void SurfaceSegmentation::computeNormals()
 {
   // Determine the number of available cores

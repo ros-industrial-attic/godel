@@ -61,18 +61,42 @@ public:
   // search terms
   double radius_;
 
-  // Constructors/Destructors
+
+  //-------------------- Constructors/Destructors --------------------//
+
   SurfaceSegmentation();
   ~SurfaceSegmentation();
+  /**
+   * @brief constructor that sets the background cloud, also initializes the KdTree for searching
+   * @param bg_cloud the set of points defining the background
+   */
   SurfaceSegmentation(pcl::PointCloud<pcl::PointXYZRGB>::Ptr icloud);
 
-  // Clouds
+
+  //-------------------- Clouds --------------------//
+
+  /**
+   * @brief sets the background cloud, replaces whatever points exists if any
+   * @param background_cloud the cloud representing the background
+   */
   void setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr icloud);
+
+  /**
+   * @brief adds new points to the background, and reinitializes the kd_tree for searching
+   * @param bg_cloud additional background points
+   */
   void addCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr icloud);
+
+  /**
+   * @brief creates a cloud from every point estimated to be on the boundary of input_cloud_
+   * @return a boundary point cloud
+   */
   void getBoundaryCloud(pcl::PointCloud<pcl::Boundary>::Ptr &boundary_cloud);
   void getSurfaceClouds(std::vector<pcl::PointCloud<pcl::PointXYZRGB>::Ptr> &surface_clouds);
 
-  // Computations
+
+  //-------------------- Computations --------------------//
+
   std::vector <pcl::PointIndices> computeSegments(pcl::PointCloud<pcl::PointXYZRGB>::Ptr &colored_cloud);
   Mesh computeMesh();
   std::pair<int, int> getNextUnused(std::vector< std::pair<int,int> > used);
@@ -80,19 +104,34 @@ public:
   void setSearchRadius(double radius);
   double getSearchRadius();
 
-  // Smoothing
+
+  //-------------------- Smoothing --------------------//
   void smoothVector(const std::vector<double> &x_in, std::vector<double> &x_out, const std::vector<double> &coef);
+
+  /**
+   * @brief SurfaceSegmentation::smoothPointNormal Uses a running weighted average (look-ahead and look-behind
+   *        to smooth a vector of point normals. Default values for position and orientation smoother length were
+   *        empirically derived and should be changed to best suit the user's application.
+   * @param pts_in Input point vector
+   * @param pts_out Destination for smoothed point vector
+   * @param p_length Length of position smoother. Increasing this leads to smoother, less accurate edges.
+   * @param w_length Length of orienation smoother. Increasing leads to less variation in edge point normal vectors.
+   */
   void smoothPointNormal(std::vector<pcl::PointNormal> &pts_in, std::vector<pcl::PointNormal> &pts_out, int p_length,
                          int w_length);
 
-  // Misc
+
+  //-------------------- Misc --------------------//
 
   void getBoundaryTrajectory(std::vector<pcl::IndicesPtr> &boundaries,
                              int sb,
                              std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>> &poses);
 
 private:
+  /** @brief remove any NAN points, otherwise many algorithms fail */
   void removeNans();
+
+  /** @brief compute the normals and store in normals_, this is requried for both segmentation and meshing*/
   void computeNormals();
 
   pcl::PointCloud<pcl::Normal>::Ptr normals_;
