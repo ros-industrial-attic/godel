@@ -3,15 +3,15 @@
   <!-- arguments -->
   <arg name="sim_robot" default="true"/>
   <arg name="robot_ip" unless="$(arg sim_robot)" />
-  <arg name="sim_sensor" default="true"/>
   <arg name="sim_laser" default="true"/>
   <arg name="laser_ip" unless="$(arg sim_laser)" default="192.168.32.50"/>
   <arg name="robot_model_plugin" default="abb_irb2400_descartes/AbbIrb2400RobotModel"/>
+  <arg name="sim_sensor" default="true"/>
+  <arg name="real_pcd" default="false"/>
+  <arg name="pcd_location"/> <!-- path to pcd file of part -->
+  <arg name="pcd_frame" default="/base_link"/>
   <arg name="debug_rviz" default="false"/>
   <arg name="debug_core" default="false"/> <!--Brings up the surface blending service in debug mode-->
-  <arg name="real_pcd" default="false" if="$(arg sim_sensor)"/>
-  <arg name="pcd_location" if="$(arg real_pcd)"/> <!-- path to pcd file of part -->
-  <arg name="pcd_frame" default="/base_link" if="$(arg real_pcd)"/>
 
   <!-- Brings up action interface for simple trajectory execution - used by laser scanner process execution -->
   <node name="path_execution_service" pkg="godel_path_execution" type="path_execution_service_node"/>

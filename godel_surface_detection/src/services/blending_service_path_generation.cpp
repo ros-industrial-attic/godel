@@ -135,18 +135,6 @@ bool SurfaceBlendingService::generateEdgePath(godel_surface_detection::detection
   SurfaceSegmentation SS(surface);
 
   SS.setSearchRadius(SEGMENTATION_SEARCH_RADIUS);
-  std::vector<double> filt_coef;
-  filt_coef.push_back(1);
-  filt_coef.push_back(2);
-  filt_coef.push_back(3);
-  filt_coef.push_back(4);
-  filt_coef.push_back(5);
-  filt_coef.push_back(4);
-  filt_coef.push_back(3);
-  filt_coef.push_back(2);
-  filt_coef.push_back(1);
-
-  SS.setSmoothCoef(filt_coef);
   computeBoundaries(surface, SS, sorted_boundaries);
 
   ROS_INFO_STREAM("Boundaries Computed");
