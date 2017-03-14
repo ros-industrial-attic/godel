@@ -12,9 +12,6 @@
   <arg name="pcd_frame" default="/base_link"/>
   <arg name="debug_rviz" default="false"/>
   <arg name="debug_core" default="false"/> <!--Brings up the surface blending service in debug mode-->
-  <arg name="real_pcd" default="false" if="$(arg sim_sensor)"/>
-  <arg name="pcd_location" if="$(arg real_pcd)"/> <!-- path to pcd file of part -->
-  <arg name="pcd_frame" default="/base_link" if="$(arg real_pcd)"/>
   <arg name="save_data" default="false" />
   <arg name="save_location" default="$(env HOME)/.ros/" />
 

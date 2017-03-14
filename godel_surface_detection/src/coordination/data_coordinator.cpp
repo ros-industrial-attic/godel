@@ -393,8 +393,9 @@ namespace data
       auto thd = std::thread(&DataCoordinator::saveRecord, this, path);
       thd.detach();
     }
-    catch (const std::exception& e){
-      ROS_WARN_STREAM("Data Save Error.");
+    catch (const std::exception& e)
+    {
+      ROS_WARN_STREAM("Could not create save thread");
     }
   }
 
@@ -419,31 +420,40 @@ namespace data
         return;
       }
 
-      // write input_cloud_ to pcd files
-      for(auto& rec : records_)
+      try
       {
-        std::stringstream save_loc;
-        save_loc << path.string() << session_id.str() << "_" << "input_cloud_"
-                 <<  rec.id_ << ".pcd";
-        int results;
-        results = pcl::io::savePCDFile(save_loc.str(),
-                                                   rec.input_cloud_);
-        if(results!=0)
-          ROS_WARN_STREAM("input_cloud_ files not saved.");
+        // write input_cloud_ to pcd files
+        for(auto& rec : records_)
+        {
+          if(!rec.input_cloud_.empty())
+          {
+            std::stringstream save_loc;
+            save_loc << path.string() << session_id.str() << "_" << "input_cloud_"
+                     <<  rec.id_ << ".pcd";
+            int results;
+            results = pcl::io::savePCDFile(save_loc.str(),
+                                                       rec.input_cloud_);
+            if(results!=0)
+              ROS_WARN_STREAM("input_cloud_ files not saved.");
+          }
+          if(!process_cloud_.empty())
+          {
+            //write process_cloud_ to pcd file
+            std::stringstream save_loc;
+            save_loc << path.string() << session_id.str() << "_"
+                     << "process_cloud.pcd";
+            int results;
+            results = pcl::io::savePCDFile(save_loc.str(), process_cloud_);
+            if(results!=0){
+              ROS_WARN_STREAM("process_cloud_ files not saved.");
+            }
+          }
+        }
       }
-
-    //write process_cloud_ to pcd file
-    std::stringstream save_loc;
-    save_loc << path.string() << session_id.str() << "_"
-             << "process_cloud.pcd";
-    int results;
-    results = pcl::io::savePCDFile(save_loc.str(), process_cloud_);
-    if(results!=0){
-      ROS_WARN_STREAM("process_cloud_ files not saved.");
-    }
-
+      catch (const std::exception& e){
+        ROS_WARN_STREAM("Data Save Error.");
+      }
     ROS_INFO_STREAM("Data Saved.");
-
   }
 } /* end namespace data */
 } /* end namespace godel_surface_detection */
