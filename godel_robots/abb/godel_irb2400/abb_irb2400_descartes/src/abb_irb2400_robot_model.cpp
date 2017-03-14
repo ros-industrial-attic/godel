@@ -59,20 +59,14 @@ bool AbbIrb2400RobotModel::initialize(const std::string& robot_description,
 bool AbbIrb2400RobotModel::getAllIK(const Eigen::Affine3d& pose,
                                     std::vector<std::vector<double> >& joint_poses) const
 {
-  bool rtn = false;
-
-  std::vector<double> vfree(free_params_.size());
+  std::vector<double> vfree(free_params_.size(), 0.0);
   KDL::Frame frame;
   Eigen::Affine3d tool_pose = world_to_base_.frame_inv * pose * tool_to_tip_.frame;
   tf::transformEigenToKDL(tool_pose, frame);
 
   ikfast::IkSolutionList<IkReal> solutions;
 
-  ROS_DEBUG_STREAM("Number of free params: " << vfree.size());
-
   int numsol = solve(frame, vfree, solutions);
-
-  ROS_DEBUG_STREAM("Found " << numsol << " solutions from IKFast");
 
   joint_poses.clear();
 
@@ -82,27 +76,29 @@ bool AbbIrb2400RobotModel::getAllIK(const Eigen::Affine3d& pose,
     {
       std::vector<double> sol;
       getSolution(solutions, s, sol);
-      ROS_DEBUG_STREAM("Original solution size: " << sol.size()
-                                                  << ", number of joints: " << num_joints_);
 
+      if (isValid(sol))
+        joint_poses.push_back(sol);
+
+      // So, IKFast returns the unique configurations of the robot (e.g. elbow up, wrist down)
+      // and the solutions have joint values between -pi and +pi. If the robot can rotate more
+      // than this, then we need to check to see if we have extra solutions that have the same
+      // configuration but a different joint position. In our case, joint 6 has this kind of
+      // extra motion, so here we check for valid solutions 360 degrees from each solution.
+      sol[5] += 2 * M_PI;
+      if (isValid(sol))
+        joint_poses.push_back(sol);
+
+      sol[5] -= 2 * 2 * M_PI;
       if (isValid(sol))
         joint_poses.push_back(sol);
 
     }
   }
 
-  if (joint_poses.empty())
-  {
-    ROS_DEBUG_STREAM("GetAllIK has not solutions");
-    rtn = false;
-  }
-  else
-  {
-    rtn = true;
-  }
-
-  return rtn;
+  return !joint_poses.empty();
 }
+
 }
 
 PLUGINLIB_EXPORT_CLASS(abb_irb2400_descartes::AbbIrb2400RobotModel, descartes_core::RobotModel)
