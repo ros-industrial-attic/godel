@@ -7,4 +7,4 @@ moveit_setup_assistant_config:
   CONFIG:
     author_name: Jonathan Meyer
     author_email: jmeyer@swri.org
-    generated_timestamp: 1487880540
+    generated_timestamp: 1489451576

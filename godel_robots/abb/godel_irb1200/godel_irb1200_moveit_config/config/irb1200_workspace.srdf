@@ -21,15 +21,67 @@
     <group name="manipulator_tcp">
         <chain base_link="base_link" tip_link="tcp_frame" />
     </group>
+    <group name="manipulator_ensenso">
+        <chain base_link="base_link" tip_link="ensenso_sensor_optical_frame" />
+    </group>
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
+    <disable_collisions link1="base_link" link2="demo_cell_back_wall" reason="Adjacent" />
+    <disable_collisions link1="base_link" link2="demo_cell_floor" reason="Adjacent" />
+    <disable_collisions link1="base_link" link2="demo_cell_front_wall" reason="Adjacent" />
+    <disable_collisions link1="base_link" link2="demo_cell_left_wall" reason="Adjacent" />
+    <disable_collisions link1="base_link" link2="demo_cell_right_wall" reason="Adjacent" />
+    <disable_collisions link1="base_link" link2="demo_cell_roof" reason="Adjacent" />
     <disable_collisions link1="base_link" link2="link_1" reason="Adjacent" />
     <disable_collisions link1="base_link" link2="link_2" reason="Never" />
+    <disable_collisions link1="blending_tool" link2="demo_cell_roof" reason="Never" />
     <disable_collisions link1="blending_tool" link2="ensenso" reason="Never" />
     <disable_collisions link1="blending_tool" link2="gripper_body" reason="Adjacent" />
     <disable_collisions link1="blending_tool" link2="keyence" reason="Never" />
     <disable_collisions link1="blending_tool" link2="link_4" reason="Never" />
     <disable_collisions link1="blending_tool" link2="link_5" reason="Never" />
     <disable_collisions link1="blending_tool" link2="link_6" reason="Never" />
+    <disable_collisions link1="demo_cell_back_wall" link2="demo_cell_floor" reason="Adjacent" />
+    <disable_collisions link1="demo_cell_back_wall" link2="demo_cell_front_wall" reason="Adjacent" />
+    <disable_collisions link1="demo_cell_back_wall" link2="demo_cell_left_wall" reason="Adjacent" />
+    <disable_collisions link1="demo_cell_back_wall" link2="demo_cell_right_wall" reason="Adjacent" />
+    <disable_collisions link1="demo_cell_back_wall" link2="demo_cell_roof" reason="Adjacent" />
+    <disable_collisions link1="demo_cell_back_wall" link2="link_1" reason="Never" />
+    <disable_collisions link1="demo_cell_back_wall" link2="link_2" reason="Never" />
+    <disable_collisions link1="demo_cell_floor" link2="demo_cell_front_wall" reason="Adjacent" />
+    <disable_collisions link1="demo_cell_floor" link2="demo_cell_left_wall" reason="Adjacent" />
+    <disable_collisions link1="demo_cell_floor" link2="demo_cell_right_wall" reason="Adjacent" />
+    <disable_collisions link1="demo_cell_floor" link2="demo_cell_roof" reason="Adjacent" />
+    <disable_collisions link1="demo_cell_floor" link2="link_1" reason="Never" />
+    <disable_collisions link1="demo_cell_floor" link2="link_2" reason="Never" />
+    <disable_collisions link1="demo_cell_front_wall" link2="demo_cell_left_wall" reason="Adjacent" />
+    <disable_collisions link1="demo_cell_front_wall" link2="demo_cell_right_wall" reason="Adjacent" />
+    <disable_collisions link1="demo_cell_front_wall" link2="demo_cell_roof" reason="Adjacent" />
+    <disable_collisions link1="demo_cell_front_wall" link2="link_1" reason="Never" />
+    <disable_collisions link1="demo_cell_front_wall" link2="link_2" reason="Never" />
+    <disable_collisions link1="demo_cell_front_wall" link2="link_3" reason="Never" />
+    <disable_collisions link1="demo_cell_front_wall" link2="link_4" reason="Never" />
+    <disable_collisions link1="demo_cell_front_wall" link2="link_5" reason="Never" />
+    <disable_collisions link1="demo_cell_front_wall" link2="link_6" reason="Never" />
+    <disable_collisions link1="demo_cell_left_wall" link2="demo_cell_right_wall" reason="Adjacent" />
+    <disable_collisions link1="demo_cell_left_wall" link2="demo_cell_roof" reason="Adjacent" />
+    <disable_collisions link1="demo_cell_left_wall" link2="link_1" reason="Never" />
+    <disable_collisions link1="demo_cell_left_wall" link2="link_2" reason="Never" />
+    <disable_collisions link1="demo_cell_right_wall" link2="demo_cell_roof" reason="Adjacent" />
+    <disable_collisions link1="demo_cell_right_wall" link2="link_1" reason="Never" />
+    <disable_collisions link1="demo_cell_right_wall" link2="link_2" reason="Never" />
+    <disable_collisions link1="demo_cell_right_wall" link2="link_3" reason="Never" />
+    <disable_collisions link1="demo_cell_right_wall" link2="link_4" reason="Never" />
+    <disable_collisions link1="demo_cell_right_wall" link2="link_5" reason="Never" />
+    <disable_collisions link1="demo_cell_right_wall" link2="link_6" reason="Never" />
+    <disable_collisions link1="demo_cell_roof" link2="ensenso" reason="Never" />
+    <disable_collisions link1="demo_cell_roof" link2="gripper_body" reason="Never" />
+    <disable_collisions link1="demo_cell_roof" link2="keyence" reason="Never" />
+    <disable_collisions link1="demo_cell_roof" link2="link_1" reason="Never" />
+    <disable_collisions link1="demo_cell_roof" link2="link_2" reason="Never" />
+    <disable_collisions link1="demo_cell_roof" link2="link_3" reason="Never" />
+    <disable_collisions link1="demo_cell_roof" link2="link_4" reason="Never" />
+    <disable_collisions link1="demo_cell_roof" link2="link_5" reason="Never" />
+    <disable_collisions link1="demo_cell_roof" link2="link_6" reason="Never" />
     <disable_collisions link1="ensenso" link2="gripper_body" reason="Adjacent" />
     <disable_collisions link1="ensenso" link2="keyence" reason="Never" />
     <disable_collisions link1="ensenso" link2="link_4" reason="Never" />
