@@ -1,19 +1,21 @@
-#include <services/surface_blending_service.h>
-#include <segmentation/surface_segmentation.h>
-#include <detection/surface_detection.h>
-#include <godel_msgs/TrajectoryExecution.h>
+#include "detection/surface_detection.h"
+#include "godel_msgs/TrajectoryExecution.h"
+#include "godel_param_helpers/godel_param_helpers.h"
+#include "segmentation/surface_segmentation.h"
+#include "services/surface_blending_service.h"
 
 // Process Execution
-#include <godel_msgs/BlendProcessExecution.h>
-#include <godel_msgs/KeyenceProcessExecution.h>
-// Process Planning
-#include <godel_msgs/BlendProcessPlanning.h>
-#include <godel_msgs/KeyenceProcessPlanning.h>
-#include <godel_msgs/PathPlanning.h>
+#include "godel_msgs/BlendProcessExecution.h"
+#include "godel_msgs/KeyenceProcessExecution.h"
 
-#include <godel_param_helpers/godel_param_helpers.h>
+// Process Planning
+#include "godel_msgs/BlendProcessPlanning.h"
+#include "godel_msgs/KeyenceProcessPlanning.h"
+#include "godel_msgs/PathPlanning.h"
 
 // topics and services
+const static std::string SAVE_DATA_BOOL_PARAM = "save_data";
+const static std::string SAVE_LOCATION_PARAM = "save_location";
 const static std::string TRAJECTORY_PLANNING_SERVICE = "trajectory_planner";
 const static std::string SURFACE_DETECTION_SERVICE = "surface_detection";
 const static std::string SURFACE_BLENDING_PARAMETERS_SERVICE = "surface_blending_parameters";
@@ -70,6 +72,9 @@ bool SurfaceBlendingService::init()
 
   // loading parameters
   ph.getParam(PUBLISH_REGION_POINT_CLOUD, publish_region_point_cloud_);
+  ph.getParam(SAVE_DATA_BOOL_PARAM, save_data_);
+  ph.getParam(SAVE_LOCATION_PARAM, save_location_);
+
   // Load the 'prefix' that will be combined with parameters msg base names to save to disk
   ph.param<std::string>("param_cache_prefix", param_cache_prefix_, "");
 
@@ -325,9 +330,13 @@ bool SurfaceBlendingService::find_surfaces(visualization_msgs::MarkerArray& surf
     std::vector<pcl::PolygonMesh> meshes;
     std::vector<godel_surface_detection::detection::CloudRGB::Ptr> surface_clouds;
     godel_surface_detection::detection::CloudRGB input_cloud;
+    godel_surface_detection::detection::CloudRGB process_cloud;
     surface_detection_.get_meshes(meshes);
     surface_detection_.get_full_cloud(input_cloud);
     surface_detection_.get_surface_clouds(surface_clouds);
+    surface_detection_.get_process_cloud(process_cloud);
+    data_coordinator_.setProcessCloud(process_cloud);
+
 
     // Meshes and Surface Clouds should be organized identically (e.g. Mesh0 corresponds to Surface0)
     ROS_ASSERT(meshes.size() == surface_clouds.size());
@@ -340,6 +349,9 @@ bool SurfaceBlendingService::find_surfaces(visualization_msgs::MarkerArray& surf
       data_coordinator_.setSurfaceMesh(id, surface_mesh);
       data_coordinator_.setSurfaceName(id, name);
     }
+
+    // Save the Data Coordinator's Records
+    if(save_data_) data_coordinator_.asyncSaveRecord(save_location_);
 
     // copying surface markers to output argument
     visualization_msgs::MarkerArray markers_msg = surface_detection_.get_surface_markers();

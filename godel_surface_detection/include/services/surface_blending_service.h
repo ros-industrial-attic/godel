@@ -92,8 +92,9 @@ public:
       nh_,
       PROCESS_PLANNING_ACTION_SERVER_NAME,
       boost::bind(&SurfaceBlendingService::processPlanningActionCallback, this, _1),
-      false
-    ) {}
+      false),
+    save_data_(false)
+  {}
 
   bool init();
   void run();
@@ -264,6 +265,8 @@ private:
 
   // parameters
   bool publish_region_point_cloud_;
+  bool save_data_;
+  std::string save_location_;
 
   // msgs
   sensor_msgs::PointCloud2 region_cloud_msg_;
