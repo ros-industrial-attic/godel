@@ -241,7 +241,7 @@ SurfaceBlendingService::generateProcessPath(const int& id,
                                             godel_surface_detection::detection::CloudRGB::Ptr surface,
                                             ProcessPathResult& result)
 {
-  SWRI_PROFILE("tool-planning")
+  SWRI_PROFILE("tool-planning");
   std::vector<geometry_msgs::PoseArray> blend_result, edge_result, scan_result;
 
   // Step 1: Generate Blending Paths
