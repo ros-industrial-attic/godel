@@ -56,6 +56,11 @@ Godel: Austrian logician and mathematician http://en.wikipedia.org/wiki/Kurt_G%C
   roslaunch godel_irb2400_support irb2400_blending.launch sim_sensor:=false 
   sim_robot:=false robot_ip:=[robot ip]
   ```
+### Qt Glyph Loading Segfault (Kinetic)
+- Rviz on Kinetic is prone to a segmentation fault caused by internal functions in the Qt library. Our current work-around is to set the following environment variable:
+  ```
+  export QT_NO_FT_CACHE=1
+  ```
 
 ### Keyence Laser Scanner
 - To run the keyence laser scanner driver (replace `KEYENCE_CONTROLLER_IP` with the ip-address of your sensor):
