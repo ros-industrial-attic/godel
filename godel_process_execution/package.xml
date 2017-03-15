@@ -15,6 +15,7 @@
 
   <depend>abb_file_suite</depend>
   <depend>godel_msgs</depend>
+  <depend>godel_utils</depend>
   <depend>industrial_robot_simulator_service</depend>
   <depend>trajectory_msgs</depend>
   <depend>keyence_experimental</depend>
