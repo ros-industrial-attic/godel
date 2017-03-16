@@ -1,10 +1,13 @@
 #ifndef DATA_COORDINATOR_H
 #define DATA_COORDINATOR_H
 
+#include <boost/filesystem.hpp>
+
 #include <pcl/PolygonMesh.h>
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <geometry_msgs/PoseArray.h>
+
+#include "geometry_msgs/PoseArray.h"
 
 namespace godel_surface_detection
 {
@@ -38,7 +41,6 @@ namespace data
       std::vector<geometry_msgs::PoseArray> scan_poses_;
   };
 
-
   /**
    * @brief The CloudTypes enum for safety access to get/set cloud function
    */
@@ -59,14 +61,17 @@ namespace data
   private:
     int id_counter_;
     std::vector<SurfaceDetectionRecord> records_;
-
+    pcl::PointCloud<pcl::PointXYZRGB> process_cloud_;
     int getNextID();
     std::string printIds();
+    void saveRecord(boost::filesystem::path path);
+
 
   public:
     DataCoordinator();
     bool init();
     int addRecord(pcl::PointCloud<pcl::PointXYZRGB> input_cloud, pcl::PointCloud<pcl::PointXYZRGB> surface_cloud);
+    void setProcessCloud(pcl::PointCloud<pcl::PointXYZRGB> incloud);
     bool getCloud(CloudTypes cloud_type, int id, pcl::PointCloud<pcl::PointXYZRGB>& cloud);
     bool setSurfaceName(int id, const std::string& name);
     bool getSurfaceName(int id, std::string& name);
@@ -77,6 +82,7 @@ namespace data
     bool getEdgePosesByName(const std::string& edge_name, geometry_msgs::PoseArray& edge_poses);
     bool setPoses(PoseTypes pose_type, int id, const std::vector<geometry_msgs::PoseArray>& poses);
     bool getPoses(PoseTypes pose_type, int id, std::vector<geometry_msgs::PoseArray>& poses);
+    void asyncSaveRecord(boost::filesystem::path path);
   };
 } /* end namespace data */
 } /* end namespace godel_surface_detection */

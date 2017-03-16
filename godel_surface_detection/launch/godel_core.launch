@@ -1,13 +1,12 @@
 <?xml version="1.0"?>
 <launch>
-  <!-- arguments -->
   <arg name="config_path"/>
-
   <arg name="debug" default="false" />
   <arg unless="$(arg debug)" name="launch_prefix" value="" />
   <arg if="$(arg debug)" name="launch_prefix" value="xterm -e gdb --args" />
+  <arg name="save_data" default="false" />
+  <arg name="save_location" default="$(env HOME)/.ros/" />
 
-    <!-- surface detection service -->
   <node name="surface_blending_service" pkg="godel_surface_detection" type="surface_blending_service" output="screen"
         required="true" launch-prefix="$(arg launch_prefix)">
     <rosparam command="load" file="$(arg config_path)/robot_scan.yaml"/>
@@ -16,10 +15,9 @@
     <rosparam command="load" file="$(arg config_path)/scan_plan.yaml"/>
     <rosparam command="load" file="$(arg config_path)/plugins.yaml"/>
     <param name="publish_region_point_cloud" value="True"/>
+    <param name="save_data" value="$(arg save_data)" />
+    <param name="save_location" value="$(arg save_location)"/>
   </node>
-
-  <!-- Blending Tool Path Generation Nodes -->
-  <!-- Used in the default blend path generation plugin -->
   <node name="process_path_generator_node" pkg="godel_process_path_generation" type="process_path_generator_node"/>
   <node name="polygon_offset_node" pkg="godel_polygon_offset" type="godel_polygon_offset_node"/>
 </launch>

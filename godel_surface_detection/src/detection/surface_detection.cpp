@@ -15,7 +15,6 @@
 */
 
 #include <detection/surface_detection.h>
-#include <coordination/data_coordinator.h>
 #include <godel_param_helpers/godel_param_helpers.h>
 #include <meshing_plugins_base/meshing_base.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -140,6 +139,7 @@ namespace godel_surface_detection
   {
     SurfaceDetection::SurfaceDetection()
       : full_cloud_ptr_(new CloudRGB())
+      , process_cloud_ptr_(new CloudRGB())
       , acquired_clouds_counter_(0)
       , random_engine_(0) // This is using a fixed seed for down-sampling at the moment
     {
@@ -173,6 +173,7 @@ namespace godel_surface_detection
     bool SurfaceDetection::init()
     {
       full_cloud_ptr_->header.frame_id = params_.frame_id;
+      process_cloud_ptr_->header.frame_id = params_.frame_id;
       acquired_clouds_counter_ = 0;
       return true;
     }
@@ -181,6 +182,7 @@ namespace godel_surface_detection
     {
       acquired_clouds_counter_ = 0;
       full_cloud_ptr_->clear();
+      process_cloud_ptr_->clear();
       surface_clouds_.clear();
       mesh_markers_.markers.clear();
       meshes_.clear();
@@ -298,12 +300,20 @@ namespace godel_surface_detection
       pcl::copyPointCloud(*full_cloud_ptr_, cloud);
     }
 
-
     void SurfaceDetection::get_full_cloud(sensor_msgs::PointCloud2 cloud_msg)
     {
       pcl::toROSMsg(*full_cloud_ptr_, cloud_msg);
     }
 
+    void SurfaceDetection::get_process_cloud(CloudRGB& cloud)
+    {
+      pcl::copyPointCloud(*process_cloud_ptr_, cloud);
+    }
+
+    void SurfaceDetection::get_process_cloud(sensor_msgs::PointCloud2 &cloud_msg)
+    {
+      pcl::toROSMsg(*process_cloud_ptr_, cloud_msg);
+    }
 
     void SurfaceDetection::get_region_colored_cloud(CloudRGB& cloud)
     {
@@ -340,18 +350,15 @@ namespace godel_surface_detection
         return false;
 
       // Create Processing Cloud
-      pcl::PointCloud<pcl::PointXYZRGB>::Ptr process_cloud_ptr (
-            new pcl::PointCloud<pcl::PointXYZRGB>());
-      process_cloud_ptr->header = full_cloud_ptr_->header;
       pcl::VoxelGrid<pcl::PointXYZRGB> vox;
       vox.setInputCloud (full_cloud_ptr_);
       vox.setLeafSize (INPUT_CLOUD_VOXEL_FILTER_SIZE,
                        INPUT_CLOUD_VOXEL_FILTER_SIZE,
                        INPUT_CLOUD_VOXEL_FILTER_SIZE);
-      vox.filter(*process_cloud_ptr);
+      vox.filter(*process_cloud_ptr_);
 
       // Segment the part into surface clusters using a "region growing" scheme
-      SurfaceSegmentation SS(process_cloud_ptr);
+      SurfaceSegmentation SS(process_cloud_ptr_);
       region_colored_cloud_ptr_ = CloudRGB::Ptr(new CloudRGB());
       {
         SWRI_PROFILE("segment-clouds");
