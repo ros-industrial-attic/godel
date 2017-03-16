@@ -7,11 +7,11 @@
 void godel_simple_gui::ScanTeachState::onStart(BlendingWidget& gui)
 {
   gui.setText("Ready to Scan\nPress Next to Continue");
+  gui.showStatusWindow();
 }
 
 void godel_simple_gui::ScanTeachState::onExit(BlendingWidget& gui) {}
 
-// Handlers for the fixed buttons
 void godel_simple_gui::ScanTeachState::onNext(BlendingWidget& gui)
 {
   Q_EMIT newStateAvailable(new ScanningState());

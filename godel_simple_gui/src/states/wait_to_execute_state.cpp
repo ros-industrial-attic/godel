@@ -1,6 +1,6 @@
 #include "godel_simple_gui/states/wait_to_execute_state.h"
 // previous state
-#include "godel_simple_gui/states/wait_to_simulate_state.h"
+#include "godel_simple_gui/states/select_plans_state.h"
 // next state
 #include "godel_simple_gui/states/executing_state.h"
 // reset state
@@ -35,7 +35,7 @@ void godel_simple_gui::WaitToExecuteState::onNext(BlendingWidget& gui)
 void godel_simple_gui::WaitToExecuteState::onBack(BlendingWidget& gui)
 {
   ROS_INFO_STREAM("WaitToExecuteState back");
-  Q_EMIT newStateAvailable(new WaitToSimulateState());
+  Q_EMIT newStateAvailable(new SelectPlansState());
 }
 
 void godel_simple_gui::WaitToExecuteState::onReset(BlendingWidget& gui)

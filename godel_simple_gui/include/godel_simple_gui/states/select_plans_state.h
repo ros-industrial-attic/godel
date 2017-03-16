@@ -1,5 +1,5 @@
-#ifndef WAIT_TO_SIMULATE_STATE_H
-#define WAIT_TO_SIMULATE_STATE_H
+#ifndef SELECT_PLANS_STATE_H
+#define SELECT_PLANS_STATE_H
 
 #include "godel_simple_gui/gui_state.h"
 #include <ros/ros.h>
@@ -7,7 +7,7 @@
 namespace godel_simple_gui
 {
 
-class WaitToSimulateState : public GuiState
+class SelectPlansState : public GuiState
 {
   Q_OBJECT
 public:

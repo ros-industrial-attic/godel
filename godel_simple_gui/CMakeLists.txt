@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(godel_simple_gui)
+add_definitions(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
   godel_msgs
@@ -31,7 +32,7 @@ set(godel_simple_gui_SRCS
  src/states/scanning_state.cpp
  src/states/surface_select_state.cpp
  src/states/planning_state.cpp
- src/states/wait_to_simulate_state.cpp
+ src/states/select_plans_state.cpp
  src/states/simulating_state.cpp
  src/states/wait_to_execute_state.cpp
  src/states/executing_state.cpp
@@ -55,7 +56,7 @@ set(godel_simple_gui_HDRS
   include/godel_simple_gui/states/scanning_state.h
   include/godel_simple_gui/states/surface_select_state.h
   include/godel_simple_gui/states/planning_state.h
-  include/godel_simple_gui/states/wait_to_simulate_state.h
+  include/godel_simple_gui/states/select_plans_state.h
   include/godel_simple_gui/states/simulating_state.h
   include/godel_simple_gui/states/wait_to_execute_state.h
   include/godel_simple_gui/states/executing_state.h
