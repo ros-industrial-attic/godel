@@ -6,6 +6,8 @@
 
 namespace ensenso
 {
+enum Command {STOP=0, START=1};
+
 class EnsensoGuard
 {
 private:
@@ -14,6 +16,7 @@ private:
 public:
   EnsensoGuard();
   ~EnsensoGuard();
+  void issueCommand(Command command);
 };
 
 }

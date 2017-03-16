@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
   industrial_robot_simulator_service
   trajectory_msgs
   keyence_experimental
-  swri_profiler
 )
 
 catkin_package(
@@ -20,7 +19,6 @@ catkin_package(
     industrial_robot_simulator_service
     trajectory_msgs
     keyence_experimental
-    swri_profiler
 )
 
 include_directories(
