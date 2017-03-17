@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(godel_process_execution)
+add_definitions(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
   abb_file_suite

@@ -18,5 +18,6 @@
   <depend>industrial_robot_simulator_service</depend>
   <depend>trajectory_msgs</depend>
   <depend>keyence_experimental</depend>
+  <depend>swri_profiler</depend>
 
 </package>

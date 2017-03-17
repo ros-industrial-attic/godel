@@ -47,6 +47,7 @@ add_service_files(
   BlendingPlan.srv
   BlendProcessExecution.srv
   BlendProcessPlanning.srv
+  EnsensoCommand.srv
   GetAvailableMotionPlans.srv
   KeyenceProcessExecution.srv
   KeyenceProcessPlanning.srv

@@ -1,0 +1,19 @@
+# Goal
+trajectory_msgs/JointTrajectory trajectory_approach
+trajectory_msgs/JointTrajectory trajectory_process
+trajectory_msgs/JointTrajectory trajectory_depart
+
+bool wait_for_execution
+
+bool simulate
+
+godel_msgs/BlendingPlanParameters params
+
+---
+
+# Result
+bool success
+
+---
+
+# Feedback is empty (completion of task is our main concern)

@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="2">
+  <name>godel_utils</name>
+  <version>0.0.1</version>
+  <description>A utility package for common Godel resources</description>
+
+  <maintainer email="ros-industrial@todo.todo">ros-industrial</maintainer>
+
+
+  <!-- One license tag required, multiple allowed, one license per tag -->
+  <!-- Commonly used license strings: -->
+  <!--   BSD, MIT, Boost Software License, GPLv2, GPLv3, LGPLv2.1, LGPLv3 -->
+  <license>Apache 2.0</license>
+
+
+  <author email="awood@swri.org">Aaron Wood</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <depend>roscpp</depend>
+  <depend>godel_msgs</depend>
+  <export></export>
+
+</package>

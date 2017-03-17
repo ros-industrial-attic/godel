@@ -207,17 +207,19 @@ bool godel_process_execution::AbbBlendProcessService::executeProcess(
     return false;
   }
 
-  if (!req.wait_for_execution)
+  if (req.wait_for_execution)
+  {
+    // If we must wait for execution, then block and listen until robot returns to initial point or
+    // times out
+    return waitForExecution(req.trajectory_approach.points.front().positions,
+                            aggregate_traj.points.back().time_from_start, // wait for
+                            aggregate_traj.points.back().time_from_start +
+                                ros::Duration(DEFAULT_TRAJECTORY_BUFFER_TIME)); // timeout
+  }
+  else
   {
     return true;
   }
-
-  // If we must wait for execution, then block and listen until robot returns to initial point or
-  // times out
-  return waitForExecution(req.trajectory_approach.points.front().positions,
-                          aggregate_traj.points.back().time_from_start, // wait for
-                          aggregate_traj.points.back().time_from_start +
-                              ros::Duration(DEFAULT_TRAJECTORY_BUFFER_TIME)); // timeout
 }
 
 bool godel_process_execution::AbbBlendProcessService::simulateProcess(
