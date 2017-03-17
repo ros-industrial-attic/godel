@@ -49,7 +49,7 @@ static size_t readfunc(void* ptr, size_t size, size_t nmemb, void* stream)
 }
 
 static int upload(CURL* curlhandle, const char* remotepath, const char* localpath, long timeout,
-                  long tries)
+                  long tries, const char* user_and_pwd)
 {
   FILE* f;
   long uploaded_len = 0;
@@ -66,6 +66,8 @@ static int upload(CURL* curlhandle, const char* remotepath, const char* localpat
   curl_easy_setopt(curlhandle, CURLOPT_UPLOAD, 1L);
 
   curl_easy_setopt(curlhandle, CURLOPT_URL, remotepath);
+
+  curl_easy_setopt(curlhandle, CURLOPT_USERPWD, "Default User:robotics");
 
   curl_easy_setopt(curlhandle, CURLOPT_CONNECTTIMEOUT, 2L);
 
@@ -133,7 +135,8 @@ static int upload(CURL* curlhandle, const char* remotepath, const char* localpat
   }
 }
 
-bool abb_file_suite::uploadFile(const std::string& ftp_addr, const std::string& filepath)
+bool abb_file_suite::uploadFile(const std::string& ftp_addr, const std::string& filepath,
+                                const std::string& user_name, const std::string& password)
 {
   CURL* curlhandle = NULL;
 
@@ -142,7 +145,10 @@ bool abb_file_suite::uploadFile(const std::string& ftp_addr, const std::string& 
 
   std::string to = "ftp://" + ftp_addr + "/mGodelBlend.mod";
 
-  bool result = upload(curlhandle, to.c_str(), filepath.c_str(), DEFAULT_TIMEOUT, DEFAULT_RETRIES);
+  std::string user_pwd = user_name + ":" + password;
+
+  bool result = upload(curlhandle, to.c_str(), filepath.c_str(), DEFAULT_TIMEOUT, DEFAULT_RETRIES,
+                       user_pwd.c_str());
 
   curl_easy_cleanup(curlhandle);
   curl_global_cleanup();

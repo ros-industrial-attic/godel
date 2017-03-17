@@ -44,9 +44,11 @@ static std::string fileJoin(const std::string& dir, const std::string& filename)
 abb_file_suite::AbbMotionFtpDownloader::AbbMotionFtpDownloader(const std::string& ip,
                                                                const std::string& listen_topic,
                                                                ros::NodeHandle& nh,
+                                                               const std::string& ftp_user, 
+                                                               const std::string& ftp_pass,
                                                                bool j23_coupled,
                                                                const std::string& temp_file_loc)
-    : ip_(ip), temp_file_loc_(temp_file_loc), j23_coupled_(j23_coupled)
+    : ip_(ip), temp_file_loc_(temp_file_loc), user_(ftp_user), pwd_(ftp_pass), j23_coupled_(j23_coupled)
 {
   trajectory_sub_ =
       nh.subscribe(listen_topic, 10, &AbbMotionFtpDownloader::handleJointTrajectory, this);
@@ -95,7 +97,7 @@ void abb_file_suite::AbbMotionFtpDownloader::handleJointTrajectory(
   ofh.close();
 
   // send to controller
-  if (!uploadFile(ip_ + "/PARTMODULES", temp_file_path))
+  if (!uploadFile(ip_ + "/PARTMODULES", temp_file_path, user_, pwd_))
   {
     ROS_WARN("Could not upload joint trajectory to remote ftp server");
   }
@@ -113,5 +115,5 @@ bool abb_file_suite::AbbMotionFtpDownloader::handleServiceCall(
   }
   ifh.close();
 
-  return uploadFile(ip_ + "/PARTMODULES", req.file_path.c_str());
+  return uploadFile(ip_ + "/PARTMODULES", req.file_path.c_str(),  user_, pwd_);
 }
