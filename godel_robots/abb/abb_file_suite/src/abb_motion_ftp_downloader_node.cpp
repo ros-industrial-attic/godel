@@ -18,8 +18,8 @@ int main(int argc, char** argv)
   pnh.param<std::string>("topic", topic, DEFAULT_JOINT_LISTENING_TOPIC);
 
   std::string username, password;
-  pnh.param<std::string>("ftp_user", username, "Default User");
-  pnh.param<std::string>("ftp_pwd", password, "robotics");
+  pnh.param<std::string>("ftp_user", username, "");
+  pnh.param<std::string>("ftp_pwd", password, "");
 
   // Note this lookup is done using a non-private node handle. We assume we are looking up
   // this parameter set in the launch file for many abb drivers.

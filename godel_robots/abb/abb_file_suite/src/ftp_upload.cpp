@@ -67,7 +67,8 @@ static int upload(CURL* curlhandle, const char* remotepath, const char* localpat
 
   curl_easy_setopt(curlhandle, CURLOPT_URL, remotepath);
 
-  curl_easy_setopt(curlhandle, CURLOPT_USERPWD, "Default User:robotics");
+  if (user_and_pwd)
+    curl_easy_setopt(curlhandle, CURLOPT_USERPWD, user_and_pwd); //"Default User:robotics" by default
 
   curl_easy_setopt(curlhandle, CURLOPT_CONNECTTIMEOUT, 2L);
 
@@ -147,8 +148,14 @@ bool abb_file_suite::uploadFile(const std::string& ftp_addr, const std::string& 
 
   std::string user_pwd = user_name + ":" + password;
 
+  const char* auth_string = nullptr;
+  if (!user_name.empty() && !password.empty())
+  {
+    auth_string = user_pwd.c_str();
+  }
+
   bool result = upload(curlhandle, to.c_str(), filepath.c_str(), DEFAULT_TIMEOUT, DEFAULT_RETRIES,
-                       user_pwd.c_str());
+                       auth_string);
 
   curl_easy_cleanup(curlhandle);
   curl_global_cleanup();

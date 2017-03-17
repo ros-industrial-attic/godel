@@ -30,6 +30,8 @@
       <include file="$(find godel_irb1200_moveit_config)/launch/irb1200_robot_ftp_interface.launch">
         <arg name="robot_ip" value="$(arg robot_ip)"/>
         <arg name="J23_coupled" value="false"/>
+        <arg name="ftp_user" value="Default User"/>
+        <arg name="ftp_pwd" value="robotics"/>
       </include>
     </group>
 
