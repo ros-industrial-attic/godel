@@ -148,7 +148,7 @@ bool abb_file_suite::uploadFile(const std::string& ftp_addr, const std::string& 
 
   std::string user_pwd = user_name + ":" + password;
 
-  const char* auth_string = nullptr;
+  const char* auth_string = NULL;
   if (!user_name.empty() && !password.empty())
   {
     auth_string = user_pwd.c_str();
