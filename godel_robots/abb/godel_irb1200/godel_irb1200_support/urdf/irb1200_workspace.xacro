@@ -17,7 +17,7 @@
   <joint name="link_t_to_eff" type="fixed">
     <parent link="tool0"/>
     <child link="eff_frame"/>
-    <origin xyz="0 0 0" rpy="0 0 ${half_pi}"/>
+    <origin xyz="0 0 -0.005" rpy="0 0 0${half_pi + half_pi/2.0}"/>
   </joint>
 
   <!-- start of arm-workcell joint definitions -->
