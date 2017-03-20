@@ -53,6 +53,9 @@
                   another_package/GraspPlanningPipeline
                   " />
     -->
+    <param name="capabilities" value="move_group/MoveGroupCartesianPathService
+          move_group/MoveGroupExecuteService
+          " />
 
     <!-- inhibit these default MoveGroup capabilities -->
     <!--
