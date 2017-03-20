@@ -5,6 +5,9 @@ float64 overlap               # (m) overlap distance between adjacent paths
 float64 approach_distance     # (m) approach distance
 float64 traverse_spd          # (m/s) Speed to travel while at traverse height
 
+# Misc
+float64 z_adjust              # (m) height adjustment along surface normal to adjust for different tools
+
 # QA Methods
 int32 METHOD_RMS=0
 

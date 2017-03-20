@@ -16,6 +16,7 @@ float64 traverse_spd          # (m/s) Speed to travel while at traverse height
 # Misc
 float64 discretization        # (m) How densely to space adjacent Cartesian points
 float64 safe_traverse_height  # (m) height above surface to rise during rapid traversal moves
+float64 z_adjust              # (m) height adjustment along surface normal to adjust for different tools
 
 # Pre-Process Surface Parameters
 float64 min_boundary_length   # (m) Boundaries below threshold are ignored during process path creation
