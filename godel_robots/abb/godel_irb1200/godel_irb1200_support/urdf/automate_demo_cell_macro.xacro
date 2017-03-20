@@ -22,7 +22,13 @@
   -->
   <xacro:macro name="automate_demo_cell" params="prefix">
 
-  <link name="${prefix}demo_cell_base_link"/>
+  <link name="${prefix}demo_cell_base_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://godel_irb1200_support/meshes/visual/automate_demo_cell_simplified.dae"/>
+      </geometry>
+    </visual>
+  </link>
 
   <link name="${prefix}demo_cell_corner"/>
 
