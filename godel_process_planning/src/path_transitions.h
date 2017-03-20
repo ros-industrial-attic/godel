@@ -21,6 +21,7 @@ struct TransitionParameters
   double angular_disc;
   double traverse_height;
   double retract_dist;
+  double z_adjust;
 };
 
 std::vector<ConnectingPath> generateTransitions(const std::vector<geometry_msgs::PoseArray>& segments,

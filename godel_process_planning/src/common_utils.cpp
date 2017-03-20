@@ -52,22 +52,24 @@ Eigen::Affine3d godel_process_planning::createNominalTransform(const geometry_ms
   return eigen_pose * to_point * flip_z;
 }
 
-Eigen::Affine3d godel_process_planning::createNominalTransform(const geometry_msgs::Pose& ref_pose)
+Eigen::Affine3d godel_process_planning::createNominalTransform(const geometry_msgs::Pose& ref_pose,
+                                                               const double z_adjust)
 {
   Eigen::Affine3d eigen_pose;
 
   tf::poseMsgToEigen(ref_pose, eigen_pose);
 
-  return createNominalTransform(eigen_pose);
+  return createNominalTransform(eigen_pose, z_adjust);
 }
 
-Eigen::Affine3d godel_process_planning::createNominalTransform(const Eigen::Affine3d &ref_pose)
+Eigen::Affine3d godel_process_planning::createNominalTransform(const Eigen::Affine3d &ref_pose,
+                                                               const double z_adjust)
 {
   // Reverse the Z axis
   Eigen::Affine3d flip_z;
   flip_z = Eigen::AngleAxisd(M_PI, Eigen::Vector3d::UnitY());
 
-  return ref_pose * flip_z;
+  return ref_pose * Eigen::Translation3d(0, 0, z_adjust) * flip_z;
 }
 
 bool godel_process_planning::descartesSolve(const godel_process_planning::DescartesTraj& in_path,
