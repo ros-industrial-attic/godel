@@ -5,6 +5,7 @@ add_definitions(-std=c++11)
 find_package(catkin REQUIRED COMPONENTS
   abb_file_suite
   godel_msgs
+  godel_utils
   industrial_robot_simulator_service
   trajectory_msgs
   keyence_experimental
@@ -16,6 +17,7 @@ catkin_package(
   CATKIN_DEPENDS 
     abb_file_suite
     godel_msgs
+    godel_utils
     industrial_robot_simulator_service
     trajectory_msgs
     keyence_experimental

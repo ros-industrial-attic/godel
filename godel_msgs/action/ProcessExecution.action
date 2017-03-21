@@ -1,3 +1,5 @@
+# Goal
+
 # Joint trajectory
 trajectory_msgs/JointTrajectory trajectory_approach
 trajectory_msgs/JointTrajectory trajectory_process
@@ -10,7 +12,13 @@ bool wait_for_execution
 bool simulate
 
 # Process parameters
-godel_msgs/BlendingPlanParameters params
+godel_msgs/BlendingPlanParameters blend_params
+godel_msgs/ScanPlanParameters scan_params
 
 ---
-# Empty
+# Result
+
+bool success
+
+---
+# Feedback is empty (primary concern is that task completes)

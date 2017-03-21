@@ -4,6 +4,7 @@
 #include <moveit_msgs/ExecuteKnownTrajectory.h>
 
 #include "godel_msgs/TrajectoryExecution.h"
+#include <godel_utils/ensenso_guard.h>
 #include "keyence_experimental/ChangeProgram.h"
 #include <std_srvs/Trigger.h>
 
@@ -21,8 +22,13 @@ const static std::string EXECUTION_SERVICE_NAME = "path_execution";
 const static std::string SIMULATION_SERVICE_NAME = "simulate_path";
 const static std::string SERVICE_SERVER_NAME = "scan_process_execution";
 const static std::string RESET_SCANS_SERVICE = "reset_scan_server";
+const static std::string PROCESS_EXE_ACTION_SERVER_NAME = "scan_process_execution_as";
 
-godel_process_execution::KeyenceProcessService::KeyenceProcessService(ros::NodeHandle& nh)
+godel_process_execution::KeyenceProcessService::KeyenceProcessService(ros::NodeHandle& nh) : nh_(nh),
+  process_exe_action_server_(nh_,
+                           PROCESS_EXE_ACTION_SERVER_NAME,
+                           boost::bind(&godel_process_execution::KeyenceProcessService::executionCallback, this, _1),
+                           false)
 {
   // Connect to motion servers and I/O server
   sim_client_ = nh.serviceClient<industrial_robot_simulator_service::SimulateTrajectory>(
@@ -35,39 +41,37 @@ godel_process_execution::KeyenceProcessService::KeyenceProcessService(ros::NodeH
   // For reseting the scan server
   reset_scan_server_ = nh.serviceClient<std_srvs::Trigger>(RESET_SCANS_SERVICE);
 
-  // Create this process execution server
-  server_ = nh.advertiseService<KeyenceProcessService, godel_msgs::KeyenceProcessExecution::Request,
-                                godel_msgs::KeyenceProcessExecution::Response>(
-      SERVICE_SERVER_NAME, &godel_process_execution::KeyenceProcessService::executionCallback,
-      this);
+  // start the action server
+  process_exe_action_server_.start();
 
 }
 
-bool godel_process_execution::KeyenceProcessService::executionCallback(
-    godel_msgs::KeyenceProcessExecution::Request& req,
-    godel_msgs::KeyenceProcessExecution::Response& res)
+void godel_process_execution::KeyenceProcessService::executionCallback(
+    const godel_msgs::ProcessExecutionGoalConstPtr &goal)
 {
-  if (req.simulate)
+  godel_msgs::ProcessExecutionResult res;
+  if (goal->simulate)
   {
-    return simulateProcess(req);
+    res.success = simulateProcess(goal);
   }
   else
   {
-    if (req.wait_for_execution)
+    if (goal->wait_for_execution)
     {
-      return executeProcess(req);
+      res.success = executeProcess(goal);
     }
     else
     {
-      boost::thread(&godel_process_execution::KeyenceProcessService::executeProcess, this, req);
-      return true;
+      boost::thread(&godel_process_execution::KeyenceProcessService::executeProcess, this, goal);
+      res.success = true;
     }
   }
 }
 
 bool godel_process_execution::KeyenceProcessService::executeProcess(
-    godel_msgs::KeyenceProcessExecution::Request& req)
+    const godel_msgs::ProcessExecutionGoalConstPtr &goal)
 {
+  ensenso::EnsensoGuard guard;
   // Check for keyence existence
   if (!keyence_client_.exists())
   {
@@ -83,15 +87,15 @@ bool godel_process_execution::KeyenceProcessService::executeProcess(
   // Prepare the trajectories to run
   godel_msgs::TrajectoryExecution srv_approach;
   srv_approach.request.wait_for_execution = true;
-  srv_approach.request.trajectory = req.trajectory_approach;
+  srv_approach.request.trajectory = goal->trajectory_approach;
 
   godel_msgs::TrajectoryExecution srv_process;
   srv_process.request.wait_for_execution = true;
-  srv_process.request.trajectory = req.trajectory_process;
+  srv_process.request.trajectory = goal->trajectory_process;
 
   godel_msgs::TrajectoryExecution srv_depart;
   srv_depart.request.wait_for_execution = true;
-  srv_depart.request.trajectory = req.trajectory_depart;
+  srv_depart.request.trajectory = goal->trajectory_depart;
 
   if (!real_client_.call(srv_approach))
   {
@@ -133,20 +137,20 @@ bool godel_process_execution::KeyenceProcessService::executeProcess(
 }
 
 bool godel_process_execution::KeyenceProcessService::simulateProcess(
-    godel_msgs::KeyenceProcessExecution::Request& req)
+    const godel_msgs::ProcessExecutionGoalConstPtr &goal)
 {
   using industrial_robot_simulator_service::SimulateTrajectory;
 
   // The simulation server doesn't support any I/O visualizations, so we aggregate the
   // trajectory components and send them all at once
   trajectory_msgs::JointTrajectory aggregate_traj;
-  aggregate_traj = req.trajectory_approach;
-  appendTrajectory(aggregate_traj, req.trajectory_process);
-  appendTrajectory(aggregate_traj, req.trajectory_depart);
+  aggregate_traj = goal->trajectory_approach;
+  appendTrajectory(aggregate_traj, goal->trajectory_process);
+  appendTrajectory(aggregate_traj, goal->trajectory_depart);
 
   // Pass the trajectory to the simulation service
   SimulateTrajectory srv;
-  srv.request.wait_for_execution = req.wait_for_execution;
+  srv.request.wait_for_execution = goal->wait_for_execution;
   srv.request.trajectory = aggregate_traj;
 
   // Call simulation service

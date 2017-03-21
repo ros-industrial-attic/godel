@@ -1,17 +1,12 @@
-#include "detection/surface_detection.h"
-#include "godel_msgs/TrajectoryExecution.h"
-#include "godel_param_helpers/godel_param_helpers.h"
-#include "segmentation/surface_segmentation.h"
-#include "services/surface_blending_service.h"
-
-// Process Execution
-#include "godel_msgs/BlendProcessExecution.h"
-#include "godel_msgs/KeyenceProcessExecution.h"
+#include <services/surface_blending_service.h>
+#include <segmentation/surface_segmentation.h>
+#include <detection/surface_detection.h>
+#include <godel_msgs/TrajectoryExecution.h>
 
 // Process Planning
-#include "godel_msgs/BlendProcessPlanning.h"
-#include "godel_msgs/KeyenceProcessPlanning.h"
-#include "godel_msgs/PathPlanning.h"
+#include <godel_msgs/BlendProcessPlanning.h>
+#include <godel_msgs/KeyenceProcessPlanning.h>
+#include <godel_msgs/PathPlanning.h>
 
 #include <godel_param_helpers/godel_param_helpers.h>
 #include <godel_utils/ensenso_guard.h>
@@ -66,6 +61,21 @@ const static std::string BLEND_TOOL_PLUGIN_PARAM = "blend_tool_planning_plugin_n
 const static std::string SCAN_TOOL_PLUGIN_PARAM = "scan_tool_planning_plugin_name";
 const static std::string MESHING_PLUGIN_PARAM = "meshing_plugin_name";
 
+// action server name
+const static std::string BLEND_EXE_ACTION_SERVER_NAME = "blend_process_execution_as";
+const static std::string SCAN_EXE_ACTION_SERVER_NAME = "scan_process_execution_as";
+const static std::string PROCESS_PLANNING_ACTION_SERVER_NAME = "process_planning_as";
+const static std::string SELECT_MOTION_PLAN_ACTION_SERVER_NAME = "select_motion_plan_as";
+const static int PROCESS_EXE_BUFFER = 5;  // Additional time [s] buffer between when blending should end and timeout
+
+SurfaceBlendingService::SurfaceBlendingService() : publish_region_point_cloud_(false), save_data_(false),
+  blend_exe_client_(BLEND_EXE_ACTION_SERVER_NAME, true),
+  scan_exe_client_(SCAN_EXE_ACTION_SERVER_NAME, true),
+  process_planning_server_(nh_, PROCESS_PLANNING_ACTION_SERVER_NAME,
+                           boost::bind(&SurfaceBlendingService::processPlanningActionCallback, this, _1), false),
+  select_motion_plan_server_(nh_, SELECT_MOTION_PLAN_ACTION_SERVER_NAME,
+                             boost::bind(&SurfaceBlendingService::selectMotionPlansActionCallback, this, _1), false)
+{}
 
 bool SurfaceBlendingService::init()
 {
@@ -147,8 +157,6 @@ bool SurfaceBlendingService::init()
   process_path_client_ = nh_.serviceClient<godel_msgs::PathPlanning>(PATH_GENERATION_SERVICE);
 
   // Process Execution Parameters
-  blend_process_client_ = nh_.serviceClient<godel_msgs::BlendProcessExecution>(BLEND_PROCESS_EXECUTION_SERVICE);
-  scan_process_client_ = nh_.serviceClient<godel_msgs::KeyenceProcessExecution>(SCAN_PROCESS_EXECUTION_SERVICE);
   blend_planning_client_ = nh_.serviceClient<godel_msgs::BlendProcessPlanning>(BLEND_PROCESS_PLANNING_SERVICE);
   keyence_planning_client_ = nh_.serviceClient<godel_msgs::KeyenceProcessPlanning>(SCAN_PROCESS_PLANNING_SERVICE);
 
@@ -166,9 +174,6 @@ bool SurfaceBlendingService::init()
   get_motion_plans_server_ = nh_.advertiseService(
       GET_MOTION_PLANS_SERVICE, &SurfaceBlendingService::getMotionPlansCallback, this);
 
-  select_motion_plan_server_ = nh_.advertiseService(
-      SELECT_MOTION_PLAN_SERVICE, &SurfaceBlendingService::selectMotionPlanCallback, this);
-
   load_save_motion_plan_server_ = nh_.advertiseService(
       LOAD_SAVE_MOTION_PLAN_SERVICE, &SurfaceBlendingService::loadSaveMotionPlanCallback, this);
 
@@ -185,6 +190,7 @@ bool SurfaceBlendingService::init()
 
   // action servers
   process_planning_server_.start();
+  select_motion_plan_server_.start();
 
   return true;
 }
@@ -549,16 +555,16 @@ bool SurfaceBlendingService::surface_detection_server_callback(
   return true;
 }
 
-void SurfaceBlendingService::processPlanningActionCallback(const godel_msgs::ProcessPlanningGoalConstPtr &goal)
+void SurfaceBlendingService::processPlanningActionCallback(const godel_msgs::ProcessPlanningGoalConstPtr &goal_in)
 {
-  switch (goal->action)
+  switch (goal_in->action)
   {
     case godel_msgs::ProcessPlanningGoal::GENERATE_MOTION_PLAN_AND_PREVIEW:
     {
       ensenso::EnsensoGuard guard; // turns off ensenso for planning and turns it on when this goes out of scope
       process_planning_feedback_.last_completed = "Recieved request to generate motion plan";
       process_planning_server_.publishFeedback(process_planning_feedback_);
-      trajectory_library_ = generateMotionLibrary(goal->params);
+      trajectory_library_ = generateMotionLibrary(goal_in->params);
       process_planning_feedback_.last_completed = "Finished planning. Visualizing...";
       process_planning_server_.publishFeedback(process_planning_feedback_);
       visualizePaths();
@@ -575,7 +581,7 @@ void SurfaceBlendingService::processPlanningActionCallback(const godel_msgs::Pro
 
     default:
     {
-      ROS_ERROR_STREAM("Unknown action code '" << goal->action << "' request");
+      ROS_ERROR_STREAM("Unknown action code '" << goal_in->action << "' request");
       break;
     }
   }
@@ -677,54 +683,48 @@ bool SurfaceBlendingService::surface_blend_parameters_server_callback(
   return true;
 }
 
-bool SurfaceBlendingService::selectMotionPlanCallback(godel_msgs::SelectMotionPlan::Request& req,
-                                                      godel_msgs::SelectMotionPlan::Response& res)
-{
-  ensenso::EnsensoGuard guard;  // Turn off camera while we execute
 
-  // Check to ensure the plan exists
-  if (trajectory_library_.get().find(req.name) == trajectory_library_.get().end())
+void SurfaceBlendingService::selectMotionPlansActionCallback(const godel_msgs::SelectMotionPlanGoalConstPtr& goal_in)
+{
+  godel_msgs::SelectMotionPlanResult res;
+
+  // If plan does not exist, abort and return
+  if (trajectory_library_.get().find(goal_in->name) == trajectory_library_.get().end())
   {
-    ROS_WARN_STREAM("Motion plan " << req.name << " does not exist. Cannot execute.");
-    res.code = godel_msgs::SelectMotionPlan::Response::NO_SUCH_NAME;
-    return false;
+    ROS_WARN_STREAM("Motion plan " << goal_in->name << " does not exist. Cannot execute.");
+    res.code = godel_msgs::SelectMotionPlanResponse::NO_SUCH_NAME;
+    select_motion_plan_server_.setAborted(res);
+    return;
   }
 
-  bool is_blend = trajectory_library_.get()[req.name].type == godel_msgs::ProcessPlan::BLEND_TYPE;
+  bool is_blend = trajectory_library_.get()[goal_in->name].type == godel_msgs::ProcessPlan::BLEND_TYPE;
 
-  if (is_blend)
+  // Send command to execution server
+  godel_msgs::ProcessExecutionActionGoal goal;
+  goal.goal.trajectory_approach = trajectory_library_.get()[goal_in->name].trajectory_approach;
+  goal.goal.trajectory_depart = trajectory_library_.get()[goal_in->name].trajectory_depart;
+  goal.goal.trajectory_process = trajectory_library_.get()[goal_in->name].trajectory_process;
+  goal.goal.wait_for_execution = goal_in->wait_for_execution;
+  goal.goal.simulate = goal_in->simulate;
+
+  actionlib::SimpleActionClient<godel_msgs::ProcessExecutionAction> *exe_client =
+      (is_blend ? &blend_exe_client_ : &scan_exe_client_);
+  exe_client->sendGoal(goal.goal);
+
+  ros::Duration process_time(goal.goal.trajectory_depart.points.back().time_from_start);
+  ros::Duration buffer_time(PROCESS_EXE_BUFFER);
+  if(exe_client->waitForResult(process_time + buffer_time))
   {
-    godel_msgs::BlendProcessExecution srv;
-    srv.request.trajectory_approach = trajectory_library_.get()[req.name].trajectory_approach;
-    srv.request.trajectory_process = trajectory_library_.get()[req.name].trajectory_process;
-    srv.request.trajectory_depart = trajectory_library_.get()[req.name].trajectory_depart;
-    srv.request.wait_for_execution = req.wait_for_execution;
-    srv.request.simulate = req.simulate;
-
-    if (!blend_process_client_.call(srv))
-    {
-      ROS_ERROR_STREAM("Could not call blend process client");
-      return false;
-    }
+    res.code = godel_msgs::SelectMotionPlanResult::SUCCESS;
+    select_motion_plan_server_.setSucceeded(res);
   }
   else
   {
-    godel_msgs::KeyenceProcessExecution srv;
-    srv.request.trajectory_approach = trajectory_library_.get()[req.name].trajectory_approach;
-    srv.request.trajectory_process = trajectory_library_.get()[req.name].trajectory_process;
-    srv.request.trajectory_depart = trajectory_library_.get()[req.name].trajectory_depart;
-    srv.request.wait_for_execution = req.wait_for_execution;
-    srv.request.simulate = req.simulate;
-
-    if (!scan_process_client_.call(srv))
-    {
-      ROS_ERROR_STREAM("Could not call scan process client");
-      return false;
-    }
+    res.code=godel_msgs::SelectMotionPlanResult::TIMEOUT;
+    select_motion_plan_server_.setAborted(res);
   }
-
-  return true;
 }
+
 
 bool SurfaceBlendingService::getMotionPlansCallback(
     godel_msgs::GetAvailableMotionPlans::Request&,
@@ -737,6 +737,7 @@ bool SurfaceBlendingService::getMotionPlansCallback(
   }
   return true;
 }
+
 
 bool SurfaceBlendingService::loadSaveMotionPlanCallback(
     godel_msgs::LoadSaveMotionPlan::Request& req, godel_msgs::LoadSaveMotionPlan::Response& res)

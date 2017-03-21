@@ -2,7 +2,8 @@
 #define KEYENCE_PROCESS_SERVICE_H
 
 #include <ros/ros.h>
-#include <godel_msgs/KeyenceProcessExecution.h>
+#include <actionlib/server/simple_action_server.h>
+#include <godel_msgs/ProcessExecutionAction.h>
 
 namespace godel_process_execution
 {
@@ -17,16 +18,15 @@ public:
    * MoveIt node. The idea though is that abstracting 'execution' will give us more flexibility
    * later to implement our own process parameters related to execution.
    */
-  bool executionCallback(godel_msgs::KeyenceProcessExecution::Request& req,
-                         godel_msgs::KeyenceProcessExecution::Response& res);
-
-  bool executeProcess(godel_msgs::KeyenceProcessExecution::Request& req);
-  bool simulateProcess(godel_msgs::KeyenceProcessExecution::Request& req);
+  void executionCallback(const godel_msgs::ProcessExecutionGoalConstPtr &goal);
+  bool executeProcess(const godel_msgs::ProcessExecutionGoalConstPtr &goal);
+  bool simulateProcess(const godel_msgs::ProcessExecutionGoalConstPtr &goal);
 
 private:
-  ros::ServiceServer server_;
+  ros::NodeHandle nh_;
   ros::ServiceClient real_client_;
   ros::ServiceClient sim_client_;
+  actionlib::SimpleActionServer<godel_msgs::ProcessExecutionAction> process_exe_action_server_;
   ros::ServiceClient keyence_client_;
   ros::ServiceClient reset_scan_server_;
 };

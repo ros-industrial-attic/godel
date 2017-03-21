@@ -28,6 +28,8 @@
 
 const double RAD_TO_DEGREES = 180.0f / M_PI;
 const double DEGREES_TO_RAD = M_PI / 180.0f;
+const static std::string PROCESS_PLANNING_ACTION_SERVER_NAME = "process_planning_as";
+const static std::string SELECT_MOTION_PLAN_ACTION_SERVER_NAME = "select_motion_plan_as";
 
 namespace godel_plugins
 {
@@ -35,7 +37,9 @@ namespace widgets
 {
 
 RobotBlendingWidget::RobotBlendingWidget(std::string ns) :
-  param_ns_(ns), process_planning_action_client_(PROCESS_PLANNING_ACTION_SERVER_NAME, true)
+  param_ns_(ns),
+  process_planning_action_client_(PROCESS_PLANNING_ACTION_SERVER_NAME, true),
+  select_motion_plan_action_client_(SELECT_MOTION_PLAN_ACTION_SERVER_NAME, true)
 {
   init();
 }
@@ -558,10 +562,12 @@ void RobotBlendingWidget::request_available_motions(std::vector<std::string>& pl
 
 void RobotBlendingWidget::select_motion_plan(const std::string& name, bool simulate)
 {
-  godel_msgs::SelectMotionPlan srv;
-  srv.request.name = name;
-  srv.request.simulate = simulate;
-  select_motion_plan_client_.call(srv);
+  ROS_INFO_STREAM("In select motion plan");
+  godel_msgs::SelectMotionPlanActionGoal goal;
+  goal.goal.name = name;
+  goal.goal.simulate = simulate;
+  goal.goal.wait_for_execution = true;
+  select_motion_plan_action_client_.sendGoal(goal.goal);
 }
 
 

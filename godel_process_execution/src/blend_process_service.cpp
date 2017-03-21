@@ -11,57 +11,53 @@
 const static std::string EXECUTION_SERVICE_NAME = "path_execution";
 const static std::string SIMULATION_SERVICE_NAME = "simulate_path";
 const static std::string THIS_SERVICE_NAME = "blend_process_execution";
+const static std::string PROCESS_EXE_ACTION_SERVER_NAME = "blend_process_execution_as";
 
-godel_process_execution::BlendProcessService::BlendProcessService(ros::NodeHandle& nh)
+godel_process_execution::BlendProcessService::BlendProcessService(ros::NodeHandle& nh) : nh_(nh),
+  process_exe_action_server_(nh_,
+                           PROCESS_EXE_ACTION_SERVER_NAME,
+                           boost::bind(&godel_process_execution::BlendProcessService::executionCallback, this, _1),
+                           false)
 {
   // Simulation Server
-  sim_client_ = nh.serviceClient<industrial_robot_simulator_service::SimulateTrajectory>(
+  sim_client_ = nh_.serviceClient<industrial_robot_simulator_service::SimulateTrajectory>(
       SIMULATION_SERVICE_NAME);
   // Trajectory Execution Service
-  real_client_ = nh.serviceClient<godel_msgs::TrajectoryExecution>(EXECUTION_SERVICE_NAME);
+  real_client_ = nh_.serviceClient<godel_msgs::TrajectoryExecution>(EXECUTION_SERVICE_NAME);
+
   // The generic process execution service
-  server_ = nh.advertiseService<BlendProcessService, godel_msgs::BlendProcessExecution::Request,
-                                godel_msgs::BlendProcessExecution::Response>(
-      THIS_SERVICE_NAME, &godel_process_execution::BlendProcessService::executionCallback, this);
+  process_exe_action_server_.start();
 }
 
-bool godel_process_execution::BlendProcessService::executionCallback(
-    godel_msgs::BlendProcessExecution::Request& req,
-    godel_msgs::BlendProcessExecution::Response& res)
+void godel_process_execution::BlendProcessService::executionCallback(
+    const godel_msgs::ProcessExecutionGoalConstPtr &goal)
 {
-  if (req.simulate)
+  godel_msgs::ProcessExecutionResult res;
+  if (goal->simulate)
   {
-    return simulateProcess(req);
+    res.success = simulateProcess(goal);
   }
   else
   {
-    // Real execution; if we shouldn't wait, spawn a thread and return this function immediately.
-    if (req.wait_for_execution)
-    {
-      return executeProcess(req);
-    }
-    else
-    {
-      boost::thread(&godel_process_execution::BlendProcessService::executeProcess, this, req);
-      return true;
-    }
+    res.success = executeProcess(goal);
   }
+  process_exe_action_server_.setSucceeded(res);
 }
 
 bool godel_process_execution::BlendProcessService::executeProcess(
-    godel_msgs::BlendProcessExecution::Request req)
+    const godel_msgs::ProcessExecutionGoalConstPtr &goal)
 {
   godel_msgs::TrajectoryExecution srv_approach;
   srv_approach.request.wait_for_execution = true;
-  srv_approach.request.trajectory = req.trajectory_approach;
+  srv_approach.request.trajectory = goal->trajectory_approach;
 
   godel_msgs::TrajectoryExecution srv_process;
   srv_process.request.wait_for_execution = true;
-  srv_process.request.trajectory = req.trajectory_process;
+  srv_process.request.trajectory = goal->trajectory_process;
 
   godel_msgs::TrajectoryExecution srv_depart;
   srv_depart.request.wait_for_execution = true;
-  srv_depart.request.trajectory = req.trajectory_depart;
+  srv_depart.request.trajectory = goal->trajectory_depart;
 
   if (!real_client_.call(srv_approach))
   {
@@ -85,20 +81,20 @@ bool godel_process_execution::BlendProcessService::executeProcess(
 }
 
 bool godel_process_execution::BlendProcessService::simulateProcess(
-    godel_msgs::BlendProcessExecution::Request req)
+    const godel_msgs::ProcessExecutionGoalConstPtr &goal)
 {
   using industrial_robot_simulator_service::SimulateTrajectory;
 
   // The simulation server doesn't support any I/O visualizations, so we aggregate the
   // trajectory components and send them all at once
   trajectory_msgs::JointTrajectory aggregate_traj;
-  aggregate_traj = req.trajectory_approach;
-  appendTrajectory(aggregate_traj, req.trajectory_process);
-  appendTrajectory(aggregate_traj, req.trajectory_depart);
+  aggregate_traj = goal->trajectory_approach;
+  appendTrajectory(aggregate_traj, goal->trajectory_process);
+  appendTrajectory(aggregate_traj, goal->trajectory_depart);
 
   // Pass the trajectory to the simulation service
   SimulateTrajectory srv;
-  srv.request.wait_for_execution = req.wait_for_execution;
+  srv.request.wait_for_execution = goal->wait_for_execution;
   srv.request.trajectory = aggregate_traj;
 
   // Call simulation service

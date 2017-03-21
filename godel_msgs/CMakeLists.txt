@@ -23,7 +23,9 @@ add_action_files(
     DIRECTORY
     action
     FILES
+    ProcessExecution.action
     ProcessPlanning.action
+    SelectMotionPlan.action
 )
 
 
@@ -45,11 +47,9 @@ add_message_files(
 add_service_files(
   FILES
   BlendingPlan.srv
-  BlendProcessExecution.srv
   BlendProcessPlanning.srv
   EnsensoCommand.srv
   GetAvailableMotionPlans.srv
-  KeyenceProcessExecution.srv
   KeyenceProcessPlanning.srv
   LoadSaveMotionPlan.srv
   OffsetBoundary.srv
@@ -83,6 +83,8 @@ generate_messages(DEPENDENCIES
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
   CATKIN_DEPENDS
+  actionlib
+  actionlib_msgs
   message_runtime
   geometry_msgs
   sensor_msgs

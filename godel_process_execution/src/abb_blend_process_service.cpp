@@ -8,6 +8,7 @@
 #include "process_utils.h"
 #include "rapid_generator/rapid_emitter.h"
 #include "abb_file_suite/ExecuteProgram.h"
+#include <godel_utils/ensenso_guard.h>
 
 // hack
 #include "sensor_msgs/JointState.h"
@@ -20,6 +21,7 @@ const static std::string JOINT_TOPIC_NAME = "/joint_states";
 const static std::string THIS_SERVICE_NAME = "blend_process_execution";
 const static std::string EXECUTION_SERVICE_NAME = "execute_program";
 const static std::string SIMULATION_SERVICE_NAME = "simulate_path";
+const static std::string PROCESS_EXE_ACTION_SERVER_NAME = "blend_process_execution_as";
 
 static inline bool compare(const std::vector<double>& a, const std::vector<double>& b,
                            double eps = 0.01)
@@ -43,6 +45,7 @@ static inline bool compare(const std::vector<double>& a, const std::vector<doubl
 static bool waitForExecution(const std::vector<double>& end_goal, const ros::Duration& wait_for,
                              const ros::Duration& time_out)
 {
+  ensenso::EnsensoGuard guard;
   sensor_msgs::JointStateConstPtr state;
   ros::Time end_time = ros::Time::now() + time_out;
 
@@ -136,44 +139,43 @@ static bool writeRapidFile(const std::string& path,
   return true;
 }
 
-godel_process_execution::AbbBlendProcessService::AbbBlendProcessService(ros::NodeHandle& nh)
+godel_process_execution::AbbBlendProcessService::AbbBlendProcessService(ros::NodeHandle& nh) : nh_(nh),
+  process_exe_action_server_(nh_,
+                           PROCESS_EXE_ACTION_SERVER_NAME,
+                           boost::bind(&godel_process_execution::AbbBlendProcessService::executionCallback, this, _1),
+                           false)
 {
   // Load Robot Specific Parameters
-  nh.param<bool>("J23_coupled", j23_coupled_, false);
+  nh_.param<bool>("J23_coupled", j23_coupled_, false);
 
   // Create client services
-  sim_client_ = nh.serviceClient<industrial_robot_simulator_service::SimulateTrajectory>(
-      SIMULATION_SERVICE_NAME);
-
-  real_client_ = nh.serviceClient<abb_file_suite::ExecuteProgram>(EXECUTION_SERVICE_NAME);
-
-  // Advertise the primary blending service
-  server_ = nh.advertiseService<AbbBlendProcessService, godel_msgs::BlendProcessExecution::Request,
-                                godel_msgs::BlendProcessExecution::Response>(
-      THIS_SERVICE_NAME, &godel_process_execution::AbbBlendProcessService::executionCallback, this);
+  sim_client_ = nh_.serviceClient<industrial_robot_simulator_service::SimulateTrajectory>(SIMULATION_SERVICE_NAME);
+  real_client_ = nh_.serviceClient<abb_file_suite::ExecuteProgram>(EXECUTION_SERVICE_NAME);
+  process_exe_action_server_.start();
 }
 
-bool godel_process_execution::AbbBlendProcessService::executionCallback(
-    godel_msgs::BlendProcessExecution::Request& req,
-    godel_msgs::BlendProcessExecution::Response& res)
+void godel_process_execution::AbbBlendProcessService::executionCallback(
+    const godel_msgs::ProcessExecutionGoalConstPtr &goal)
 {
-  if (req.simulate)
+  godel_msgs::ProcessExecutionResult res;
+  if (goal->simulate)
   {
-    return simulateProcess(req);
+    res.success = simulateProcess(goal);
   }
   else
   {
-    return executeProcess(req);
+    res.success = executeProcess(goal);
   }
+  process_exe_action_server_.setSucceeded(res);
 }
 
 bool godel_process_execution::AbbBlendProcessService::executeProcess(
-    godel_msgs::BlendProcessExecution::Request req)
+    const godel_msgs::ProcessExecutionGoalConstPtr &goal)
 {
   trajectory_msgs::JointTrajectory aggregate_traj;
-  aggregate_traj = req.trajectory_approach;
-  appendTrajectory(aggregate_traj, req.trajectory_process);
-  appendTrajectory(aggregate_traj, req.trajectory_depart);
+  aggregate_traj = goal->trajectory_approach;
+  appendTrajectory(aggregate_traj, goal->trajectory_process);
+  appendTrajectory(aggregate_traj, goal->trajectory_depart);
 
   // ABB Rapid Emmiter
   std::vector<rapid_emitter::TrajectoryPt> pts = toRapidTrajectory(aggregate_traj, j23_coupled_);
@@ -187,8 +189,8 @@ bool godel_process_execution::AbbBlendProcessService::executeProcess(
   params.output_name = "do_PIO_8";
 
   // Calculate process start and end indexes
-  unsigned start_index = req.trajectory_approach.points.size();
-  unsigned stop_index = start_index + req.trajectory_process.points.size();
+  unsigned start_index = goal->trajectory_approach.points.size();
+  unsigned stop_index = start_index + goal->trajectory_process.points.size();
 
   if (!writeRapidFile("/tmp/blend.mod", pts, start_index, stop_index, params))
   {
@@ -207,11 +209,10 @@ bool godel_process_execution::AbbBlendProcessService::executeProcess(
     return false;
   }
 
-  if (req.wait_for_execution)
+  if (goal->wait_for_execution)
   {
-    // If we must wait for execution, then block and listen until robot returns to initial point or
-    // times out
-    return waitForExecution(req.trajectory_approach.points.front().positions,
+    // If we must wait for execution, then block and listen until robot returns to initial point or times out
+    return waitForExecution(goal->trajectory_approach.points.front().positions,
                             aggregate_traj.points.back().time_from_start, // wait for
                             aggregate_traj.points.back().time_from_start +
                                 ros::Duration(DEFAULT_TRAJECTORY_BUFFER_TIME)); // timeout
@@ -223,18 +224,17 @@ bool godel_process_execution::AbbBlendProcessService::executeProcess(
 }
 
 bool godel_process_execution::AbbBlendProcessService::simulateProcess(
-    godel_msgs::BlendProcessExecution::Request req)
+    const godel_msgs::ProcessExecutionGoalConstPtr &goal)
 {
   // The simulation server doesn't support any I/O visualizations, so we aggregate the
   // trajectory components and send them all at once
   trajectory_msgs::JointTrajectory aggregate_traj;
-  aggregate_traj = req.trajectory_approach;
-  appendTrajectory(aggregate_traj, req.trajectory_process);
-  appendTrajectory(aggregate_traj, req.trajectory_depart);
+  aggregate_traj = goal->trajectory_approach;
+  appendTrajectory(aggregate_traj, goal->trajectory_process);
+  appendTrajectory(aggregate_traj, goal->trajectory_depart);
 
   // Pass the trajectory to the simulation service
   industrial_robot_simulator_service::SimulateTrajectory srv;
-  srv.request.wait_for_execution = req.wait_for_execution;
   srv.request.trajectory = aggregate_traj;
 
   // Call simulation service
