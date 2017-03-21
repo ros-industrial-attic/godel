@@ -82,6 +82,7 @@ bool ProcessPlanningManager::handleBlendPlanning(godel_msgs::BlendProcessPlannin
   transition_params.angular_disc = ANGULAR_DISCRETIZATION;
   transition_params.retract_dist = RETRACT_DISTANCE;
   transition_params.traverse_height = req.params.safe_traverse_height;
+  transition_params.z_adjust = req.params.z_adjust;
 
   DescartesTraj process_points = toDescartesTraj(req.path.segments, req.params.traverse_spd, transition_params,
                                                  toDescartesBlendPt);

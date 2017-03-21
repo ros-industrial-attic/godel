@@ -6,6 +6,7 @@ process_planning_params:
     blending_speed: 0.3
     retract_speed: 0.02
     traverse_speed: 0.05
+    z_adjust: 0.01
   scan_params:
     approach_distance: 0.15
     traverse_speed: 0.05

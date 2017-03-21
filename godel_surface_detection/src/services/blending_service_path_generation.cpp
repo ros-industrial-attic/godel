@@ -51,6 +51,8 @@ const static std::string APPROACH_SPD_PARAM = PARAM_BASE + BLEND_PARAM_BASE + "a
 const static std::string BLENDING_SPD_PARAM = PARAM_BASE + BLEND_PARAM_BASE + "blending_speed";
 const static std::string RETRACT_SPD_PARAM = PARAM_BASE + BLEND_PARAM_BASE + "retract_speed";
 const static std::string TRAVERSE_SPD_PARAM = PARAM_BASE + BLEND_PARAM_BASE + "traverse_speed";
+const static std::string Z_ADJUST_PARAM = PARAM_BASE + BLEND_PARAM_BASE + "z_adjust";
+
 const static std::string APPROACH_DISTANCE_PARAM = PARAM_BASE + SCAN_PARAM_BASE + "approach_distance";
 const static std::string QUALITY_METRIC_PARAM = PARAM_BASE + SCAN_PARAM_BASE + "quality_metric";
 const static std::string WINDOW_WIDTH_PARAM = PARAM_BASE + SCAN_PARAM_BASE + "window_width";
@@ -363,6 +365,7 @@ godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotio
     nh.getParam(BLENDING_SPD_PARAM, blend_params.blending_spd);
     nh.getParam(RETRACT_SPD_PARAM, blend_params.retract_spd);
     nh.getParam(TRAVERSE_SPD_PARAM, blend_params.traverse_spd);
+    nh.getParam(Z_ADJUST_PARAM, blend_params.z_adjust);
 
     godel_msgs::ScanPlanParameters scan_params;
     scan_params.scan_width = params.scan_width;
@@ -375,7 +378,9 @@ godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotio
     nh.getParam(WINDOW_WIDTH_PARAM, scan_params.window_width);
     nh.getParam(MIN_QA_VALUE_PARAM, scan_params.min_qa_value);
     nh.getParam(MAX_QA_VALUE_PARAM, scan_params.min_qa_value);
-
+//    nh.getParam(Z_ADJUST_PARAM, scan_params.z_adjust);
+    scan_params.z_adjust = 0.0; // Until we fix these parameters and do not share them among the
+                                // different processes, I'm only applying this to blend paths.
 
     // Generate trajectory plans from motion plan
     {
