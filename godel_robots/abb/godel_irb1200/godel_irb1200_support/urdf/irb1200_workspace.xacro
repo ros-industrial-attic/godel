@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <robot name="irb1200_workspace" xmlns:xacro="http://ros.org/wiki/xacro">
   <xacro:include filename="$(find abb_irb1200_support)/urdf/irb1200_5_90_macro.xacro"/>
-  <xacro:include filename="$(find godel_irb1200_support)/urdf/abb_blending_eff_macro.xacro"/>
+  <xacro:include filename="$(find blending_end_effector)/urdf/blending_eff_macro.xacro"/>
   <xacro:include filename="$(find godel_irb1200_support)/urdf/automate_demo_cell_macro.xacro"/>
   
   <link name="world_frame"/>  
@@ -17,7 +17,7 @@
   <joint name="link_t_to_eff" type="fixed">
     <parent link="tool0"/>
     <child link="eff_frame"/>
-    <origin xyz="0 0 -0.005" rpy="0 0 0${half_pi + half_pi/2.0}"/>
+    <origin xyz="0 0 0" rpy="0 0 3.1415"/>
   </joint>
 
   <!-- start of arm-workcell joint definitions -->
