@@ -5,4 +5,6 @@ moveit_setup_assistant_config:
   SRDF:
     relative_path: config/irb2400_workspace.srdf
   CONFIG:
-    generated_timestamp: 1432224738
+    author_name: AustinDeric
+    author_email: austin.deric@gmail.com
+    generated_timestamp: 1490130796

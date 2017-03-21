@@ -1,0 +1,25 @@
+manipulator:
+  kinematics_solver: abb_irb1200_5_90_manipulator_kinematics/IKFastKinematicsPlugin
+  kinematics_solver_search_resolution: 0.005
+  kinematics_solver_timeout: 0.005
+  kinematics_solver_attempts: 3
+manipulator_asus:
+  kinematics_solver: lma_kinematics_plugin/LMAKinematicsPlugin
+  kinematics_solver_search_resolution: 0.005
+  kinematics_solver_timeout: 0.005
+  kinematics_solver_attempts: 3
+manipulator_keyence:
+  kinematics_solver: abb_irb1200_5_90_manipulator_kinematics/IKFastKinematicsPlugin
+  kinematics_solver_search_resolution: 0.005
+  kinematics_solver_timeout: 0.005
+  kinematics_solver_attempts: 3
+manipulator_tcp:
+  kinematics_solver: abb_irb1200_5_90_manipulator_kinematics/IKFastKinematicsPlugin
+  kinematics_solver_search_resolution: 0.005
+  kinematics_solver_timeout: 0.005
+  kinematics_solver_attempts: 3
+manipulator_ensenso:
+  kinematics_solver: lma_kinematics_plugin/LMAKinematicsPlugin
+  kinematics_solver_search_resolution: 0.005
+  kinematics_solver_timeout: 0.005
+  kinematics_solver_attempts: 3

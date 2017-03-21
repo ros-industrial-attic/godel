@@ -18,7 +18,9 @@ class AbbMotionFtpDownloader
 {
 public:
   AbbMotionFtpDownloader(const std::string& ip, const std::string& listen_topic,
-                         ros::NodeHandle& nh, bool j23_coupled = false,
+                         ros::NodeHandle& nh,
+                         const std::string& ftp_user, const std::string& ftp_pass,
+                         bool j23_coupled = false,
                          const std::string& temp_file_loc = std::string("/tmp"));
 
   /**
@@ -44,6 +46,8 @@ private:
   ros::ServiceServer server_;
   const std::string ip_;
   const std::string temp_file_loc_;
+  const std::string user_;
+  const std::string pwd_;
   bool j23_coupled_; /** joints 2 and 3 are coupled (as in ABB IRB2400) */
 };
 }
