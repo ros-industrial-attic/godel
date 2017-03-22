@@ -1,6 +1,9 @@
 #include <segmentation/surface_segmentation.h>
 #include <pcl/features/normal_3d_omp.h>
 #include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/sample_consensus/method_types.h>
+#include <pcl/sample_consensus/model_types.h>
+#include <pcl/segmentation/sac_segmentation.h>
 #include <ros/io.h>
 #include <thread>
 
@@ -29,6 +32,9 @@ SurfaceSegmentation::SurfaceSegmentation(pcl::PointCloud<pcl::PointXYZRGB>::Ptr 
   setInputCloud(icloud);
   removeNans();
   computeNormals();
+
+  // create kdtree for speeding up search queries
+
 }
 
 
@@ -36,6 +42,9 @@ void SurfaceSegmentation::setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr i
 {
   input_cloud_->clear();
   pcl::copyPointCloud(*icloud, *input_cloud_);
+
+  kd_tree_.reset(new pcl::search::KdTree<pcl::PointXYZRGB>());
+  kd_tree_->setInputCloud(input_cloud_);
 }
 
 
@@ -307,6 +316,111 @@ void SurfaceSegmentation::smoothPointNormal(std::vector<pcl::PointNormal> &pts_i
     pt.normal_z = nz_out[i] / norm;
     pts_out.push_back(pt);
   }
+}
+
+
+bool SurfaceSegmentation::regularizeNormals(pcl::IndicesConstPtr boundary_indices,
+                                            std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>>& poses )
+{
+  // aliases
+  using PCLPoint = pcl::PointXYZRGB;
+  using Cloud = pcl::PointCloud<PCLPoint>;
+  using BasicCloud = pcl::PointCloud<pcl::PointXYZ>;
+  using SearchTree = pcl::KdTreeFLANN<PCLPoint>;
+
+  // parameters
+  double eps = 0.05;
+  double plane_max_dist = 0.005;
+  double plane_inlier_threshold = 0.8; // anything less that this percentage will be considered a failure
+
+  // create cloud of nearby points
+  BasicCloud::Ptr bd_nearby_points(new BasicCloud());
+
+  // find points in surface near boundary points
+  std::vector<int> nearest_indices;
+  std::vector<float> nearest_sqrt_dist;
+  BasicCloud::Ptr nearest_points(new BasicCloud());
+  pcl::PointXYZ p;
+  int found = 0;
+  for(std::size_t i = 0; i < boundary_indices->size();i++)
+  {
+    int index = boundary_indices->at(i);
+    PCLPoint& pf = input_cloud_->at(index);
+    p.x = pf.x;
+    p.y = pf.y;
+    p.z = pf.z;
+
+    nearest_indices.clear();
+    nearest_sqrt_dist.clear();
+    nearest_points->clear();
+    found = kd_tree_->radiusSearchT(p,2*eps,nearest_indices,nearest_sqrt_dist);
+    if(found == 0)
+    {
+      continue;
+    }
+
+    // inserting points into cloud
+    pcl::copyPointCloud(*input_cloud_,nearest_indices,*nearest_points);
+
+    // adding to larget cloud
+    bd_nearby_points->insert(bd_nearby_points->end(),nearest_points->begin(),nearest_points->end());
+
+  }
+
+  if(bd_nearby_points->empty())
+  {
+    ROS_DEBUG("Failed to find points near edge boundary points");
+    return false;
+  }
+
+  // proceed to estimate plane
+  pcl::ModelCoefficients::Ptr plane_coeffs(new pcl::ModelCoefficients());
+  pcl::PointIndices::Ptr plane_inliers(new pcl::PointIndices());
+  pcl::SACSegmentation<pcl::PointXYZ> seg;
+  seg.setOptimizeCoefficients(true);
+  seg.setModelType(pcl::SACMODEL_PLANE);
+  seg.setMethodType (pcl::SAC_RANSAC);
+  seg.setDistanceThreshold(plane_max_dist);
+  seg.setInputCloud(bd_nearby_points);
+  seg.segment(*plane_inliers,*plane_coeffs);
+
+  double inlier_percentage = double(plane_inliers->indices.size())/double(plane_inlier_threshold*bd_nearby_points->size());
+  if(inlier_percentage <= plane_inlier_threshold)
+  {
+    ROS_DEBUG("Only %f of the points near the boundary fall within %f to the surface plane, below threshold of %f",
+              inlier_percentage,plane_max_dist,plane_inlier_threshold);
+    return false;
+  }
+
+  BasicCloud::Ptr bd_points(new BasicCloud());
+  pcl::copyPointCloud(*input_cloud_,*boundary_indices,*bd_points);
+
+  BasicCloud directions;
+  std::transform(bd_points->begin()+1,bd_points->end(),bd_points->begin(),directions.begin(),
+                 [](const pcl::PointXYZ& p1,const pcl::PointXYZ& p2){
+    pcl::PointXYZ d;
+    d.x = p1.x - p2.x;
+    d.y = p1.y - p2.y;
+    d.z = p1.z - p2.z;
+    return d;
+
+  });
+  directions.push_back(directions.back()); // copying last direction
+
+  // apply plane normal to all boundary points
+  for(std::size_t i = 0; i < boundary_indices->size();i++)
+  {
+    int index = boundary_indices->at(i);
+    PCLPoint& pf = input_cloud_->at(index);
+
+    Eigen::Affine3d pose = Eigen::Translation3d(pf.x,pf.y,pf.z)*Eigen::Quaterniond::Identity();
+
+  }
+
+
+
+
+  return true;
 }
 
 

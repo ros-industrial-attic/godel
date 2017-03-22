@@ -56,6 +56,7 @@ public:
   // segmentation results
   std::vector <pcl::PointIndices> clusters_;
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud_;
+  pcl::search::KdTree<pcl::PointXYZRGB>::Ptr kd_tree_;
   Mesh HEM_;
 
   // search terms
@@ -119,6 +120,14 @@ public:
    */
   void smoothPointNormal(std::vector<pcl::PointNormal> &pts_in, std::vector<pcl::PointNormal> &pts_out, int p_length,
                          int w_length);
+  /*
+   * @brief Uses the surrounding surface around the point edges to determine if the adjacent normals are sufficiently
+   * consistent so as to generalize them onto the edge points
+   *
+   *
+   */
+  bool regularizeNormals(pcl::IndicesConstPtr boundary_indices,
+                         std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>>& poses);
 
 
   //-------------------- Misc --------------------//
