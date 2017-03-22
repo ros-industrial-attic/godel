@@ -26,6 +26,7 @@
 #include <swri_profiler/profiler.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/pcl_base.h>
+#include <pcl/filters/passthrough.h>
 
 namespace godel_surface_detection
 {
@@ -349,13 +350,7 @@ namespace godel_surface_detection
       if (full_cloud_ptr_->empty())
         return false;
 
-      // Create Processing Cloud
-      pcl::VoxelGrid<pcl::PointXYZRGB> vox;
-      vox.setInputCloud (full_cloud_ptr_);
-      vox.setLeafSize (INPUT_CLOUD_VOXEL_FILTER_SIZE,
-                       INPUT_CLOUD_VOXEL_FILTER_SIZE,
-                       INPUT_CLOUD_VOXEL_FILTER_SIZE);
-      vox.filter(*process_cloud_ptr_);
+      filterFullCloud();
 
       // Segment the part into surface clusters using a "region growing" scheme
       SurfaceSegmentation SS(process_cloud_ptr_);
@@ -432,6 +427,25 @@ namespace godel_surface_detection
       }
 
       return name;
+    }
+
+    void SurfaceDetection::filterFullCloud()
+    {
+      pcl::PointCloud<pcl::PointXYZRGB>::Ptr intermediate_cloud_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
+
+      // Create Processing Cloud
+      pcl::VoxelGrid<pcl::PointXYZRGB> vox;
+      vox.setInputCloud (full_cloud_ptr_);
+      vox.setLeafSize (INPUT_CLOUD_VOXEL_FILTER_SIZE,
+                       INPUT_CLOUD_VOXEL_FILTER_SIZE,
+                       INPUT_CLOUD_VOXEL_FILTER_SIZE);
+      vox.filter(*intermediate_cloud_ptr);
+
+      pcl::PassThrough<pcl::PointXYZRGB> pass;
+      pass.setInputCloud (intermediate_cloud_ptr);
+      pass.setFilterFieldName ("z");
+      pass.setFilterLimits (0.01, 1.0);
+      pass.filter (*process_cloud_ptr_);
     }
   } /* end namespace detection */
 } /* end namespace godel_surface_detection */

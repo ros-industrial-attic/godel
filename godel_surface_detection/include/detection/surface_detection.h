@@ -91,6 +91,8 @@ private:
 
   // counter
   int acquired_clouds_counter_;
+
+  void filterFullCloud();
 };
 } /* end namespace detection */
 } /* namespace godel_surface_detection */
