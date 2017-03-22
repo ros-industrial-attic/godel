@@ -130,3 +130,38 @@ void godel_simple_gui::BlendingWidget::loadParameters()
   }
   setButtonsEnabled(true);
 }
+
+void godel_simple_gui::BlendingWidget::showStatusWindow()
+{
+  ui_->stackedWidget->setCurrentWidget(ui_->status_widget);
+}
+
+void godel_simple_gui::BlendingWidget::showPlanListWidget()
+{
+  ui_->stackedWidget->setCurrentWidget(ui_->plan_widget);
+}
+
+void godel_simple_gui::BlendingWidget::addPlans(const std::vector<std::string> &plan_names)
+{
+  ui_->plan_list_widget->clear();
+  for(const auto& plan : plan_names)
+  {
+    QListWidgetItem* item = new QListWidgetItem();
+    item->setText(QString::fromStdString(plan));
+    ui_->plan_list_widget->addItem(item);
+  }
+}
+
+void godel_simple_gui::BlendingWidget::setLabelText(const std::string& txt)
+{
+  ui_->statusLabel->setText( QString::fromStdString(txt));
+}
+
+std::vector<std::string> godel_simple_gui::BlendingWidget::getPlanNames()
+{
+  std::vector<std::string> selected_plans;
+  if (ui_->plan_list_widget->currentItem() == NULL)
+    ROS_WARN_STREAM("No plan slected, TODO QERRORMESSAGE");
+  selected_plans.push_back(ui_->plan_list_widget->currentItem()->text().toStdString());
+  return selected_plans;
+}

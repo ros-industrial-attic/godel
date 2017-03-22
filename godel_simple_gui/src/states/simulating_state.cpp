@@ -1,6 +1,4 @@
 #include "godel_simple_gui/states/simulating_state.h"
-// prev
-#include "godel_simple_gui/states/wait_to_simulate_state.h"
 // next
 #include "godel_simple_gui/states/wait_to_execute_state.h"
 

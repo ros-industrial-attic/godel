@@ -1,7 +1,7 @@
 #include "godel_simple_gui/blending_widget.h"
 #include "godel_simple_gui/states/planning_state.h"  // previous
-#include "godel_simple_gui/states/surface_select_state.h"  // next
-#include "godel_simple_gui/states/wait_to_simulate_state.h"
+#include "godel_simple_gui/states/surface_select_state.h"  // next if fail
+#include "godel_simple_gui/states/select_plans_state.h" // next is success
 #include <QtConcurrent/QtConcurrentRun>
 #include <ros/console.h>
 
@@ -53,7 +53,7 @@ void godel_simple_gui::PlanningState::processPlanningDoneCallback(
     const godel_msgs::ProcessPlanningResultConstPtr& result)
 {
   if(result->succeeded)
-    Q_EMIT newStateAvailable(new WaitToSimulateState());
+    Q_EMIT newStateAvailable(new SelectPlansState());
   else
     Q_EMIT newStateAvailable(new SurfaceSelectState());
 }
