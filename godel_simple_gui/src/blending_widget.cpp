@@ -141,7 +141,7 @@ void godel_simple_gui::BlendingWidget::showPlanListWidget()
   ui_->stackedWidget->setCurrentWidget(ui_->plan_widget);
 }
 
-void godel_simple_gui::BlendingWidget::addPlans(std::vector<std::string>& plan_names)
+void godel_simple_gui::BlendingWidget::addPlans(const std::vector<std::string> &plan_names)
 {
   ui_->plan_list_widget->clear();
   for(const auto& plan : plan_names)

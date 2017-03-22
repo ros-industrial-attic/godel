@@ -21,7 +21,6 @@ namespace godel_simple_gui
  * 3. Surface Select State (User selects surfaces)
  * 4. Planning State (Godel path plans)
  * 5. Select Plans State (User selects plans)
- * 6. -Waiting to Simulate State (User selects next)-
  * 6. Simulating State (Simulated robot executes motion)
  * 7. Waiting to Execute State (User selects next)
  * 8. Execute State (Simulated robot executes motion)
@@ -42,7 +41,7 @@ public:
   void showStatusWindow();
   void showPlanListWidget();
   void clearPlanList();
-  void addPlans(std::vector<std::string>& plan_names);
+  void addPlans(const std::vector<std::string>& plan_names);
   void setLabelText(const std::string& txt);
   std::vector<std::string> getPlanNames();
 
