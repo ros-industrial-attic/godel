@@ -91,6 +91,14 @@ private:
 
   // counter
   int acquired_clouds_counter_;
+
+  /**
+   * @brief filterFullCloud applies a passthrough and voxelgrid filter to the
+   * full cloud.  The result of these filters is the process cloud. The
+   * passthrough filter eliminates the table and the voxelgrid downsamples the
+   * cloud.
+   */
+  void filterFullCloud();
 };
 } /* end namespace detection */
 } /* namespace godel_surface_detection */

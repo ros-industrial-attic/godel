@@ -26,6 +26,7 @@
 #include <swri_profiler/profiler.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/pcl_base.h>
+#include <pcl/filters/passthrough.h>
 
 namespace godel_surface_detection
 {
@@ -75,7 +76,6 @@ static const bool USE_TABLETOP_SEGMENTATION = true;
 static const double TABLETOP_SEG_DISTANCE_THRESH = 0.005f;
 
 static const double MARKER_ALPHA = 1.0f;
-static const bool IGNORE_LARGEST_CLUSTER = false;
 }
 
 namespace config
@@ -124,7 +124,6 @@ static const std::string USE_TABLETOP_SEGMENTATION = "use_tabletop_segmentation"
 static const std::string TABLETOP_SEG_DISTANCE_THRESH = "tabletop_seg_distance_thresh";
 
 static const std::string MARKER_ALPHA = "marker_alpha";
-static const std::string IGNORE_LARGEST_CLUSTER = "ignore_largest_cluster";
 }
 }
 }
@@ -161,7 +160,6 @@ namespace godel_surface_detection
       params_.tr_normal_consistency = defaults::TRIANGULATION_NORMAL_CONSISTENCY;
       params_.voxel_leafsize = defaults::VOXEL_LEAF_SIZE;
       params_.marker_alpha = defaults::MARKER_ALPHA;
-      params_.ignore_largest_cluster = defaults::IGNORE_LARGEST_CLUSTER;
       params_.occupancy_threshold = defaults::OCCUPANCY_THRESHOLD;
       params_.mls_upsampling_radius = defaults::MLS_UPSAMPLING_RADIUS;
       params_.mls_point_density = defaults::MLS_POINT_DENSITY;
@@ -231,8 +229,7 @@ namespace godel_surface_detection
              loadBoolParam(nh, params::USE_TABLETOP_SEGMENTATION, params_.use_tabletop_seg) &&
              loadParam(nh, params::TABLETOP_SEG_DISTANCE_THRESH,
                        params_.tabletop_seg_distance_threshold) &&
-             loadParam(nh, params::MARKER_ALPHA, params_.marker_alpha) &&
-             loadBoolParam(nh, params::IGNORE_LARGEST_CLUSTER, params_.ignore_largest_cluster);
+             loadParam(nh, params::MARKER_ALPHA, params_.marker_alpha);
     }
 
     void SurfaceDetection::save_parameters(const std::string& filename)
@@ -328,14 +325,6 @@ namespace godel_surface_detection
       cloud_msg.header.frame_id = params_.frame_id;
     }
 
-    static auto findLargestCloud(const std::vector<CloudRGB::Ptr>& clouds) -> decltype(clouds.begin())
-    {
-      return std::max_element(clouds.begin(), clouds.end(),
-                              [] (const CloudRGB::Ptr& a, const CloudRGB::Ptr& b) {
-        return a->size() < b->size();
-      });
-    }
-
     bool SurfaceDetection::find_surfaces()
     {
       SWRI_PROFILE("find-surfaces");
@@ -349,13 +338,7 @@ namespace godel_surface_detection
       if (full_cloud_ptr_->empty())
         return false;
 
-      // Create Processing Cloud
-      pcl::VoxelGrid<pcl::PointXYZRGB> vox;
-      vox.setInputCloud (full_cloud_ptr_);
-      vox.setLeafSize (INPUT_CLOUD_VOXEL_FILTER_SIZE,
-                       INPUT_CLOUD_VOXEL_FILTER_SIZE,
-                       INPUT_CLOUD_VOXEL_FILTER_SIZE);
-      vox.filter(*process_cloud_ptr_);
+      filterFullCloud();
 
       // Segment the part into surface clusters using a "region growing" scheme
       SurfaceSegmentation SS(process_cloud_ptr_);
@@ -365,12 +348,6 @@ namespace godel_surface_detection
         SS.computeSegments(region_colored_cloud_ptr_);
       }
       SS.getSurfaceClouds(surface_clouds_);
-
-      // Remove largest cluster if appropriate
-      if (params_.ignore_largest_cluster && surface_clouds_.size() > 1)
-      {
-        surface_clouds_.erase(findLargestCloud(surface_clouds_));
-      }
 
       // Load the code to perform meshing dynamically
       pluginlib::ClassLoader<meshing_plugins_base::MeshingBase>
@@ -432,6 +409,30 @@ namespace godel_surface_detection
       }
 
       return name;
+    }
+
+    void SurfaceDetection::filterFullCloud()
+    {
+      pcl::PointCloud<pcl::PointXYZRGB>::Ptr intermediate_cloud_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
+
+      //remove the table using the passthrough filter
+      pcl::PassThrough<pcl::PointXYZRGB> pass;
+      pass.setInputCloud(full_cloud_ptr_);
+      const std::string FILTER_DIRECTION = "z";
+      pass.setFilterFieldName (FILTER_DIRECTION);
+      //keep poin clouds with these limits
+      const double MINIMUM_DISTANCE = 0.01; // 1 cm
+      const double MAXIMUM_DISTANCE = 1.0; // 1 m
+      pass.setFilterLimits (MINIMUM_DISTANCE, MAXIMUM_DISTANCE);
+      pass.filter (*intermediate_cloud_ptr);
+
+      //downsample the full cloud using the voxelgrid filter method
+      pcl::VoxelGrid<pcl::PointXYZRGB> vox;
+      vox.setInputCloud (intermediate_cloud_ptr);
+      vox.setLeafSize (INPUT_CLOUD_VOXEL_FILTER_SIZE,
+                       INPUT_CLOUD_VOXEL_FILTER_SIZE,
+                       INPUT_CLOUD_VOXEL_FILTER_SIZE);
+      vox.filter(*process_cloud_ptr_);
     }
   } /* end namespace detection */
 } /* end namespace godel_surface_detection */
