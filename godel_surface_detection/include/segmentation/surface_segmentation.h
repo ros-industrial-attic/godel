@@ -56,7 +56,8 @@ public:
   // segmentation results
   std::vector <pcl::PointIndices> clusters_;
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr input_cloud_;
-  pcl::search::KdTree<pcl::PointXYZRGB>::Ptr kd_tree_;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr input_cloud_downsampled_;
+  pcl::search::KdTree<pcl::PointXYZ>::Ptr kd_tree_;
   Mesh HEM_;
 
   // search terms
@@ -120,14 +121,29 @@ public:
    */
   void smoothPointNormal(std::vector<pcl::PointNormal> &pts_in, std::vector<pcl::PointNormal> &pts_out, int p_length,
                          int w_length);
-  /*
+  /**
    * @brief Uses the surrounding surface around the point edges to determine if the adjacent normals are sufficiently
    * consistent so as to generalize them onto the edge points
-   *
-   *
+   * @param boundary_indices
+   * @param poses
+   * @param
    */
-  bool regularizeNormals(pcl::IndicesConstPtr boundary_indices,
-                         std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>>& poses);
+
+  /**
+   * @brief Inspects the surrounding surface around the boundary points to determine if the nearby surface is sufficiently flat
+   * such that the plane normal can be used to estimate normal vector at the boundary points.
+   * @param boundary_pts                The boundary points
+   * @param poses                       Output argument that contains the poses with the computed normals
+   * @param eps                         Radius used to search for points in the surface near the boundary
+   * @param plane_max_dist              Max distance at which points are considered to be in the plane.
+   * @param plane_inlier_threshold      Minimum ratio of points needed to be confident that the surface is flat.
+   * @return
+   */
+  bool regularizeNormals(const std::vector<pcl::PointNormal>& boundary_pts,
+                         std::vector<Eigen::Matrix4d, Eigen::aligned_allocator<Eigen::Matrix4d>>& poses,
+                         double eps = 0.01,
+                         double plane_max_dist = 0.005,
+                         double plane_inlier_threshold = 0.8);
 
 
   //-------------------- Misc --------------------//
