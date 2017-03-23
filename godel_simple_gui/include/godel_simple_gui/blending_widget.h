@@ -3,9 +3,11 @@
 
 #include <QWidget>
 #include <ros/ros.h>
-
 #include "godel_simple_gui/gui_state.h"
 #include "godel_simple_gui/options_submenu.h"
+#include "actionlib/client/simple_action_client.h"
+#include "godel_msgs/SelectMotionPlanAction.h"
+#include "godel_msgs/SelectMotionPlanActionGoal.h"
 
 namespace Ui
 {
@@ -44,6 +46,8 @@ public:
   void addPlans(const std::vector<std::string>& plan_names);
   void setLabelText(const std::string& txt);
   std::vector<std::string> getPlanNames();
+  void sendGoal(godel_msgs::SelectMotionPlanActionGoal goal);
+
 
   ros::NodeHandle& nodeHandle() { return nh_; }
 
@@ -75,6 +79,7 @@ protected:
   // Current state
   GuiState* active_state_;
   ros::ServiceClient surface_blending_parameters_client_;
+  actionlib::SimpleActionClient<godel_msgs::SelectMotionPlanAction> select_motion_plan_action_client_;
 
 };
 }
