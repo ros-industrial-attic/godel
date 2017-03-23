@@ -24,8 +24,8 @@ public:
   virtual void onReset(BlendingWidget& gui);
 
 protected:
-  void simulateAll();
-  void simulateOne(const std::string& plan);
+  void simulateAll(BlendingWidget& gui);
+  void simulateOne(const std::string& plan, BlendingWidget& gui);
 
 private:
   std::vector<std::string> plan_names_;

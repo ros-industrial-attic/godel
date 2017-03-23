@@ -1,13 +1,9 @@
-#include "godel_simple_gui/states/simulating_state.h"
-// next
-#include "godel_simple_gui/states/wait_to_execute_state.h"
-
 #include <ros/console.h>
-#include "godel_simple_gui/blending_widget.h"
-
-#include "godel_msgs/SelectMotionPlan.h"
-
 #include <QtConcurrent/QtConcurrentRun>
+#include "godel_msgs/SelectMotionPlan.h"
+#include "godel_simple_gui/blending_widget.h"
+#include "godel_simple_gui/states/simulating_state.h"
+#include "godel_simple_gui/states/wait_to_execute_state.h"
 
 const static std::string SELECT_MOTION_PLAN_SERVICE = "select_motion_plan";
 
@@ -23,7 +19,7 @@ void godel_simple_gui::SimulatingState::onStart(BlendingWidget& gui)
 
   sim_client_ =
       gui.nodeHandle().serviceClient<godel_msgs::SelectMotionPlan>(SELECT_MOTION_PLAN_SERVICE);
-  QtConcurrent::run(this, &SimulatingState::simulateAll);
+  QtConcurrent::run(this, &SimulatingState::simulateAll, boost::ref(gui));
 }
 
 void godel_simple_gui::SimulatingState::onExit(BlendingWidget& gui) { gui.setButtonsEnabled(true); }
@@ -35,18 +31,19 @@ void godel_simple_gui::SimulatingState::onBack(BlendingWidget& gui) {}
 
 void godel_simple_gui::SimulatingState::onReset(BlendingWidget& gui) {}
 
-void godel_simple_gui::SimulatingState::simulateAll()
+void godel_simple_gui::SimulatingState::simulateAll(BlendingWidget& gui)
 {
   for (std::size_t i = 0; i < plan_names_.size(); ++i)
   {
-    simulateOne(plan_names_[i]);
+    simulateOne(plan_names_[i], gui);
   }
 
   Q_EMIT newStateAvailable(new WaitToExecuteState(plan_names_));
 }
 
-void godel_simple_gui::SimulatingState::simulateOne(const std::string& plan)
+void godel_simple_gui::SimulatingState::simulateOne(const std::string& plan, BlendingWidget& gui)
 {
+  /*
   godel_msgs::SelectMotionPlan srv;
   srv.request.name = plan;
   srv.request.simulate = true;
@@ -55,4 +52,11 @@ void godel_simple_gui::SimulatingState::simulateOne(const std::string& plan)
   {
     ROS_WARN_STREAM("Client simulation request returned false");
   }
+  */
+  ROS_INFO_STREAM("In select motion plan");
+  godel_msgs::SelectMotionPlanActionGoal goal;
+  goal.goal.name = plan;
+  goal.goal.simulate = true;
+  goal.goal.wait_for_execution = true;
+  gui.sendGoal(goal);
 }

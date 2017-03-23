@@ -32,7 +32,7 @@ void godel_simple_gui::ExecutingState::onStart(BlendingWidget& gui)
 
   real_client_ =
       gui.nodeHandle().serviceClient<godel_msgs::SelectMotionPlan>(SELECT_MOTION_PLAN_SERVICE);
-  QtConcurrent::run(this, &ExecutingState::executeAll);
+  QtConcurrent::run(this, &ExecutingState::executeAll, boost::ref(gui));
 }
 
 void godel_simple_gui::ExecutingState::onExit(BlendingWidget& gui) { gui.setButtonsEnabled(true); }
@@ -44,13 +44,13 @@ void godel_simple_gui::ExecutingState::onBack(BlendingWidget& gui) {}
 
 void godel_simple_gui::ExecutingState::onReset(BlendingWidget& gui) {}
 
-void godel_simple_gui::ExecutingState::executeAll()
+void godel_simple_gui::ExecutingState::executeAll(BlendingWidget& gui)
 {
   try
   {
     for (std::size_t i = 0; i < plan_names_.size(); ++i)
     {
-      executeOne(plan_names_[i]);
+      executeOne(plan_names_[i], gui);
     }
 
     Q_EMIT newStateAvailable(new WaitToExecuteState(plan_names_));
@@ -62,8 +62,9 @@ void godel_simple_gui::ExecutingState::executeAll()
   }
 }
 
-void godel_simple_gui::ExecutingState::executeOne(const std::string& plan)
+void godel_simple_gui::ExecutingState::executeOne(const std::string& plan, BlendingWidget& gui)
 {
+  /*
   ROS_DEBUG_STREAM("Executing " << plan);
   godel_msgs::SelectMotionPlan srv;
   srv.request.name = plan;
@@ -75,4 +76,11 @@ void godel_simple_gui::ExecutingState::executeOne(const std::string& plan)
     ss << "Failed to execute plan: " << plan << ". Please see logs for more details.";
     throw BadExecutionError(ss.str());
   }
+  */
+  ROS_INFO_STREAM("In select motion plan");
+  godel_msgs::SelectMotionPlanActionGoal goal;
+  goal.goal.name = plan;
+  goal.goal.simulate = false;
+  goal.goal.wait_for_execution = true;
+  gui.sendGoal(goal);
 }

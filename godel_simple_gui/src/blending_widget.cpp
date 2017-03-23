@@ -1,17 +1,16 @@
-#include "godel_simple_gui/blending_widget.h"
-
-// UI specific
-#include "ui_blending_widget.h"
-// General ROS stuff
 #include <ros/console.h>
 #include "godel_msgs/SurfaceBlendingParameters.h"
-// States
+#include "godel_simple_gui/blending_widget.h"
 #include "godel_simple_gui/states/scan_teach_state.h"
+#include "ui_blending_widget.h"
 
 const std::string SURFACE_BLENDING_PARAMETERS_SERVICE = "surface_blending_parameters";
+const static std::string SELECT_MOTION_PLAN_ACTION_SERVER_NAME = "select_motion_plan_as";
 
 godel_simple_gui::BlendingWidget::BlendingWidget(QWidget* parent)
-    : QWidget(parent), active_state_(NULL)
+    : QWidget(parent),
+      active_state_(NULL),
+      select_motion_plan_action_client_(SELECT_MOTION_PLAN_ACTION_SERVER_NAME, true)
 {
   // UI setup
   ui_ = new Ui::BlendingWidget;
@@ -164,4 +163,9 @@ std::vector<std::string> godel_simple_gui::BlendingWidget::getPlanNames()
     ROS_WARN_STREAM("No plan slected, TODO QERRORMESSAGE");
   selected_plans.push_back(ui_->plan_list_widget->currentItem()->text().toStdString());
   return selected_plans;
+}
+
+void godel_simple_gui::BlendingWidget::sendGoal(godel_msgs::SelectMotionPlanActionGoal goal)
+{
+  select_motion_plan_action_client_.sendGoal(goal.goal);
 }
