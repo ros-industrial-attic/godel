@@ -207,9 +207,20 @@ int RobotScan::scan(bool move_only)
       cartesian_poses.poses.clear();
       cartesian_poses.poses.push_back(trajectory_poses[i]);
 
-      move_group_ptr_->setPoseTarget(trajectory_poses[i], params_.tcp_frame);
       // creating path plan structure and execute
       move_group_ptr_->setStartStateToCurrentState();
+
+      // Todo: What follows is a hack to get saner motions for the automate demonstration
+      // Can fail to plan because the solution is not checked for collisions/limits etc
+      // though in practice it works pretty well.
+      auto current_state = move_group_ptr_->getCurrentJointValues();
+      auto rob_model = move_group_ptr_->getRobotModel();
+      moveit::core::RobotState state (rob_model);
+      state.setVariablePositions(current_state);
+      state.setFromIK(rob_model->getJointModelGroup(params_.group_name), trajectory_poses[i], params_.tcp_frame);
+      std::vector<double> to_goto (state.getVariablePositions(), state.getVariablePositions() + current_state.size());
+      move_group_ptr_->setJointValueTarget(to_goto);
+//      move_group_ptr_->setPoseTarget(trajectory_poses[i], params_.tcp_frame);
 
       moveit::planning_interface::MoveGroupInterface::Plan my_plan;
       bool success = move_group_ptr_->plan(my_plan);
