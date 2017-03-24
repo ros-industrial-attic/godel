@@ -95,7 +95,7 @@ bool rapid_emitter::emitGrindMotion(std::ostream& os, const ProcessParams& param
   }
   else
   {
-    os << "MoveL CalcRobT(jTarget_" << n << ",tool1), vProcessSpeed, z5, tool1;\n";
+    os << "MoveL CalcRobT(jTarget_" << n << ",tool1), vProcessSpeed, z40, tool1;\n";
   }
   return os.good();
 }
@@ -109,11 +109,11 @@ bool rapid_emitter::emitFreeMotion(std::ostream& os, const ProcessParams& params
 
   if (duration <= 0.0)
   {
-    os << "MoveJ CalcRobT(jTarget_" << n << ",tool1), vMotionSpeed," << zone << ", tool1;\n";
+    os << "MoveAbsJ jTarget_" << n << ", vMotionSpeed," << zone << ", tool1;\n";
   }
   else
   {
-    os << "MoveJ CalcRobT(jTarget_" << n << ",tool1), vMotionSpeed, \\T:=" << duration << ", "
+    os << "MoveAbsJ jTarget_" << n << ", vMotionSpeed, \\T:=" << duration << ", "
        << zone << ", tool1;\n";
   }
   return os.good();
