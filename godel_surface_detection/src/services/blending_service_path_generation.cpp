@@ -139,7 +139,7 @@ bool SurfaceBlendingService::generateEdgePath(godel_surface_detection::detection
   SS.setSearchRadius(SEGMENTATION_SEARCH_RADIUS);
   computeBoundaries(surface, SS, sorted_boundaries);
 
-  ROS_INFO_STREAM("Boundaries Computed");
+  ROS_INFO_STREAM("Boundaries Computed = "<<sorted_boundaries.size());
 
   for(int i = 0; i < sorted_boundaries.size(); i++)
   {
@@ -164,7 +164,10 @@ bool SurfaceBlendingService::generateEdgePath(godel_surface_detection::detection
 
     result.push_back(edge_poses);
   }
+
+  ROS_INFO_COND((result.size() > 0),"Finished generating edge paths for %i boundaries",int(result.size()));
   return result.size() > 0;
+
 }
 
 
