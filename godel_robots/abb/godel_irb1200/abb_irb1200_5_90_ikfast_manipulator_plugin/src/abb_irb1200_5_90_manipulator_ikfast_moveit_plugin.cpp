@@ -1021,9 +1021,11 @@ bool IKFastKinematicsPlugin::getPositionIK(const geometry_msgs::Pose& ik_pose, c
   int numsol = solve(frame, vfree, solutions);
 
   ROS_DEBUG_STREAM_NAMED("ikfast", "Found " << numsol << " solutions from IKFast");
+  error_code.val = moveit_msgs::MoveItErrorCodes::NO_IK_SOLUTION;
 
   if (numsol)
   {
+    double d_min = std::numeric_limits<double>::max();
     for (int s = 0; s < numsol; ++s)
     {
       std::vector<double> sol;
@@ -1048,19 +1050,26 @@ bool IKFastKinematicsPlugin::getPositionIK(const geometry_msgs::Pose& ik_pose, c
       }
       if (obeys_limits)
       {
-        // All elements of solution obey limits
-        getSolution(solutions, s, solution);
-        error_code.val = moveit_msgs::MoveItErrorCodes::SUCCESS;
-        return true;
+        double d = harmonize(ik_seed_state, sol);
+        if (d < d_min)
+        {
+          d_min = d;
+
+          // All elements of solution obey limits
+          getSolution(solutions, s, solution);
+          error_code.val = moveit_msgs::MoveItErrorCodes::SUCCESS;
+        }
       }
     }
+
+    if (error_code.val == moveit_msgs::MoveItErrorCodes::SUCCESS)
+        return true;
   }
   else
   {
     ROS_DEBUG_STREAM_NAMED("ikfast", "No IK solution");
   }
 
-  error_code.val = moveit_msgs::MoveItErrorCodes::NO_IK_SOLUTION;
   return false;
 }
 
