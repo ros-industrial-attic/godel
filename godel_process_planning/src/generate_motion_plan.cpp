@@ -15,8 +15,11 @@ bool godel_process_planning::generateMotionPlan(const descartes_core::RobotModel
 {
 
   descartes_planner::PlanningGraph planning_graph (model);
-  planning_graph.insertGraph(traj); // builds the graph out
-
+  if (!planning_graph.insertGraph(traj)) // builds the graph out
+  {
+    ROS_ERROR("Unable to build graph. One or more points do not have valid solutions.");
+    return false;
+  }
   const auto& graph = planning_graph.graph();
   const auto dof = graph.dof();
 
