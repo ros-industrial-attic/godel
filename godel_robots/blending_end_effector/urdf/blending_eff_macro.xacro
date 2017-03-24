@@ -8,9 +8,9 @@
   <xacro:property name="keyence_optical_y" value="0.216"/> <!--To the face of the sensor: y = 0.216-->
   <xacro:property name="keyence_optical_z" value="0.12192"/>
 
-  <xacro:property name="keyence_tcp_x" value="0"/>
+  <xacro:property name="keyence_tcp_x" value="0.0006"/>
   <xacro:property name="keyence_tcp_y" value="0.2863"/>
-  <xacro:property name="keyence_tcp_z" value="0.12192"/>
+  <xacro:property name="keyence_tcp_z" value="0.0968"/>
 
   <xacro:property name="kinect_mount_x" value="0.09"/>
   <xacro:property name="kinect_mount_y" value="-0.065"/>
@@ -20,9 +20,9 @@
   <xacro:property name="blend_tcp_y" value="0"/>
   <xacro:property name="blend_tcp_z" value="0.040"/> <!-- TBD -->
 
-  <xacro:property name="chuck_tcp_x" value="-0.2483"/>
-  <xacro:property name="chuck_tcp_y" value="0"/>
-  <xacro:property name="chuck_tcp_z" value="0.12192"/>
+  <xacro:property name="chuck_tcp_x" value="-0.2507"/>
+  <xacro:property name="chuck_tcp_y" value="-0.0035"/>
+  <xacro:property name="chuck_tcp_z" value="0.1228"/>
 
 
   <xacro:property name="half_pi" value="1.5707963267948966"/>
