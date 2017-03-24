@@ -12,6 +12,10 @@
 #include <thread>
 
 static const double DOWNSAMPLING_LEAF = 0.005f;
+static const double EDGE_SEARCH_RADIUS = 0.01;
+static const double PLANE_INLIER_DISTANCE = 0.005;
+static const double PLANE_INLIER_THRESHOLD = 0.8;
+
 
 // Custom boundary estimation
 #include "parallel_boundary.h"
@@ -53,11 +57,7 @@ void SurfaceSegmentation::setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr i
   pcl::VoxelGrid<pcl::PointXYZ> vg;
   vg.setInputCloud(input_cloud_downsampled_);
   vg.setLeafSize (DOWNSAMPLING_LEAF,DOWNSAMPLING_LEAF,DOWNSAMPLING_LEAF);
-  int start_size = input_cloud_downsampled_->size();
-  int end_size = 0;
   vg.filter(*input_cloud_downsampled_);
-  end_size = input_cloud_downsampled_->size();
-  ROS_INFO("Downsampled input cloud from %i to %i",start_size,end_size);
 
   // create kdtree for speeding up search queries
   kd_tree_.reset(new pcl::search::KdTree<pcl::PointXYZ>());
@@ -552,7 +552,7 @@ void SurfaceSegmentation::getBoundaryTrajectory(std::vector<pcl::IndicesPtr> &bo
 
 
   poses.clear();
-  if(regularizeNormals(spts,poses))
+  if(regularizeNormals(spts,poses,EDGE_SEARCH_RADIUS,PLANE_INLIER_DISTANCE,PLANE_INLIER_THRESHOLD))
   {
     return; // surface was sufficiently flat
   }
