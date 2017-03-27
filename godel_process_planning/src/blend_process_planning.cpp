@@ -87,14 +87,6 @@ bool ProcessPlanningManager::handleBlendPlanning(godel_msgs::BlendProcessPlannin
   DescartesTraj process_points = toDescartesTraj(req.path.segments, req.params.traverse_spd, transition_params,
                                                  toDescartesBlendPt);
 
-  ROS_ERROR_STREAM("DESCARTES");
-  for (const descartes_core::TrajectoryPtPtr& pt : process_points)
-  {
-    Eigen::Affine3d pose;
-    double dt = pt->getTiming().upper;
-    pt->getNominalCartPose(std::vector<double>(), *blend_model_, pose);
-    ROS_ERROR_STREAM("POINT:\n" << pose.matrix() << "\nWITH DT = " << dt << "\n");
-  }
   if (generateMotionPlan(blend_model_, process_points, moveit_model_, blend_group_name_,
                          current_joints, res.plan))
   {
