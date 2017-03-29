@@ -4,6 +4,7 @@
 #include "godel_simple_gui/blending_widget.h"
 #include "godel_simple_gui/states/simulating_state.h"
 #include "godel_simple_gui/states/wait_to_execute_state.h"
+#include <iostream>
 
 const static std::string SELECT_MOTION_PLAN_SERVICE = "select_motion_plan";
 
@@ -43,20 +44,9 @@ void godel_simple_gui::SimulatingState::simulateAll(BlendingWidget& gui)
 
 void godel_simple_gui::SimulatingState::simulateOne(const std::string& plan, BlendingWidget& gui)
 {
-  /*
-  godel_msgs::SelectMotionPlan srv;
-  srv.request.name = plan;
-  srv.request.simulate = true;
-  srv.request.wait_for_execution = true;
-  if (!sim_client_.call(srv))
-  {
-    ROS_WARN_STREAM("Client simulation request returned false");
-  }
-  */
-  ROS_INFO_STREAM("In select motion plan");
   godel_msgs::SelectMotionPlanActionGoal goal;
   goal.goal.name = plan;
   goal.goal.simulate = true;
   goal.goal.wait_for_execution = true;
-  gui.sendGoal(goal);
+  gui.sendGoalAndWait(goal);
 }

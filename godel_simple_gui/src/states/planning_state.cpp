@@ -1,9 +1,10 @@
+#include <ros/console.h>
+#include <QtConcurrent/QtConcurrentRun>
 #include "godel_simple_gui/blending_widget.h"
 #include "godel_simple_gui/states/planning_state.h"  // previous
 #include "godel_simple_gui/states/surface_select_state.h"  // next if fail
 #include "godel_simple_gui/states/select_plans_state.h" // next is success
-#include <QtConcurrent/QtConcurrentRun>
-#include <ros/console.h>
+#include "godel_simple_gui/states/select_all_surface_state.h"
 
 const static std::string PROCESS_PATH_SERVICE = "process_path";
 
@@ -55,7 +56,7 @@ void godel_simple_gui::PlanningState::processPlanningDoneCallback(
   if(result->succeeded)
     Q_EMIT newStateAvailable(new SelectPlansState());
   else
-    Q_EMIT newStateAvailable(new SurfaceSelectState());
+    Q_EMIT newStateAvailable(new SelectAllSurfaceState());
 }
 
 void godel_simple_gui::PlanningState::processPlanningActiveCallback()

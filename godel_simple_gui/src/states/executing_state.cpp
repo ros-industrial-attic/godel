@@ -1,15 +1,10 @@
 #include "godel_simple_gui/states/executing_state.h"
-// prev
 #include "godel_simple_gui/states/wait_to_execute_state.h"
-// There is no next!
-// error
 #include "godel_simple_gui/states/error_state.h"
-
 #include <ros/console.h>
 #include "godel_simple_gui/blending_widget.h"
-
 #include "godel_msgs/SelectMotionPlan.h"
-
+#include "godel_simple_gui/states/scan_teach_state.h"
 #include <QtConcurrent/QtConcurrentRun>
 
 const static std::string SELECT_MOTION_PLAN_SERVICE = "select_motion_plan";
@@ -53,7 +48,7 @@ void godel_simple_gui::ExecutingState::executeAll(BlendingWidget& gui)
       executeOne(plan_names_[i], gui);
     }
 
-    Q_EMIT newStateAvailable(new WaitToExecuteState(plan_names_));
+    Q_EMIT newStateAvailable(new ScanTeachState());
   }
   catch (const BadExecutionError& err)
   {
@@ -64,23 +59,13 @@ void godel_simple_gui::ExecutingState::executeAll(BlendingWidget& gui)
 
 void godel_simple_gui::ExecutingState::executeOne(const std::string& plan, BlendingWidget& gui)
 {
-  /*
-  ROS_DEBUG_STREAM("Executing " << plan);
-  godel_msgs::SelectMotionPlan srv;
-  srv.request.name = plan;
-  srv.request.simulate = false;
-  srv.request.wait_for_execution = true;
-  if (!real_client_.call(srv))
-  {
-    std::ostringstream ss;
-    ss << "Failed to execute plan: " << plan << ". Please see logs for more details.";
-    throw BadExecutionError(ss.str());
-  }
-  */
-  ROS_INFO_STREAM("In select motion plan");
   godel_msgs::SelectMotionPlanActionGoal goal;
   goal.goal.name = plan;
   goal.goal.simulate = false;
   goal.goal.wait_for_execution = true;
-  gui.sendGoal(goal);
+  gui.sendGoalAndWait(goal);
+
+
 }
+
+
