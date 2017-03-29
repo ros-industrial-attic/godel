@@ -11,7 +11,7 @@ static unsigned int calculateRequiredSteps(const std::vector<double>& start,
   unsigned steps = 0;
   for (std::size_t i = 0; i < start.size(); ++i)
   {
-    unsigned this_joint_steps = static_cast<unsigned>(std::abs(start[i] - stop[i]) / dtheta);
+    unsigned this_joint_steps = static_cast<unsigned>(std::ceil(std::abs(start[i] - stop[i]) / dtheta));
     steps = std::max(steps, this_joint_steps);
   }
 

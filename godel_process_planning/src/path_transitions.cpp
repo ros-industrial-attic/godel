@@ -163,6 +163,12 @@ godel_process_planning::toDescartesTraj(const std::vector<geometry_msgs::PoseArr
       // O(1) jerky - may need to revisit this time parameterization later. This at least allows
       // Descartes to perform some optimizations in its graph serach.
       double dt = (this_pose.translation() - last_pose.translation()).norm() / process_speed;
+
+      if (dt < 1e-4)
+      {
+        continue;
+      }
+
       if (j == poses.size() - 1 && free_last)
       {
         dt = 0.0;

@@ -310,11 +310,11 @@ double godel_process_planning::freeSpaceCostFunction(const std::vector<double> &
                                                      const std::vector<double> &target)
 {
   const double FREE_SPACE_MAX_ANGLE_DELTA =
-      M_PI_2; // The maximum angle a joint during a freespace motion
+      M_PI; // The maximum angle a joint during a freespace motion
               // from the start to end position without that motion
               // being penalized. Avoids flips.
   const double FREE_SPACE_ANGLE_PENALTY =
-      5.0; // The factor by which a joint motion is multiplied if said
+      2.0; // The factor by which a joint motion is multiplied if said
            // motion is greater than the max.
 
   // The cost function here penalizes large single joint motions in an effort to

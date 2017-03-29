@@ -86,6 +86,7 @@ bool ProcessPlanningManager::handleBlendPlanning(godel_msgs::BlendProcessPlannin
 
   DescartesTraj process_points = toDescartesTraj(req.path.segments, req.params.traverse_spd, transition_params,
                                                  toDescartesBlendPt);
+
   if (generateMotionPlan(blend_model_, process_points, moveit_model_, blend_group_name_,
                          current_joints, res.plan))
   {
