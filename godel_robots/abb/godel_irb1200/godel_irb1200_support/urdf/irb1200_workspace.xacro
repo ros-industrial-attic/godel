@@ -30,7 +30,7 @@
   <joint name="world_to_demo_cell" type="fixed">
     <parent link="world_frame"/>
     <child link="demo_cell_base_link"/>
-    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <origin xyz="0 0 0" rpy="0 0 -${3.14159 / 2.0}"/>
   </joint>
   
 </robot>
