@@ -15,7 +15,7 @@
 #include "ros/topic.h"
 
 const static double DEFAULT_JOINT_TOPIC_WAIT_TIME = 5.0; // seconds
-const static double DEFAULT_TRAJECTORY_BUFFER_TIME = 5.0; // seconds
+const static double DEFAULT_TRAJECTORY_BUFFER_TIME_SCALE = 2.0; // seconds
 const static std::string JOINT_TOPIC_NAME = "/joint_states";
 
 const static std::string THIS_SERVICE_NAME = "blend_process_execution";
@@ -45,12 +45,14 @@ static inline bool compare(const std::vector<double>& a, const std::vector<doubl
 static bool waitForExecution(const std::vector<double>& end_goal, const ros::Duration& wait_for,
                              const ros::Duration& time_out)
 {
-  ensenso::EnsensoGuard guard;
+  ensenso::EnsensoGuard guard; // Turns off ensenso if available - to stop flashing people in the face
   sensor_msgs::JointStateConstPtr state;
   ros::Time end_time = ros::Time::now() + time_out;
 
   // wait a fixed amount of time
   wait_for.sleep();
+
+  ros::Rate loop_rate (4.0); // Check for results at 4 Hz
 
   while (ros::Time::now() < end_time)
   {
@@ -63,10 +65,14 @@ static bool waitForExecution(const std::vector<double>& end_goal, const ros::Dur
     }
     if (compare(state->position, end_goal))
     {
-      ROS_INFO("Goal in tolerance. Returning control.");
+      ROS_INFO("Goal in tolerance. Returning from execution monitor.");
       return true;
     }
+
+    loop_rate.sleep();
   }
+
+  ROS_WARN("Robot execution timed out.");
   return false;
 }
 
@@ -213,9 +219,9 @@ bool godel_process_execution::AbbBlendProcessService::executeProcess(
   {
     // If we must wait for execution, then block and listen until robot returns to initial point or times out
     return waitForExecution(goal->trajectory_approach.points.front().positions,
-                            aggregate_traj.points.back().time_from_start, // wait for
-                            aggregate_traj.points.back().time_from_start +
-                                ros::Duration(DEFAULT_TRAJECTORY_BUFFER_TIME)); // timeout
+                            ros::Duration(10.0), // wait for
+                            aggregate_traj.points.back().time_from_start *
+                                DEFAULT_TRAJECTORY_BUFFER_TIME_SCALE); // timeout
   }
   else
   {
