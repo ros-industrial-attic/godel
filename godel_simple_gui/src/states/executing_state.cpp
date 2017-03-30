@@ -1,11 +1,11 @@
+#include <ros/console.h>
+#include <QtConcurrent/QtConcurrentRun>
+#include "godel_msgs/SelectMotionPlan.h"
 #include "godel_simple_gui/states/executing_state.h"
 #include "godel_simple_gui/states/wait_to_execute_state.h"
 #include "godel_simple_gui/states/error_state.h"
-#include <ros/console.h>
 #include "godel_simple_gui/blending_widget.h"
-#include "godel_msgs/SelectMotionPlan.h"
 #include "godel_simple_gui/states/scan_teach_state.h"
-#include <QtConcurrent/QtConcurrentRun>
 
 const static std::string SELECT_MOTION_PLAN_SERVICE = "select_motion_plan";
 
@@ -32,7 +32,6 @@ void godel_simple_gui::ExecutingState::onStart(BlendingWidget& gui)
 
 void godel_simple_gui::ExecutingState::onExit(BlendingWidget& gui) { gui.setButtonsEnabled(true); }
 
-// Handlers for the fixed buttons
 void godel_simple_gui::ExecutingState::onNext(BlendingWidget& gui) {}
 
 void godel_simple_gui::ExecutingState::onBack(BlendingWidget& gui) {}
@@ -64,8 +63,6 @@ void godel_simple_gui::ExecutingState::executeOne(const std::string& plan, Blend
   goal.goal.simulate = false;
   goal.goal.wait_for_execution = true;
   gui.sendGoalAndWait(goal);
-
-
 }
 
 

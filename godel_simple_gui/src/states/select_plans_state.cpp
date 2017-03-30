@@ -31,7 +31,9 @@ void godel_simple_gui::SelectPlansState::onStart(BlendingWidget& gui)
   }
 
   if (plan_names_.empty())
+  {
     Q_EMIT newStateAvailable(new SelectAllSurfaceState());
+  }
   else
   {
     gui.showPlanListWidget();

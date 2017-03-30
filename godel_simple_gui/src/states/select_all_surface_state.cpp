@@ -14,8 +14,6 @@ void godel_simple_gui::SelectAllSurfaceState::onStart(BlendingWidget& gui)
   msg.request.action = msg.request.SELECT_ALL;
   client.call(msg.request, msg.response);
   gui.setText("Press Next to select all surfaces.\nPress Back to select individual surfaces.");
-
-
 }
 
 void godel_simple_gui::SelectAllSurfaceState::onExit(BlendingWidget& gui) {}
