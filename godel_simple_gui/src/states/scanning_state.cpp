@@ -50,6 +50,9 @@ void godel_simple_gui::ScanningState::makeRequest(
   }
   else
   {
-    Q_EMIT newStateAvailable(new SurfaceSelectState());
+    if(srv.response.surfaces_found)
+      Q_EMIT newStateAvailable(new SurfaceSelectState());
+    else
+      Q_EMIT newStateAvailable(new ScanTeachState());
   }
 }
