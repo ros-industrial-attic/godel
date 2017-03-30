@@ -159,13 +159,22 @@ void godel_simple_gui::BlendingWidget::setLabelText(const std::string& txt)
 std::vector<std::string> godel_simple_gui::BlendingWidget::getPlanNames()
 {
   std::vector<std::string> selected_plans;
-  if (ui_->plan_list_widget->currentItem() == NULL)
-    ROS_WARN_STREAM("No plan slected, TODO QERRORMESSAGE");
   selected_plans.push_back(ui_->plan_list_widget->currentItem()->text().toStdString());
   return selected_plans;
 }
 
-void godel_simple_gui::BlendingWidget::sendGoal(godel_msgs::SelectMotionPlanActionGoal goal)
+void godel_simple_gui::BlendingWidget::sendGoal(const godel_msgs::SelectMotionPlanActionGoal& goal)
 {
   select_motion_plan_action_client_.sendGoal(goal.goal);
+}
+
+void godel_simple_gui::BlendingWidget::sendGoalAndWait(const godel_msgs::SelectMotionPlanActionGoal& goal)
+{
+  ros::Duration timeout = ros::Duration(60);
+  select_motion_plan_action_client_.sendGoalAndWait(goal.goal, timeout, timeout);
+}
+
+bool godel_simple_gui::BlendingWidget::planSelectionEmpty()
+{
+  return (ui_->plan_list_widget->currentItem() == NULL);
 }

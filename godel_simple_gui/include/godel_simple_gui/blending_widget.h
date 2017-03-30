@@ -46,8 +46,9 @@ public:
   void addPlans(const std::vector<std::string>& plan_names);
   void setLabelText(const std::string& txt);
   std::vector<std::string> getPlanNames();
-  void sendGoal(godel_msgs::SelectMotionPlanActionGoal goal);
-
+  void sendGoal(const godel_msgs::SelectMotionPlanActionGoal& goal);
+  void sendGoalAndWait(const godel_msgs::SelectMotionPlanActionGoal& goal);
+  bool planSelectionEmpty();
 
   ros::NodeHandle& nodeHandle() { return nh_; }
 

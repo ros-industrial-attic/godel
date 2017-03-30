@@ -37,6 +37,7 @@ set(godel_simple_gui_SRCS
  src/states/wait_to_execute_state.cpp
  src/states/executing_state.cpp
  src/states/error_state.cpp
+ src/states/select_all_surface_state.cpp
 # options
  src/options_submenu.cpp
  src/parameter_window_base.cpp
@@ -61,6 +62,7 @@ set(godel_simple_gui_HDRS
   include/godel_simple_gui/states/wait_to_execute_state.h
   include/godel_simple_gui/states/executing_state.h
   include/godel_simple_gui/states/error_state.h
+  include/godel_simple_gui/states/select_all_surface_state.h
   # options
   include/godel_simple_gui/options_submenu.h
   include/godel_simple_gui/parameter_window_base.h
@@ -87,7 +89,6 @@ set(godel_simple_gui_INCLUDE_DIRECTORIES
 )
 
 add_definitions(-DQT_NO_KEYWORDS)
-
 qt5_wrap_cpp(godel_simple_gui_MOCS ${godel_simple_gui_HDRS})
 qt5_wrap_ui(godel_simple_gui_UIS_H ${godel_simple_gui_UIS})
 
