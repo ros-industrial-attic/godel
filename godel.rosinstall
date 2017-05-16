@@ -6,6 +6,6 @@
 - git: {local-name: swri_profiler, uri: 'https://github.com/swri-robotics/swri_profiler.git', version: master}
 
 # Custom abb until Kinetic release happens
-- git: {local-name: abb, uri: 'https://github.com/Jmeyer1292/abb.git', version: kinetic-devel}
+- git: {local-name: abb, uri: 'https://github.com/ros-industrial/abb.git', version: kinetic-devel}
 # Custom descartes until we get changes merged in
 - git: {local-name: descartes, uri: 'https://github.com/Jmeyer1292/descartes.git', version: godel_refactor_omp}
