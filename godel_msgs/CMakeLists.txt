@@ -41,6 +41,8 @@ add_message_files(
   ScanPlanParameters.msg
   SurfaceBoundaries.msg
   SurfaceDetectionParameters.msg
+  # Laser Scan QA
+  LaserScanRecord.msg
 )
 
 ## Generate services in the 'srv' folder
