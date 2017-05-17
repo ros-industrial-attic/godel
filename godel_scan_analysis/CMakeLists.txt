@@ -9,7 +9,10 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 catkin_package(
-  INCLUDE_DIRS include
+  INCLUDE_DIRS
+    include
+  LIBRARIES
+    ${PROJECT_NAME}
   CATKIN_DEPENDS
     pcl_ros
     roscpp
@@ -20,6 +23,18 @@ include_directories(
   include
 )
 
+# Defines some tools for dealing with laser profile data
+add_library(${PROJECT_NAME}
+  src/scan_aggregator/profile_scan_aggregator.cpp
+  src/scan_aggregator/profile_scan_fusion.cpp
+)
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
+)
+
+# Defines a node that aggregates clouds & scores their roughness
 add_executable(godel_scan_analysis_node 
   src/godel_scan_analysis_node.cpp
   src/scan_roughness_scoring.cpp
