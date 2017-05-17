@@ -1,0 +1,14 @@
+<launch>
+  <arg name="cat_file" default="$(find godel_process_planning)/cat.pcd"/>
+  <arg name="frame_id" default="cat_link"/>
+  <arg name="pub_rate" default="1"/>
+
+  <node name="cat_tf" pkg="tf" type="static_transform_publisher"
+    args="0.7 -0.2 0.6 0 0 0 base_link $(arg frame_id) 1" />
+
+  <node name="cat_pcd_pub" pkg="pcl_ros" type="pcd_to_pointcloud"
+    args="$(arg cat_file) $(arg pub_rate)">
+    <remap from="cloud_pcd" to="godel_octomap_input" />
+    <param name="frame_id" value="$(arg frame_id)" />
+  </node>
+</launch>

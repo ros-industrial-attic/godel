@@ -73,11 +73,14 @@ Eigen::Affine3d godel_process_planning::createNominalTransform(const Eigen::Affi
 }
 
 bool godel_process_planning::descartesSolve(const godel_process_planning::DescartesTraj& in_path,
-                                            descartes_core::RobotModelConstPtr robot_model,
+                                            descartes_core::RobotModelPtr robot_model,
                                             godel_process_planning::DescartesTraj& out_path)
 {
   // Create planner
   descartes_core::PathPlannerBasePtr planner(new descartes_planner::DensePlanner);
+
+  robot_model->updateInternals();
+
   if (!planner->initialize(robot_model))
   {
     ROS_ERROR("%s: Failed to initialize planner with robot model", __FUNCTION__);

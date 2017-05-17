@@ -43,7 +43,7 @@ Eigen::Affine3d createNominalTransform(const Eigen::Affine3d& ref_pose, const do
  * @param out_path The solution path, if found, otherwise undefined
  * @return True if path was found and result placed inside 'out_path'; False otherwise.
  */
-bool descartesSolve(const DescartesTraj& in_path, descartes_core::RobotModelConstPtr robot_model,
+bool descartesSolve(const DescartesTraj& in_path, descartes_core::RobotModelPtr robot_model,
                     DescartesTraj& out_path);
 /**
  * @brief Extracts joint position values from Descartes trajectory and packs them into a ROS message
