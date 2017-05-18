@@ -10,6 +10,7 @@ namespace godel_scan_analysis
 struct ProfileFusionParameters
 {
   double voxel_leaf_size;
+  int min_points_per_voxel;
 };
 
 /**

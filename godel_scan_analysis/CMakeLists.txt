@@ -45,6 +45,16 @@ target_link_libraries(godel_scan_analysis_node
   ${catkin_LIBRARIES}
 )
 
+# Define another test node for new stuff
+add_executable(godel_scan_fusion_node
+  src/scan_fusion_test_node.cpp
+)
+
+target_link_libraries(godel_scan_fusion_node
+  ${catkin_LIBRARIES}
+  ${PROJECT_NAME}
+)
+
 install(TARGETS godel_scan_analysis_node
   ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}

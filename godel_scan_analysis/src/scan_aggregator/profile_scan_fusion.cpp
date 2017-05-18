@@ -31,6 +31,7 @@ godel_scan_analysis::fuseProfiles(const std::vector<pcl::PointCloud<pcl::PointXY
   pcl::VoxelGrid<pcl::PointXYZ> vg;
   vg.setInputCloud(fused_cloud);
   vg.setLeafSize(params.voxel_leaf_size, params.voxel_leaf_size, params.voxel_leaf_size);
+  vg.setMinimumPointsNumberPerVoxel(params.min_points_per_voxel);
   vg.filter(*final_cloud);
   // TODO: Other forms of filtering? E.g. minimum samples in a voxel, statistical outlier removal, etc...
 
