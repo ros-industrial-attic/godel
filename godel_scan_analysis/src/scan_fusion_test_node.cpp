@@ -2,8 +2,43 @@
 
 #include "godel_scan_analysis/profile_scan_fusion.h"
 #include "godel_scan_analysis/profile_scan_aggregator.h"
+#include <godel_msgs/GetSurfaceScans.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 #include <std_srvs/Trigger.h>
+
+namespace
+{
+
+godel_msgs::LaserScanRecord
+createLaserScanRecord(const std::vector<godel_scan_server::ProfileScanAggregator::Profile>& profiles,
+                      const std::vector<tf::Transform>& transforms)
+{
+  godel_msgs::LaserScanRecord msg;
+
+  // Reserve memory
+  msg.profiles.resize(profiles.size());
+  msg.poses.resize(transforms.size());
+
+  // Convert each cloud
+  std::transform(profiles.begin(), profiles.end(), msg.profiles.begin(),
+                 [] (const godel_scan_server::ProfileScanAggregator::Profile& profile) {
+    sensor_msgs::PointCloud2 cloud_msg;
+    pcl::toROSMsg(profile, cloud_msg);
+    return cloud_msg;
+  });
+
+  // Convert each pose
+  std::transform(transforms.begin(), transforms.end(), msg.poses.begin(), [] (const tf::Transform& pose) {
+    geometry_msgs::Pose pose_msg;
+    tf::poseTFToMsg(pose, pose_msg);
+    return pose_msg;
+  });
+
+  return msg;
+}
+
+} // end anonymous namespace
 
 void scanCallback(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr& profile,
                   godel_scan_server::ProfileScanAggregator& agg)
@@ -54,6 +89,17 @@ int main(int argc, char** argv)
     voxel_pub.publish(cloud);
 
     pcl::io::savePCDFile("voxels.pcd", *cloud, true);
+    return true;
+  });
+
+  ros::ServiceServer get_scan_service =
+      nh.advertiseService<godel_msgs::GetSurfaceScansRequest, godel_msgs::GetSurfaceScansResponse>("get_surface_scans",
+        [&aggregator, base_frame] (const godel_msgs::GetSurfaceScansRequest&, godel_msgs::GetSurfaceScansResponse& res) {
+
+    res.scans = createLaserScanRecord(aggregator.profiles(), aggregator.poses());
+    res.scans.header.frame_id = base_frame;
+    res.scans.header.stamp = ros::Time::now();
+
     return true;
   });
 

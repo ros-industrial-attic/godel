@@ -4,6 +4,7 @@ project(godel_scan_analysis)
 add_compile_options(-std=c++11)
 
 find_package(catkin REQUIRED COMPONENTS
+  godel_msgs
   pcl_ros
   roscpp
 )
@@ -14,6 +15,7 @@ catkin_package(
   LIBRARIES
     ${PROJECT_NAME}
   CATKIN_DEPENDS
+    godel_msgs
     pcl_ros
     roscpp
 )
@@ -49,6 +51,8 @@ target_link_libraries(godel_scan_analysis_node
 add_executable(godel_scan_fusion_node
   src/scan_fusion_test_node.cpp
 )
+
+add_dependencies(godel_scan_fusion_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 target_link_libraries(godel_scan_fusion_node
   ${catkin_LIBRARIES}
