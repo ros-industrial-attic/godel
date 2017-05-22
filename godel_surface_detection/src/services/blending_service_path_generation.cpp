@@ -394,7 +394,10 @@ godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotio
                                                      scan_params);
 
         for (std::size_t k = 0; k < plan.plans.size(); ++k)
+        {
+          plan.plans[k].second.id = id;
           lib.get()[plan.plans[k].first] = plan.plans[k].second;
+        }
       }
     }
   }
