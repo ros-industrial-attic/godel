@@ -175,6 +175,8 @@ private:
   bool renameSurfaceCallback(godel_msgs::RenameSurface::Request& req,
                              godel_msgs::RenameSurface::Response& res);
 
+  bool getLaserScanDataAndSave(int surface_id);
+
   void visualizePaths();
 
   void visualizePathPoses();
@@ -200,6 +202,8 @@ private:
 
   ros::ServiceClient blend_planning_client_;
   ros::ServiceClient keyence_planning_client_;
+
+  ros::ServiceClient get_laser_scans_client_;
 
   // Actions offered by this class
   ros::NodeHandle nh_;
