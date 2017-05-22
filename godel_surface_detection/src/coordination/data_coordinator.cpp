@@ -94,7 +94,7 @@ namespace data
       return false;
     }
 
-    const auto& record = *it;
+    auto& record = *it;
 
     switch (cloud_type)
     {
@@ -103,6 +103,10 @@ namespace data
       return true;
     case surface_cloud:
       record.surface_cloud_ = cloud;
+      return true;
+    case laser_cloud:
+      record.laser_cloud_ = cloud;
+      return true;
     default:
       ROS_WARN_STREAM("Invalid cloud type");
       return false;
@@ -140,6 +144,8 @@ namespace data
     case surface_cloud:
       cloud = record.surface_cloud_;
       return true;
+    case laser_cloud:
+      cloud = record.laser_cloud_;
     default:
       ROS_WARN_STREAM("Invalid cloud type");
       return false;
