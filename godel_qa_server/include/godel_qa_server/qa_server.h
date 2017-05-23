@@ -46,11 +46,18 @@ class QAServer
 public:
   using key_type = int;
 
+  void setParams(const cat_laser_scan_qa::TorchCutQAParameters& params)
+  {
+    params_ = params;
+  }
+
   void createNewJob(key_type surface_id);
 
   void clear();
 
   boost::optional<const QAJob&> lookup(key_type surface_id) const;
+
+  boost::optional<QAJob&> lookup(key_type surface_id);
 
 private:
   std::map<key_type, QAJob> active_jobs_;

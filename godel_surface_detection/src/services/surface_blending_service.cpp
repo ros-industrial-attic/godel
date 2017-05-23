@@ -155,6 +155,11 @@ bool SurfaceBlendingService::init()
     ROS_ERROR_STREAM("Surface detection service had an initialization error");
   }
 
+  // Configure QA server parameters
+  cat_laser_scan_qa::TorchCutQAParameters qa_params;
+  qa_params.surface_tolerance = 0.0005; // 0.5 mm
+  qa_server_.setParams(qa_params);
+
   // start server
   interactive::InteractiveSurfaceServer::SelectionCallback f =
       boost::bind(&SurfaceBlendingService::publish_selected_surfaces_changed, this);
@@ -745,7 +750,7 @@ void SurfaceBlendingService::selectMotionPlansActionCallback(const godel_msgs::S
 
     // In the event that the execution was for a laser scan and we were successful and we did not simulate anything
     // then we want to save the laser scan data
-    if (selected_plan.type == godel_msgs::ProcessPlan::SCAN_TYPE && !selected_plan.simulate)
+    if (selected_plan.type == godel_msgs::ProcessPlan::SCAN_TYPE && !goal.simulate)
     {
       getLaserScanDataAndSave(selected_plan.id);
     }
@@ -849,8 +854,8 @@ bool SurfaceBlendingService::getLaserScanDataAndSave(int surface_id)
     qa_server_.createNewJob(surface_id);
     qa_job = qa_server_.lookup(surface_id);
     ROS_ASSERT(static_cast<bool>(qa_job));
-    const godel_qa_server::QAJob& job = *qa_job;
-//    auto qa_job.addNewScan(*surface_cloud);
+    godel_qa_server::QAJob& job = *qa_job;
+    job.addNewScan(*surface_cloud);
   }
   else
   {

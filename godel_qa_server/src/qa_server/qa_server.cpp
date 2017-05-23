@@ -36,3 +36,12 @@ boost::optional<const godel_qa_server::QAJob &> godel_qa_server::QAServer::looku
   else
     return {};
 }
+
+boost::optional<godel_qa_server::QAJob &> godel_qa_server::QAServer::lookup(key_type surface_id)
+{
+  const auto it = active_jobs_.find(surface_id);
+  if (it != active_jobs_.end())
+    return it->second;
+  else
+    return {};
+}
