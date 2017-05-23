@@ -727,11 +727,16 @@ void SurfaceBlendingService::selectMotionPlansActionCallback(const godel_msgs::S
       (is_blend ? &blend_exe_client_ : &scan_exe_client_);
   exe_client->sendGoal(goal);
 
-  // Compute expected time and send the goal off to be executed
-  ros::Duration process_time(goal.trajectory_depart.points.back().time_from_start);
+  // Compute expected time
+  ros::Duration total_time = goal.trajectory_approach.points.back().time_from_start +
+                             goal.trajectory_process.points.back().time_from_start +
+                             goal.trajectory_depart.points.back().time_from_start;
+
   ros::Duration buffer_time(PROCESS_EXE_BUFFER);
+
+  // send the goal off to be executed
   ROS_ERROR_STREAM("WAITING FOR MOTION EXEC RESULT ON " << goal_in->name);
-  if(exe_client->waitForResult(process_time + buffer_time))
+  if(exe_client->waitForResult(total_time + buffer_time))
   {
     res.code = godel_msgs::SelectMotionPlanResult::SUCCESS;
     select_motion_plan_server_.setSucceeded(res);
@@ -740,7 +745,7 @@ void SurfaceBlendingService::selectMotionPlansActionCallback(const godel_msgs::S
 
     // In the event that the execution was for a laser scan and we were successful and we did not simulate anything
     // then we want to save the laser scan data
-    if (selected_plan.type == godel_msgs::ProcessPlan::SCAN_TYPE)
+    if (selected_plan.type == godel_msgs::ProcessPlan::SCAN_TYPE && !selected_plan.simulate)
     {
       getLaserScanDataAndSave(selected_plan.id);
     }
