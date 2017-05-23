@@ -431,6 +431,7 @@ bool SurfaceBlendingService::surface_detection_server_callback(
     {
       SurfaceBlendingService::clear_visualizations();
       data_coordinator_.init();
+      qa_server_.clear();
       res.surfaces_found = false;
       res.surfaces = visualization_msgs::MarkerArray();
       break;
@@ -457,6 +458,7 @@ bool SurfaceBlendingService::surface_detection_server_callback(
       res.surfaces = visualization_msgs::MarkerArray();
       SurfaceBlendingService::clear_visualizations();
       data_coordinator_.init();
+      qa_server_.clear();
 
       if (req.use_default_parameters)
       {
@@ -480,6 +482,7 @@ bool SurfaceBlendingService::surface_detection_server_callback(
       res.surfaces = visualization_msgs::MarkerArray();
       SurfaceBlendingService::clear_visualizations();
       data_coordinator_.init();
+      qa_server_.clear();
 
       if (req.use_default_parameters)
       {
@@ -502,6 +505,7 @@ bool SurfaceBlendingService::surface_detection_server_callback(
       res.surfaces = visualization_msgs::MarkerArray();
       SurfaceBlendingService::clear_visualizations();
       data_coordinator_.init();
+      qa_server_.clear();
 
       if (req.use_default_parameters)
       {
@@ -523,6 +527,7 @@ bool SurfaceBlendingService::surface_detection_server_callback(
       res.surfaces = visualization_msgs::MarkerArray();
       SurfaceBlendingService::clear_visualizations();
       data_coordinator_.init();
+      qa_server_.clear();
 
       if (req.use_default_parameters)
       {
@@ -725,10 +730,13 @@ void SurfaceBlendingService::selectMotionPlansActionCallback(const godel_msgs::S
   // Compute expected time and send the goal off to be executed
   ros::Duration process_time(goal.trajectory_depart.points.back().time_from_start);
   ros::Duration buffer_time(PROCESS_EXE_BUFFER);
+  ROS_ERROR_STREAM("WAITING FOR MOTION EXEC RESULT ON " << goal_in->name);
   if(exe_client->waitForResult(process_time + buffer_time))
   {
     res.code = godel_msgs::SelectMotionPlanResult::SUCCESS;
     select_motion_plan_server_.setSucceeded(res);
+
+    ROS_ERROR_STREAM("GOAL SUCCESS");
 
     // In the event that the execution was for a laser scan and we were successful and we did not simulate anything
     // then we want to save the laser scan data
@@ -739,6 +747,7 @@ void SurfaceBlendingService::selectMotionPlansActionCallback(const godel_msgs::S
   }
   else
   {
+    ROS_ERROR_STREAM("GOAL TIMEOUT");
     res.code=godel_msgs::SelectMotionPlanResult::TIMEOUT;
     select_motion_plan_server_.setAborted(res);
   }
@@ -798,7 +807,7 @@ bool SurfaceBlendingService::getLaserScanDataAndSave(int surface_id)
   godel_msgs::GetSurfaceScansResponse res;
   if (!get_laser_scans_client_.call(req, res))
   {
-    ROS_WARN("Unable to fetch laser scans from aggregation service: %s", get_laser_scans_client_.getService());
+    ROS_ERROR("Unable to fetch laser scans from aggregation service: %s", get_laser_scans_client_.getService());
     return false;
   }
 
@@ -825,7 +834,23 @@ bool SurfaceBlendingService::getLaserScanDataAndSave(int surface_id)
   pcl::copyPointCloud(*surface_cloud, color_cloud);
 
   data_coordinator_.setCloud(godel_surface_detection::data::laser_cloud, surface_id, color_cloud);
-  ROS_INFO_STREAM("Laser scan data added to coordinator for surface " << surface_id);
+  ROS_ERROR_STREAM("Laser scan data added to coordinator for surface " << surface_id);
+
+  // Now add to QA
+  auto qa_job = qa_server_.lookup(surface_id);
+  if (!qa_job)
+  {
+    ROS_ERROR("Creating new QA job for surface %d", surface_id);
+    qa_server_.createNewJob(surface_id);
+    qa_job = qa_server_.lookup(surface_id);
+    ROS_ASSERT(static_cast<bool>(qa_job));
+    const godel_qa_server::QAJob& job = *qa_job;
+//    auto qa_job.addNewScan(*surface_cloud);
+  }
+  else
+  {
+    ROS_ERROR("Already an active QA job under surface id = %d. Adding new QA pass.", surface_id);
+  }
 }
 
 void SurfaceBlendingService::visualizePaths()

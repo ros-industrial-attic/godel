@@ -95,7 +95,7 @@ int main(int argc, char** argv)
   ros::ServiceServer get_scan_service =
       nh.advertiseService<godel_msgs::GetSurfaceScansRequest, godel_msgs::GetSurfaceScansResponse>("get_surface_scans",
         [&aggregator, base_frame] (const godel_msgs::GetSurfaceScansRequest&, godel_msgs::GetSurfaceScansResponse& res) {
-
+    ROS_ERROR_STREAM("GET SERVICE SCAN CALLBACK!");
     res.scans = createLaserScanRecord(aggregator.profiles(), aggregator.poses());
     res.scans.header.frame_id = base_frame;
     res.scans.header.stamp = ros::Time::now();

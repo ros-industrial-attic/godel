@@ -47,6 +47,8 @@
 #include <godel_process_path_generation/utils.h>
 #include <godel_process_path_generation/polygon_utils.h>
 
+#include <godel_qa_server/qa_server.h>
+
 #include <services/trajectory_library.h>
 #include <coordination/data_coordinator.h>
 
@@ -266,6 +268,9 @@ private:
 
   // Parameter loading and saving
   std::string param_cache_prefix_;
+
+  // QA stuff
+  godel_qa_server::QAServer qa_server_;
 };
 
 #endif // surface blending services

@@ -28,6 +28,7 @@
   <depend>godel_process_path_generation</depend>
   <depend>godel_param_helpers</depend>
   <depend>godel_plugins</depend>
+  <depend>godel_qa_server</depend>
   <depend>godel_scan_analysis</depend>
   <depend>godel_utils</depend>
   <depend>meshing_plugins_base</depend>
