@@ -411,6 +411,27 @@ namespace godel_surface_detection
       return name;
     }
 
+    bool SurfaceDetection::meshCloud(const CloudRGB &cloud, pcl::PolygonMesh &mesh) const
+    {
+      // Load the code to perform meshing dynamically
+      pluginlib::ClassLoader<meshing_plugins_base::MeshingBase>
+          poly_loader("meshing_plugins_base", "meshing_plugins_base::MeshingBase");
+      boost::shared_ptr<meshing_plugins_base::MeshingBase> mesher;
+
+      try
+      {
+        mesher = poly_loader.createInstance(getMeshingPluginName());
+      }
+      catch(pluginlib::PluginlibException& ex)
+      {
+        ROS_ERROR("The plugin failed to load for some reason. Error: %s", ex.what());
+        return false;
+      }
+
+      mesher->init(cloud);
+      return mesher->generateMesh(mesh);
+    }
+
     void SurfaceDetection::filterFullCloud()
     {
       pcl::PointCloud<pcl::PointXYZRGB>::Ptr intermediate_cloud_ptr(new pcl::PointCloud<pcl::PointXYZRGB>);
