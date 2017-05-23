@@ -84,6 +84,9 @@ namespace data
     bool getEdgePosesByName(const std::string& edge_name, geometry_msgs::PoseArray& edge_poses);
     bool setPoses(PoseTypes pose_type, int id, const std::vector<geometry_msgs::PoseArray>& poses);
     bool getPoses(PoseTypes pose_type, int id, std::vector<geometry_msgs::PoseArray>& poses);
+
+    int findSurfaceByName(const std::string& surface_name) const;
+
     void asyncSaveRecord(boost::filesystem::path path);
   };
 } /* end namespace data */

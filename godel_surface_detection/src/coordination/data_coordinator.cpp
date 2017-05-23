@@ -410,6 +410,21 @@ namespace data
     return false;
   }
 
+  int DataCoordinator::findSurfaceByName(const std::string &surface_name) const
+  {
+    auto it = std::find_if(records_.begin(), records_.end(), [surface_name] (const SurfaceDetectionRecord& record) {
+      return record.surface_name_ == surface_name;
+    });
+
+    if (it == records_.end())
+    {
+      ROS_WARN_STREAM("No such surface with name = '" << surface_name << "'.");
+      return -1; // error condition - no such service
+    }
+
+    return std::distance(records_.begin(), it);
+  }
+
   /**
    * @brief DataCoordinator::asyncSaveRecord calls saveRecord in a detached
    * thread
