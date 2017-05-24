@@ -9,7 +9,7 @@
   <xacro:property name="keyence_optical_z" value="0.12192"/>
 
   <xacro:property name="keyence_tcp_x" value="0.0006"/>
-  <xacro:property name="keyence_tcp_y" value="0.2863"/>
+  <xacro:property name="keyence_tcp_y" value="0.2923"/>
   <xacro:property name="keyence_tcp_z" value="0.0968"/>
 
   <xacro:property name="kinect_mount_x" value="0.09"/>
