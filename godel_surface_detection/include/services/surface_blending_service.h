@@ -199,9 +199,6 @@ private:
   ros::ServiceServer rename_suface_server_;
 
   // Services subscribed to by this class
-  ros::ServiceClient process_path_client_;
-  ros::ServiceClient trajectory_planner_client_;
-
   ros::ServiceClient blend_planning_client_;
   ros::ServiceClient keyence_planning_client_;
 

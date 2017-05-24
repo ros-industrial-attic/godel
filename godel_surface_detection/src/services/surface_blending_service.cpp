@@ -165,9 +165,6 @@ bool SurfaceBlendingService::init()
       boost::bind(&SurfaceBlendingService::publish_selected_surfaces_changed, this);
   surface_server_.add_selection_callback(f);
 
-  // service clients
-  process_path_client_ = nh_.serviceClient<godel_msgs::PathPlanning>(PATH_GENERATION_SERVICE);
-
   // Process Execution Parameters
   blend_planning_client_ = nh_.serviceClient<godel_msgs::BlendProcessPlanning>(BLEND_PROCESS_PLANNING_SERVICE);
   keyence_planning_client_ = nh_.serviceClient<godel_msgs::KeyenceProcessPlanning>(SCAN_PROCESS_PLANNING_SERVICE);
