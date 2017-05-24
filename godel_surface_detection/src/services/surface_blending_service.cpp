@@ -850,6 +850,7 @@ bool SurfaceBlendingService::getLaserScanDataAndSave(int surface_id)
   else
   {
     ROS_ERROR("Already an active QA job under surface id = %d. Adding new QA pass.", surface_id);
+    qa_job->addNewScan(*surface_cloud);
   }
 }
 
