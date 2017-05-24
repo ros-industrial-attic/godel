@@ -66,7 +66,7 @@
        <item>
         <widget class="QTabWidget" name="TabWidgetCreateLib">
          <property name="currentIndex">
-          <number>0</number>
+          <number>2</number>
          </property>
          <widget class="QWidget" name="tab_1">
           <attribute name="title">
@@ -613,6 +613,13 @@
                    <widget class="QPushButton" name="pushButtonSavePlan">
                     <property name="text">
                      <string>Save</string>
+                    </property>
+                   </widget>
+                  </item>
+                  <item>
+                   <widget class="QPushButton" name="pushButtonQAPlan">
+                    <property name="text">
+                     <string>QA Plan</string>
                     </property>
                    </widget>
                   </item>
