@@ -15,7 +15,9 @@ public:
   typedef std::map<std::string, godel_msgs::ProcessPlan> TrajectoryMap;
 
   void load(const std::string& filename);
-  void save(const std::string& filename);
+  void save(const std::string& filename) const;
+
+  void merge(const TrajectoryLibrary& other);
 
   TrajectoryMap& get() { return map_; }
   const TrajectoryMap& get() const { return map_; }

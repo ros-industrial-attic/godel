@@ -59,6 +59,13 @@ public:
 
   boost::optional<QAJob&> lookup(key_type surface_id);
 
+  using JobConstIter = std::map<key_type, QAJob>::const_iterator;
+
+  JobConstIter begin() const { return active_jobs_.begin(); }
+
+  JobConstIter end() const { return active_jobs_.end(); }
+
+
 private:
   std::map<key_type, QAJob> active_jobs_;
   cat_laser_scan_qa::TorchCutQAParameters params_;

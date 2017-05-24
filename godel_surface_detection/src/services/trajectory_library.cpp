@@ -3,7 +3,7 @@
 #include <rosbag/bag.h>
 #include <rosbag/view.h>
 
-void godel_surface_detection::TrajectoryLibrary::save(const std::string& filename)
+void godel_surface_detection::TrajectoryLibrary::save(const std::string& filename) const
 {
   rosbag::Bag bag;
   bag.open(filename, rosbag::bagmode::Write);
@@ -12,6 +12,14 @@ void godel_surface_detection::TrajectoryLibrary::save(const std::string& filenam
   for (TrajectoryMap::const_iterator it = map_.begin(); it != map_.end(); ++it)
   {
     bag.write(it->first, now, it->second);
+  }
+}
+
+void godel_surface_detection::TrajectoryLibrary::merge(const godel_surface_detection::TrajectoryLibrary &other)
+{
+  for (const auto& pair : other.get())
+  {
+    map_.insert(pair);
   }
 }
 

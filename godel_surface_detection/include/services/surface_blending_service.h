@@ -139,6 +139,8 @@ private:
 
   godel_surface_detection::TrajectoryLibrary generateMotionLibrary(const godel_msgs::PathPlanningParameters& params);
 
+  godel_surface_detection::TrajectoryLibrary generateQAMotionLibrary(const godel_msgs::PathPlanningParameters& params);
+
 
   bool generateProcessPath(const int& id, ProcessPathResult& result);
 

@@ -587,7 +587,19 @@ void SurfaceBlendingService::processPlanningActionCallback(const godel_msgs::Pro
       process_planning_server_.publishFeedback(process_planning_feedback_);
       break;
     }
-
+    case godel_msgs::ProcessPlanningGoal::GENERATE_QA_MOTION_PLAN:
+    {
+      ensenso::EnsensoGuard guard; // turns off ensenso for planning and turns it on when this goes out of scope
+      process_planning_feedback_.last_completed = "Recieved request to generate motion plans from QA data";
+      process_planning_server_.publishFeedback(process_planning_feedback_);
+      trajectory_library_.merge(generateQAMotionLibrary(goal_in->params));
+      process_planning_feedback_.last_completed = "Finished QA motion planning";
+      process_planning_server_.publishFeedback(process_planning_feedback_);
+      visualizePaths();
+      process_planning_result_.succeeded = true;
+      process_planning_server_.setSucceeded(process_planning_result_);
+      break;
+    }
     default:
     {
       ROS_ERROR_STREAM("Unknown action code '" << goal_in->action << "' request");

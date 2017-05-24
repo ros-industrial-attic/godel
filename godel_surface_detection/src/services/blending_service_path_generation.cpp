@@ -10,6 +10,7 @@
 #include <eigen_conversions/eigen_msg.h>
 #include <path_planning_plugins_base/path_planning_base.h>
 
+#include <pcl/segmentation/extract_clusters.h>
 #include <swri_profiler/profiler.h>
 
 // Temporary constants for storing blending path `planning parameters
@@ -322,6 +323,109 @@ godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotio
   std::vector<int> selected_ids;
   surface_server_.getSelectedIds(selected_ids);
   return generateMotionLibrary(params, selected_ids);
+}
+
+// static helper function
+static std::vector<pcl::PointCloud<pcl::PointXYZRGB>>
+computeQAClusters(const pcl::PointCloud<pcl::PointXYZRGB>& macro_surface,
+                  const pcl::PointCloud<pcl::PointXYZRGB>& laser_surface,
+                  const cat_laser_scan_qa::TorchCutQAResult& qa_result)
+{
+  // Let's extract the high points
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr high_points (new pcl::PointCloud<pcl::PointXYZRGB>());
+  pcl::copyPointCloud(laser_surface, qa_result.high_point_indices.indices, *high_points);
+
+  // 'Dilate' the points by finding neighbors of the high points
+  pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB>);
+  tree->setInputCloud(laser_surface.makeShared());
+
+  std::set<int> indices;
+  for (const auto& pt : *high_points)
+  {
+    std::vector<int> local_indices;
+    std::vector<float> distances;
+    tree->radiusSearch(pt, 0.01, local_indices, distances);
+    indices.insert(local_indices.begin(), local_indices.end());
+  }
+
+  ROS_ERROR_STREAM("input cloud had " << high_points->size() << "points and after dilation we have " << indices.size());
+
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr dilated_cloud (new pcl::PointCloud<pcl::PointXYZRGB>());
+  std::vector<int> dilated_indices;
+  dilated_indices.insert(dilated_indices.end(), indices.begin(), indices.end());
+  pcl::copyPointCloud(laser_surface, dilated_indices, *dilated_cloud);
+
+
+  // Cluster the high points
+  pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree2 (new pcl::search::KdTree<pcl::PointXYZRGB>);
+  tree2->setInputCloud(dilated_cloud);
+
+  pcl::EuclideanClusterExtraction<pcl::PointXYZRGB> ec;
+  ec.setClusterTolerance(0.01);
+  ec.setMinClusterSize(10);
+//  ec.setMaxClusterSize(25000);
+  ec.setSearchMethod(tree2);
+  ec.setInputCloud(dilated_cloud);
+
+  std::vector<pcl::PointIndices> cluster_indices;
+  ec.extract(cluster_indices);
+
+  ROS_ERROR_STREAM("After clustering we have " << cluster_indices.size() << " clusters");
+
+  // Assemble results
+  std::vector<pcl::PointCloud<pcl::PointXYZRGB>> clusters (cluster_indices.size());
+  for (std::size_t i = 0; i < cluster_indices.size(); ++i)
+  {
+    pcl::copyPointCloud(*dilated_cloud, cluster_indices[i].indices, clusters[i]);
+  }
+
+  return clusters;
+}
+
+godel_surface_detection::TrajectoryLibrary
+SurfaceBlendingService::generateQAMotionLibrary(const godel_msgs::PathPlanningParameters &params)
+{
+  // Define return value library which will get populated for each surface
+  godel_surface_detection::TrajectoryLibrary lib;
+
+  // Identify any outstanding QA 'jobs'
+  for (const auto& q : qa_server_)
+  {
+    // For each active job...
+    const int key = q.first;
+    const godel_qa_server::QAJob& job = q.second;
+
+    // Examine the QA point cloud and pull out "patches" that need to be re-processed; each patch is a euclidean
+    // cluster
+    pcl::PointCloud<pcl::PointXYZRGB> surface_cloud, laser_cloud;
+    data_coordinator_.getCloud(godel_surface_detection::data::surface_cloud, key, surface_cloud);
+    data_coordinator_.getCloud(godel_surface_detection::data::laser_cloud, key, laser_cloud);
+    std::string surface_name;
+    data_coordinator_.getSurfaceName(key, surface_name);
+
+    auto clusters = computeQAClusters(surface_cloud, laser_cloud, job.iterations().back().qa_result);
+
+    // For each cluster, lets create a new record in the data coordinator whilst building a list of new surfaces
+    std::vector<int> new_surface_ids;
+
+    for (std::size_t i = 0; i < clusters.size(); ++i)
+    {
+      auto new_id = data_coordinator_.addRecord(surface_cloud, clusters[i]);
+      data_coordinator_.setSurfaceName(new_id, surface_name + "_qa" + std::to_string(i));
+
+      pcl::PolygonMesh mesh;
+      surface_detection_.meshCloud(clusters[i], mesh);
+      data_coordinator_.setSurfaceMesh(new_id, mesh);
+    }
+
+    // Generate a new motion library with plans for each surface patch
+    auto patch_plans = generateMotionLibrary(params, new_surface_ids);
+
+    // Merge the motion library with the overall results
+    lib.merge(patch_plans);
+  }
+
+  return lib;
 }
 
 godel_surface_detection::TrajectoryLibrary
