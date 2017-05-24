@@ -50,13 +50,6 @@ const static std::string REGION_POINT_CLOUD_TOPIC = "region_colored_cloud";
 
 const static std::string EDGE_IDENTIFIER = "_edge_";
 
-//  tool visual properties
-const static float TOOL_DIA = .050;
-const static float TOOL_THK = .005;
-const static float TOOL_SHAFT_DIA = .006;
-const static float TOOL_SHAFT_LEN = .045;
-const static std::string TOOL_FRAME_ID = "process_tool";
-
 // Default filepaths and namespaces for caching stored parameters
 const static std::string BLEND_PARAMS_FILE = "godel_blending_parameters.msg";
 const static std::string SCAN_PARAMS_FILE = "godel_scan_parameters.msg";

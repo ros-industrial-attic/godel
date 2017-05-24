@@ -223,9 +223,6 @@ private:
   ros::Publisher edge_visualization_pub_;
   ros::Publisher scan_visualization_pub_;
 
-  // Timers
-  bool stop_tool_animation_;
-
   // robot scan instance
   godel_surface_detection::scan::RobotScan robot_scan_;
   // surface detection instance
