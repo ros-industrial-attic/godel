@@ -319,17 +319,23 @@ SurfaceBlendingService::generateProcessPath(const int& id,
 godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotionLibrary(
     const godel_msgs::PathPlanningParameters& params)
 {
-  SWRI_PROFILE("generate-motion-library");
   std::vector<int> selected_ids;
   surface_server_.getSelectedIds(selected_ids);
+  return generateMotionLibrary(params, selected_ids);
+}
 
+godel_surface_detection::TrajectoryLibrary
+SurfaceBlendingService::generateMotionLibrary(const godel_msgs::PathPlanningParameters &params,
+                                              const std::vector<int> &selected_surface_ids)
+{
+  SWRI_PROFILE("generate-motion-library");
   godel_surface_detection::TrajectoryLibrary lib;
   // Clear previous results
   process_path_results_.blend_poses_.clear();
   process_path_results_.edge_poses_.clear();
   process_path_results_.scan_poses_.clear();
 
-  for (const auto& id : selected_ids)
+  for (const auto& id : selected_surface_ids)
   {
     // Generate motion plan
     ProcessPathResult paths;
@@ -404,7 +410,6 @@ godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotio
 
   return lib;
 }
-
 
 ProcessPlanResult
 SurfaceBlendingService::generateProcessPlan(const std::string& name,
