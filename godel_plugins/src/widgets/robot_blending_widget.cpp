@@ -509,8 +509,10 @@ void RobotBlendingWidget::generate_qa_path_handler()
 void RobotBlendingWidget::processPlanningDoneCallback(const actionlib::SimpleClientGoalState& state,
             const godel_msgs::ProcessPlanningResultConstPtr& result)
 {
+  ROS_ERROR_STREAM("GUI PLANNING DONE");
   if(result->succeeded)
   {
+    ROS_ERROR_STREAM("GUI REQUESTING PLANS");
     std::vector<std::string> plan_names;
     request_available_motions(plan_names);
     update_motion_plan_list(plan_names);

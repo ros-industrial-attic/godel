@@ -337,7 +337,7 @@ computeQAClusters(const pcl::PointCloud<pcl::PointXYZRGB>& macro_surface,
 
   // 'Dilate' the points by finding neighbors of the high points
   pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB>);
-  tree->setInputCloud(laser_surface.makeShared());
+  tree->setInputCloud(macro_surface.makeShared());
 
   std::set<int> indices;
   for (const auto& pt : *high_points)
@@ -353,7 +353,7 @@ computeQAClusters(const pcl::PointCloud<pcl::PointXYZRGB>& macro_surface,
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr dilated_cloud (new pcl::PointCloud<pcl::PointXYZRGB>());
   std::vector<int> dilated_indices;
   dilated_indices.insert(dilated_indices.end(), indices.begin(), indices.end());
-  pcl::copyPointCloud(laser_surface, dilated_indices, *dilated_cloud);
+  pcl::copyPointCloud(macro_surface, dilated_indices, *dilated_cloud);
 
 
   // Cluster the high points
@@ -376,6 +376,7 @@ computeQAClusters(const pcl::PointCloud<pcl::PointXYZRGB>& macro_surface,
   std::vector<pcl::PointCloud<pcl::PointXYZRGB>> clusters (cluster_indices.size());
   for (std::size_t i = 0; i < cluster_indices.size(); ++i)
   {
+    ROS_ERROR_STREAM("Cluster " << i << " has " << cluster_indices[i].indices.size() << " points");
     pcl::copyPointCloud(*dilated_cloud, cluster_indices[i].indices, clusters[i]);
   }
 
@@ -394,6 +395,7 @@ SurfaceBlendingService::generateQAMotionLibrary(const godel_msgs::PathPlanningPa
     // For each active job...
     const int key = q.first;
     const godel_qa_server::QAJob& job = q.second;
+    ROS_ERROR_STREAM("CONSIDERING QA FOR SURFACE " << key);
 
     // Examine the QA point cloud and pull out "patches" that need to be re-processed; each patch is a euclidean
     // cluster
@@ -411,11 +413,22 @@ SurfaceBlendingService::generateQAMotionLibrary(const godel_msgs::PathPlanningPa
     for (std::size_t i = 0; i < clusters.size(); ++i)
     {
       auto new_id = data_coordinator_.addRecord(surface_cloud, clusters[i]);
-      data_coordinator_.setSurfaceName(new_id, surface_name + "_qa" + std::to_string(i));
+      ROS_ERROR_STREAM("Creating a new qa surface w/ id = " << new_id);
+      const std::string new_surface_name = surface_name + "_qa" + std::to_string(i);
+      data_coordinator_.setSurfaceName(new_id, new_surface_name);
 
       pcl::PolygonMesh mesh;
       surface_detection_.meshCloud(clusters[i], mesh);
       data_coordinator_.setSurfaceMesh(new_id, mesh);
+
+      if (mesh.polygons.size() > 0)
+      {
+        new_surface_ids.push_back(new_id);
+      }
+      else
+      {
+        ROS_ERROR_STREAM("Mesh for surface " << key << " cluster " << i << " new id = " << new_id << " has no verts");
+      }
     }
 
     // Generate a new motion library with plans for each surface patch
