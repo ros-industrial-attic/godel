@@ -4,6 +4,8 @@ Application for demonstrating surface blending with ROS.
 
 Godel: Austrian logician and mathematician http://en.wikipedia.org/wiki/Kurt_G%C3%B6del
 
+![Automate 2017 Demo Video](https://s3-us-west-2.amazonaws.com/ros-industrial/gifs/ROS-I_Surface_Blending.gif)
+
 ### Installation
 
 - Install [wstool](http://wiki.ros.org/wstool) in order manage the repos inside the workspace
