@@ -47,10 +47,6 @@ void godel_process_execution::BlendProcessService::executionCallback(
 bool godel_process_execution::BlendProcessService::executeProcess(
     const godel_msgs::ProcessExecutionGoalConstPtr &goal)
 {
-  //goal->trajectory_approach.header.stamp = ros::Time::now();
-  //goal->trajectory_depart.header.stamp = ros::Time::now();
-  //goal->trajectory_process.header.stamp = ros::Time::now();
-
   godel_msgs::TrajectoryExecution srv_approach;
   srv_approach.request.wait_for_execution = true;
   srv_approach.request.trajectory = goal->trajectory_approach;
