@@ -10,7 +10,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <exec_depend>godel_plugins</exec_depend>
-  <exec_depend>godel_path_planning</exec_depend>
+  <exec_depend>godel_process_planning</exec_depend>
   <exec_depend>godel_process_path_generation</exec_depend>
   <exec_depend>godel_msgs</exec_depend>
   <exec_depend>godel_surface_detection</exec_depend>
