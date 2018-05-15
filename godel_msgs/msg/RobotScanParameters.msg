@@ -1,5 +1,6 @@
 # path planning
 string group_name
+float64 move_scan_vel_scaling
 string home_position
 string world_frame
 string tcp_frame

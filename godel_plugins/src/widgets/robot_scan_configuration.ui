@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>540</width>
-    <height>563</height>
+    <height>583</height>
    </rect>
   </property>
   <property name="font">
@@ -105,7 +105,7 @@
       <x>30</x>
       <y>40</y>
       <width>281</width>
-      <height>441</height>
+      <height>461</height>
      </rect>
     </property>
     <property name="frameShape">
@@ -299,13 +299,36 @@
        </widget>
       </item>
       <item row="12" column="0">
+       <widget class="QLabel" name="moveScanVelScalingLabel">
+        <property name="text">
+         <string>Move Scan Vel Scaling</string>
+        </property>
+       </widget>
+      </item>
+      <item row="12" column="1">
+       <widget class="QLineEdit" name="LineEditMoveScanVelScaling">
+        <property name="inputMethodHints">
+         <set>Qt::ImhDigitsOnly</set>
+        </property>
+        <property name="inputMask">
+         <string/>
+        </property>
+        <property name="text">
+         <string/>
+        </property>
+        <property name="maxLength">
+         <number>8</number>
+        </property>
+       </widget>
+      </item>
+      <item row="13" column="0">
        <widget class="QLabel" name="stopOnPlanningErrorLabel">
         <property name="text">
          <string>Stop On Plan Error</string>
         </property>
        </widget>
       </item>
-      <item row="12" column="1">
+      <item row="13" column="1">
        <widget class="QCheckBox" name="CheckBoxStopOnPlanningError"/>
       </item>
      </layout>
@@ -341,7 +364,7 @@
     <property name="geometry">
      <rect>
       <x>33</x>
-      <y>500</y>
+      <y>520</y>
       <width>491</width>
       <height>33</height>
      </rect>
