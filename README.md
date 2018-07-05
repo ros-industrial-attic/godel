@@ -1,5 +1,7 @@
 ## Godel
 
+[![Build Status](https://travis-ci.org/ros-industrial-consortium/godel.svg?branch=kinetic-devel)](https://travis-ci.org/ros-industrial-consortium/godel)
+
 Application for demonstrating surface blending with ROS.
 
 Godel: Austrian logician and mathematician http://en.wikipedia.org/wiki/Kurt_G%C3%B6del
