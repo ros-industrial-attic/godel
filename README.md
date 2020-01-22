@@ -14,7 +14,7 @@ Godel: Austrian logician and mathematician http://en.wikipedia.org/wiki/Kurt_G%C
 - Cd into the 'src' directory of your catkin workspace and run the following:
   ```
   wstool init . 
-  wstool merge https://github.com/ros-industrial-consortium/godel/raw/kinetic-devel/godel.rosinstall
+  wstool merge https://github.com/tecnalia-advancedmanufacturing-robotics/godel/raw/kinetic-devel/godel.rosinstall
   wstool update
   rosdep install --from-paths . --ignore-src
   ```
