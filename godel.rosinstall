@@ -1,5 +1,5 @@
 - git: {local-name: godel_openvoronoi, uri: 'https://github.com/ros-industrial-consortium/godel_openvoronoi.git', version: hydro-devel}
-- git: {local-name: godel, uri: 'https://github.com/ros-industrial-consortium/godel.git', version: kinetic-devel}
+- git: {local-name: godel, uri: 'https://github.com/tecnalia-advancedmanufacturing-robotics/godel.git', version: kinetic-devel}
 - git: {local-name: industrial_core, uri: 'https://github.com/ros-industrial/industrial_core.git', version: kinetic-devel}
 - git: {local-name: keyence_experimental, uri: 'https://github.com/ros-industrial/keyence_experimental.git', version: kinetic-devel}
 - git: {local-name: libsocket, uri: 'https://github.com/dermesser/libsocket.git', version: master}
@@ -8,4 +8,4 @@
 # Custom abb until Kinetic release happens
 - git: {local-name: abb, uri: 'https://github.com/ros-industrial/abb.git', version: kinetic-devel}
 # Custom descartes until we get changes merged in
-- git: {local-name: descartes, uri: 'https://github.com/Jmeyer1292/descartes.git', version: godel_refactor_omp}
+- git: {local-name: descartes, uri: 'https://github.com/tecnalia-advancedmanufacturing-robotics/descartes.git', version: godel_refactor_omp}
