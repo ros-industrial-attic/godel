@@ -1,0 +1,16 @@
+on: [push]
+
+jobs:
+  catkin-build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout repo
+        uses: actions/checkout@v1
+        with:
+          fetch-depth: 1
+        id: checkout
+      - name: build image
+        run: docker build -t godel -f .
+      - name: image details
+        run: docker images
+
