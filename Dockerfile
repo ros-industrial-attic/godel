@@ -16,4 +16,4 @@ RUN wstool init --shallow src src/godel/godel.repos
 
 RUN bash -c "source /opt/ros/$ROS_DISTRO/setup.bash && apt update && rosdep install -y --ignore-packages-from-source --from-paths $CATKIN_WS/src"
 
-RUN bash -c "source /opt/ros/$ROS_DISTRO/setup.bash && catkin build"
+RUN bash -c "source /opt/ros/$ROS_DISTRO/setup.bash && catkin build --no-status"
