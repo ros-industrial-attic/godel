@@ -10,6 +10,5 @@ install(DIRECTORY
   launch
   rviz
   urdf
-  yaml
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

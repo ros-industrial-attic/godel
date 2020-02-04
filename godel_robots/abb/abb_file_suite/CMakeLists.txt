@@ -18,15 +18,15 @@ generate_messages(
 )
 
 catkin_package(
-  INCLUDE_DIRS 
-    include 
+  INCLUDE_DIRS
+    include
     rapid_generator/include
-  LIBRARIES 
+  LIBRARIES
     ros_abb_ftp_interface
     rapid_generator
-  CATKIN_DEPENDS 
-    roscpp 
-    trajectory_msgs 
+  CATKIN_DEPENDS
+    roscpp
+    trajectory_msgs
     message_runtime
   DEPENDS
     curl

@@ -12,9 +12,9 @@ find_package(catkin REQUIRED COMPONENTS
 )
 
 catkin_package(
-  INCLUDE_DIRS 
+  INCLUDE_DIRS
     include
-  CATKIN_DEPENDS 
+  CATKIN_DEPENDS
     abb_file_suite
     godel_msgs
     godel_utils
@@ -28,20 +28,20 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 
-add_executable(abb_blend_process_service_node 
-  src/abb_blend_process_service_node.cpp 
+add_executable(abb_blend_process_service_node
+  src/abb_blend_process_service_node.cpp
   src/abb_blend_process_service.cpp
   src/process_utils.cpp
 )
 
 add_executable(blend_process_service_node
-  src/blend_process_service_node.cpp 
-  src/blend_process_service.cpp 
+  src/blend_process_service_node.cpp
+  src/blend_process_service.cpp
   src/process_utils.cpp
 )
 
-add_executable(keyence_process_service_node 
-  src/keyence_process_service_node.cpp 
+add_executable(keyence_process_service_node
+  src/keyence_process_service_node.cpp
   src/keyence_process_service.cpp
   src/process_utils.cpp
 )

@@ -117,3 +117,17 @@ catkin_add_gtest(test_PolygonUtils test/test_polygon_utils.cpp)
 target_link_libraries(test_PolygonUtils
                       polygon_utils
 )
+
+#############
+## Install ##
+#############
+
+install(TARGETS polygon_utils process_path process_path_generator
+  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+)
+
+install(DIRECTORY include/${PROJECT_NAME}/
+  DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
