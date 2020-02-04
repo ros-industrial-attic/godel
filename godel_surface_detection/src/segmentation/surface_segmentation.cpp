@@ -8,6 +8,7 @@
 #include <pcl/filters/extract_indices.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/filters/project_inliers.h>
+#include <pcl/search/impl/search.hpp>
 #include <ros/io.h>
 #include <thread>
 
