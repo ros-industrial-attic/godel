@@ -2,20 +2,20 @@
 <package format="2">
   <name>godel_surface_detection</name>
   <version>0.1.0</version>
-  
+
   <description>
     This package houses the primary blending "server" that is responsible for
     making the whole system go. It is actuated via service calls and farms out
-    jobs to the many planning and execution components of the Godel project. 
+    jobs to the many planning and execution components of the Godel project.
   </description>
 
   <maintainer email="jnicho@swri.org">jnicho</maintainer>
   <maintainer email="jmeyer@swri.org">Jonathan Meyer</maintainer>
-  
+
   <license>Apache 2.0</license>
 
   <buildtool_depend>catkin</buildtool_depend>
-  
+
   <depend>pcl_msgs</depend>
   <depend>pcl_ros</depend>
   <depend>roscpp</depend>
@@ -34,5 +34,7 @@
   <depend>swri_profiler</depend>
 
   <build_depend>moveit_ros_move_group</build_depend>
+
+  <exec_depend>godel_polygon_offset</exec_depend>
 
 </package>
