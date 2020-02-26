@@ -23,7 +23,7 @@ void openveronoi::ScanPlanner::init(pcl::PolygonMesh mesh)
   mesh_ = mesh;
 }
 
-bool openveronoi::ScanPlanner::generatePath(std::vector<geometry_msgs::PoseArray>& path)
+bool openveronoi::ScanPlanner::generatePath(const godel_msgs::PathPlanningParameters &params,std::vector<geometry_msgs::PoseArray>& path)
 {
   using godel_process_path::PolygonBoundaryCollection;
   using godel_process_path::PolygonBoundary;
@@ -33,21 +33,33 @@ bool openveronoi::ScanPlanner::generatePath(std::vector<geometry_msgs::PoseArray
   std::unique_ptr<mesh_importer::MeshImporter> mesh_importer_ptr(new mesh_importer::MeshImporter(false));
 
   ros::NodeHandle nh;
-  godel_msgs::PathPlanningParameters params;
-  try
+  godel_msgs::PathPlanningParameters params_;
+  bool params_is_ok = params.tool_radius >= 0. &&                     /*tool must be real*/
+           params.margin >= 0. &&                          /*negative margin is dangerous*/
+           params.overlap < 2. * params.tool_radius &&           /*offset must increment inward*/
+           (params.tool_radius != 0. || params.overlap != 0.) && /*offset must be positive*/
+           params.traverse_height >= 0.;
+  if (!params_is_ok)
   {
-    nh.getParam(DISCRETIZATION, params.discretization);
-    nh.getParam(MARGIN, params.margin);
-    nh.getParam(OVERLAP, params.overlap);
-    nh.getParam(SAFE_TRAVERSE_HEIGHT, params.traverse_height);
-    nh.getParam(SCAN_WIDTH, params.scan_width);
-    nh.getParam(TOOL_RADIUS, params.tool_radius);
+    try
+    {
+      nh.getParam(DISCRETIZATION, params_.discretization);
+      nh.getParam(MARGIN, params_.margin);
+      nh.getParam(OVERLAP, params_.overlap);
+      nh.getParam(SAFE_TRAVERSE_HEIGHT, params_.traverse_height);
+      nh.getParam(SCAN_WIDTH, params_.scan_width);
+      ROS_ERROR_STREAM("params_.tool_radius = " << params_.tool_radius);
+      nh.getParam(TOOL_RADIUS, params_.tool_radius);
+      ROS_ERROR_STREAM("params_.tool_radius = " << params_.tool_radius);
+    }
+    catch(const std::exception& e)
+    {
+      ROS_ERROR_STREAM("Unable to populate path planning parameters" << e.what());
+      return false;
+    }
   }
-  catch(const std::exception& e)
-  {
-    ROS_ERROR_STREAM("Unable to populate path planning parameters" << e.what());
-    return false;
-  }
+  else
+    params_=params;
 
   // 0 - Calculate boundaries for a surface
   if (mesh_importer_ptr->calculateSimpleBoundary(mesh_))

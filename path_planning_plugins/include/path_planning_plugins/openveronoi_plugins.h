@@ -51,12 +51,12 @@ namespace openveronoi
   class BlendPlanner : public path_planning_plugins_base::PathPlanningBase
   {
   private:
-    pcl::PolygonMesh mesh_;    
+    pcl::PolygonMesh mesh_;
 
   public:
     BlendPlanner() {}
     void init(pcl::PolygonMesh mesh);
-    bool generatePath(std::vector<geometry_msgs::PoseArray>& path);
+    bool generatePath(const godel_msgs::PathPlanningParameters &params, std::vector<geometry_msgs::PoseArray>& path);
   };
 
   class ScanPlanner : public path_planning_plugins_base::PathPlanningBase
@@ -67,7 +67,7 @@ namespace openveronoi
   public:
     ScanPlanner() {}
     void init(pcl::PolygonMesh mesh);
-    bool generatePath(std::vector<geometry_msgs::PoseArray>& path);
+    bool generatePath(const godel_msgs::PathPlanningParameters &params, std::vector<geometry_msgs::PoseArray>& path);
   };
 }
 }
