@@ -34,11 +34,11 @@ if(OPENMP_FOUND)
 endif()
 
 catkin_package(
-  INCLUDE_DIRS 
+  INCLUDE_DIRS
     include
-  LIBRARIES 
+  LIBRARIES
     ${PROJECT_NAME}
-  CATKIN_DEPENDS 
+  CATKIN_DEPENDS
     pcl_msgs
     pcl_ros
     roscpp
@@ -67,7 +67,7 @@ include_directories(
 )
 
 ## Declare a cpp library
-add_library(${PROJECT_NAME} 
+add_library(${PROJECT_NAME}
   src/detection/surface_detection.cpp
   src/segmentation/surface_segmentation.cpp
   src/coordination/data_coordinator.cpp
@@ -106,3 +106,5 @@ install(TARGETS ${PROJECT_NAME}
   LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
   RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
 )
+
+install(DIRECTORY launch DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
