@@ -20,8 +20,8 @@ catkin_package(
     descartes_moveit
     descartes_planner
     descartes_trajectory
-    godel_msgs 
-    moveit_ros_planning_interface 
+    godel_msgs
+    moveit_ros_planning_interface
     roscpp
 )
 
@@ -35,7 +35,7 @@ include_directories(
 )
 
 ## Declare a cpp executable
-add_executable(godel_process_planning_node 
+add_executable(godel_process_planning_node
   src/blend_process_planning.cpp
   src/common_utils.cpp
   src/godel_process_planning.cpp
@@ -77,3 +77,5 @@ install(DIRECTORY include/${PROJECT_NAME}/
 install(DIRECTORY launch
   DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+
+install(DIRECTORY config DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION})
