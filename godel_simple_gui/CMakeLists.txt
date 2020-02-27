@@ -105,10 +105,10 @@ add_library(${PROJECT_NAME}
   ${godel_simple_gui_SRCS}
 )
 
-target_link_libraries(${PROJECT_NAME} 
+target_link_libraries(${PROJECT_NAME}
                       ${catkin_LIBRARIES}
                       Qt5::Widgets
-                      Qt5::Gui 
+                      Qt5::Gui
                       )
 
 add_dependencies(${PROJECT_NAME} godel_msgs_generate_messages_cpp)
@@ -124,4 +124,11 @@ install(TARGETS ${PROJECT_NAME}
 
 install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
+)
+
+install(
+  FILES
+  plugin.xml
+  DESTINATION
+  ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )

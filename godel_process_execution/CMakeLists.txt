@@ -64,3 +64,7 @@ target_link_libraries(blend_process_service_node
 target_link_libraries(keyence_process_service_node
   ${catkin_LIBRARIES}
 )
+
+install(TARGETS abb_blend_process_service_node blend_process_service_node keyence_process_service_node
+  RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)

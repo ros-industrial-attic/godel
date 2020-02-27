@@ -53,3 +53,10 @@ install(DIRECTORY include/${PROJECT_NAME}/
   FILES_MATCHING PATTERN "*.h"
   PATTERN ".svn" EXCLUDE
 )
+
+install(
+  FILES
+  abb_irb2400_descartes_plugins.xml
+  DESTINATION
+  ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)

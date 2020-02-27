@@ -37,7 +37,7 @@ set(godel_plugins_HDRS
 )
 
 set(godel_plugins_UIS
-  src/widgets/robot_blending_plugin.ui 
+  src/widgets/robot_blending_plugin.ui
   src/widgets/robot_scan_configuration.ui
   src/widgets/pose_widget.ui
   src/widgets/surface_detection_configuration.ui
@@ -51,14 +51,14 @@ set(godel_plugins_INCLUDE_DIRECTORIES
 )
 
 catkin_package(
-  INCLUDE_DIRS 
+  INCLUDE_DIRS
     ${godel_plugins_INCLUDE_DIRECTORIES}
-  LIBRARIES 
+  LIBRARIES
     ${PROJECT_NAME}
-  CATKIN_DEPENDS 
+  CATKIN_DEPENDS
     godel_msgs
     roscpp
-    rqt_gui 
+    rqt_gui
     rqt_gui_cpp
     rviz
 )
@@ -80,8 +80,8 @@ add_library(${PROJECT_NAME}
   ${godel_plugins_SRCS}
 )
 
-target_link_libraries(${PROJECT_NAME} 
-  ${catkin_LIBRARIES} 
+target_link_libraries(${PROJECT_NAME}
+  ${catkin_LIBRARIES}
   Qt5::Widgets
   Qt5::Gui
 )
@@ -103,4 +103,9 @@ install(DIRECTORY include/${PROJECT_NAME}/
   DESTINATION ${CATKIN_PACKAGE_INCLUDE_DESTINATION}
 )
 
-
+install(
+  FILES
+  plugin.xml
+  DESTINATION
+  ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)

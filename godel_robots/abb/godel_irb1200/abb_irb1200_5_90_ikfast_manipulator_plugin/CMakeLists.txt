@@ -38,3 +38,9 @@ install(
   DESTINATION
   ${CATKIN_PACKAGE_SHARE_DESTINATION}
 )
+install(
+  FILES
+  abb_irb1200_manipulator_moveit_ikfast_plugin_description.xml
+  DESTINATION
+  ${CATKIN_PACKAGE_SHARE_DESTINATION}
+)
