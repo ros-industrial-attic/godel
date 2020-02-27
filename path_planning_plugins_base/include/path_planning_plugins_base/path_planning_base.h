@@ -10,7 +10,7 @@ namespace path_planning_plugins_base
   {
   public:
     virtual void init(pcl::PolygonMesh mesh) = 0;
-    virtual bool generatePath(std::vector<geometry_msgs::PoseArray>& path) = 0;
+    virtual bool generatePath(const godel_msgs::PathPlanningParameters &params, std::vector<geometry_msgs::PoseArray>& path) = 0;
   };
 }
 

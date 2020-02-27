@@ -173,6 +173,7 @@ bool SurfaceBlendingService::generateEdgePath(godel_surface_detection::detection
 
 bool
 SurfaceBlendingService::generateProcessPath(const int& id,
+                                            const godel_msgs::PathPlanningParameters &params,
                                             ProcessPathResult& result)
 {
   using godel_surface_detection::detection::CloudRGB;
@@ -184,7 +185,7 @@ SurfaceBlendingService::generateProcessPath(const int& id,
   data_coordinator_.getSurfaceName(id, name);
   data_coordinator_.getSurfaceMesh(id, mesh);
   data_coordinator_.getCloud(godel_surface_detection::data::CloudTypes::surface_cloud, id, *surface_ptr);
-  return generateProcessPath(id, name, mesh, surface_ptr, result);
+  return generateProcessPath(id, name, mesh, surface_ptr, params, result);
 }
 
 static bool generateToolPaths(const godel_msgs::PathPlanningParameters& params,
@@ -196,7 +197,8 @@ static bool generateToolPaths(const godel_msgs::PathPlanningParameters& params,
       loader("path_planning_plugins_base", "path_planning_plugins_base::PathPlanningBase");
   auto planner = loader.createInstance(plugin_name);
   planner->init(mesh);
-  return planner->generatePath(result);
+  //return planner->generatePath(result);
+  return planner->generatePath(params, result);
 }
 
 bool SurfaceBlendingService::generateBlendPath(const godel_msgs::PathPlanningParameters &params,
@@ -244,13 +246,14 @@ SurfaceBlendingService::generateProcessPath(const int& id,
                                             const std::string& name,
                                             const pcl::PolygonMesh& mesh,
                                             godel_surface_detection::detection::CloudRGB::Ptr surface,
+                                            const godel_msgs::PathPlanningParameters &params,
                                             ProcessPathResult& result)
 {
   SWRI_PROFILE("tool-planning");
   std::vector<geometry_msgs::PoseArray> blend_result, edge_result, scan_result;
 
   // Step 1: Generate Blending Paths
-  godel_msgs::PathPlanningParameters params;
+  // godel_msgs::PathPlanningParameters params;
   if (!generateBlendPath(params, mesh, blend_result))
   {
     process_planning_feedback_.last_completed = "Failed to generate blend path for surface " + name;
@@ -333,7 +336,7 @@ godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotio
   {
     // Generate motion plan
     ProcessPathResult paths;
-    generateProcessPath(id, paths);
+    generateProcessPath(id, params, paths);
 
     // If planning failed entirely, skip to next
     if(paths.paths.size() == 0)

@@ -136,13 +136,14 @@ private:
   generateMotionLibrary(const godel_msgs::PathPlanningParameters& params);
 
 
-  bool generateProcessPath(const int& id, ProcessPathResult& result);
+  bool generateProcessPath(const int& id, const godel_msgs::PathPlanningParameters &params, ProcessPathResult& result);
 
 
   bool generateProcessPath(const int& id,
                            const std::string& name,
                            const pcl::PolygonMesh& mesh,
                            const godel_surface_detection::detection::CloudRGB::Ptr,
+                           const godel_msgs::PathPlanningParameters &params,
                            ProcessPathResult& result);
 
 
