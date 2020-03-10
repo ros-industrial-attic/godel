@@ -46,9 +46,7 @@ bool openveronoi::BlendPlanner::generatePath(const godel_msgs::PathPlanningParam
       nh.getParam(OVERLAP, params_.overlap);
       nh.getParam(SAFE_TRAVERSE_HEIGHT, params_.traverse_height);
       nh.getParam(SCAN_WIDTH, params_.scan_width);
-      ROS_ERROR_STREAM("params_.tool_radius = " << params_.tool_radius);
       nh.getParam(TOOL_RADIUS, params_.tool_radius);
-      ROS_ERROR_STREAM("params_.tool_radius = " << params_.tool_radius);
     }
     catch(const std::exception& e)
     {
