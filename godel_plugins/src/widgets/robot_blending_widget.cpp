@@ -139,7 +139,7 @@ void RobotBlendingWidget::init()
   // Move to first tab
   ui_.TabWidgetCreateLib->setCurrentIndex(0);
   ROS_INFO_STREAM("Current Index " << ui_.TabWidgetCreateLib->currentIndex());
-  
+
   // Setup timer
   QTimer* timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(update_handler()));
@@ -477,6 +477,29 @@ void RobotBlendingWidget::generate_process_path_handler()
   godel_msgs::ProcessPlanningActionGoal goal;
   goal.goal.use_default_parameters = false;
   goal.goal.params = path_planning_config_window_->params();
+  bool params_is_ok =
+      goal.goal.params.tool_radius >= 0. &&                                     /*tool must be real*/
+      goal.goal.params.margin >= 0. &&                                          /*negative margin is dangerous*/
+      goal.goal.params.overlap < 2. * goal.goal.params.tool_radius &&           /*offset must increment inward*/
+      (goal.goal.params.tool_radius != 0. || goal.goal.params.overlap != 0.) && /*offset must be positive*/
+      goal.goal.params.traverse_height >= 0.;
+  if (!params_is_ok)
+  {
+    try
+    {
+      ros::NodeHandle nh;
+      nh.getParam("/path_planning_params/discretization", goal.goal.params.discretization);
+      nh.getParam("/path_planning_params/margin", goal.goal.params.margin);
+      nh.getParam("/path_planning_params/overlap", goal.goal.params.overlap);
+      nh.getParam("/path_planning_params/safe_traverse_height", goal.goal.params.traverse_height);
+      nh.getParam("/path_planning_params/scan_width", goal.goal.params.scan_width);
+      nh.getParam("/path_planning_params/tool_radius", goal.goal.params.tool_radius);
+    }
+    catch(const std::exception& e)
+    {
+      ROS_ERROR_STREAM("Unable to populate default path planning parameters from ros parameter server!" << e.what());
+    }
+  }
   goal.goal.action = goal.goal.GENERATE_MOTION_PLAN_AND_PREVIEW;
   process_planning_action_client_.sendGoal(
         goal.goal,
@@ -509,7 +532,7 @@ void RobotBlendingWidget::processPlanningActiveCallback()
 
 void RobotBlendingWidget::processPlanningFeedbackCallback(
     const godel_msgs::ProcessPlanningFeedbackConstPtr& feedback)
-{  
+{
   Q_EMIT feedbackReceived(QString::fromStdString((feedback->last_completed).c_str()));
 }
 
