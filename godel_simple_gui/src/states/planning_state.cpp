@@ -34,29 +34,6 @@ void godel_simple_gui::PlanningState::makeRequest(godel_msgs::PathPlanningParame
   godel_msgs::ProcessPlanningGoal goal;
   goal.action = godel_msgs::ProcessPlanningGoal::GENERATE_MOTION_PLAN_AND_PREVIEW;
   goal.params = planning_params;
-  bool params_is_ok =
-      goal.params.tool_radius >= 0. &&                                     /*tool must be real*/
-      goal.params.margin >= 0. &&                                          /*negative margin is dangerous*/
-      goal.params.overlap < 2. * goal.params.tool_radius &&           /*offset must increment inward*/
-      (goal.params.tool_radius != 0. || goal.params.overlap != 0.) && /*offset must be positive*/
-      goal.params.traverse_height >= 0.;
-  if (!params_is_ok)
-  {
-    try
-    {
-      ros::NodeHandle nh;
-      nh.getParam("/path_planning_params/discretization", goal.params.discretization);
-      nh.getParam("/path_planning_params/margin", goal.params.margin);
-      nh.getParam("/path_planning_params/overlap", goal.params.overlap);
-      nh.getParam("/path_planning_params/safe_traverse_height", goal.params.traverse_height);
-      nh.getParam("/path_planning_params/scan_width", goal.params.scan_width);
-      nh.getParam("/path_planning_params/tool_radius", goal.params.tool_radius);
-    }
-    catch(const std::exception& e)
-    {
-      ROS_ERROR_STREAM("Unable to populate default path planning parameters from ros parameter server!" << e.what());
-    }
-  }
   process_planning_action_client_.sendGoal(
         goal,
         boost::bind(&godel_simple_gui::PlanningState::processPlanningDoneCallback, this, _1, _2),
