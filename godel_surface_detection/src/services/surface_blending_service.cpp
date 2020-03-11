@@ -92,7 +92,7 @@ bool SurfaceBlendingService::init()
   ph.param<std::string>("param_cache_prefix", param_cache_prefix_, "");
 
   if (!this->load_path_planning_parameters(param_cache_prefix_ + PATH_PLANNING_PARAMS_FILE))
-    ROS_WARN("Unable to load blending process parameters.");
+    ROS_WARN("Unable to load path planning process parameters.");
 
   if (!this->load_blend_parameters(param_cache_prefix_ + BLEND_PARAMS_FILE))
     ROS_WARN("Unable to load blending process parameters.");
@@ -247,11 +247,20 @@ void SurfaceBlendingService::save_blend_parameters(const std::string& filename)
 
 bool SurfaceBlendingService::load_path_planning_parameters(const std::string & filename)
 {
+  using godel_param_helpers::loadParam;
+
   if(godel_param_helpers::fromFile(filename, path_planning_params_))
   {
     return true;
   }
-  return false;
+  // otherwise default to the parameter server
+  ros::NodeHandle nh ("path_planning_params");
+  return  loadParam(nh, "discretization", path_planning_params_.discretization) &&
+          loadParam(nh, "margin", path_planning_params_.margin) &&
+          loadParam(nh, "overlap", path_planning_params_.overlap) &&
+          loadParam(nh, "safe_traverse_height", path_planning_params_.traverse_height) &&
+          loadParam(nh, "scan_width", path_planning_params_.scan_width) &&
+          loadParam(nh, "tool_radius", path_planning_params_.tool_radius);
 }
 
 
