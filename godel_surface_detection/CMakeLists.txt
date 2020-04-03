@@ -21,6 +21,7 @@ find_package(catkin REQUIRED COMPONENTS
   meshing_plugins_base
   path_planning_plugins_base
   swri_profiler
+  zivid_camera
 )
 
 find_package(Boost REQUIRED COMPONENTS system)
@@ -53,6 +54,7 @@ catkin_package(
     godel_utils
     meshing_plugins_base
     path_planning_plugins_base
+    zivid_camera
 )
 
 

@@ -32,6 +32,7 @@
   <depend>meshing_plugins_base</depend>
   <depend>path_planning_plugins_base</depend>
   <depend>swri_profiler</depend>
+  <depend>zivid_camera</depend>
 
   <build_depend>moveit_ros_move_group</build_depend>
 
