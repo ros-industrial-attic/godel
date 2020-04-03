@@ -46,7 +46,7 @@ namespace scan
 {
 
 const double RobotScan::PLANNING_TIME = 60.0f;
-const double RobotScan::WAIT_MSG_DURATION = 5.0f;
+const double RobotScan::WAIT_MSG_DURATION = 30.0f;
 const double RobotScan::MIN_TRAJECTORY_TIME_STEP = 0.8f; // seconds
 const double RobotScan::EEF_STEP = 0.05f;                // 5cm
 const double RobotScan::MIN_JOINT_VELOCITY = 0.01f;      // rad/sect
@@ -259,10 +259,20 @@ int RobotScan::scan(bool move_only)
 
       if (!move_only)
       {
+        //Calling Zivid camera capture service
+        zivid_camera::Capture capture;
+        ros::service::call("/zivid_camera/capture", capture);
         // get message
         ros::Duration(1.0).sleep();
-        sensor_msgs::PointCloud2ConstPtr msg = ros::topic::waitForMessage<sensor_msgs::PointCloud2>(
-            params_.scan_topic, ros::Duration(WAIT_MSG_DURATION));
+        ROS_INFO_STREAM("Waiting point cloud from topic : "<<params_.scan_topic); // -> params_.scan_topic = sensor_point_cloud
+        sensor_msgs::PointCloud2ConstPtr msg;
+        try {
+          msg = ros::topic::waitForMessage<sensor_msgs::PointCloud2>(
+              params_.scan_topic, ros::Duration(WAIT_MSG_DURATION));
+        }
+        catch ( ros::Exception &e ){
+          ROS_ERROR("Error occured: %s ", e.what());
+        }
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZRGB>());
         tf::StampedTransform source_to_target_tf;
         if (msg)
