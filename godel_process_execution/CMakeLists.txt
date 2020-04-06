@@ -8,7 +8,7 @@ find_package(catkin REQUIRED COMPONENTS
   godel_utils
   industrial_robot_simulator_service
   trajectory_msgs
-  keyence_experimental
+  quelltech_laser_scanner_ros
 )
 
 catkin_package(
@@ -20,7 +20,7 @@ catkin_package(
     godel_utils
     industrial_robot_simulator_service
     trajectory_msgs
-    keyence_experimental
+    quelltech_laser_scanner_ros
 )
 
 include_directories(
@@ -40,9 +40,9 @@ add_executable(blend_process_service_node
   src/process_utils.cpp
 )
 
-add_executable(keyence_process_service_node
-  src/keyence_process_service_node.cpp
-  src/keyence_process_service.cpp
+add_executable(quelltech_process_service_node
+  src/quelltech_process_service_node.cpp
+  src/quelltech_process_service.cpp
   src/process_utils.cpp
 )
 
@@ -50,7 +50,7 @@ add_dependencies(abb_blend_process_service_node ${${PROJECT_NAME}_EXPORTED_TARGE
 
 add_dependencies(blend_process_service_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
-add_dependencies(keyence_process_service_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(quelltech_process_service_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 
 target_link_libraries(abb_blend_process_service_node
@@ -61,10 +61,10 @@ target_link_libraries(blend_process_service_node
   ${catkin_LIBRARIES}
 )
 
-target_link_libraries(keyence_process_service_node
+target_link_libraries(quelltech_process_service_node
   ${catkin_LIBRARIES}
 )
 
-install(TARGETS abb_blend_process_service_node blend_process_service_node keyence_process_service_node
+install(TARGETS abb_blend_process_service_node blend_process_service_node quelltech_process_service_node
   RUNTIME DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

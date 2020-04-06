@@ -33,7 +33,7 @@
 #include <godel_msgs/ScanPlanParameters.h>
 
 #include <godel_msgs/BlendProcessPlanning.h>
-#include <godel_msgs/KeyenceProcessPlanning.h>
+#include <godel_msgs/QuelltechProcessPlanning.h>
 #include <godel_msgs/PathPlanning.h>
 #include <godel_msgs/PathPlanningParameters.h>
 
@@ -200,7 +200,7 @@ private:
   ros::ServiceClient trajectory_planner_client_;
 
   ros::ServiceClient blend_planning_client_;
-  ros::ServiceClient keyence_planning_client_;
+  ros::ServiceClient quelltech_planning_client_;
 
   // Actions offered by this class
   ros::NodeHandle nh_;

@@ -26,7 +26,7 @@ const static std::string JOINT_TOPIC_NAME =
  * @brief Translated an Eigen pose to a Descartes trajectory point appropriate for the BLEND
  * process!
  *        Note that this function is local only to this file, and there is a similar function in
- *        the keyence_process_planning.cpp document.
+ *        the quelltech_process_planning.cpp document.
  * @param pose
  * @param dt The upper limit of time from the previous point to achieve this one
  * @return A descartes trajectory point encapsulating a move to this pose

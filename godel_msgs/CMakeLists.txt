@@ -50,7 +50,7 @@ add_service_files(
   BlendProcessPlanning.srv
   EnsensoCommand.srv
   GetAvailableMotionPlans.srv
-  KeyenceProcessPlanning.srv
+  QuelltechProcessPlanning.srv
   LoadSaveMotionPlan.srv
   OffsetBoundary.srv
   PathPlanning.srv
@@ -64,7 +64,7 @@ add_service_files(
 )
 
 ## Generate added messages and services with any dependencies listed here
-generate_messages(DEPENDENCIES 
+generate_messages(DEPENDENCIES
   actionlib_msgs
   geometry_msgs
   sensor_msgs

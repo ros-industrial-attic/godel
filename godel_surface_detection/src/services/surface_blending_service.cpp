@@ -5,7 +5,7 @@
 
 // Process Planning
 #include <godel_msgs/BlendProcessPlanning.h>
-#include <godel_msgs/KeyenceProcessPlanning.h>
+#include <godel_msgs/QuelltechProcessPlanning.h>
 #include <godel_msgs/PathPlanning.h>
 
 #include <godel_param_helpers/godel_param_helpers.h>
@@ -30,7 +30,7 @@ const static std::string LOAD_SAVE_MOTION_PLAN_SERVICE = "load_save_motion_plan"
 const static std::string BLEND_PROCESS_EXECUTION_SERVICE = "blend_process_execution";
 const static std::string SCAN_PROCESS_EXECUTION_SERVICE = "scan_process_execution";
 const static std::string BLEND_PROCESS_PLANNING_SERVICE = "blend_process_planning";
-const static std::string SCAN_PROCESS_PLANNING_SERVICE = "keyence_process_planning";
+const static std::string SCAN_PROCESS_PLANNING_SERVICE = "quelltech_process_planning";
 
 const static std::string TOOL_PATH_PREVIEW_TOPIC = "tool_path_preview";
 const static std::string EDGE_VISUALIZATION_TOPIC = "edge_visualization";
@@ -158,7 +158,7 @@ bool SurfaceBlendingService::init()
 
   // Process Execution Parameters
   blend_planning_client_ = nh_.serviceClient<godel_msgs::BlendProcessPlanning>(BLEND_PROCESS_PLANNING_SERVICE);
-  keyence_planning_client_ = nh_.serviceClient<godel_msgs::KeyenceProcessPlanning>(SCAN_PROCESS_PLANNING_SERVICE);
+  quelltech_planning_client_ = nh_.serviceClient<godel_msgs::QuelltechProcessPlanning>(SCAN_PROCESS_PLANNING_SERVICE);
 
   // service servers
   surf_blend_parameters_server_ =

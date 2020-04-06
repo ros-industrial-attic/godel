@@ -1,11 +1,11 @@
-#include <godel_process_execution/keyence_process_service.h>
+#include <godel_process_execution/quelltech_process_service.h>
 
 #include <industrial_robot_simulator_service/SimulateTrajectory.h>
 #include <moveit_msgs/ExecuteKnownTrajectory.h>
 
 #include "godel_msgs/TrajectoryExecution.h"
 #include <godel_utils/ensenso_guard.h>
-#include "keyence_experimental/ChangeProgram.h"
+#include <std_srvs/SetBool.h>
 #include <std_srvs/Trigger.h>
 
 #include "process_utils.h"
@@ -14,20 +14,20 @@
 
 #include <ros/topic.h>
 
-const static int KEYENCE_PROGRAM_LASER_ON = 1;
-const static int KEYENCE_PROGRAM_LASER_OFF = 0;
+const static bool QUELLTECH_LASER_ON = true;
+const static bool QUELLTECH_LASER_OFF = false;
 
-const static std::string KEYENCE_PROGRAM_SERVICE_NAME = "change_program";
+const static std::string QUELLTECH_PROGRAM_SERVICE_NAME = "change_program";
 const static std::string EXECUTION_SERVICE_NAME = "path_execution";
 const static std::string SIMULATION_SERVICE_NAME = "simulate_path";
 const static std::string SERVICE_SERVER_NAME = "scan_process_execution";
 const static std::string RESET_SCANS_SERVICE = "reset_scan_server";
 const static std::string PROCESS_EXE_ACTION_SERVER_NAME = "scan_process_execution_as";
 
-godel_process_execution::KeyenceProcessService::KeyenceProcessService(ros::NodeHandle& nh) : nh_(nh),
+godel_process_execution::QuelltechProcessService::QuelltechProcessService(ros::NodeHandle& nh) : nh_(nh),
   process_exe_action_server_(nh_,
                            PROCESS_EXE_ACTION_SERVER_NAME,
-                           boost::bind(&godel_process_execution::KeyenceProcessService::executionCallback, this, _1),
+                           boost::bind(&godel_process_execution::QuelltechProcessService::executionCallback, this, _1),
                            false)
 {
   // Connect to motion servers and I/O server
@@ -36,7 +36,7 @@ godel_process_execution::KeyenceProcessService::KeyenceProcessService(ros::NodeH
 
   real_client_ = nh.serviceClient<godel_msgs::TrajectoryExecution>(EXECUTION_SERVICE_NAME);
 
-  keyence_client_ = nh.serviceClient<keyence_experimental::ChangeProgram>(KEYENCE_PROGRAM_SERVICE_NAME);
+  quelltech_client_ = nh.serviceClient<std_srvs::SetBool>(QUELLTECH_PROGRAM_SERVICE_NAME);
 
   // For reseting the scan server
   reset_scan_server_ = nh.serviceClient<std_srvs::Trigger>(RESET_SCANS_SERVICE);
@@ -46,7 +46,7 @@ godel_process_execution::KeyenceProcessService::KeyenceProcessService(ros::NodeH
 
 }
 
-void godel_process_execution::KeyenceProcessService::executionCallback(
+void godel_process_execution::QuelltechProcessService::executionCallback(
     const godel_msgs::ProcessExecutionGoalConstPtr &goal)
 {
   godel_msgs::ProcessExecutionResult res;
@@ -62,21 +62,21 @@ void godel_process_execution::KeyenceProcessService::executionCallback(
     }
     else
     {
-      boost::thread(&godel_process_execution::KeyenceProcessService::executeProcess, this, goal);
+      boost::thread(&godel_process_execution::QuelltechProcessService::executeProcess, this, goal);
       res.success = true;
     }
   }
 }
 
-bool godel_process_execution::KeyenceProcessService::executeProcess(
+bool godel_process_execution::QuelltechProcessService::executeProcess(
     const godel_msgs::ProcessExecutionGoalConstPtr &goal)
 {
   ensenso::EnsensoGuard guard;
-  // Check for keyence existence
-  if (!keyence_client_.exists())
+  // Check for quelltech existence
+  if (!quelltech_client_.exists())
   {
-    ROS_ERROR_STREAM("Keyence ROS server is not available on service "
-                      << keyence_client_.getService());
+    ROS_ERROR_STREAM("Quelltech ROS server is not available on service "
+                      << quelltech_client_.getService());
     return false;
   }
 
@@ -103,12 +103,12 @@ bool godel_process_execution::KeyenceProcessService::executeProcess(
     return false;
   }
 
-  keyence_experimental::ChangeProgram keyence_srv;
-  keyence_srv.request.program_no = KEYENCE_PROGRAM_LASER_ON;
+  std_srvs::SetBool quelltech_srv;
+  quelltech_srv.request.data = QUELLTECH_LASER_ON;
 
-  if (!keyence_client_.call(keyence_srv))
+  if (!quelltech_client_.call(quelltech_srv))
   {
-    ROS_ERROR_STREAM("Unable to activate keyence (program " << KEYENCE_PROGRAM_LASER_ON << ").");
+    ROS_ERROR_STREAM("Unable to activate quelltech (program " << QUELLTECH_LASER_ON << ").");
     return false;
   }
 
@@ -118,11 +118,11 @@ bool godel_process_execution::KeyenceProcessService::executeProcess(
     return false;
   }
 
-  // Turn keyence off
-  keyence_srv.request.program_no = KEYENCE_PROGRAM_LASER_OFF;
-  if (!keyence_client_.call(keyence_srv))
+  // Turn quelltech off
+  quelltech_srv.request.data = QUELLTECH_LASER_OFF;
+  if (!quelltech_client_.call(quelltech_srv))
   {
-    ROS_ERROR_STREAM("Unable to de-activate keyence (program " << KEYENCE_PROGRAM_LASER_OFF
+    ROS_ERROR_STREAM("Unable to de-activate quelltech (program " << QUELLTECH_LASER_OFF
                                                               << ").");
     return false;
   }
@@ -136,7 +136,7 @@ bool godel_process_execution::KeyenceProcessService::executeProcess(
   return true;
 }
 
-bool godel_process_execution::KeyenceProcessService::simulateProcess(
+bool godel_process_execution::QuelltechProcessService::simulateProcess(
     const godel_msgs::ProcessExecutionGoalConstPtr &goal)
 {
   using industrial_robot_simulator_service::SimulateTrajectory;

@@ -18,7 +18,7 @@
   <depend>godel_utils</depend>
   <depend>industrial_robot_simulator_service</depend>
   <depend>trajectory_msgs</depend>
-  <depend>keyence_experimental</depend>
+  <depend>quelltech_laser_scanner_ros</depend>
   <depend>swri_profiler</depend>
 
 </package>
