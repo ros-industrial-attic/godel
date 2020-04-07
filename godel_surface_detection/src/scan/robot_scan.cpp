@@ -26,6 +26,15 @@
 #include <moveit/trajectory_processing/iterative_time_parameterization.h>
 #include <godel_param_helpers/godel_param_helpers.h>
 
+#define CHECK(cmd)                                                                                                     \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (!cmd)                                                                                                          \
+    {                                                                                                                  \
+      throw std::runtime_error{ "\"" #cmd "\" failed!" };                                                              \
+    }                                                                                                                  \
+  } while (false)
+
 static const std::string DEFAULT_MOVEIT_PLANNER = "RRTConnectkConfigDefault";
 
 static bool loadPoseParam(ros::NodeHandle& nh, const std::string& name, geometry_msgs::Pose& pose)
