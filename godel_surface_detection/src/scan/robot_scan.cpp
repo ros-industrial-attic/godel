@@ -265,12 +265,23 @@ int RobotScan::scan(bool move_only)
           continue;
         }
       }
+      if (!move_only)
+      {
+        CHECK(ros::service::waitForService("/zivid_camera/capture_assistant/suggest_settings", WAIT_MSG_DURATION));
+        zivid_camera::CaptureAssistantSuggestSettings cass;
+        cass.request.max_capture_time = ros::Duration{ 1.20 };
+        cass.request.ambient_light_frequency =
+          zivid_camera::CaptureAssistantSuggestSettings::Request::AMBIENT_LIGHT_FREQUENCY_NONE;
+
+        ROS_INFO_STREAM("Calling " << "/zivid_camera/capture_assistant/suggest_settings"
+                                   << " with max capture time = " << cass.request.max_capture_time << " sec");
+        CHECK(ros::service::call("/zivid_camera/capture_assistant/suggest_settings", cass));
+      }
 
       if (!move_only)
       {
         //Calling Zivid camera capture service
         zivid_camera::Capture capture;
-        ros::service::call("/zivid_camera/capture", capture);
         CHECK(ros::service::call("/zivid_camera/capture", capture));
         // get message
         ros::Duration(1.0).sleep();

@@ -26,7 +26,9 @@
 #include <sensor_msgs/PointCloud2.h>
 #include <geometry_msgs/PoseArray.h>
 #include <godel_msgs/RobotScanParameters.h>
+
 #include <zivid_camera/Capture.h>
+#include <zivid_camera/CaptureAssistantSuggestSettings.h>
 
 #ifndef ROBOT_SCAN_H_
 #define ROBOT_SCAN_H_
