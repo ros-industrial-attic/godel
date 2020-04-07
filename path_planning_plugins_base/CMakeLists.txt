@@ -26,6 +26,7 @@ catkin_package(
     geometry_msgs
     pcl_ros
     roscpp
+    godel_msgs
 )
 
 ###########

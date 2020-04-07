@@ -3,6 +3,7 @@
 
 #include <geometry_msgs/PoseArray.h>
 #include <pcl/PolygonMesh.h>
+#include "godel_msgs/PathPlanningParameters.h"
 
 namespace path_planning_plugins_base
 {
