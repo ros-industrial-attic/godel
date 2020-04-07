@@ -271,6 +271,7 @@ int RobotScan::scan(bool move_only)
         //Calling Zivid camera capture service
         zivid_camera::Capture capture;
         ros::service::call("/zivid_camera/capture", capture);
+        CHECK(ros::service::call("/zivid_camera/capture", capture));
         // get message
         ros::Duration(1.0).sleep();
         ROS_INFO_STREAM("Waiting point cloud from topic : "<<params_.scan_topic); // -> params_.scan_topic = sensor_point_cloud
