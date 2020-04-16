@@ -1,5 +1,5 @@
-#ifndef KEYENCE_PROCESS_SERVICE_H
-#define KEYENCE_PROCESS_SERVICE_H
+#ifndef QUELLTECH_PROCESS_SERVICE_H
+#define QUELLTECH_PROCESS_SERVICE_H
 
 #include <ros/ros.h>
 #include <actionlib/server/simple_action_server.h>
@@ -8,10 +8,10 @@
 namespace godel_process_execution
 {
 
-class KeyenceProcessService
+class QuelltechProcessService
 {
 public:
-  KeyenceProcessService(ros::NodeHandle& nh);
+  QuelltechProcessService(ros::NodeHandle& nh);
 
   /**
    * Currently forwards the godel_msgs::TrajectoryExecution on to the corresponding
@@ -27,9 +27,9 @@ private:
   ros::ServiceClient real_client_;
   ros::ServiceClient sim_client_;
   actionlib::SimpleActionServer<godel_msgs::ProcessExecutionAction> process_exe_action_server_;
-  ros::ServiceClient keyence_client_;
+  ros::ServiceClient quelltech_client_;
   ros::ServiceClient reset_scan_server_;
 };
 }
 
-#endif // KEYENCE_PROCESS_SERVICE_H
+#endif // QUELLTECH_PROCESS_SERVICE_H

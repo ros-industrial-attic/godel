@@ -1,5 +1,5 @@
 /**
- * This defines some utilities for generating keyence scan paths from a
+ * This defines some utilities for generating quelltech scan paths from a
  * polygon boundary.
  *
  * The input is a PolygonBoundary which defines the 2d points comprising

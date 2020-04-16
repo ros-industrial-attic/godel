@@ -1,10 +1,10 @@
 #include <ros/ros.h>
 
-#include "godel_scan_analysis/keyence_scan_server.h"
+#include "godel_scan_analysis/quelltech_scan_server.h"
 #include <std_srvs/Trigger.h>
 
 const static std::string DEFAULT_WORLD_FRAME = "world_frame";
-const static std::string DEFAULT_SCAN_FRAME = "keyence_sensor_optical_frame";
+const static std::string DEFAULT_SCAN_FRAME = "quelltech_sensor_optical_frame";
 const static double VOXEL_GRID_LEAF_SIZE = 0.005;    // 5 mm
 const static double VOXEL_GRID_PUBLISH_PERIOD = 2.0; // seconds
 

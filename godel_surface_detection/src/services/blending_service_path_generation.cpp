@@ -23,8 +23,8 @@ const static double BLEND_TRAJECTORY_ANGLE_DISC = M_PI / 10.0;
 // Temporary constants for storing scan path planning parameters
 // Will be replaced by loadable, savable parameters
 const static std::string SCAN_TRAJECTORY_BAGFILE = "scan_trajectory.bag";
-const static std::string SCAN_TRAJECTORY_GROUP_NAME = "manipulator_keyence";
-const static std::string SCAN_TRAJECTORY_TOOL_FRAME = "keyence_tcp_frame";
+const static std::string SCAN_TRAJECTORY_GROUP_NAME = "manipulator_quelltech";
+const static std::string SCAN_TRAJECTORY_TOOL_FRAME = "quelltech_tcp_frame";
 const static std::string SCAN_TRAJECTORY_WORLD_FRAME = "world_frame";
 const static double SCAN_TRAJECTORY_ANGLE_DISC = 0.2;
 
@@ -438,11 +438,11 @@ SurfaceBlendingService::generateProcessPlan(const std::string& name,
   }
   else
   {
-    godel_msgs::KeyenceProcessPlanning srv;
+    godel_msgs::QuelltechProcessPlanning srv;
     srv.request.path.segments = poses;
     srv.request.params = scan_params;
 
-    success = keyence_planning_client_.call(srv);
+    success = quelltech_planning_client_.call(srv);
     process_plan = srv.response.plan;
   }
 

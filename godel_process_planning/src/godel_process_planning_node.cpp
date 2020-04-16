@@ -4,7 +4,7 @@
 
 // Globals
 const static std::string DEFAULT_BLEND_PLANNING_SERVICE = "blend_process_planning";
-const static std::string DEFAULT_KEYENCE_PLANNING_SERVICE = "keyence_process_planning";
+const static std::string DEFAULT_QUELLTECH_PLANNING_SERVICE = "quelltech_process_planning";
 
 int main(int argc, char** argv)
 {
@@ -12,12 +12,12 @@ int main(int argc, char** argv)
 
   // Load local parameters
   ros::NodeHandle nh, pnh("~");
-  std::string world_frame, blend_group, keyence_group, blend_tcp, keyence_tcp, robot_model_plugin;
+  std::string world_frame, blend_group, quelltech_group, blend_tcp, quelltech_tcp, robot_model_plugin;
   pnh.param<std::string>("world_frame", world_frame, "world_frame");
   pnh.param<std::string>("blend_group", blend_group, "manipulator_tcp");
-  pnh.param<std::string>("keyence_group", keyence_group, "manipulator_keyence");
+  pnh.param<std::string>("quelltech_group", quelltech_group, "manipulator_quelltech");
   pnh.param<std::string>("blend_tcp", blend_tcp, "tcp_frame");
-  pnh.param<std::string>("keyence_tcp", keyence_tcp, "keyence_tcp_frame");
+  pnh.param<std::string>("quelltech_tcp", quelltech_tcp, "quelltech_tcp_frame");
   pnh.param<std::string>("robot_model_plugin", robot_model_plugin, "");
 
   // IK Plugin parameter must be specified
@@ -32,13 +32,13 @@ int main(int argc, char** argv)
   // Creates a planning manager that will create the appropriate planning classes and perform
   // all required initialization. It exposes member functions to handle each kind of processing
   // event.
-  ProcessPlanningManager manager(world_frame, blend_group, blend_tcp, keyence_group, keyence_tcp,
+  ProcessPlanningManager manager(world_frame, blend_group, blend_tcp, quelltech_group, quelltech_tcp,
                                  robot_model_plugin);
   // Plumb in the appropriate ros services
   ros::ServiceServer blend_server = nh.advertiseService(
       DEFAULT_BLEND_PLANNING_SERVICE, &ProcessPlanningManager::handleBlendPlanning, &manager);
-  ros::ServiceServer keyence_server = nh.advertiseService(
-      DEFAULT_KEYENCE_PLANNING_SERVICE, &ProcessPlanningManager::handleKeyencePlanning, &manager);
+  ros::ServiceServer quelltech_server = nh.advertiseService(
+      DEFAULT_QUELLTECH_PLANNING_SERVICE, &ProcessPlanningManager::handleQuelltechPlanning, &manager);
 
   // Serve and wait for shutdown
   ROS_INFO_STREAM("Godel Process Planning Server Online");

@@ -20,10 +20,10 @@ include_directories(
   include
 )
 
-add_executable(godel_scan_analysis_node 
+add_executable(godel_scan_analysis_node
   src/godel_scan_analysis_node.cpp
   src/scan_roughness_scoring.cpp
-  src/keyence_scan_server.cpp
+  src/quelltech_scan_server.cpp
 )
 
 target_link_libraries(godel_scan_analysis_node

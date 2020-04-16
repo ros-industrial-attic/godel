@@ -40,7 +40,7 @@ add_executable(godel_process_planning_node
   src/common_utils.cpp
   src/godel_process_planning.cpp
   src/godel_process_planning_node.cpp
-  src/keyence_process_planning.cpp
+  src/quelltech_process_planning.cpp
   src/trajectory_utils.cpp
   src/generate_motion_plan.cpp
   src/path_transitions.cpp

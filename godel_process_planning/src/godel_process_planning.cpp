@@ -3,10 +3,10 @@
 
 godel_process_planning::ProcessPlanningManager::ProcessPlanningManager(
     const std::string& world_frame, const std::string& blend_group, const std::string& blend_tcp,
-    const std::string& keyence_group, const std::string& keyence_tcp,
+    const std::string& quelltech_group, const std::string& quelltech_tcp,
     const std::string& robot_model_plugin)
     : plugin_loader_("descartes_core", "descartes_core::RobotModel"),
-      blend_group_name_(blend_group), keyence_group_name_(keyence_group)
+      blend_group_name_(blend_group), quelltech_group_name_(quelltech_group)
 {
   // Attempt to load and initialize the blending robot model
   blend_model_ = plugin_loader_.createInstance(robot_model_plugin);
@@ -20,14 +20,14 @@ godel_process_planning::ProcessPlanningManager::ProcessPlanningManager(
     throw std::runtime_error("Unable to initialize blending robot model");
   }
 
-  // Attempt to load and initialize the scanning/keyence robot model
-  keyence_model_ = plugin_loader_.createInstance(robot_model_plugin);
-  if (!keyence_model_)
+  // Attempt to load and initialize the scanning/quelltech robot model
+  quelltech_model_ = plugin_loader_.createInstance(robot_model_plugin);
+  if (!quelltech_model_)
   {
     throw std::runtime_error(std::string("Could not load: ") + robot_model_plugin);
   }
 
-  if (!keyence_model_->initialize("robot_description", keyence_group, world_frame, keyence_tcp))
+  if (!quelltech_model_->initialize("robot_description", quelltech_group, world_frame, quelltech_tcp))
   {
     throw std::runtime_error("Unable to initialize scanning robot model");
   }
