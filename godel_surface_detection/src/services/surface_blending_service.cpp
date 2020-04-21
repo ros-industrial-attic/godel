@@ -26,6 +26,7 @@ const static std::string PATH_EXECUTION_SERVICE = "path_execution";
 const static std::string GET_MOTION_PLANS_SERVICE = "get_available_motion_plans";
 const static std::string SELECT_MOTION_PLAN_SERVICE = "select_motion_plan";
 const static std::string LOAD_SAVE_MOTION_PLAN_SERVICE = "load_save_motion_plan";
+const static std::string SET_SCAN_POSES_SERVICE = "set_scan_poses";
 
 const static std::string BLEND_PROCESS_EXECUTION_SERVICE = "blend_process_execution";
 const static std::string SCAN_PROCESS_EXECUTION_SERVICE = "scan_process_execution";
@@ -179,6 +180,10 @@ bool SurfaceBlendingService::init()
 
   rename_suface_server_ = nh_.advertiseService(RENAME_SURFACE_SERVICE,
                                               &SurfaceBlendingService::renameSurfaceCallback, this);
+
+  set_scan_poses_ = nh_.advertiseService(SET_SCAN_POSES_SERVICE,
+                                              &SurfaceBlendingService::setScanPosesCallback, this);
+
 
   // publishers
   selected_surf_changed_pub_ = nh_.advertise<godel_msgs::SelectedSurfacesChanged>(SELECTED_SURFACES_CHANGED_TOPIC, 1);
@@ -774,6 +779,14 @@ bool SurfaceBlendingService::renameSurfaceCallback(godel_msgs::RenameSurface::Re
 
   ROS_WARN_STREAM("Surface rename failed");
   return false;
+}
+
+bool SurfaceBlendingService::setScanPosesCallback(godel_msgs::SetScanPoses::Request& req,
+                                                   godel_msgs::SetScanPoses::Response& res)
+{
+  robot_scan_.set_scan_poses(req.poses);
+  res.result = true;
+  return true;
 }
 
 void SurfaceBlendingService::visualizePaths()

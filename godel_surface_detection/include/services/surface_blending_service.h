@@ -31,6 +31,7 @@
 #include <godel_msgs/ProcessPlan.h>
 #include <godel_msgs/RenameSurface.h>
 #include <godel_msgs/ScanPlanParameters.h>
+#include <godel_msgs/SetScanPoses.h>
 
 #include <godel_msgs/BlendProcessPlanning.h>
 #include <godel_msgs/QuelltechProcessPlanning.h>
@@ -176,6 +177,9 @@ private:
   bool renameSurfaceCallback(godel_msgs::RenameSurface::Request& req,
                              godel_msgs::RenameSurface::Response& res);
 
+  bool setScanPosesCallback(godel_msgs::SetScanPoses::Request& req,
+                             godel_msgs::SetScanPoses::Response& res);
+
   void visualizePaths();
 
   void visualizePathPoses();
@@ -194,6 +198,7 @@ private:
   ros::ServiceServer get_motion_plans_server_;
   ros::ServiceServer load_save_motion_plan_server_;
   ros::ServiceServer rename_suface_server_;
+  ros::ServiceServer set_scan_poses_;
 
   // Services subscribed to by this class
   ros::ServiceClient process_path_client_;

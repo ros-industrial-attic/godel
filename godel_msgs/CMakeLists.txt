@@ -61,6 +61,7 @@ add_service_files(
   SurfaceBlendingParameters.srv
   TrajectoryExecution.srv
   TrajectoryPlanning.srv
+  SetScanPoses.srv
 )
 
 ## Generate added messages and services with any dependencies listed here
