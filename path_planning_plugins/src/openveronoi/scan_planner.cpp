@@ -78,7 +78,7 @@ bool openveronoi::ScanPlanner::generatePath(const godel_msgs::PathPlanningParame
     geometry_msgs::PoseArray scan_poses;
 
     // 4 - Generate scan polygon boundary
-    PolygonBoundary scan_boundary = scan::generateProfilometerScanPath(filtered_boundaries.front(), params);
+    PolygonBoundary scan_boundary = scan::generateProfilometerScanPath(filtered_boundaries.front(), params_);
 
     // 5 - Get boundary pose eigen
     Eigen::Affine3d boundary_pose_eigen;
