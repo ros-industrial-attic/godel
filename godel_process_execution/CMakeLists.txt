@@ -8,7 +8,6 @@ find_package(catkin REQUIRED COMPONENTS
   godel_utils
   industrial_robot_simulator_service
   trajectory_msgs
-  quelltech_laser_scanner_ros
 )
 
 catkin_package(
@@ -20,7 +19,6 @@ catkin_package(
     godel_utils
     industrial_robot_simulator_service
     trajectory_msgs
-    quelltech_laser_scanner_ros
 )
 
 include_directories(
