@@ -195,7 +195,6 @@ void RobotScan::set_scan_poses(const geometry_msgs::PoseArray& poses)
   {
     scan_traj_poses_.push_back(poses.poses[i]);
   }
-  //move_group_ptr_->setEndEffectorLink(params_.tcp_frame);
 }
 
 int RobotScan::scan(bool move_only)
@@ -249,7 +248,11 @@ int RobotScan::scan(bool move_only)
       auto rob_model = move_group_ptr_->getRobotModel();
       moveit::core::RobotState state (rob_model);
       state.setVariablePositions(current_state);
-      state.setFromIK(rob_model->getJointModelGroup(params_.group_name), trajectory_poses[i], params_.tcp_frame);
+      bool ik_res = state.setFromIK(rob_model->getJointModelGroup(params_.group_name), trajectory_poses[i], params_.tcp_frame);
+      if (!ik_res)
+      {
+        continue;
+      }
       std::vector<double> to_goto (state.getVariablePositions(), state.getVariablePositions() + current_state.size());
       move_group_ptr_->setJointValueTarget(to_goto);
 //      move_group_ptr_->setPoseTarget(trajectory_poses[i], params_.tcp_frame);
