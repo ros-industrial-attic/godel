@@ -692,7 +692,7 @@ void SurfaceBlendingService::selectMotionPlansActionCallback(const godel_msgs::S
   if (trajectory_library_.get().find(goal_in->name) == trajectory_library_.get().end())
   {
     ROS_WARN_STREAM("Motion plan " << goal_in->name << " does not exist. Cannot execute.");
-    res.code = godel_msgs::SelectMotionPlanResponse::NO_SUCH_NAME;
+    res.code = godel_msgs::SelectMotionPlanResult::NO_SUCH_NAME;
     select_motion_plan_server_.setAborted(res);
     return;
   }
