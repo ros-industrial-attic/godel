@@ -181,7 +181,7 @@ bool SurfaceBlendingService::init()
   rename_suface_server_ = nh_.advertiseService(RENAME_SURFACE_SERVICE,
                                               &SurfaceBlendingService::renameSurfaceCallback, this);
 
-  set_scan_poses_ = nh_.advertiseService(SET_SCAN_POSES_SERVICE,
+  set_scan_poses_ = ph.advertiseService(SET_SCAN_POSES_SERVICE,
                                               &SurfaceBlendingService::setScanPosesCallback, this);
 
 
