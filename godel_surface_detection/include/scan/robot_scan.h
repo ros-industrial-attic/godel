@@ -65,6 +65,7 @@ public:
   void publish_scan_poses(std::string topic);
   MoveGroupPtr get_move_group();
   bool move_to_pose(geometry_msgs::Pose& target_pose);
+  void set_scan_poses(const geometry_msgs::PoseArray& poses);
   int scan(bool move_only = false);
 
   static void apply_trajectory_parabolic_time_parameterization(
@@ -87,6 +88,9 @@ protected:
 
 public: // parameters
   godel_msgs::RobotScanParameters params_;
+
+private:
+  bool using_custom_scan_poses_;
 };
 
 } /* namespace detection */

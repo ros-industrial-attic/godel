@@ -1,0 +1,6 @@
+geometry_msgs/PoseArray poses
+---
+bool result
+
+
+

@@ -70,6 +70,7 @@ RobotScan::RobotScan()
   params_.reachable_scan_points_ratio = 0.5f;
   params_.num_scan_points = 20;
   params_.stop_on_planning_error = true;
+  using_custom_scan_poses_ = false;
 }
 
 bool RobotScan::init()
@@ -143,12 +144,24 @@ bool RobotScan::generate_scan_display_trajectory(moveit_msgs::DisplayTrajectory&
 
 bool RobotScan::generate_scan_poses(geometry_msgs::PoseArray& poses)
 {
-  // create trajectory
-  bool succeeded = true;
-  moveit_msgs::RobotTrajectory robot_traj;
-  succeeded = create_scan_trajectory(poses.poses, robot_traj);
-  poses.header.frame_id = params_.world_frame;
+  bool succeeded = false;
+  poses.poses.clear();
+  if (using_custom_scan_poses_)
+  {
+    for (uint8_t i = 0; i< scan_traj_poses_.size(); i++)
+    {
+      poses.poses.push_back(scan_traj_poses_[i]);
+    }
+    succeeded = true;
+  }
+  else
+  {
+    // create trajectory
+    moveit_msgs::RobotTrajectory robot_traj;
+    succeeded = create_scan_trajectory(poses.poses, robot_traj);
+   }
 
+  poses.header.frame_id = params_.world_frame;
   return succeeded;
 }
 
@@ -174,6 +187,15 @@ bool RobotScan::move_to_pose(geometry_msgs::Pose& target_pose)
   move_group_ptr_->setPoseTarget(target_pose, params_.tcp_frame);
   return static_cast<bool>(move_group_ptr_->move());
 }
+void RobotScan::set_scan_poses(const geometry_msgs::PoseArray& poses)
+{
+  using_custom_scan_poses_ = true;
+  scan_traj_poses_.clear();
+  for (uint8_t i = 0; i < poses.poses.size(); i++)
+  {
+    scan_traj_poses_.push_back(poses.poses[i]);
+  }
+}
 
 int RobotScan::scan(bool move_only)
 {
@@ -185,10 +207,19 @@ int RobotScan::scan(bool move_only)
   path_plan.planning_time_ = PLANNING_TIME;
 
   // create trajectory
-  scan_traj_poses_.clear();
+  bool scan_poses_created = false;
   int poses_reached = 0;
   moveit_msgs::RobotTrajectory robot_traj;
-  if (create_scan_trajectory(scan_traj_poses_, robot_traj))
+  if (using_custom_scan_poses_)
+  {
+    scan_poses_created = true;
+  }
+  else
+  {
+    scan_traj_poses_.clear();
+    scan_poses_created = create_scan_trajectory(scan_traj_poses_, robot_traj);
+  }
+  if (scan_poses_created)
   {
     std::vector<geometry_msgs::Pose> trajectory_poses;
 
@@ -217,7 +248,11 @@ int RobotScan::scan(bool move_only)
       auto rob_model = move_group_ptr_->getRobotModel();
       moveit::core::RobotState state (rob_model);
       state.setVariablePositions(current_state);
-      state.setFromIK(rob_model->getJointModelGroup(params_.group_name), trajectory_poses[i], params_.tcp_frame);
+      bool ik_res = state.setFromIK(rob_model->getJointModelGroup(params_.group_name), trajectory_poses[i], params_.tcp_frame);
+      if (!ik_res)
+      {
+        continue;
+      }
       std::vector<double> to_goto (state.getVariablePositions(), state.getVariablePositions() + current_state.size());
       move_group_ptr_->setJointValueTarget(to_goto);
 //      move_group_ptr_->setPoseTarget(trajectory_poses[i], params_.tcp_frame);
