@@ -265,7 +265,11 @@ int RobotScan::scan(bool move_only)
           continue;
         }
       }
-      if (!move_only)
+
+      bool sim_sensor;
+      ros::NodeHandle nh;
+      nh.getParam("/sim_sensor", sim_sensor);
+      if (!sim_sensor && !move_only)
       {
         CHECK(ros::service::waitForService("/zivid_camera/capture_assistant/suggest_settings", WAIT_MSG_DURATION));
         zivid_camera::CaptureAssistantSuggestSettings cass;
@@ -282,7 +286,8 @@ int RobotScan::scan(bool move_only)
       {
         //Calling Zivid camera capture service
         zivid_camera::Capture capture;
-        CHECK(ros::service::call("/zivid_camera/capture", capture));
+        if(!sim_sensor)
+          CHECK(ros::service::call("/zivid_camera/capture", capture));
         // get message
         ros::Duration(1.0).sleep();
         ROS_INFO_STREAM("Waiting point cloud from topic : "<<params_.scan_topic); // -> params_.scan_topic = sensor_point_cloud
