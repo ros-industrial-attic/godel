@@ -139,7 +139,7 @@ void RobotBlendingWidget::init()
   // Move to first tab
   ui_.TabWidgetCreateLib->setCurrentIndex(0);
   ROS_INFO_STREAM("Current Index " << ui_.TabWidgetCreateLib->currentIndex());
-  
+
   // Setup timer
   QTimer* timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(update_handler()));
@@ -509,7 +509,7 @@ void RobotBlendingWidget::processPlanningActiveCallback()
 
 void RobotBlendingWidget::processPlanningFeedbackCallback(
     const godel_msgs::ProcessPlanningFeedbackConstPtr& feedback)
-{  
+{
   Q_EMIT feedbackReceived(QString::fromStdString((feedback->last_completed).c_str()));
 }
 

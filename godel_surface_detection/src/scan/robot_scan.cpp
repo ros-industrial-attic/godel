@@ -26,6 +26,15 @@
 #include <moveit/trajectory_processing/iterative_time_parameterization.h>
 #include <godel_param_helpers/godel_param_helpers.h>
 
+#define CHECK(cmd)                                                                                                     \
+  do                                                                                                                   \
+  {                                                                                                                    \
+    if (!cmd)                                                                                                          \
+    {                                                                                                                  \
+      throw std::runtime_error{ "\"" #cmd "\" failed!" };                                                              \
+    }                                                                                                                  \
+  } while (false)
+
 static const std::string DEFAULT_MOVEIT_PLANNER = "RRTConnectkConfigDefault";
 
 static bool loadPoseParam(ros::NodeHandle& nh, const std::string& name, geometry_msgs::Pose& pose)
@@ -46,7 +55,7 @@ namespace scan
 {
 
 const double RobotScan::PLANNING_TIME = 60.0f;
-const double RobotScan::WAIT_MSG_DURATION = 5.0f;
+const double RobotScan::WAIT_MSG_DURATION = 30.0f;
 const double RobotScan::MIN_TRAJECTORY_TIME_STEP = 0.8f; // seconds
 const double RobotScan::EEF_STEP = 0.05f;                // 5cm
 const double RobotScan::MIN_JOINT_VELOCITY = 0.01f;      // rad/sect
@@ -292,12 +301,39 @@ int RobotScan::scan(bool move_only)
         }
       }
 
+      bool sim_sensor;
+      ros::NodeHandle nh;
+      nh.getParam("/sim_sensor", sim_sensor);
+      if (!sim_sensor && !move_only)
+      {
+        CHECK(ros::service::waitForService("/zivid_camera/capture_assistant/suggest_settings", WAIT_MSG_DURATION));
+        zivid_camera::CaptureAssistantSuggestSettings cass;
+        cass.request.max_capture_time = ros::Duration{ 1.20 };
+        cass.request.ambient_light_frequency =
+          zivid_camera::CaptureAssistantSuggestSettings::Request::AMBIENT_LIGHT_FREQUENCY_NONE;
+
+        ROS_INFO_STREAM("Calling " << "/zivid_camera/capture_assistant/suggest_settings"
+                                   << " with max capture time = " << cass.request.max_capture_time << " sec");
+        CHECK(ros::service::call("/zivid_camera/capture_assistant/suggest_settings", cass));
+      }
+
       if (!move_only)
       {
+        //Calling Zivid camera capture service
+        zivid_camera::Capture capture;
+        if(!sim_sensor)
+          CHECK(ros::service::call("/zivid_camera/capture", capture));
         // get message
         ros::Duration(1.0).sleep();
-        sensor_msgs::PointCloud2ConstPtr msg = ros::topic::waitForMessage<sensor_msgs::PointCloud2>(
-            params_.scan_topic, ros::Duration(WAIT_MSG_DURATION));
+        ROS_INFO_STREAM("Waiting point cloud from topic : "<<params_.scan_topic); // -> params_.scan_topic = sensor_point_cloud
+        sensor_msgs::PointCloud2ConstPtr msg;
+        try {
+          msg = ros::topic::waitForMessage<sensor_msgs::PointCloud2>(
+              params_.scan_topic, ros::Duration(WAIT_MSG_DURATION));
+        }
+        catch ( ros::Exception &e ){
+          ROS_ERROR("Error occured: %s ", e.what());
+        }
         pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr(new pcl::PointCloud<pcl::PointXYZRGB>());
         tf::StampedTransform source_to_target_tf;
         if (msg)
