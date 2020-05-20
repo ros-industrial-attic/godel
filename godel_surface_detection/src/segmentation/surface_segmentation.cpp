@@ -641,8 +641,8 @@ void SurfaceSegmentation::computeNormals()
   ne.setInputCloud (input_cloud_);
   pcl::search::KdTree<pcl::PointXYZRGB>::Ptr tree (new pcl::search::KdTree<pcl::PointXYZRGB> ());
   ne.setSearchMethod (tree);
-  ne.setRadiusSearch(0.025);
-//  ne.setKSearch (100);
+  //ne.setRadiusSearch(0.025);
+  ne.setKSearch (250);
 
   // Estimate the normals
   ne.compute (*normals_);
