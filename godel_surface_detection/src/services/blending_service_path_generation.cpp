@@ -55,6 +55,7 @@ const static std::string Z_ADJUST_PARAM = PARAM_BASE + BLEND_PARAM_BASE + "z_adj
 
 const static std::string APPROACH_DISTANCE_PARAM = PARAM_BASE + SCAN_PARAM_BASE + "approach_distance";
 const static std::string QUALITY_METRIC_PARAM = PARAM_BASE + SCAN_PARAM_BASE + "quality_metric";
+const static std::string SCAN_TRAVERSE_SPD_PARAM = PARAM_BASE + SCAN_PARAM_BASE + "traverse_speed";
 const static std::string WINDOW_WIDTH_PARAM = PARAM_BASE + SCAN_PARAM_BASE + "window_width";
 const static std::string MIN_QA_VALUE_PARAM = PARAM_BASE + SCAN_PARAM_BASE + "min_qa_value";
 const static std::string MAX_QA_VALUE_PARAM = PARAM_BASE + SCAN_PARAM_BASE + "max_qa_value";
@@ -377,9 +378,8 @@ godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotio
     scan_params.scan_width = params.scan_width;
     scan_params.margin = params.margin;
     scan_params.overlap = params.overlap;
-    scan_params.scan_width = params.scan_width;
     nh.getParam(APPROACH_DISTANCE_PARAM, scan_params.approach_distance);
-    nh.getParam(TRAVERSE_SPD_PARAM, scan_params.traverse_spd);
+    nh.getParam(SCAN_TRAVERSE_SPD_PARAM, scan_params.traverse_spd);
     nh.getParam(QUALITY_METRIC_PARAM, scan_params.quality_metric);
     nh.getParam(WINDOW_WIDTH_PARAM, scan_params.window_width);
     nh.getParam(MIN_QA_VALUE_PARAM, scan_params.min_qa_value);
