@@ -69,6 +69,14 @@ const static std::string PROCESS_PLANNING_ACTION_SERVER_NAME = "process_planning
 const static std::string SELECT_MOTION_PLAN_ACTION_SERVER_NAME = "select_motion_plan_as";
 const static int PROCESS_EXE_BUFFER = 5;  // Additional time [s] buffer between when blending should end and timeout
 
+inline static bool isEdgePath(const std::string& name)
+{
+  const static std::string suffix("_edge");
+  if (name.size() < suffix.size())
+    return false;
+  return name.find(suffix) != std::string::npos;
+}
+
 SurfaceBlendingService::SurfaceBlendingService() : publish_region_point_cloud_(false), save_data_(false),
   blend_exe_client_(BLEND_EXE_ACTION_SERVER_NAME, true),
   scan_exe_client_(SCAN_EXE_ACTION_SERVER_NAME, true),
@@ -712,6 +720,7 @@ void SurfaceBlendingService::selectMotionPlansActionCallback(const godel_msgs::S
   }
 
   bool is_blend = trajectory_library_.get()[goal_in->name].type == godel_msgs::ProcessPlan::BLEND_TYPE;
+  bool is_edge = isEdgePath(goal_in->name);
 
   // Send command to execution server
   godel_msgs::ProcessExecutionActionGoal goal;
@@ -728,6 +737,14 @@ void SurfaceBlendingService::selectMotionPlansActionCallback(const godel_msgs::S
   ros::Duration approach_time(goal.goal.trajectory_approach.points.back().time_from_start - goal.goal.trajectory_approach.points.front().time_from_start);
   ros::Duration process_time(goal.goal.trajectory_process.points.back().time_from_start - goal.goal.trajectory_process.points.front().time_from_start);
   ros::Duration depart_time(goal.goal.trajectory_depart.points.back().time_from_start - goal.goal.trajectory_depart.points.front().time_from_start);
+
+  ROS_DEBUG_STREAM("----------->> is_edge :"<<is_edge);
+
+  if (is_edge)
+  {
+    process_time*=1.2;
+  }
+  ROS_DEBUG_STREAM("----------->> process time :"<<process_time);
   ros::Duration total_process_time = approach_time + process_time + depart_time;
   ros::Duration buffer_time(PROCESS_EXE_BUFFER);
   if (exe_client->waitForResult(total_process_time + buffer_time))
