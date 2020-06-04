@@ -60,6 +60,8 @@ void SurfaceSegmentation::setInputCloud(pcl::PointCloud<pcl::PointXYZRGB>::Ptr i
   vg.setLeafSize (DOWNSAMPLING_LEAF,DOWNSAMPLING_LEAF,DOWNSAMPLING_LEAF);
   vg.filter(*input_cloud_downsampled_);
 
+  removeNansFromDownSampledCloud();
+
   // create kdtree for speeding up search queries
   kd_tree_.reset(new pcl::search::KdTree<pcl::PointXYZ>());
   kd_tree_->setInputCloud(input_cloud_downsampled_);
@@ -627,6 +629,12 @@ void SurfaceSegmentation::removeNans()
 {
   std::vector<int> indices;
   pcl::removeNaNFromPointCloud (*input_cloud_, *input_cloud_, indices);
+}
+
+void SurfaceSegmentation::removeNansFromDownSampledCloud()
+{
+  std::vector<int> indices;
+  pcl::removeNaNFromPointCloud (*input_cloud_downsampled_, *input_cloud_downsampled_, indices);
 }
 
 

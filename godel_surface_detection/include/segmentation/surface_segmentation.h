@@ -155,6 +155,7 @@ public:
 private:
   /** @brief remove any NAN points, otherwise many algorithms fail */
   void removeNans();
+  void removeNansFromDownSampledCloud();
 
   /** @brief compute the normals and store in normals_, this is requried for both segmentation and meshing*/
   void computeNormals();
