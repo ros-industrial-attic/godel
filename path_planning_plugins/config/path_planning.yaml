@@ -3,5 +3,5 @@ path_planning_params:
   margin: 0.001
   overlap: 0.0
   safe_traverse_height: 0.05
-  scan_width: 0.01
+  scan_width: 0.035
   tool_radius: 0.0125

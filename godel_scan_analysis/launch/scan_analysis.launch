@@ -3,7 +3,7 @@
   <arg name="world_frame" />
   <arg name="scan_frame" />
   <arg name="voxel_leaf_size" default="0.005"/> <!-- 5mm -->
-  <arg name="voxel_publish_period" default="2.0"/> <!--seconds -->
+  <arg name="voxel_publish_period" default="0.01"/> <!--seconds -->
 
   <node pkg="godel_scan_analysis" type="godel_scan_analysis_node" name="godel_scan_analysis">
     <param name="world_frame" value="$(arg world_frame)"/>
