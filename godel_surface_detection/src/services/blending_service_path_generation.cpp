@@ -33,8 +33,8 @@ const static std::string EDGE_TYPE = "edge";
 const static std::string SCAN_TYPE = "scan";
 
 // Edge Processing constants
-const static double SEGMENTATION_SEARCH_RADIUS = 0.03; // 3cm
-const static int BOUNDARY_THRESHOLD = 10;
+const static double SEGMENTATION_SEARCH_RADIUS = 0.03;  // 3cm
+const static int BOUNDARY_THRESHOLD = 100;
 
 // Variables to select path type
 const static int PATH_TYPE_BLENDING = 0;
