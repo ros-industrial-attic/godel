@@ -746,9 +746,12 @@ void SurfaceBlendingService::selectMotionPlansActionCallback(const godel_msgs::S
     process_time*=1.2;
   }
   ROS_DEBUG_STREAM("----------->> process time :"<<process_time);
+  double fanuc_vel_factor =
+      1.0 / 0.25;  // Get the 0.25 factor from rosparam? (correspond to fanuc teach pendant velocity limitation)
+  ROS_DEBUG_STREAM("----------->> process time :" << process_time);
   ros::Duration total_process_time = approach_time + process_time + depart_time;
   ros::Duration buffer_time(PROCESS_EXE_BUFFER);
-  if (exe_client->waitForResult(total_process_time + buffer_time))
+  if (exe_client->waitForResult((total_process_time + buffer_time) * fanuc_vel_factor))
   {
     res.code = godel_msgs::SelectMotionPlanResult::SUCCESS;
     select_motion_plan_server_.setSucceeded(res);

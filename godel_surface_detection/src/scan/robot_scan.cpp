@@ -78,7 +78,7 @@ RobotScan::RobotScan()
   params_.scan_target_frame = "world_frame";
   params_.reachable_scan_points_ratio = 0.5f;
   params_.num_scan_points = 20;
-  params_.stop_on_planning_error = true;
+  params_.stop_on_planning_error = false;
   using_custom_scan_poses_ = false;
 }
 
@@ -296,8 +296,40 @@ int RobotScan::scan(bool move_only)
         }
         else
         {
-          ROS_WARN_STREAM("Path Execution to scan position " << i << " failed, skipping scan");
-          continue;
+          ROS_WARN_STREAM("Path Execution to scan position " << i << " failed, waiting 3 sec and checking if pose has "
+                                                                     "been reached");
+          ros::Duration(3).sleep();
+          current_state = move_group_ptr_->getCurrentJointValues();
+          rob_model = move_group_ptr_->getRobotModel();
+          state.setVariablePositions(current_state);
+          ik_res = state.setFromIK(rob_model->getJointModelGroup(params_.group_name), trajectory_poses[i],
+                                   params_.tcp_frame);
+          if (!ik_res)
+          {
+            continue;
+          }
+          std::vector<double> to_goto(state.getVariablePositions(),
+                                      state.getVariablePositions() + current_state.size());
+          move_group_ptr_->setJointValueTarget(to_goto);
+          moveit::planning_interface::MoveGroupInterface::Plan my_plan_2;
+          bool success = static_cast<bool>(move_group_ptr_->plan(my_plan_2));
+          if (!success)
+          {
+            ROS_WARN_STREAM("Path Planning to scan position " << i << " failed the second time, skipping scan");
+          }
+          else
+          {
+            if (move_group_ptr_->execute(my_plan_2))
+            {
+              ROS_INFO_STREAM("Path Execution to scan position " << i << " finally succeed");
+              poses_reached++;
+            }
+            else
+            {
+              ROS_WARN_STREAM("Path Execution to scan position " << i << " failed two times, skipping scan");
+              continue;
+            }
+          }
         }
       }
 
