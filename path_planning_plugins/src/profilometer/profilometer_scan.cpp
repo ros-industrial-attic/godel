@@ -30,7 +30,7 @@ struct RotatedRect
 };
 
 
-RotatedRect simpleBoundingBox(const Boundary& boundary)
+RotatedRect simpleBoundingBox(const Boundary& boundary, bool linear_blend)
 {
   double min_x = boundary[0].x;
   double min_y = boundary[0].y;
@@ -54,8 +54,15 @@ RotatedRect simpleBoundingBox(const Boundary& boundary)
   result.h = max_y - min_y;
 
   // grow region a little
-  result.w *= GROWTH_FACTOR;
-  result.h *= GROWTH_FACTOR;
+  if (!linear_blend)
+  {
+    result.w *= GROWTH_FACTOR;
+    result.h *= GROWTH_FACTOR;
+  }
+  else
+  {
+    return result;
+  }
 
   return result;
 }
@@ -198,7 +205,7 @@ generateProfilometerScanPath(const Boundary& boundary, const PlanningParams& par
   }
 
   // Step 1 -> compute axis-aligned bounding box; we rely on our reference pose for orientation
-  RotatedRect bbox = simpleBoundingBox(boundary);
+  RotatedRect bbox = simpleBoundingBox(boundary, params.linear_blend);
 
   // Step 2 -> slice bounding box into strips
   std::vector<RotatedRect> slices = sliceBoundingBox(bbox, params.scan_width, params.overlap);

@@ -132,7 +132,6 @@ bool openveronoi::BlendPlanner::generatePath(const godel_msgs::PathPlanningParam
 
       godel_msgs::PathPlanningParameters params_tmp = params_;
       params_tmp.scan_width = params_.tool_radius;
-      params_tmp.margin = 0.0;
 
       // 4 - Generate scan polygon boundary
       PolygonBoundary scan_boundary = scan::generateProfilometerScanPath(filtered_boundaries.front(), params_tmp);
