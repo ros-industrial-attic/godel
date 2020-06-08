@@ -11,3 +11,4 @@ blending_plan:
   min_boundary_length: .03       # (m) Boundaries below threshold are ignored during process path creation
   tool_force: 0.0                # (kg)
   spindle_speed: 0.0             # (rad/s)
+  linear_blend: false

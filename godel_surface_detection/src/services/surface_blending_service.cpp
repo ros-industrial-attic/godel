@@ -245,7 +245,8 @@ bool SurfaceBlendingService::load_blend_parameters(const std::string& filename)
          loadParam(nh, "traverse_spd", blending_plan_params_.traverse_spd) &&
          loadParam(nh, "discretization", blending_plan_params_.discretization) &&
          loadParam(nh, "safe_traverse_height", blending_plan_params_.safe_traverse_height) &&
-         loadParam(nh, "min_boundary_length", blending_plan_params_.min_boundary_length);
+         loadParam(nh, "min_boundary_length", blending_plan_params_.min_boundary_length)&&
+         loadBoolParam(nh, "linear_blend", blending_plan_params_.linear_blend);
 }
 
 

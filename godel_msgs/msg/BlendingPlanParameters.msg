@@ -20,3 +20,4 @@ float64 z_adjust              # (m) height adjustment along surface normal to ad
 
 # Pre-Process Surface Parameters
 float64 min_boundary_length   # (m) Boundaries below threshold are ignored during process path creation
+bool linear_blend
