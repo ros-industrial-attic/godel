@@ -19,6 +19,7 @@ void godel_plugins::PathPlanningConfigWidget::update_gui_fields()
   ui_.LineEditScanWidth->setText(QString::number(params_.scan_width));
   ui_.LineEditToolRadius->setText(QString::number(params_.tool_radius));
   ui_.LineEditTraverseHeight->setText(QString::number(params_.traverse_height));
+  ui_.checkBoxLinearBlend->setChecked(params_.linear_blend);
 }
 
 void godel_plugins::PathPlanningConfigWidget::update_internal_values()
@@ -29,4 +30,5 @@ void godel_plugins::PathPlanningConfigWidget::update_internal_values()
   params_.scan_width = ui_.LineEditScanWidth->text().toDouble();
   params_.tool_radius = ui_.LineEditToolRadius->text().toDouble();
   params_.traverse_height = ui_.LineEditTraverseHeight->text().toDouble();
+  params_.linear_blend = ui_.checkBoxLinearBlend->isChecked();
 }
