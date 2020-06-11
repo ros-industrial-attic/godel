@@ -77,6 +77,7 @@ public:
   void setToolRadius(double radius) { tool_radius_ = std::abs(radius); }
   void setTraverseHeight(double height) { safe_traverse_height_ = height; }
   void setVelocity(const ProcessVelocity& vel) { velocity_ = vel; }
+  void setLinearBlend(const bool& linear_blend) { linea_blend_ = linear_blend; }
 
   /**@brief Check if values of offset variables are acceptable */
   bool variables_ok() const
@@ -116,6 +117,7 @@ private:
   double margin_;      /**<Margin (m) around boundary to leave untouched (first pass only) */
   double overlap_;     /**<Amount of overlap(m) between adjacent passes. */
   double safe_traverse_height_; /**<Height to move to when traversing to new loops */
+  bool linea_blend_; /**<Height to move to when traversing to new loops */
 
   double
       max_discretization_distance_; /**<(m) When discretizing segments, use this or less distance

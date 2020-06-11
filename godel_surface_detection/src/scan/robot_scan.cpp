@@ -25,6 +25,7 @@
 #include <moveit/robot_state/conversions.h>
 #include <moveit/trajectory_processing/iterative_time_parameterization.h>
 #include <godel_param_helpers/godel_param_helpers.h>
+#include <std_srvs/Trigger.h>
 
 #define CHECK(cmd)                                                                                                     \
   do                                                                                                                   \
@@ -214,6 +215,12 @@ int RobotScan::scan(bool move_only)
   moveit::planning_interface::MoveGroupInterface::Plan path_plan;
   geometry_msgs::PoseArray cartesian_poses;
   path_plan.planning_time_ = PLANNING_TIME;
+  
+  //Clear laser scan from previous execution
+  ros::NodeHandle nh;
+  ros::ServiceClient reset_scan_server_ = nh.serviceClient<std_srvs::Trigger>("reset_scan_server");
+  std_srvs::Trigger dummy_trigger;
+  reset_scan_server_.call(dummy_trigger);
 
   // create trajectory
   bool scan_poses_created = false;

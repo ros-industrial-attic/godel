@@ -367,6 +367,7 @@ godel_surface_detection::TrajectoryLibrary SurfaceBlendingService::generateMotio
     blend_params.tool_radius = params.tool_radius;
     blend_params.discretization = params.discretization;
     blend_params.safe_traverse_height = params.traverse_height;
+    blend_params.linear_blend = params.linear_blend;
     nh.getParam(SPINDLE_SPEED_PARAM, blend_params.spindle_speed);
     nh.getParam(APPROACH_SPD_PARAM, blend_params.approach_spd);
     nh.getParam(BLENDING_SPD_PARAM, blend_params.blending_spd);
