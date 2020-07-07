@@ -1,4 +1,5 @@
 ## Godel
+[![Build Status](https://travis-ci.com/ros-industrial-consortium/godel.svg?branch=kinetic-devel)](https://travis-ci.com/ros-industrial-consortium/godel)
 
 Application for demonstrating surface blending with ROS.
 
