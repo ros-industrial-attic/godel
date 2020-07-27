@@ -41,6 +41,8 @@ add_message_files(
   ScanPlanParameters.msg
   SurfaceBoundaries.msg
   SurfaceDetectionParameters.msg
+  # Laser Scan QA
+  LaserScanRecord.msg
 )
 
 ## Generate services in the 'srv' folder
@@ -61,6 +63,8 @@ add_service_files(
   SurfaceBlendingParameters.srv
   TrajectoryExecution.srv
   TrajectoryPlanning.srv
+  # Laser Scan QA
+  GetSurfaceScans.srv
 )
 
 ## Generate added messages and services with any dependencies listed here

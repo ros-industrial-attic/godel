@@ -14,3 +14,7 @@ trajectory_msgs/JointTrajectory trajectory_approach
 trajectory_msgs/JointTrajectory trajectory_process
 trajectory_msgs/JointTrajectory trajectory_depart
 int32 type
+
+# Identifier used to associate this plan w/ external information;
+# e.g. the surface for which this plan was formulated.
+int32 id

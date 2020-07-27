@@ -1,0 +1,6 @@
+# A service for fetching the results of a QA-surface scan
+
+# Empty request
+---
+# Response includes the appropriate data
+godel_msgs/LaserScanRecord scans

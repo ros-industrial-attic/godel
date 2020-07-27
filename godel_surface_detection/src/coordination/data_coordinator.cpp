@@ -81,6 +81,38 @@ namespace data
     process_cloud_ = incloud;
   }
 
+  bool DataCoordinator::setCloud(CloudTypes cloud_type, int id, const pcl::PointCloud<pcl::PointXYZRGB> &cloud)
+  {
+    // Search for record w/ given 'id'
+    auto it = std::find_if(records_.begin(), records_.end(), [id] (const SurfaceDetectionRecord& rec) {
+      return rec.id_ == id;
+    });
+
+    if (it == records_.end())
+    {
+      ROS_WARN_STREAM(UNABLE_TO_FIND_RECORD_ERROR << " " << id);
+      return false;
+    }
+
+    auto& record = *it;
+
+    switch (cloud_type)
+    {
+    case input_cloud:
+      record.input_cloud_ = cloud;
+      return true;
+    case surface_cloud:
+      record.surface_cloud_ = cloud;
+      return true;
+    case laser_cloud:
+      record.laser_cloud_ = cloud;
+      return true;
+    default:
+      ROS_WARN_STREAM("Invalid cloud type");
+      return false;
+    }
+  }
+
 
   /**
    * @brief getCloud Returns a cloud of interest
@@ -89,38 +121,35 @@ namespace data
    * @param cloud Destination for cloud
    * @return true if record is found and type is valid, false otherwise
    */
-  bool DataCoordinator::getCloud(CloudTypes cloud_type, int id,
-                                 pcl::PointCloud<pcl::PointXYZRGB>& cloud)
+  bool DataCoordinator::getCloud(CloudTypes cloud_type, int id, pcl::PointCloud<pcl::PointXYZRGB>& cloud) const
   {
-    for(auto& rec : records_)
+    // Search for record w/ given 'id'
+    auto it = std::find_if(records_.begin(), records_.end(), [id] (const SurfaceDetectionRecord& rec) {
+      return rec.id_ == id;
+    });
+
+    if (it == records_.end())
     {
-      if(id == rec.id_)
-      {
-        switch(cloud_type)
-        {
-          case input_cloud:
-          {
-            cloud = rec.input_cloud_;
-            return true;
-          }
-
-          case surface_cloud:
-          {
-            cloud = rec.surface_cloud_;
-            return true;
-          }
-
-          default:
-          {
-            ROS_WARN_STREAM("Invalid cloud type");
-            return false;
-          }
-        }
-      }
+      ROS_WARN_STREAM(UNABLE_TO_FIND_RECORD_ERROR << " " << id);
+      return false;
     }
 
-    ROS_ERROR_STREAM(UNABLE_TO_FIND_RECORD_ERROR << " " << id);
-    return false;
+    const auto& record = *it;
+
+    switch (cloud_type)
+    {
+    case input_cloud:
+      cloud = record.input_cloud_;
+      return true;
+    case surface_cloud:
+      cloud = record.surface_cloud_;
+      return true;
+    case laser_cloud:
+      cloud = record.laser_cloud_;
+    default:
+      ROS_WARN_STREAM("Invalid cloud type");
+      return false;
+    }
   }
 
 
@@ -379,6 +408,21 @@ namespace data
 
     ROS_WARN_STREAM(UNABLE_TO_FIND_RECORD_ERROR << " " << id);
     return false;
+  }
+
+  int DataCoordinator::findSurfaceByName(const std::string &surface_name) const
+  {
+    auto it = std::find_if(records_.begin(), records_.end(), [surface_name] (const SurfaceDetectionRecord& record) {
+      return record.surface_name_ == surface_name;
+    });
+
+    if (it == records_.end())
+    {
+      ROS_WARN_STREAM("No such surface with name = '" << surface_name << "'.");
+      return -1; // error condition - no such service
+    }
+
+    return std::distance(records_.begin(), it);
   }
 
   /**

@@ -47,6 +47,8 @@
 #include <godel_process_path_generation/utils.h>
 #include <godel_process_path_generation/polygon_utils.h>
 
+#include <godel_qa_server/qa_server.h>
+
 #include <services/trajectory_library.h>
 #include <coordination/data_coordinator.h>
 
@@ -132,8 +134,12 @@ private:
                                            godel_msgs::SurfaceBlendingParameters::Response& res);
 
   // Reads from the surface selection server and generates blend/scan paths for each
-  godel_surface_detection::TrajectoryLibrary
-  generateMotionLibrary(const godel_msgs::PathPlanningParameters& params);
+  godel_surface_detection::TrajectoryLibrary generateMotionLibrary(const godel_msgs::PathPlanningParameters& params,
+                                                                   const std::vector<int>& selected_surface_ids);
+
+  godel_surface_detection::TrajectoryLibrary generateMotionLibrary(const godel_msgs::PathPlanningParameters& params);
+
+  godel_surface_detection::TrajectoryLibrary generateQAMotionLibrary(const godel_msgs::PathPlanningParameters& params);
 
 
   bool generateProcessPath(const int& id, ProcessPathResult& result);
@@ -175,6 +181,8 @@ private:
   bool renameSurfaceCallback(godel_msgs::RenameSurface::Request& req,
                              godel_msgs::RenameSurface::Response& res);
 
+  bool getLaserScanDataAndSave(int surface_id);
+
   void visualizePaths();
 
   void visualizePathPoses();
@@ -195,11 +203,10 @@ private:
   ros::ServiceServer rename_suface_server_;
 
   // Services subscribed to by this class
-  ros::ServiceClient process_path_client_;
-  ros::ServiceClient trajectory_planner_client_;
-
   ros::ServiceClient blend_planning_client_;
   ros::ServiceClient keyence_planning_client_;
+
+  ros::ServiceClient get_laser_scans_client_;
 
   // Actions offered by this class
   ros::NodeHandle nh_;
@@ -219,9 +226,6 @@ private:
   ros::Publisher blend_visualization_pub_;
   ros::Publisher edge_visualization_pub_;
   ros::Publisher scan_visualization_pub_;
-
-  // Timers
-  bool stop_tool_animation_;
 
   // robot scan instance
   godel_surface_detection::scan::RobotScan robot_scan_;
@@ -262,6 +266,9 @@ private:
 
   // Parameter loading and saving
   std::string param_cache_prefix_;
+
+  // QA stuff
+  godel_qa_server::QAServer qa_server_;
 };
 
 #endif // surface blending services

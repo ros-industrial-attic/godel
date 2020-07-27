@@ -70,6 +70,7 @@ public:
 
   std::string getMeshingPluginName() const;
 
+  bool meshCloud(const CloudRGB& cloud, pcl::PolygonMesh& mesh) const;
 
 public:
   // parameters

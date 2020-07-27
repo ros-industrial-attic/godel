@@ -2,14 +2,20 @@
 #include <segmentation/surface_segmentation.h>
 #include <detection/surface_detection.h>
 #include <godel_msgs/TrajectoryExecution.h>
-
+#include <godel_msgs/GetSurfaceScans.h>
 // Process Planning
 #include <godel_msgs/BlendProcessPlanning.h>
 #include <godel_msgs/KeyenceProcessPlanning.h>
 #include <godel_msgs/PathPlanning.h>
 
+// QA
+#include "godel_scan_analysis/profile_scan_fusion.h"
+
+
 #include <godel_param_helpers/godel_param_helpers.h>
 #include <godel_utils/ensenso_guard.h>
+
+
 
 // topics and services
 const static std::string SAVE_DATA_BOOL_PARAM = "save_data";
@@ -26,6 +32,7 @@ const static std::string PATH_EXECUTION_SERVICE = "path_execution";
 const static std::string GET_MOTION_PLANS_SERVICE = "get_available_motion_plans";
 const static std::string SELECT_MOTION_PLAN_SERVICE = "select_motion_plan";
 const static std::string LOAD_SAVE_MOTION_PLAN_SERVICE = "load_save_motion_plan";
+const static std::string GET_LASER_SCANS_SERVICE = "get_surface_scans";
 
 const static std::string BLEND_PROCESS_EXECUTION_SERVICE = "blend_process_execution";
 const static std::string SCAN_PROCESS_EXECUTION_SERVICE = "scan_process_execution";
@@ -42,13 +49,6 @@ const static std::string PUBLISH_REGION_POINT_CLOUD = "publish_region_point_clou
 const static std::string REGION_POINT_CLOUD_TOPIC = "region_colored_cloud";
 
 const static std::string EDGE_IDENTIFIER = "_edge_";
-
-//  tool visual properties
-const static float TOOL_DIA = .050;
-const static float TOOL_THK = .005;
-const static float TOOL_SHAFT_DIA = .006;
-const static float TOOL_SHAFT_LEN = .045;
-const static std::string TOOL_FRAME_ID = "process_tool";
 
 // Default filepaths and namespaces for caching stored parameters
 const static std::string BLEND_PARAMS_FILE = "godel_blending_parameters.msg";
@@ -148,17 +148,22 @@ bool SurfaceBlendingService::init()
     ROS_ERROR_STREAM("Surface detection service had an initialization error");
   }
 
+  // Configure QA server parameters
+  cat_laser_scan_qa::TorchCutQAParameters qa_params;
+  qa_params.surface_tolerance = 0.0005; // 0.5 mm
+  qa_server_.setParams(qa_params);
+
   // start server
   interactive::InteractiveSurfaceServer::SelectionCallback f =
       boost::bind(&SurfaceBlendingService::publish_selected_surfaces_changed, this);
   surface_server_.add_selection_callback(f);
 
-  // service clients
-  process_path_client_ = nh_.serviceClient<godel_msgs::PathPlanning>(PATH_GENERATION_SERVICE);
-
   // Process Execution Parameters
   blend_planning_client_ = nh_.serviceClient<godel_msgs::BlendProcessPlanning>(BLEND_PROCESS_PLANNING_SERVICE);
   keyence_planning_client_ = nh_.serviceClient<godel_msgs::KeyenceProcessPlanning>(SCAN_PROCESS_PLANNING_SERVICE);
+
+  // Get laser scans service
+  get_laser_scans_client_ = nh_.serviceClient<godel_msgs::GetSurfaceScans>(GET_LASER_SCANS_SERVICE);
 
   // service servers
   surf_blend_parameters_server_ =
@@ -347,7 +352,6 @@ bool SurfaceBlendingService::find_surfaces(visualization_msgs::MarkerArray& surf
     surface_detection_.get_process_cloud(process_cloud);
     data_coordinator_.setProcessCloud(process_cloud);
 
-
     // Meshes and Surface Clouds should be organized identically (e.g. Mesh0 corresponds to Surface0)
     ROS_ASSERT(meshes.size() == surface_clouds.size());
     for (std::size_t i = 0; i < meshes.size(); i++)
@@ -422,6 +426,7 @@ bool SurfaceBlendingService::surface_detection_server_callback(
     {
       SurfaceBlendingService::clear_visualizations();
       data_coordinator_.init();
+      qa_server_.clear();
       res.surfaces_found = false;
       res.surfaces = visualization_msgs::MarkerArray();
       break;
@@ -448,6 +453,7 @@ bool SurfaceBlendingService::surface_detection_server_callback(
       res.surfaces = visualization_msgs::MarkerArray();
       SurfaceBlendingService::clear_visualizations();
       data_coordinator_.init();
+      qa_server_.clear();
 
       if (req.use_default_parameters)
       {
@@ -471,6 +477,7 @@ bool SurfaceBlendingService::surface_detection_server_callback(
       res.surfaces = visualization_msgs::MarkerArray();
       SurfaceBlendingService::clear_visualizations();
       data_coordinator_.init();
+      qa_server_.clear();
 
       if (req.use_default_parameters)
       {
@@ -493,6 +500,7 @@ bool SurfaceBlendingService::surface_detection_server_callback(
       res.surfaces = visualization_msgs::MarkerArray();
       SurfaceBlendingService::clear_visualizations();
       data_coordinator_.init();
+      qa_server_.clear();
 
       if (req.use_default_parameters)
       {
@@ -514,6 +522,7 @@ bool SurfaceBlendingService::surface_detection_server_callback(
       res.surfaces = visualization_msgs::MarkerArray();
       SurfaceBlendingService::clear_visualizations();
       data_coordinator_.init();
+      qa_server_.clear();
 
       if (req.use_default_parameters)
       {
@@ -578,7 +587,22 @@ void SurfaceBlendingService::processPlanningActionCallback(const godel_msgs::Pro
       process_planning_server_.publishFeedback(process_planning_feedback_);
       break;
     }
-
+    case godel_msgs::ProcessPlanningGoal::GENERATE_QA_MOTION_PLAN:
+    {
+      ROS_ERROR_STREAM("QA MOTION ACTION HANDLER");
+      ensenso::EnsensoGuard guard; // turns off ensenso for planning and turns it on when this goes out of scope
+      process_planning_feedback_.last_completed = "Recieved request to generate motion plans from QA data";
+      process_planning_server_.publishFeedback(process_planning_feedback_);
+      trajectory_library_.merge(generateQAMotionLibrary(goal_in->params));
+      ROS_ERROR_STREAM("QA PLANNING DONE");
+      process_planning_feedback_.last_completed = "Finished QA motion planning";
+      process_planning_server_.publishFeedback(process_planning_feedback_);
+      visualizePaths();
+      process_planning_result_.succeeded = true;
+      process_planning_server_.setSucceeded(process_planning_result_);
+      ROS_ERROR_STREAM("ALL QA DONE");
+      break;
+    }
     default:
     {
       ROS_ERROR_STREAM("Unknown action code '" << goal_in->action << "' request");
@@ -689,37 +713,56 @@ void SurfaceBlendingService::selectMotionPlansActionCallback(const godel_msgs::S
   godel_msgs::SelectMotionPlanResult res;
 
   // If plan does not exist, abort and return
-  if (trajectory_library_.get().find(goal_in->name) == trajectory_library_.get().end())
+  const auto iter = trajectory_library_.get().find(goal_in->name);
+  if (iter == trajectory_library_.get().end())
   {
     ROS_WARN_STREAM("Motion plan " << goal_in->name << " does not exist. Cannot execute.");
     res.code = godel_msgs::SelectMotionPlanResponse::NO_SUCH_NAME;
     select_motion_plan_server_.setAborted(res);
     return;
   }
+  const auto& selected_plan = iter->second;
 
-  bool is_blend = trajectory_library_.get()[goal_in->name].type == godel_msgs::ProcessPlan::BLEND_TYPE;
+  // Copy trajectory information into a new execution goal
+  godel_msgs::ProcessExecutionGoal goal;
+  goal.trajectory_approach = selected_plan.trajectory_approach;
+  goal.trajectory_depart = selected_plan.trajectory_depart;
+  goal.trajectory_process = selected_plan.trajectory_process;
+  goal.wait_for_execution = goal_in->wait_for_execution;
+  goal.simulate = goal_in->simulate;
 
-  // Send command to execution server
-  godel_msgs::ProcessExecutionActionGoal goal;
-  goal.goal.trajectory_approach = trajectory_library_.get()[goal_in->name].trajectory_approach;
-  goal.goal.trajectory_depart = trajectory_library_.get()[goal_in->name].trajectory_depart;
-  goal.goal.trajectory_process = trajectory_library_.get()[goal_in->name].trajectory_process;
-  goal.goal.wait_for_execution = goal_in->wait_for_execution;
-  goal.goal.simulate = goal_in->simulate;
-
+  // Choose the appropriate action server to execute this goal through
+  bool is_blend = selected_plan.type == godel_msgs::ProcessPlan::BLEND_TYPE;
   actionlib::SimpleActionClient<godel_msgs::ProcessExecutionAction> *exe_client =
       (is_blend ? &blend_exe_client_ : &scan_exe_client_);
-  exe_client->sendGoal(goal.goal);
+  exe_client->sendGoal(goal);
 
-  ros::Duration process_time(goal.goal.trajectory_depart.points.back().time_from_start);
+  // Compute expected time
+  ros::Duration total_time = goal.trajectory_approach.points.back().time_from_start +
+                             goal.trajectory_process.points.back().time_from_start +
+                             goal.trajectory_depart.points.back().time_from_start;
+
   ros::Duration buffer_time(PROCESS_EXE_BUFFER);
-  if(exe_client->waitForResult(process_time + buffer_time))
+
+  // send the goal off to be executed
+  ROS_ERROR_STREAM("WAITING FOR MOTION EXEC RESULT ON " << goal_in->name);
+  if(exe_client->waitForResult(total_time + buffer_time))
   {
     res.code = godel_msgs::SelectMotionPlanResult::SUCCESS;
     select_motion_plan_server_.setSucceeded(res);
+
+    ROS_ERROR_STREAM("GOAL SUCCESS");
+
+    // In the event that the execution was for a laser scan and we were successful and we did not simulate anything
+    // then we want to save the laser scan data
+    if (selected_plan.type == godel_msgs::ProcessPlan::SCAN_TYPE && !goal.simulate)
+    {
+      getLaserScanDataAndSave(selected_plan.id);
+    }
   }
   else
   {
+    ROS_ERROR_STREAM("GOAL TIMEOUT");
     res.code=godel_msgs::SelectMotionPlanResult::TIMEOUT;
     select_motion_plan_server_.setAborted(res);
   }
@@ -771,6 +814,59 @@ bool SurfaceBlendingService::renameSurfaceCallback(godel_msgs::RenameSurface::Re
 
   ROS_WARN_STREAM("Surface rename failed");
   return false;
+}
+
+bool SurfaceBlendingService::getLaserScanDataAndSave(int surface_id)
+{
+  godel_msgs::GetSurfaceScansRequest req;
+  godel_msgs::GetSurfaceScansResponse res;
+  if (!get_laser_scans_client_.call(req, res))
+  {
+    ROS_ERROR("Unable to fetch laser scans from aggregation service: %s", get_laser_scans_client_.getService());
+    return false;
+  }
+
+  // If we were successful, let's convert the data to a format usable by the data coordinator
+  godel_scan_analysis::ProfileFusionParameters params;
+  params.voxel_leaf_size = 0.0005; // 0.5 mm
+  params.min_points_per_voxel = 2;
+
+  const auto n_profiles = res.scans.profiles.size();
+  std::vector<pcl::PointCloud<pcl::PointXYZ>> profiles (n_profiles);
+  std::vector<tf::Transform> poses (n_profiles);
+
+  // Convert profiles and poses
+  for (std::size_t i = 0; i < res.scans.profiles.size(); ++i)
+  {
+    pcl::fromROSMsg(res.scans.profiles[i], profiles[i]);
+    tf::poseMsgToTF(res.scans.poses[i], poses[i]);
+  }
+  // Fuse the cloud data
+  pcl::PointCloud<pcl::PointXYZ>::Ptr surface_cloud = godel_scan_analysis::fuseProfiles(profiles, poses, params);
+
+  // The data aggregator takes color clouds, so we put them back in as colored data
+  pcl::PointCloud<pcl::PointXYZRGB> color_cloud;
+  pcl::copyPointCloud(*surface_cloud, color_cloud);
+
+  data_coordinator_.setCloud(godel_surface_detection::data::laser_cloud, surface_id, color_cloud);
+  ROS_ERROR_STREAM("Laser scan data added to coordinator for surface " << surface_id);
+
+  // Now add to QA
+  auto qa_job = qa_server_.lookup(surface_id);
+  if (!qa_job)
+  {
+    ROS_ERROR("Creating new QA job for surface %d", surface_id);
+    qa_server_.createNewJob(surface_id);
+    qa_job = qa_server_.lookup(surface_id);
+    ROS_ASSERT(static_cast<bool>(qa_job));
+    godel_qa_server::QAJob& job = *qa_job;
+    job.addNewScan(*surface_cloud);
+  }
+  else
+  {
+    ROS_ERROR("Already an active QA job under surface id = %d. Adding new QA pass.", surface_id);
+    qa_job->addNewScan(*surface_cloud);
+  }
 }
 
 void SurfaceBlendingService::visualizePaths()

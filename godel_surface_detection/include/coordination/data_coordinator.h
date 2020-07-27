@@ -21,6 +21,7 @@ namespace data
   const static int INPUT_CLOUD_TYPE = 1;
   const static int SURFACE_CLOUD_TYPE = 2;
   const static int BOUNDARY_CLOUD_TYPE = 3;  // for future use
+  const static int LASER_SCAN_CLOUD_TYPE = 4; // e.g. data produced by line scanner
 
   // Common Error Strings
   const static std::string UNABLE_TO_FIND_RECORD_ERROR = "Unable to get record with specified id";
@@ -30,21 +31,21 @@ namespace data
    */
   struct SurfaceDetectionRecord
   {
-    public:
-      int id_;
-      std::string surface_name_;
-      pcl::PointCloud<pcl::PointXYZRGB> input_cloud_;
-      pcl::PolygonMesh surface_mesh_;
-      pcl::PointCloud<pcl::PointXYZRGB> surface_cloud_;
-      std::vector<std::pair<std::string, geometry_msgs::PoseArray>> edge_pairs_;
-      std::vector<geometry_msgs::PoseArray> blend_poses_;
-      std::vector<geometry_msgs::PoseArray> scan_poses_;
+    int id_;
+    std::string surface_name_;
+    pcl::PointCloud<pcl::PointXYZRGB> input_cloud_;
+    pcl::PolygonMesh surface_mesh_;
+    pcl::PointCloud<pcl::PointXYZRGB> surface_cloud_;
+    std::vector<std::pair<std::string, geometry_msgs::PoseArray>> edge_pairs_;
+    std::vector<geometry_msgs::PoseArray> blend_poses_;
+    std::vector<geometry_msgs::PoseArray> scan_poses_;
+    pcl::PointCloud<pcl::PointXYZRGB> laser_cloud_;
   };
 
   /**
    * @brief The CloudTypes enum for safety access to get/set cloud function
    */
-  enum CloudTypes {input_cloud, surface_cloud, boundary_cloud};
+  enum CloudTypes {input_cloud, surface_cloud, boundary_cloud, laser_cloud};
 
 
   /**
@@ -72,7 +73,8 @@ namespace data
     bool init();
     int addRecord(pcl::PointCloud<pcl::PointXYZRGB> input_cloud, pcl::PointCloud<pcl::PointXYZRGB> surface_cloud);
     void setProcessCloud(pcl::PointCloud<pcl::PointXYZRGB> incloud);
-    bool getCloud(CloudTypes cloud_type, int id, pcl::PointCloud<pcl::PointXYZRGB>& cloud);
+    bool getCloud(CloudTypes cloud_type, int id, pcl::PointCloud<pcl::PointXYZRGB>& cloud) const;
+    bool setCloud(CloudTypes cloud_type, int id, const pcl::PointCloud<pcl::PointXYZRGB>& cloud);
     bool setSurfaceName(int id, const std::string& name);
     bool getSurfaceName(int id, std::string& name);
     bool setSurfaceMesh(int id, pcl::PolygonMesh mesh);
@@ -82,6 +84,9 @@ namespace data
     bool getEdgePosesByName(const std::string& edge_name, geometry_msgs::PoseArray& edge_poses);
     bool setPoses(PoseTypes pose_type, int id, const std::vector<geometry_msgs::PoseArray>& poses);
     bool getPoses(PoseTypes pose_type, int id, std::vector<geometry_msgs::PoseArray>& poses);
+
+    int findSurfaceByName(const std::string& surface_name) const;
+
     void asyncSaveRecord(boost::filesystem::path path);
   };
 } /* end namespace data */
