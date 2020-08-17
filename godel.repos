@@ -1,5 +1,4 @@
 - git: {local-name: godel_openvoronoi, uri: 'https://github.com/ros-industrial-consortium/godel_openvoronoi.git', version: hydro-devel}
-- git: {local-name: godel, uri: 'https://github.com/ros-industrial-consortium/godel.git', version: kinetic-devel}
 - git: {local-name: industrial_core, uri: 'https://github.com/ros-industrial/industrial_core.git', version: kinetic-devel}
 - git: {local-name: keyence_experimental, uri: 'https://github.com/ros-industrial/keyence_experimental.git', version: kinetic-devel}
 - git: {local-name: libsocket, uri: 'https://github.com/dermesser/libsocket.git', version: master}
