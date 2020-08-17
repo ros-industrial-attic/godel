@@ -59,18 +59,21 @@ bool godel_process_execution::BlendProcessService::executeProcess(
   srv_depart.request.wait_for_execution = true;
   srv_depart.request.trajectory = goal->trajectory_depart;
 
+  srv_approach.request.trajectory.header.stamp = ros::Time::now();
   if (!real_client_.call(srv_approach))
   {
     ROS_ERROR("Execution client unavailable or unable to execute approach trajectory.");
     return false;
   }
 
+  srv_process.request.trajectory.header.stamp = ros::Time::now();
   if (!real_client_.call(srv_process))
   {
     ROS_ERROR("Execution client unavailable or unable to execute process trajectory.");
     return false;
   }
 
+  srv_depart.request.trajectory.header.stamp = ros::Time::now();
   if (!real_client_.call(srv_depart))
   {
     ROS_ERROR("Execution client unavailable or unable to execute departure trajectory.");
