@@ -27,34 +27,25 @@
     <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->
     <virtual_joint name="FixedBase" type="fixed" parent_frame="map" child_link="world_frame" />
     <!--DISABLE COLLISIONS: By default it is assumed that any link of the robot could potentially come into collision with any other link in the robot. This tag disables collision checking between a specified pair of links. -->
-    <disable_collisions link1="adapter_tube" link2="blending_tool" reason="Never" />
-    <disable_collisions link1="adapter_tube" link2="bracket" reason="Adjacent" />
-    <disable_collisions link1="adapter_tube" link2="ensenso" reason="Never" />
-    <disable_collisions link1="adapter_tube" link2="keyence" reason="Never" />
-    <disable_collisions link1="adapter_tube" link2="link_2" reason="Never" />
-    <disable_collisions link1="adapter_tube" link2="link_3" reason="Never" />
-    <disable_collisions link1="adapter_tube" link2="link_5" reason="Never" />
-    <disable_collisions link1="adapter_tube" link2="link_6" reason="Adjacent" />
     <disable_collisions link1="base_link" link2="link_1" reason="Adjacent" />
     <disable_collisions link1="base_link" link2="link_2" reason="Never" />
     <disable_collisions link1="base_link" link2="link_3" reason="Never" />
-    <disable_collisions link1="blending_tool" link2="bracket" reason="Adjacent" />
     <disable_collisions link1="blending_tool" link2="ensenso" reason="Never" />
+    <disable_collisions link1="blending_tool" link2="gripper_body" reason="Adjacent" />
     <disable_collisions link1="blending_tool" link2="keyence" reason="Never" />
     <disable_collisions link1="blending_tool" link2="link_3" reason="Never" />
     <disable_collisions link1="blending_tool" link2="link_5" reason="Never" />
     <disable_collisions link1="blending_tool" link2="link_6" reason="Never" />
-    <disable_collisions link1="bracket" link2="ensenso" reason="Adjacent" />
-    <disable_collisions link1="bracket" link2="keyence" reason="Adjacent" />
-    <disable_collisions link1="bracket" link2="link_3" reason="Never" />
-    <disable_collisions link1="bracket" link2="link_5" reason="Never" />
-    <disable_collisions link1="bracket" link2="link_6" reason="Never" />
+    <disable_collisions link1="ensenso" link2="gripper_body" reason="Adjacent" />
     <disable_collisions link1="ensenso" link2="keyence" reason="Never" />
     <disable_collisions link1="ensenso" link2="link_2" reason="Never" />
     <disable_collisions link1="ensenso" link2="link_3" reason="Never" />
     <disable_collisions link1="ensenso" link2="link_5" reason="Never" />
     <disable_collisions link1="ensenso" link2="link_6" reason="Never" />
-    <disable_collisions link1="keyence" link2="link_2" reason="Never" />
+    <disable_collisions link1="gripper_body" link2="keyence" reason="Adjacent" />
+    <disable_collisions link1="gripper_body" link2="link_3" reason="Never" />
+    <disable_collisions link1="gripper_body" link2="link_5" reason="Never" />
+    <disable_collisions link1="gripper_body" link2="link_6" reason="Adjacent" />
     <disable_collisions link1="keyence" link2="link_3" reason="Never" />
     <disable_collisions link1="keyence" link2="link_5" reason="Never" />
     <disable_collisions link1="keyence" link2="link_6" reason="Never" />
