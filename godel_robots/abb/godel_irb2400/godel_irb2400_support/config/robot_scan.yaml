@@ -1,5 +1,6 @@
 robot_scan:
   group_name: manipulator_asus
+  move_scan_vel_scaling: 1
   home_position: home_asus
   world_frame: world_frame
   tcp_frame: kinect2_move_frame

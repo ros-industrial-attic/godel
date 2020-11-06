@@ -82,6 +82,7 @@ void godel_plugins::RobotScanConfigWidget::update_gui_fields()
   ui_.LineEditWorldFrame->setText(QString::fromStdString(params_.world_frame));
   ui_.LineEditTcpFrame->setText(QString::fromStdString(params_.tcp_frame));
   ui_.LineEditGroupName->setText(QString::fromStdString(params_.group_name));
+  ui_.LineEditMoveScanVelScaling->setText(QString::number(params_.move_scan_vel_scaling));
   ui_.CheckBoxStopOnPlanningError->setChecked(params_.stop_on_planning_error);
 
   world_to_obj_pose_widget_->set_values(params_.world_to_obj_pose);
@@ -102,6 +103,7 @@ void godel_plugins::RobotScanConfigWidget::update_internal_values()
   params_.world_frame = ui_.LineEditWorldFrame->text().toStdString();
   params_.tcp_frame = ui_.LineEditTcpFrame->text().toStdString();
   params_.group_name = ui_.LineEditGroupName->text().toStdString();
+  params_.move_scan_vel_scaling = ui_.LineEditMoveScanVelScaling->text().toDouble();
   params_.stop_on_planning_error = ui_.CheckBoxStopOnPlanningError->isChecked();
 
   tf::poseTFToMsg(world_to_obj_pose_widget_->get_values(), params_.world_to_obj_pose);

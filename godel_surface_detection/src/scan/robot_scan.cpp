@@ -55,6 +55,7 @@ RobotScan::RobotScan()
 {
 
   params_.group_name = "manipulator_asus";
+  params_.move_scan_vel_scaling = 1;
   params_.home_position = "home";
   params_.world_frame = "world_frame";
   params_.tcp_frame = "kinect2_move_frame";
@@ -75,6 +76,7 @@ RobotScan::RobotScan()
 bool RobotScan::init()
 {
   move_group_ptr_ = MoveGroupPtr(new  moveit::planning_interface::MoveGroupInterface(params_.group_name));
+  move_group_ptr_->setMaxVelocityScalingFactor(params_.move_scan_vel_scaling);
   move_group_ptr_->setEndEffectorLink(params_.tcp_frame);
   move_group_ptr_->setPoseReferenceFrame(params_.world_frame);
   move_group_ptr_->setPlanningTime(PLANNING_TIME);
@@ -97,6 +99,7 @@ bool RobotScan::load_parameters(const std::string& filename)
   // otherwise load from parameters
   ros::NodeHandle nh("~/robot_scan");
   return loadParam(nh, "group_name", params_.group_name) &&
+         loadParam(nh, "move_scan_vel_scaling", params_.move_scan_vel_scaling) &&
          loadParam(nh, "home_position", params_.home_position) &&
          loadParam(nh, "world_frame", params_.world_frame) &&
          loadParam(nh, "tcp_frame", params_.tcp_frame) &&
@@ -361,6 +364,7 @@ bool RobotScan::create_scan_trajectory(std::vector<geometry_msgs::Pose>& scan_po
     scan_poses.push_back(pose);
   }
 
+  move_group_ptr_->setMaxVelocityScalingFactor(params_.move_scan_vel_scaling);
   move_group_ptr_->setEndEffectorLink(params_.tcp_frame);
 
   return true;
